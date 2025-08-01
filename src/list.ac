@@ -155,6 +155,88 @@ theorem unique_length<T>(list: List<T>) {
     }
 }
 
+theorem unique_preserves_contains<T>(list: List<T>, item: T) {
+    list.unique.contains(item) = list.contains(item)
+} by {
+    define p(l: List<T>, x: T) -> Bool {
+        l.unique.contains(x) = l.contains(x)
+    }
+
+    // Base case: empty list
+    p(List.nil<T>, item)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        if p(tail, item) {
+            if tail.contains(head) {
+                // If the tail contains the head, then the unique list is just the tail's unique list.
+                tail.unique.contains(item) = tail.contains(item)
+                List.cons(head, tail).unique = tail.unique
+
+                // Obviously if the tail contains the item, so does the cons list.
+                List.cons(head, tail).contains(item) implies tail.contains(item)
+                tail.contains(item) implies List.cons(head, tail).contains(item)
+                List.cons(head, tail).contains(item) = tail.contains(item)
+
+                // Proves proposition
+                p(List.cons(head, tail), item)
+            } else {
+                // If the tail doesn't contain the item, then have to append head
+                List.cons(head, tail).unique = List.cons(head, tail.unique)
+
+                // Trick to help prover here (tail.unique.contains = tail.contains, rest is defns)
+                List.cons(head, tail.unique).contains(item) implies List.cons(head, tail).contains(item)
+                List.cons(head, tail).contains(item) implies List.cons(head, tail.unique).contains(item)
+                List.cons(head, tail).contains(item) = List.cons(head, tail.unique).contains(item)
+
+                p(List.cons(head, tail), item)
+            }
+            p(List.cons(head, tail), item)
+        }
+    }
+
+    List.induction(function (l: List<T>) {
+        p(l, item)
+    })
+
+    // Prover help
+    list.unique.contains(item) implies list.contains(item)
+    list.contains(item) implies list.unique.contains(item)
+}
+
+theorem unique_indemp<T>(list: List<T>) {
+    list.unique.unique = list.unique
+} by {
+    let list_unique = list.unique
+
+    define f(x: List<T>) -> Bool {
+        x.unique.unique = x.unique
+    }
+
+    // Base case
+    f(List.nil)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        if f(tail) {
+            tail.unique.unique = tail.unique
+
+            if tail.contains(head) {
+                tail.unique.contains(head)
+                // Definition of unique and induction assumption
+                List.cons(head, tail).unique.unique = List.cons(head, tail).unique
+            } else {
+                not tail.unique.contains(head)
+                // Head is not in tail, so added to end (definition)
+                List.cons(head, tail).unique.unique = List.cons(head, tail).unique
+            }
+
+            List.cons(head, tail).unique = List.cons(head, tail).unique.unique
+            f(List.cons(head, tail))
+        }
+    }
+}
+
 attributes List<T> {
     /// Appends a single element to the end of the list.
     define append(self, item: T) -> List<T> {
@@ -196,8 +278,130 @@ attributes List<T> {
             }
         }
     }
+
+    /// Remove all instances of an element from the list.
+    // XXX: Todo, prove that this matches filter in the expected case
+    define remove_elem(self, elem: T) -> List<T> {
+        match self {
+            List.nil {
+                List.nil<T>
+            }
+            List.cons(head, tail) {
+                if head != elem {
+                    List.cons(head, tail.remove_elem(elem))
+                } else {
+                    tail.remove_elem(elem)
+                }
+            }
+        }
+    }
 }
 
+// Filter theorems (kinda ugly, but alas)
+theorem filter_only_removes_elems<T>(list: List<T>, f: T -> Bool) {
+    list.filter(f).length <= list.length
+} by {
+    define p(l: List<T>) -> Bool {
+        l.filter(f).length <= l.length
+    }
+
+    // Base case: empty list
+    p(List.nil<T>)
+    forall(head: T, tail: List<T>) {
+        if p(tail) {
+            // Induction hypothesis: tail.filter(f).length <= tail.length
+            if f(head) {
+                List.cons(head, tail).filter(f).length <= List.cons(head, tail).length
+            } else {
+                List.cons(head, tail).filter(f).length <= List.cons(head, tail).length
+            }
+            p(List.cons(head, tail))
+        }
+    }
+}
+
+theorem filter_contains_and<T>(list: List<T>, f: T -> Bool, item: T) {
+    (list.contains(item) and f(item)) implies list.filter(f).contains(item)
+} by {
+    define p(l: List<T>, x: T) -> Bool {
+        l.contains(x) and f(x) implies l.filter(f).contains(x)
+    }
+
+    // Base case: empty list
+    p(List.nil<T>, item)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        if p(tail, item) {
+            if tail.contains(item) {
+                tail.filter(f).contains(item)
+                if f(head) {
+                    List.cons(head, tail).filter(f) = List.cons(head, tail.filter(f))
+                    List.cons(head, tail).filter(f).contains(item)
+                } else {
+                    List.cons(head, tail).filter(f) = tail.filter(f)
+                    List.cons(head, tail).filter(f).contains(item)
+                }
+            } else {
+                not tail.contains(item)
+                if head = item {
+                    List.cons(head, tail).filter(f) = List.cons(head, tail.filter(f))
+                    List.cons(head, tail).filter(f).contains(item)
+                }
+            }
+            p(List.cons(head, tail), item)
+        }
+    }
+
+    List.induction(function (l: List<T>) {
+        p(l, item)
+    })
+}
+
+theorem filter_contained_by_and<T>(list: List<T>, f: T -> Bool, item: T) {
+    list.filter(f).contains(item) implies (list.contains(item) and f(item))
+} by {
+    define p(l: List<T>, x: T) -> Bool {
+        l.filter(f).contains(x) implies (l.contains(x) and f(x))
+    }
+
+    // Base case: empty list
+    p(List.nil<T>, item)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        if p(tail, item) {
+            if List.cons(head, tail).filter(f).contains(item) {
+                // If the filter contains the item then item must either
+                // be in tail or head
+                if tail.filter(f).contains(item) {
+                    // `and` phrase here is needed to help prover
+                    f(item) and List.cons(head, tail).contains(item)
+                } else {
+                    f(head)
+                    head = item
+                    f(item) and List.cons(head, tail).contains(item)
+                }
+                f(item) and List.cons(head, tail).contains(item)
+            }
+            List.cons(head, tail).filter(f).contains(item) implies (List.cons(head, tail).contains(item) and f(item))
+            p(List.cons(head, tail), item)
+        }
+    }
+
+    List.induction(function (l: List<T>) {
+        p(l, item)
+    })
+}
+
+theorem filter_equivalent_to_and<T>(list: List<T>, f: T -> Bool, item: T) {
+    (list.contains(item) and f(item)) = list.filter(f).contains(item)
+} by {
+    list.filter(f).contains(item) implies (list.contains(item) and f(item))
+    (list.contains(item) and f(item)) implies list.filter(f).contains(item)
+}
+
+// Length theorems
 theorem length_range(n: Nat) {
     n.range.length = n
 } by {
@@ -239,6 +443,260 @@ theorem length_range(n: Nat) {
     // Conclusion
     f(n)
 }
+
+theorem remove_element_not_in_list<T>(list: List<T>, item: T) {
+    not list.contains(item) implies list.remove_elem(item) = list
+} by {
+    define p(l: List<T>, x: T) -> Bool {
+        not l.contains(x) implies l.remove_elem(x) = l
+    }
+
+    // Base case: empty list
+    p(List.nil<T>, item)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        if p(tail, item) {
+            if not List.cons(head, tail).contains(item) {
+                head != item
+                not tail.contains(item)
+                List.cons(head, tail).remove_elem(item) = List.cons(head, tail)
+            }
+            p(List.cons(head, tail), item)
+        }
+    }
+
+    List.induction(function (l: List<T>) {
+        p(l, item)
+    })
+}
+
+theorem remove_element_removes_element<T>(list: List<T>, item: T) {
+    list.contains(item) implies not list.remove_elem(item).contains(item)
+} by {
+    define p(l: List<T>, x: T) -> Bool {
+        l.contains(x) implies not l.remove_elem(x).contains(x)
+    }
+
+    // Base case: empty list
+    p(List.nil<T>, item)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        if p(tail, item) {
+            let cons_list = List.cons(head, tail)
+            if cons_list.contains(item) {
+                // If the cons list contains the item, then it must be in either head or tail
+                if head = item {
+                    cons_list.remove_elem(item) = tail.remove_elem(item)
+                    not cons_list.remove_elem(item).contains(item)
+                } else {
+                    cons_list.remove_elem(item) = List.cons(head, tail.remove_elem(item))
+                    not tail.remove_elem(item).contains(item)
+                    not cons_list.remove_elem(item).contains(item)
+                }
+                not cons_list.remove_elem(item).contains(item)
+
+            } 
+            p(List.cons(head, tail), item)
+        }
+    }
+
+    List.induction(function (l: List<T>) {
+        p(l, item)
+    })
+}
+
+theorem remove_element_removes_no_other_elements<T>(list: List<T>, removed_item: T, elem: T) {
+    removed_item != elem implies list.remove_elem(removed_item).contains(elem) = list.contains(elem)
+} by {
+    define p(l: List<T>, r: T, e: T) -> Bool {
+        r != e implies l.remove_elem(r).contains(e) = l.contains(e)
+    }
+
+    // Base case: empty list
+    p(List.nil<T>, removed_item, elem)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        let cons_list = List.cons(head, tail)
+        if p(tail, removed_item, elem) {
+            // Hypothesis
+            if removed_item != elem {
+                // If we don't remove anything, then trivial
+                if not cons_list.contains(removed_item) {
+                    p(cons_list, removed_item, elem)
+                }
+
+                // If the removed item is contained, it is either in head or tail
+                // If head, then cons_list.remove_elem(removed_item) = tail.remove_elem(removed_item)
+                if head = removed_item {
+                    cons_list.remove_elem(removed_item) = tail.remove_elem(removed_item)
+                    tail.remove_elem(removed_item).contains(elem) = tail.contains(elem)
+                    cons_list.contains(elem) = tail.contains(elem)
+                    cons_list.remove_elem(removed_item).contains(elem) = cons_list.contains(elem)
+
+                    p(cons_list, removed_item, elem)
+                } else {
+                    // If the removed item is in tail then induction takes care of the rest
+                    cons_list.remove_elem(removed_item).contains(elem) = (head = elem) or tail.remove_elem(removed_item).contains(elem)
+
+                    if head = elem {
+                        cons_list.remove_elem(removed_item).contains(elem)
+                        cons_list.contains(elem)
+
+                        p(cons_list, removed_item, elem)
+                    } else {
+                        tail.remove_elem(removed_item).contains(elem) = tail.contains(elem)
+                        cons_list.contains(elem) = tail.contains(elem)
+                        cons_list.remove_elem(removed_item).contains(elem) = tail.remove_elem(removed_item).contains(elem)
+
+                        p(cons_list, removed_item, elem)
+                    }
+
+                    cons_list.remove_elem(removed_item).contains(elem) = cons_list.contains(elem)
+                    p(cons_list, removed_item, elem)
+                }
+            }
+            p(cons_list, removed_item, elem)
+        }
+    }
+
+    List.induction(function (l: List<T>) {
+        p(l, removed_item, elem)
+    })
+}
+
+theorem remove_element_in_unique_equals_length_minus_one<T>(list: List<T>, item: T) {
+    list.contains(item) implies list.unique.remove_elem(item).length + Nat.1 = list.unique.length
+} by {
+    define p(l: List<T>) -> Bool {
+        l.contains(item) implies l.unique.remove_elem(item).length + Nat.1 = l.unique.length
+    }
+
+    // Base case: empty list, does not contain any item
+    p(List.nil<T>)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        if p(tail) {
+            if List.cons(head, tail).contains(item) {
+                // Either head is a duplicate or not
+                if tail.contains(head) {
+                    // If it's a duplicate, we can safely ignore it and the induction hypothesis
+                    // carries us through
+                    List.cons(head, tail).unique = tail.unique
+
+                    List.cons(head, tail).unique.remove_elem(item).length + Nat.1 = List.cons(head, tail).unique.length
+                } else {
+                    // If it is not a duplicate, then either the item is head or in tail.unique
+                    List.cons(head, tail).unique = List.cons(head, tail.unique)
+                    if head = item {
+                        // If the item is in head, it's not in tail.unique, and it will be one removed
+                        not tail.contains(item)
+
+                        // Prover help: item is head, remove
+                        List.cons(head, tail).unique.remove_elem(item) = tail.unique
+
+                        List.cons(head, tail).unique.remove_elem(item).length + Nat.1 = List.cons(head, tail).unique.length
+                    } else {
+                        // If it's in tail then we're done by induction hypothesis
+                        tail.contains(item)
+
+                        // Prover help: item is in tail
+                        List.cons(head, tail).unique.remove_elem(item) = List.cons(head, tail.unique.remove_elem(item))
+
+                        List.cons(head, tail).unique.remove_elem(item).length + Nat.1 = List.cons(head, tail).unique.length
+                    }
+                }
+            }
+            p(List.cons(head, tail))
+        }
+    }
+}
+
+// Finally a real-ish theorem
+theorem eq_contains_implies_unique_eq_length<T>(a: List<T>, b: List<T>) {
+    a.contains = b.contains implies a.unique.length = b.unique.length
+} by {
+    define p(x: List<T>, y: List<T>) -> Bool {
+        x.contains = y.contains implies x.unique.length = y.unique.length
+    }
+
+    // Base case: empty lists
+    p(List.nil<T>, b)
+
+    // Induction
+    forall(head: T, tail: List<T>) {
+        if p(tail, b) {
+            let cons_list = List.cons(head, tail)
+            if (cons_list.contains = b.contains) {
+                // Either head was contained in tail or not
+                if tail.contains(head) {
+                    // If it was contained, we can use the induction hypothesis directly
+                    // Prover needs a ton of help here for some reason
+                    cons_list.unique = tail.unique
+                    forall(x: T) {
+                        cons_list.unique.contains(x) = tail.unique.contains(x)
+                        cons_list.contains(x) = tail.contains(x)
+                        tail.contains(x) = b.contains(x)
+                    }
+                    tail.contains = b.contains
+
+                    tail.unique.length = b.unique.length
+                    cons_list.unique.length = b.unique.length
+
+                    p(cons_list, b)
+                } else {
+                    // Tail does not contain head, so head can be removed from both lists
+                    // We can then use the tail directly
+                    cons_list.contains = b.contains
+                    let b_no_head = b.unique.remove_elem(head)
+
+                    cons_list.unique.remove_elem(head) = tail.unique
+                    b.unique.remove_elem(head) = tail.unique
+
+                    forall(x: T) {
+                        cons_list.unique.contains(x) = tail.unique.contains(x)
+                        cons_list.contains(x) = tail.contains(x)
+                        tail.contains(x) = b.contains(x)
+                    }
+                    cons_list.unique.contains = b.unique.contains
+                }
+            }
+            p(List.cons(head, tail), b)
+        }
+    }
+
+}
+
+// And the big one
+theorem unique_is_smallest_containing_list<T>(list: List<T>, container: List<T>) {
+    forall(x: T) {
+        list.contains(x) implies container.contains(x)
+    } implies list.unique.length <= container.length
+} by {
+    let filtered_container = container.filter(list.unique.contains)
+
+    filtered_container.length <= container.length
+    filtered_container.unique.length <= filtered_container.length
+    // therefore:
+    filtered_container.unique.length <= container.length
+
+    // Let's prove that the filtered_container contains all elements of list
+    // and vice versa
+    forall(x: T) {
+        list.contains(x) implies filtered_container.contains(x)
+        filtered_container.contains(x) implies list.contains(x)
+        filtered_container.contains(x) = list.contains(x)
+    }
+
+    filtered_container.contains = list.contains
+    filtered_container.unique.length = list.unique.length
+}
+
+
+
 
 /// Applies a function to each element of a list, creating a new list of results.
 define map<T, U>(items: List<T>, f: T -> U) -> List<U> {
