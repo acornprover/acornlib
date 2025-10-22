@@ -34,12 +34,16 @@ The Cauchy product of two series `∑ aₙ` and `∑ bₙ` is:
 
 **Key insight discovered:** Extracting lambda functions into named definitions (like `cauchy_coefficient`) enables proving properties about them. Direct reasoning with lambdas inside `sum(map(...))` is challenging in Acorn.
 
+**Recent progress:**
+- [x] `cauchy_coefficient_comm` - Coefficient-level commutativity
+- [x] `cauchy_product_comm` - Product-level commutativity (uses `sum_symmetric_range` axiom)
+- [x] Added `sum_symmetric_range` axiom to `list.ac` - enables proving commutativity
+- [x] Proved helper `sum_symmetric_one` for n=1 case
+
 ### 🚧 Next Steps
 
 **Algebraic properties to prove:**
-- [ ] Commutativity: `cauchy_product(a, b, n) = cauchy_product(b, a, n)`
-  - Will require proving that reversing sum indices preserves the result
-  - May need helper lemmas about list reversal and sums
+- [x] Commutativity: `cauchy_product(a, b, n) = cauchy_product(b, a, n)` ✅
 - [ ] Linearity in first argument: `cauchy_product(c*a, b, n) = c * cauchy_product(a, b, n)`
 - [ ] Linearity in second argument: `cauchy_product(a, c*b, n) = c * cauchy_product(a, b, n)`
 - [ ] Distributivity: `cauchy_product(a + a', b, n) = cauchy_product(a, b, n) + cauchy_product(a', b, n)`
@@ -48,6 +52,10 @@ The Cauchy product of two series `∑ aₙ` and `∑ bₙ` is:
 - [ ] More lemmas about `sum` and `map` with function composition
 - [ ] Properties relating `cauchy_coefficient` to sequence operations (add_seq, mul_seq)
 - [ ] Connection between `partial(cauchy_seq(a, b))` and products of partial sums
+- [ ] **IMPORTANT:** Prove `sum_symmetric_range` (currently an axiom in `list.ac`)
+  - This is a fundamental theorem about sum symmetry
+  - Likely requires list reversal infrastructure or double-sum techniques
+  - Currently used as axiom to unblock progress on Cauchy products
 
 **Major theorem (hardest):**
 - [ ] **Cauchy product convergence:** If `∑ aₙ` and `∑ bₙ` both converge absolutely, then `partial(cauchy_seq(a, b))` converges
