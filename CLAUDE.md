@@ -16,6 +16,27 @@ If you are in an environment that doesn't have the verifier, install it with
 npm i -g @acornprover/cli
 ```
 
+### Workaround for Restricted Network Environments
+
+If `api.github.com` is blocked (common in some sandbox environments), the npm-installed `acorn` command will fail. Here's a simple workaround - download and use the binary directly:
+
+```bash
+# Get latest version and download binary
+LATEST=$(git ls-remote --tags https://github.com/acornprover/acorn.git | grep -o 'v[0-9.]*$' | sort -V | tail -1)
+mkdir -p ~/.local/bin
+curl -L "https://github.com/acornprover/acorn/releases/download/${LATEST}/acorn-${LATEST#v}-linux-x64" \
+  -o ~/.local/bin/acorn
+chmod +x ~/.local/bin/acorn
+
+# Ensure ~/.local/bin is in PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# Now use acorn normally
+acorn --version
+```
+
+The binary can be used directly without the npm wrapper.
+
 Make sure to run the verifier before you tell the user you're finished. If you have made some progress but you're still working on a big proof, it's okay to comment that out so the user can check in your work.
 
 There is a todo list in TODO.md. If you are working off of it, keep that up to date as you make changes.
