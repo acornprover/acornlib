@@ -1271,6 +1271,18 @@ define sum[A: AddCommMonoid](items: List[A]) -> A {
     }
 }
 
+/// Reverses a list.
+define reverse[T](xs: List[T]) -> List[T] {
+    match xs {
+        List.nil {
+            List.nil[T]
+        }
+        List.cons(head, tail) {
+            reverse(tail) + List.singleton(head)
+        }
+    }
+}
+
 /// Computes the partial sum of a series up to index n.
 /// Returns the sum of f(0) + f(1) + ... + f(n-1).
 define partial[A: AddCommMonoid](f: Nat -> A, n: Nat) -> A {
@@ -1572,6 +1584,106 @@ theorem map_map[T, U, V](items: List[T], f: T -> U, g: U -> V) {
     }
 }
 
+/// Reversing the empty list gives the empty list.
+theorem reverse_nil[T] {
+    reverse(List.nil[T]) = List.nil[T]
+}
+
+/// Reversing a singleton list gives the same list.
+theorem reverse_singleton[T](x: T) {
+    reverse(List.singleton(x)) = List.singleton(x)
+} by {
+    reverse(List.singleton(x)) = reverse(List.cons(x, List.nil[T]))
+    reverse(List.cons(x, List.nil[T])) = reverse(List.nil[T]) + List.singleton(x)
+    reverse(List.nil[T]) = List.nil[T]
+    List.nil[T] + List.singleton(x) = List.singleton(x)
+}
+
+/// Reversing a list formed by appending an element.
+theorem reverse_append[T](xs: List[T], x: T) {
+    reverse(xs.append(x)) = List.cons(x, reverse(xs))
+} by {
+    define p(ys: List[T]) -> Bool {
+        reverse(ys.append(x)) = List.cons(x, reverse(ys))
+    }
+
+    // Base case
+    List.nil[T].append(x) = List.singleton(x)
+    reverse(List.singleton(x)) = List.singleton(x)
+    reverse(List.nil[T]) = List.nil[T]
+    List.cons(x, List.nil[T]) = List.singleton(x)
+    p(List.nil)
+
+    // Inductive step
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            // IH: reverse(tail.append(x)) = List.cons(x, reverse(tail))
+
+            // LHS: reverse(cons(head, tail).append(x))
+            List.cons(head, tail).append(x) = List.cons(head, tail.append(x))
+            reverse(List.cons(head, tail.append(x))) = reverse(tail.append(x)) + List.singleton(head)
+
+            // By IH
+            reverse(tail.append(x)) = List.cons(x, reverse(tail))
+            reverse(tail.append(x)) + List.singleton(head) = List.cons(x, reverse(tail)) + List.singleton(head)
+
+            // RHS: List.cons(x, reverse(cons(head, tail)))
+            reverse(List.cons(head, tail)) = reverse(tail) + List.singleton(head)
+            List.cons(x, reverse(List.cons(head, tail))) = List.cons(x, reverse(tail) + List.singleton(head))
+
+            // Need to show: cons(x, reverse(tail)) + singleton(head) = cons(x, reverse(tail) + singleton(head))
+            List.cons(x, reverse(tail)) + List.singleton(head) = List.cons(x, reverse(tail) + List.singleton(head))
+
+            p(List.cons(head, tail))
+        }
+    }
+
+    p(xs)
+}
+
+/// The sum of a reversed list equals the sum of the original list.
+theorem sum_reverse[A: AddCommMonoid](xs: List[A]) {
+    sum(reverse(xs)) = sum(xs)
+} by {
+    define p(ys: List[A]) -> Bool {
+        sum(reverse(ys)) = sum(ys)
+    }
+
+    // Base case: empty list
+    reverse(List.nil[A]) = List.nil[A]
+    sum(List.nil[A]) = A.0
+    p(List.nil)
+
+    // Inductive step
+    forall(head: A, tail: List[A]) {
+        if p(tail) {
+            // Induction hypothesis: sum(reverse(tail)) = sum(tail)
+
+            // Compute reverse(cons(head, tail))
+            reverse(List.cons(head, tail)) = reverse(tail) + List.singleton(head)
+
+            // Compute sum of reversed list
+            let rev_cons = reverse(tail) + List.singleton(head)
+            sum(rev_cons) = sum(reverse(tail)) + sum(List.singleton(head))
+            sum(List.singleton(head)) = head
+            sum(rev_cons) = sum(reverse(tail)) + head
+
+            // Apply induction hypothesis
+            sum(reverse(tail)) + head = sum(tail) + head
+
+            // Compute sum of original list
+            sum(List.cons(head, tail)) = head + sum(tail)
+
+            // Use commutativity
+            head + sum(tail) = sum(tail) + head
+
+            // Conclude
+            sum(reverse(List.cons(head, tail))) = sum(List.cons(head, tail))
+            p(List.cons(head, tail))
+        }
+    }
+}
+
 /// Helper: Sum symmetry for n=1
 theorem sum_symmetric_one[A: AddCommMonoid](f: Nat -> A, g: Nat -> A) {
     f(Nat.0) = g(Nat.1) and f(Nat.1) = g(Nat.0)
@@ -1617,13 +1729,101 @@ theorem sum_symmetric_one[A: AddCommMonoid](f: Nat -> A, g: Nat -> A) {
     }
 }
 
+/// If two functions agree on all elements of a list, their mapped lists are equal.
+theorem map_pointwise_eq[T, U](xs: List[T], f: T -> U, g: T -> U) {
+    (forall(x: T) { xs.contains(x) implies f(x) = g(x) })
+    implies
+    map(xs, f) = map(xs, g)
+} by {
+    define p(ys: List[T]) -> Bool {
+        (forall(y: T) { ys.contains(y) implies f(y) = g(y) })
+        implies
+        map(ys, f) = map(ys, g)
+    }
+
+    // Base case
+    if forall(y: T) { List.nil[T].contains(y) implies f(y) = g(y) } {
+        map(List.nil[T], f) = List.nil[U]
+        map(List.nil[T], g) = List.nil[U]
+    }
+    p(List.nil)
+
+    // Inductive step
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            if forall(y: T) { List.cons(head, tail).contains(y) implies f(y) = g(y) } {
+                // head is in the list, so f(head) = g(head)
+                List.cons(head, tail).contains(head)
+                f(head) = g(head)
+
+                // All elements of tail are in cons(head, tail)
+                forall(y: T) {
+                    if tail.contains(y) {
+                        List.cons(head, tail).contains(y)
+                        f(y) = g(y)
+                    }
+                }
+
+                // By IH
+                map(tail, f) = map(tail, g)
+
+                // Therefore
+                map(List.cons(head, tail), f) = List.cons(f(head), map(tail, f))
+                map(List.cons(head, tail), g) = List.cons(g(head), map(tail, g))
+                List.cons(f(head), map(tail, f)) = List.cons(g(head), map(tail, g))
+                map(List.cons(head, tail), f) = map(List.cons(head, tail), g)
+            }
+            p(List.cons(head, tail))
+        }
+    }
+
+    p(xs)
+}
+
+/// Mapping with a reflected index over a range equals reversing the mapped range.
+/// This states that [f(n-0), f(n-1), ..., f(n-n)] = reverse([f(0), f(1), ..., f(n)]).
+axiom map_range_reflect[T](f: Nat -> T, n: Nat) {
+    map(n.suc.range, function(k: Nat) { f(n - k) }) = reverse(map(n.suc.range, f))
+}
+
 /// If two functions are symmetric around index n/2, their sums over [0..n] are equal.
-/// NOTE: This is a challenging theorem to prove. We may need additional infrastructure
-/// such as list reversal or double-sum manipulation lemmas.
-axiom sum_symmetric_range[A: AddCommMonoid](f: Nat -> A, g: Nat -> A, n: Nat) {
+theorem sum_symmetric_range[A: AddCommMonoid](f: Nat -> A, g: Nat -> A, n: Nat) {
     (forall(k: Nat) { k <= n implies f(k) = g(n - k) })
     implies
     sum(map(n.suc.range, f)) = sum(map(n.suc.range, g))
+} by {
+    if forall(k: Nat) { k <= n implies f(k) = g(n - k) } {
+        // Define h(k) = g(n - k), so f(k) = h(k) for all k in range
+        let h = function(k: Nat) { g(n - k) }
+
+        // All elements k in n.suc.range satisfy k <= n
+        forall(k: Nat) {
+            if n.suc.range.contains(k) {
+                k <= n
+                f(k) = g(n - k)
+                f(k) = h(k)
+            }
+        }
+
+        // By map_pointwise_eq: map(n.suc.range, f) = map(n.suc.range, h)
+        map(n.suc.range, f) = map(n.suc.range, h)
+
+        // Apply map_range_reflect with g
+        map_range_reflect(g, n)
+
+        // This gives us: map(n.suc.range, function(k) { g(n-k) }) = reverse(map(n.suc.range, g))
+        // Since h = function(k) { g(n-k) }, we have map(n.suc.range, h) = reverse(map(n.suc.range, g))
+        map(n.suc.range, h) = reverse(map(n.suc.range, g))
+
+        // Therefore: map(n.suc.range, f) = reverse(map(n.suc.range, g))
+        map(n.suc.range, f) = reverse(map(n.suc.range, g))
+
+        // By sum_reverse: sum(reverse(xs)) = sum(xs)
+        sum(reverse(map(n.suc.range, g))) = sum(map(n.suc.range, g))
+
+        // Therefore: sum(map(n.suc.range, f)) = sum(map(n.suc.range, g))
+        sum(map(n.suc.range, f)) = sum(map(n.suc.range, g))
+    }
 }
 
 /// Distributing scalar multiplication through a partial sum.
