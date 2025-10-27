@@ -21,8 +21,10 @@ npm i -g @acornprover/cli
 If `api.github.com` is blocked (common in some sandbox environments), the npm-installed `acorn` command will fail. Here's a simple workaround - download and use the binary directly:
 
 ```bash
-# Get latest version and download binary
+# Get latest version
 LATEST=$(git ls-remote --tags https://github.com/acornprover/acorn.git | grep -o 'v[0-9.]*$' | sort -V | tail -1)
+
+# Download binary
 mkdir -p ~/.local/bin
 curl -L "https://github.com/acornprover/acorn/releases/download/${LATEST}/acorn-${LATEST#v}-linux-x64" \
   -o ~/.local/bin/acorn
