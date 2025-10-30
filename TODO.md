@@ -24,7 +24,13 @@ The Cauchy product of two series `∑ aₙ` and `∑ bₙ` is:
 **Algebraic properties:**
 - [x] Linearity in first argument: `cauchy_product(mul_fn(c, a), b, n) = c * cauchy_product(a, b, n)` ✅
 - [x] Linearity in second argument: `cauchy_product(a, mul_fn(c, b), n) = c * cauchy_product(a, b, n)` ✅
-- [x] Distributivity: `cauchy_product(add_fn(a, aa), b, n) = cauchy_product(a, b, n) + cauchy_product(aa, b, n)` ✅
+- [x] Distributivity in first argument: `cauchy_product(add_fn(a, aa), b, n) = cauchy_product(a, b, n) + cauchy_product(aa, b, n)` ✅
+- [x] Distributivity in second argument: `cauchy_product(a, add_fn(b, bb), n) = cauchy_product(a, b, n) + cauchy_product(a, bb, n)` ✅
+
+**Partial sum properties:**
+- [x] Zero behavior: `partial(cauchy_seq(const(0), b), n) = 0` and symmetric ✅
+- [x] Distributivity: `partial(cauchy_seq(add_fn(a, aa), b), n) = partial(cauchy_seq(a, b), n) + partial(cauchy_seq(aa, b), n)` (both arguments) ✅
+- [x] Linearity: `partial(cauchy_seq(mul_fn(c, a), b), n) = c * partial(cauchy_seq(a, b), n)` (both arguments) ✅
 
 **Key insight:** Extracting lambda functions into named definitions (like `cauchy_coefficient`) enables proving properties about them. Direct reasoning with lambdas inside `sum(map(...))` is challenging in Acorn.
 
