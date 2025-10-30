@@ -58,7 +58,7 @@ Build the foundation for reasoning about absolutely convergent series. This is e
   - Uses comparison test and triangle inequality
 
 **Still needed for Cauchy products:**
-- [ ] `abs_conv_tail_bound`: If series converges absolutely, tail sums are bounded
+- [x] `abs_conv_tail_bound`: If series converges absolutely, tail sums are bounded ✅
   - `absolutely_converges(a) implies forall(ε > 0) exists(N) forall(n >= N, m >= N): sum_{k=n}^{m} |a(k)| < ε`
 
 **Phase 2: Cauchy Product Convergence** (TODO)
