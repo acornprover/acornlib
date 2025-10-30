@@ -61,16 +61,27 @@ Build the foundation for reasoning about absolutely convergent series. This is e
 - [x] `abs_conv_tail_bound`: If series converges absolutely, tail sums are bounded ✅
   - `absolutely_converges(a) implies forall(ε > 0) exists(N) forall(n >= N, m >= N): sum_{k=n}^{m} |a(k)| < ε`
 
-**Phase 2: Cauchy Product Convergence** (TODO)
+**Phase 2: Cauchy Product Convergence** (IN PROGRESS)
 
 Once we have absolute convergence infrastructure:
 - [ ] **Cauchy product convergence:** If `∑ aₙ` and `∑ bₙ` both converge absolutely, then `partial(cauchy_seq(a, b))` converges
+  - Framework established with `cauchy_coefficient_abs_bound`
+  - Key lemmas identified but not yet proven (commented out):
+    - `cauchy_product_abs_bound`: |cauchy_product(a,b,n)| ≤ cauchy_product(|a|,|b|,n)
+    - `cauchy_partial_product_bound`: partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)
+    - `cauchy_product_abs_converges`: Main convergence theorem
 - [ ] **Cauchy product formula:** If both series converge absolutely, then `limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))`
 
+**Progress:**
+- ✅ Helper lemma `cauchy_coefficient_abs_bound` proven
+- 🚧 Working on triangle inequality for sums to complete `cauchy_product_abs_bound`
+- 🚧 Need to prove `cauchy_partial_product_bound` (key lemma showing Cauchy product partial sums bounded by product of partial sums)
+- 🚧 Main convergence theorem scaffolded but needs completion
+
 **Will need:**
-- Connection between `partial(cauchy_seq(a, b))` and products of partial sums
-- Bounds on partial sums of absolutely convergent series (from Phase 1)
-- Double sum manipulation theorems
+- Triangle inequality theorem for sums (currently missing from list.list_sum)
+- Double sum manipulation for proving `cauchy_partial_product_bound`
+- Theorem about products of convergent sequences for the product formula
 
 ## 2. Define e^x via Power Series
 
