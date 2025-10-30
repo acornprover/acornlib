@@ -33,16 +33,18 @@ Define and prove properties of the Cauchy product of two infinite series: `∑ c
   - **Key insight**: Leverages existing `partial_seq_lte` infrastructure
 - ✅ `cauchy_coefficient_abs_bound`: |a(k)*b(n-k)| ≤ |a(k)|*|b(n-k)| (line 884)
 - ✅ `cauchy_product_abs_bound`: |cauchy_product(a,b,n)| ≤ cauchy_product(|a|,|b|,n) (line 899) ⭐
+- ✅ `partial_zero`: Helper lemma showing partial(f, 0) = 0 (line 934)
 
 **🎯 Next: Prove Convergence (Mertens' Theorem)**
 
 These three theorems complete the proof that Cauchy products of absolutely convergent series converge:
 
-1. **`cauchy_partial_product_bound`** (NEXT)
+1. **`cauchy_partial_product_bound`** 🚧 IN PROGRESS (line 954, commented out)
    - Statement: For nonnegative sequences, `partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)`
-   - Strategy: When you expand (∑aᵢ)(∑bⱼ), you get all terms aᵢ*bⱼ where i,j < n.
-     The Cauchy product includes only terms where i+j < n, which is a subset.
-   - Will need: Double sum manipulation theorems or algebraic expansion
+   - Status: Base case proven, inductive step scaffolded. The mathematical argument is sound but requires
+     double sum manipulation which isn't directly supported in Acorn's current infrastructure.
+   - Needs: Either (a) additional helper lemmas for double sums, or (b) a more sophisticated algebraic
+     approach to expand products of partial sums
 
 2. **`cauchy_product_abs_converges`** (Mertens' Theorem)
    - Statement: If `absolutely_converges(a)` and `absolutely_converges(b)`, then `absolutely_converges(cauchy_seq(a, b))`
