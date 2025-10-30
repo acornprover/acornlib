@@ -32,14 +32,20 @@ The Cauchy product of two series `∑ aₙ` and `∑ bₙ` is:
 - [x] `cauchy_product_zero_left` - `cauchy_product(0, b, n) = 0`
 - [x] `cauchy_product_zero_right` - `cauchy_product(a, 0, n) = 0`
 
+**Commutativity proof (completed in this session):**
+- [x] `sum_reverse[A]` - New foundational theorem: `sum(reverse(list)) = sum(list)` (list_functional.ac)
+- [x] `cauchy_reverse_map_eq` - Helper: reverse of mapped cauchy coefficients equals swapped coefficients
+- [x] `cauchy_product_comm` - Main theorem: Cauchy product is commutative
+
 **Key insight discovered:** Extracting lambda functions into named definitions (like `cauchy_coefficient`) enables proving properties about them. Direct reasoning with lambdas inside `sum(map(...))` is challenging in Acorn.
 
 ### 🚧 Next Steps
 
 **Algebraic properties to prove:**
-- [ ] Commutativity: `cauchy_product(a, b, n) = cauchy_product(b, a, n)`
-  - Will require proving that reversing sum indices preserves the result
-  - May need helper lemmas about list reversal and sums
+- [x] Commutativity: `cauchy_product(a, b, n) = cauchy_product(b, a, n)` ✅ **COMPLETED**
+  - Proved using `sum_reverse` (new theorem showing sum is invariant under list reversal)
+  - Helper lemma `cauchy_reverse_map_eq` shows reversed list equals swapped list
+  - Uses list extensionality to prove pointwise equality via `get_idx`
 - [ ] Linearity in first argument: `cauchy_product(c*a, b, n) = c * cauchy_product(a, b, n)`
 - [ ] Linearity in second argument: `cauchy_product(a, c*b, n) = c * cauchy_product(a, b, n)`
 - [ ] Distributivity: `cauchy_product(a + a', b, n) = cauchy_product(a, b, n) + cauchy_product(a', b, n)`
