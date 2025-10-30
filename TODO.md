@@ -13,55 +13,30 @@ The Cauchy product of two series `∑ aₙ` and `∑ bₙ` is:
 
 **Why it matters:** Essential for proving `e^x * e^y = e^(x+y)` and other properties of power series.
 
-### ✅ Completed (as of current session)
+### ✅ Completed
 
-**Core definitions:**
-- [x] `cauchy_coefficient(a, b, n)` - Returns function `k ↦ a(k) * b(n-k)`
-- [x] `cauchy_product(a, b, n)` - Computes `∑_{k=0}^{n} a(k) * b(n-k)`
-- [x] `cauchy_seq(a, b)` - Sequence of Cauchy products
+**Infrastructure:**
+- Core definitions: `cauchy_coefficient`, `cauchy_product`, `cauchy_seq`
+- Zero behavior: products with zero sequences give zero
+- Base case: `cauchy_product(a, b, 0) = a(0) * b(0)`
+- Commutativity: `cauchy_product(a, b, n) = cauchy_product(b, a, n)` ✅
 
-**Helper lemmas:**
-- [x] `sum_map_zero[T]` - If `f` always returns zero, `sum(map(items, f)) = 0`
-
-**Basic properties:**
-- [x] `cauchy_product_zero` - Base case: `cauchy_product(a, b, 0) = a(0) * b(0)`
-- [x] `cauchy_coefficient_zero_left` - If `a` is constant zero, coefficient is zero
-- [x] `cauchy_coefficient_zero_left_fn` - If `a` is constant zero, coefficient function is zero
-- [x] `cauchy_coefficient_zero_right` - If `b` is constant zero, coefficient is zero
-- [x] `cauchy_coefficient_zero_right_fn` - If `b` is constant zero, coefficient function is zero
-- [x] `cauchy_product_zero_left` - `cauchy_product(0, b, n) = 0`
-- [x] `cauchy_product_zero_right` - `cauchy_product(a, 0, n) = 0`
-
-**Commutativity proof (completed in this session):**
-- [x] `sum_reverse[A]` - New foundational theorem: `sum(reverse(list)) = sum(list)` (list_functional.ac)
-- [x] `cauchy_reverse_map_eq` - Helper: reverse of mapped cauchy coefficients equals swapped coefficients
-- [x] `cauchy_product_comm` - Main theorem: Cauchy product is commutative
-
-**Key insight discovered:** Extracting lambda functions into named definitions (like `cauchy_coefficient`) enables proving properties about them. Direct reasoning with lambdas inside `sum(map(...))` is challenging in Acorn.
+**Key insight:** Extracting lambda functions into named definitions (like `cauchy_coefficient`) enables proving properties about them. Direct reasoning with lambdas inside `sum(map(...))` is challenging in Acorn.
 
 ### 🚧 Next Steps
 
-**Algebraic properties to prove:**
-- [x] Commutativity: `cauchy_product(a, b, n) = cauchy_product(b, a, n)` ✅ **COMPLETED**
-  - Proved using `sum_reverse` (new theorem showing sum is invariant under list reversal)
-  - Helper lemma `cauchy_reverse_map_eq` shows reversed list equals swapped list
-  - Uses list extensionality to prove pointwise equality via `get_idx`
+**Algebraic properties:**
 - [ ] Linearity in first argument: `cauchy_product(c*a, b, n) = c * cauchy_product(a, b, n)`
 - [ ] Linearity in second argument: `cauchy_product(a, c*b, n) = c * cauchy_product(a, b, n)`
 - [ ] Distributivity: `cauchy_product(a + a', b, n) = cauchy_product(a, b, n) + cauchy_product(a', b, n)`
 
-**Infrastructure needed:**
-- [ ] More lemmas about `sum` and `map` with function composition
-- [ ] Properties relating `cauchy_coefficient` to sequence operations (add_seq, mul_seq)
-- [ ] Connection between `partial(cauchy_seq(a, b))` and products of partial sums
-
-**Major theorem (hardest):**
+**Convergence theorems (the big ones):**
 - [ ] **Cauchy product convergence:** If `∑ aₙ` and `∑ bₙ` both converge absolutely, then `partial(cauchy_seq(a, b))` converges
 - [ ] **Cauchy product formula:** If both series converge absolutely, then `limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))`
 
-**Prerequisites for convergence theorem:**
-- Absolute convergence is already in `src/real/real_series.ac` (check for `converges(partial(compose(Real.abs, a)))`)
-- Triangle inequality for sums (already proven as `sum_abs_le_abs_sum` in real_series.ac:772)
+**Will need:**
+- Lemmas connecting `cauchy_coefficient` to sequence operations (add_seq, mul_seq) for linearity/distributivity
+- Connection between `partial(cauchy_seq(a, b))` and products of partial sums
 - Bounds on partial sums of absolutely convergent series
 - Double sum manipulation theorems
 
