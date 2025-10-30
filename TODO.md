@@ -36,13 +36,40 @@ The Cauchy product of two series `∑ aₙ` and `∑ bₙ` is:
 
 ### 🚧 Next Steps
 
-**Convergence theorems (the big ones):**
+**Phase 1: Absolute Convergence Infrastructure** (CURRENT)
+
+Build the foundation for reasoning about absolutely convergent series. This is essential for proving the Cauchy product convergence theorem.
+
+**Definitions:**
+- [x] `abs_fn(a: Nat -> Real)`: Takes a sequence and returns the sequence of absolute values ✅
+- [x] `absolutely_converges(a)`: Predicate meaning `converges(partial(abs_fn(a)))` ✅
+
+**Basic properties of abs_fn:**
+- [x] `abs_fn_zero`: `abs_fn(const(0))(n) = 0` for all n ✅
+- [x] `abs_fn_nonneg`: `forall n, abs_fn(a)(n) >= 0` ✅
+- [x] `abs_fn_scalar_mul`: `abs_fn(mul_fn(c, a))(n) = c.abs * abs_fn(a)(n)` ✅
+- [x] `abs_fn_eq_compose`: Shows `abs_fn` is equivalent to `compose(Real.abs, _)` ✅
+
+**Absolute convergence theorems:**
+- [x] `absolutely_converges_imp_converges`: Absolute convergence implies convergence ✅
+  - Connects to existing `abs_conv_imp_conv` from real_series.ac
+- [x] `absolutely_converges_scalar_mul`: Scalar multiple of absolutely convergent series is absolutely convergent ✅
+- [x] `absolutely_converges_add`: Sum of absolutely convergent series is absolutely convergent ✅
+  - Uses comparison test and triangle inequality
+
+**Still needed for Cauchy products:**
+- [ ] `abs_conv_tail_bound`: If series converges absolutely, tail sums are bounded
+  - `absolutely_converges(a) implies forall(ε > 0) exists(N) forall(n >= N, m >= N): sum_{k=n}^{m} |a(k)| < ε`
+
+**Phase 2: Cauchy Product Convergence** (TODO)
+
+Once we have absolute convergence infrastructure:
 - [ ] **Cauchy product convergence:** If `∑ aₙ` and `∑ bₙ` both converge absolutely, then `partial(cauchy_seq(a, b))` converges
 - [ ] **Cauchy product formula:** If both series converge absolutely, then `limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))`
 
 **Will need:**
 - Connection between `partial(cauchy_seq(a, b))` and products of partial sums
-- Bounds on partial sums of absolutely convergent series
+- Bounds on partial sums of absolutely convergent series (from Phase 1)
 - Double sum manipulation theorems
 
 ## 2. Define e^x via Power Series
