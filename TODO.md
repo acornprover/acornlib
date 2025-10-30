@@ -71,31 +71,25 @@ Once we have absolute convergence infrastructure:
 
 **Completed:**
 - ✅ `sum_triangle_ineq`: |sum(list)| ≤ sum(|elements|) - Proven by structural induction (src/real/cauchy.ac:806)
-- ✅ `cauchy_coefficient_abs_bound`: |a(k)*b(n-k)| ≤ |a(k)|*|b(n-k)| (src/real/cauchy.ac:859)
-
-**Blocked - needs infrastructure:**
-- 🚧 `sum_map_le`: If f(k) ≤ g(k) for all k, then sum(map(list,f)) ≤ sum(map(list,g))
-  - Proof strategy is sound but Acorn verifier times out on transitivity reasoning
-  - Attempted using lte_add_left theorem but constraint solving fails
-  - **Blocker**: Need better way to express/prove transitivity of inequality addition
-  - This blocks `cauchy_product_abs_bound` which needs it
-
-**Scaffolded (commented out, waiting on sum_map_le):**
-- 🚧 `cauchy_product_abs_bound`: |cauchy_product(a,b,n)| ≤ cauchy_product(|a|,|b|,n)
-  - Uses: sum_triangle_ineq + map composition + sum_map_le + transitivity
-  - Proof is 90% complete, just needs sum_map_le to finish
+- ✅ `cauchy_coefficient_abs_bound`: |a(k)*b(n-k)| ≤ |a(k)|*|b(n-k)| (src/real/cauchy.ac:884)
+- ✅ `lte_fn`: Definition for pointwise inequality on Nat -> Real functions (src/real/cauchy.ac:850)
+- ✅ `sum_map_range_le`: If lte_fn(f,g), then sum(map(n.range,f)) ≤ sum(map(n.range,g)) (src/real/cauchy.ac:856)
+  - **Key insight**: Reuse existing `partial_seq_lte` instead of reproving transitivity from scratch
+- ✅ `cauchy_product_abs_bound`: |cauchy_product(a,b,n)| ≤ cauchy_product(|a|,|b|,n) (src/real/cauchy.ac:899)
+  - Uses: sum_triangle_ineq + map_map + cauchy_coefficient_abs_bound + sum_map_range_le
+  - Critical building block for proving Cauchy product convergence!
 
 **Still TODO:**
 - `cauchy_partial_product_bound`: partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)
   - Key lemma for convergence - shows Cauchy product sums bounded by product of sums
-- `cauchy_product_abs_converges`: Main convergence theorem
+  - Will need double sum manipulation theorems
+- `cauchy_product_abs_converges`: Main convergence theorem using comparison test
 - Cauchy product formula (limit equals product of limits)
 
-**Infrastructure needs:**
-- Better support for transitivity reasoning in inequality chains
-- Or: direct axiom/theorem for "if a ≤ b and c ≤ d then a+c ≤ b+d"
-- Double sum manipulation for proving `cauchy_partial_product_bound`
-- Theorem about products of convergent sequences for the product formula
+**Lessons learned:**
+- When proving inequality combinations, work with Acorn's existing optimized infrastructure
+- The `partial` function and `partial_seq_lte` are well-optimized; reuse them when possible
+- Converting problems to use `partial` rather than raw `sum(map(...))` can unlock existing theorems
 
 ## 2. Define e^x via Power Series
 
