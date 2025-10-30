@@ -21,21 +21,20 @@ The Cauchy product of two series `∑ aₙ` and `∑ bₙ` is:
 - Base case: `cauchy_product(a, b, 0) = a(0) * b(0)`
 - Commutativity: `cauchy_product(a, b, n) = cauchy_product(b, a, n)` ✅
 
+**Algebraic properties:**
+- [x] Linearity in first argument: `cauchy_product(mul_fn(c, a), b, n) = c * cauchy_product(a, b, n)` ✅
+- [x] Linearity in second argument: `cauchy_product(a, mul_fn(c, b), n) = c * cauchy_product(a, b, n)` ✅
+- [x] Distributivity: `cauchy_product(add_fn(a, aa), b, n) = cauchy_product(a, b, n) + cauchy_product(aa, b, n)` ✅
+
 **Key insight:** Extracting lambda functions into named definitions (like `cauchy_coefficient`) enables proving properties about them. Direct reasoning with lambdas inside `sum(map(...))` is challenging in Acorn.
 
 ### 🚧 Next Steps
-
-**Algebraic properties:**
-- [ ] Linearity in first argument: `cauchy_product(c*a, b, n) = c * cauchy_product(a, b, n)`
-- [ ] Linearity in second argument: `cauchy_product(a, c*b, n) = c * cauchy_product(a, b, n)`
-- [ ] Distributivity: `cauchy_product(a + a', b, n) = cauchy_product(a, b, n) + cauchy_product(a', b, n)`
 
 **Convergence theorems (the big ones):**
 - [ ] **Cauchy product convergence:** If `∑ aₙ` and `∑ bₙ` both converge absolutely, then `partial(cauchy_seq(a, b))` converges
 - [ ] **Cauchy product formula:** If both series converge absolutely, then `limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))`
 
 **Will need:**
-- Lemmas connecting `cauchy_coefficient` to sequence operations (add_seq, mul_seq) for linearity/distributivity
 - Connection between `partial(cauchy_seq(a, b))` and products of partial sums
 - Bounds on partial sums of absolutely convergent series
 - Double sum manipulation theorems
