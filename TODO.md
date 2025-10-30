@@ -40,13 +40,14 @@ Define and prove properties of the Cauchy product of two infinite series: `∑ c
 
 These three theorems complete the proof that Cauchy products of absolutely convergent series converge:
 
-1. **`cauchy_partial_product_bound`** 🚧 IN PROGRESS (line 964, commented out)
+1. **`cauchy_partial_product_bound`** 🚧 IN PROGRESS (line 987, commented out)
    - Statement: For nonnegative sequences, `partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)`
    - Status: Base case proven, inductive step scaffolded.
    - Current work: Building helper lemmas for double sum manipulation
    - Helper lemmas needed:
-     - ✅ `partial_mul_scalar_right` - Complete
-     - ⏳ Product of partial sums as double sum
+     - ✅ `partial_mul_scalar_right` - Complete (line 946)
+     - ✅ `double_sum` definition - Complete (line 966)! Uses tuple type `(Nat, Nat) -> Real`
+     - 🚧 `partial_product_as_double_sum` - Scaffolded (line 974, commented out)
      - ⏳ Cauchy partial sum as restricted double sum
      - ⏳ Subset inequality for sums of nonnegative terms
 
