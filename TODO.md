@@ -65,21 +65,35 @@ Build the foundation for reasoning about absolutely convergent series. This is e
 
 Once we have absolute convergence infrastructure:
 - [ ] **Cauchy product convergence:** If `∑ aₙ` and `∑ bₙ` both converge absolutely, then `partial(cauchy_seq(a, b))` converges
-  - Framework established with `cauchy_coefficient_abs_bound`
-  - Key lemmas identified but not yet proven (commented out):
-    - `cauchy_product_abs_bound`: |cauchy_product(a,b,n)| ≤ cauchy_product(|a|,|b|,n)
-    - `cauchy_partial_product_bound`: partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)
-    - `cauchy_product_abs_converges`: Main convergence theorem
+  - Framework established with proven building blocks
+  - Key lemmas identified, some blocked on infrastructure (see below)
 - [ ] **Cauchy product formula:** If both series converge absolutely, then `limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))`
 
-**Progress:**
-- ✅ Helper lemma `cauchy_coefficient_abs_bound` proven
-- 🚧 Working on triangle inequality for sums to complete `cauchy_product_abs_bound`
-- 🚧 Need to prove `cauchy_partial_product_bound` (key lemma showing Cauchy product partial sums bounded by product of partial sums)
-- 🚧 Main convergence theorem scaffolded but needs completion
+**Completed:**
+- ✅ `sum_triangle_ineq`: |sum(list)| ≤ sum(|elements|) - Proven by structural induction (src/real/cauchy.ac:806)
+- ✅ `cauchy_coefficient_abs_bound`: |a(k)*b(n-k)| ≤ |a(k)|*|b(n-k)| (src/real/cauchy.ac:859)
 
-**Will need:**
-- Triangle inequality theorem for sums (currently missing from list.list_sum)
+**Blocked - needs infrastructure:**
+- 🚧 `sum_map_le`: If f(k) ≤ g(k) for all k, then sum(map(list,f)) ≤ sum(map(list,g))
+  - Proof strategy is sound but Acorn verifier times out on transitivity reasoning
+  - Attempted using lte_add_left theorem but constraint solving fails
+  - **Blocker**: Need better way to express/prove transitivity of inequality addition
+  - This blocks `cauchy_product_abs_bound` which needs it
+
+**Scaffolded (commented out, waiting on sum_map_le):**
+- 🚧 `cauchy_product_abs_bound`: |cauchy_product(a,b,n)| ≤ cauchy_product(|a|,|b|,n)
+  - Uses: sum_triangle_ineq + map composition + sum_map_le + transitivity
+  - Proof is 90% complete, just needs sum_map_le to finish
+
+**Still TODO:**
+- `cauchy_partial_product_bound`: partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)
+  - Key lemma for convergence - shows Cauchy product sums bounded by product of sums
+- `cauchy_product_abs_converges`: Main convergence theorem
+- Cauchy product formula (limit equals product of limits)
+
+**Infrastructure needs:**
+- Better support for transitivity reasoning in inequality chains
+- Or: direct axiom/theorem for "if a ≤ b and c ≤ d then a+c ≤ b+d"
 - Double sum manipulation for proving `cauchy_partial_product_bound`
 - Theorem about products of convergent sequences for the product formula
 
