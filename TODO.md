@@ -34,7 +34,8 @@ Define and prove properties of the Cauchy product of two infinite series: `∑ c
 - ✅ `cauchy_coefficient_abs_bound`: |a(k)*b(n-k)| ≤ |a(k)|*|b(n-k)| (line 884)
 - ✅ `cauchy_product_abs_bound`: |cauchy_product(a,b,n)| ≤ cauchy_product(|a|,|b|,n) (line 899) ⭐
 - ✅ `partial_zero`: Helper lemma showing partial(f, 0) = 0 (line 936)
-- ✅ `partial_mul_scalar_right`: Right scalar multiplication through partial sums (line 946)
+- ✅ `partial_nonneg`: Partial sums of nonnegative sequences are nonnegative (line 945) ⭐
+- ✅ `partial_mul_scalar_right`: Right scalar multiplication through partial sums (line 998)
 
 **🎯 Next: Prove Convergence (Mertens' Theorem)**
 
@@ -45,9 +46,12 @@ These three theorems complete the proof that Cauchy products of absolutely conve
    - Status: Base case proven, inductive step scaffolded.
    - Current work: Building helper lemmas for double sum manipulation
    - Helper lemmas needed:
-     - ✅ `partial_mul_scalar_right` - Complete (line 946)
-     - ✅ `double_sum` definition - Complete (line 966)! Uses tuple type `(Nat, Nat) -> Real`
-     - 🚧 `partial_product_as_double_sum` - Scaffolded (line 974, commented out)
+     - ✅ `partial_nonneg` - Complete (line 945)! Shows partial sums of nonnegative sequences are nonnegative
+     - ✅ `partial_mul_scalar_right` - Complete (line 998)
+     - ✅ `scalar_mul_sum` - Complete (line 1030)! Scalar multiplication distributes into sum
+     - ✅ `double_sum` definition - Complete (line 1022)! Uses tuple type `(Nat, Nat) -> Real`
+     - 🚧 `partial_product_as_double_sum` - Scaffolded (line 1048, commented out)
+       - **Status**: Proof structure complete, needs final step for double_sum expansion
      - ⏳ Cauchy partial sum as restricted double sum
      - ⏳ Subset inequality for sums of nonnegative terms
 
