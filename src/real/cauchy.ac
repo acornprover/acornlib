@@ -1054,30 +1054,67 @@ theorem partial_mul_scalar_right(a: Nat -> Real, b: Real, n: Nat) {
     partial(a, n) * b = sum(map(n.range, mul_fn(b, a)))
 }
 
+/// Helper: compute the sum of row i in a double sum.
+/// This avoids nested lambdas by making all parameters explicit.
+define row_sum(m: Nat, f: (Nat, Nat) -> Real, i: Nat) -> Real {
+    sum(map(m.range, f(i)))
+}
+
+/// Helper: get the value at column j for row i.
+/// This extracts f(i, j) in a way that can be partially applied.
+define col_val(f: (Nat, Nat) -> Real, j: Nat, i: Nat) -> Real {
+    f(i, j)
+}
+
 /// Double sum: sum over pairs (i, j) where i ∈ [0, n) and j ∈ [0, m).
 /// This computes ∑_{i=0}^{n-1} ∑_{j=0}^{m-1} f(i, j).
+/// Using a named helper function instead of nested lambdas to help Acorn's normalizer.
 define double_sum(n: Nat, m: Nat, f: (Nat, Nat) -> Real) -> Real {
-    sum(map(n.range, function(i: Nat) {
-        sum(map(m.range, f(i)))
-    }))
+    sum(map(n.range, row_sum(m, f)))
 }
 
 /// Test: Can we just expand the double_sum definition?
 /// This should be trivially true since it's literally the definition.
 theorem double_sum_expands(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
-    double_sum(n, m, f) = sum(map(n.range, function(i: Nat) { sum(map(m.range, f(i))) }))
+    double_sum(n, m, f) = sum(map(n.range, row_sum(m, f)))
 } by {
     // This is literally just the definition
 }
 
 /// Expanding double_sum by adding a column: when we increment the column count,
 /// we get the old double_sum plus the sum over the new column.
-///
-/// TODO: This theorem remains challenging for Acorn's verifier. Using the cleaner
-/// syntax f(i) instead of function(j) { f(i, j) } helped readability but Acorn still
-/// cannot verify automatic expansions of the double_sum definition, even with explicit
-/// intermediate steps using map_add and sum_add. May need alternative approach.
-// theorem double_sum_col_expand(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
+theorem double_sum_col_expand(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
+    double_sum(n, m.suc, f) = double_sum(n, m, f) + sum(map(n.range, col_val(f, m)))
+} by {
+    from list.list_sum import map_add, sum_add
+
+    // For each i, row_sum(m.suc, f, i) = row_sum(m, f, i) + f(i, m)
+    forall(i: Nat) {
+        m.suc.range = m.range + List.singleton(m)
+        map_add(m.range, List.singleton(m), f(i))
+        sum_add(map(m.range, f(i)), List.singleton(f(i, m)))
+        row_sum(m.suc, f, i) = row_sum(m, f, i) + f(i, m)
+    }
+
+    // Apply map_sum_add
+    map_sum_add(n.range, row_sum(m, f), col_val(f, m))
+    sum(map(n.range, row_sum(m, f))) + sum(map(n.range, col_val(f, m))) = sum(map(n.range, add_fn(row_sum(m, f), col_val(f, m))))
+
+    // Connect add_fn to row_sum(m.suc)
+    forall(i: Nat) {
+        add_fn(row_sum(m, f), col_val(f, m))(i) = row_sum(m, f, i) + col_val(f, m, i)
+        col_val(f, m, i) = f(i, m)
+        add_fn(row_sum(m, f), col_val(f, m))(i) = row_sum(m, f, i) + f(i, m)
+        add_fn(row_sum(m, f), col_val(f, m))(i) = row_sum(m.suc, f, i)
+    }
+
+    sum(map(n.range, add_fn(row_sum(m, f), col_val(f, m)))) = sum(map(n.range, row_sum(m.suc, f)))
+
+    double_sum(n, m.suc, f) = double_sum(n, m, f) + sum(map(n.range, col_val(f, m)))
+}
+
+// Previous failed attempt - kept for reference
+// theorem double_sum_col_expand_old(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
 //     double_sum(n, m.suc, f) = double_sum(n, m, f) + sum(map(n.range, f(m)))
 // } by {
 //     from list.list_sum import map_add, sum_add
