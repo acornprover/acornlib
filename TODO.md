@@ -22,10 +22,10 @@ All foundational definitions, algebraic properties, absolute convergence infrast
 
 These theorems complete the proof that Cauchy products of absolutely convergent series converge:
 
-1. **`partial_product_as_double_sum`** ⏳ TODO
-   - Statement: `partial(a,n) * partial(b,n) = double_sum(n, n, function(i,j) { a(i) * b(j) })`
-   - Strategy: Use `double_sum_col_expand` and induction
-   - Note: Use named helpers like `row_sum` to avoid lambda issues
+1. **`partial_product_as_double_sum`** ✅ COMPLETE
+   - Statement: `partial(a,n) * partial(b,n) = double_sum(n, n, prod_fn(a, b))`
+   - Strategy: Used `double_sum_col_expand` and `double_sum_row_expand` with induction
+   - Note: Defined `prod_fn` helper to avoid lambda equality issues
 
 2. **`cauchy_partial_product_bound`** ⏳ TODO (commented scaffolding around line ~1200)
    - Statement: For nonnegative sequences, `partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)`

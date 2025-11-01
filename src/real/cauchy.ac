@@ -1113,6 +1113,48 @@ theorem double_sum_col_expand(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
     double_sum(n, m.suc, f) = double_sum(n, m, f) + sum(map(n.range, col_val(f, m)))
 }
 
+/// Helper: get the value at row i for column j.
+/// This extracts f(i, j) as a function of j for a fixed i.
+define row_val(f: (Nat, Nat) -> Real, i: Nat) -> (Nat -> Real) {
+    function(j: Nat) { f(i, j) }
+}
+
+/// Expanding double_sum by adding a row: when we increment the row count,
+/// we get the old double_sum plus the sum over the new row.
+theorem double_sum_row_expand(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
+    double_sum(n.suc, m, f) = double_sum(n, m, f) + sum(map(m.range, row_val(f, n)))
+} by {
+    from list.list_sum import map_add, sum_add
+
+    // Expand the definition of double_sum
+    double_sum(n.suc, m, f) = sum(map(n.suc.range, row_sum(m, f)))
+    double_sum(n, m, f) = sum(map(n.range, row_sum(m, f)))
+
+    // Expand n.suc.range
+    n.suc.range = n.range + List.singleton(n)
+    map_add(n.range, List.singleton(n), row_sum(m, f))
+    map(n.suc.range, row_sum(m, f)) = map(n.range, row_sum(m, f)) + map(List.singleton(n), row_sum(m, f))
+
+    // Evaluate map on singleton
+    map(List.singleton(n), row_sum(m, f)) = List.singleton(row_sum(m, f, n))
+    row_sum(m, f, n) = sum(map(m.range, f(n)))
+
+    // Show that f(n) = row_val(f, n)
+    forall(j: Nat) {
+        f(n)(j) = f(n, j)
+        row_val(f, n)(j) = f(n, j)
+    }
+    f(n) = row_val(f, n)
+    row_sum(m, f, n) = sum(map(m.range, row_val(f, n)))
+
+    // Combine using sum_add
+    map(n.suc.range, row_sum(m, f)) = map(n.range, row_sum(m, f)) + List.singleton(sum(map(m.range, row_val(f, n))))
+    sum_add(map(n.range, row_sum(m, f)), List.singleton(sum(map(m.range, row_val(f, n)))))
+    sum(map(n.suc.range, row_sum(m, f))) = sum(map(n.range, row_sum(m, f))) + sum(map(m.range, row_val(f, n)))
+
+    double_sum(n.suc, m, f) = double_sum(n, m, f) + sum(map(m.range, row_val(f, n)))
+}
+
 /// Helper: scalar multiplication distributes into a sum.
 /// For a constant c: c * ∑ᵢ b(i) = ∑ᵢ (c * b(i))
 theorem scalar_mul_sum(c: Real, b: Nat -> Real, n: Nat) {
@@ -1131,100 +1173,144 @@ theorem scalar_mul_sum(c: Real, b: Nat -> Real, n: Nat) {
     c * sum(map(n.range, b)) = sum(map(n.range, mul_fn(c, b)))
 }
 
+/// Helper: product function for double sums.
+define prod_fn(a: Nat -> Real, b: Nat -> Real) -> ((Nat, Nat) -> Real) {
+    function(i: Nat, j: Nat) { a(i) * b(j) }
+}
+
 /// Product of two partial sums equals a double sum over the product.
 /// This is the key lemma for expanding (∑aᵢ)(∑bⱼ) into ∑ᵢ∑ⱼ aᵢbⱼ.
-///
-/// TODO: This theorem requires careful manipulation of double sums.
-/// The proof structure is mostly complete but needs the final step showing
-/// how double_sum(m.suc, m.suc, ...) expands in terms of double_sum(m, m, ...).
-// theorem partial_product_as_double_sum(a: Nat -> Real, b: Nat -> Real, n: Nat) {
-//     partial(a, n) * partial(b, n) = double_sum(n, n, function(i: Nat, j: Nat) { a(i) * b(j) })
-// } by {
-//     from list.list_sum import map_add, sum_add
-//
-//     define p(m: Nat) -> Bool {
-//         partial(a, m) * partial(b, m) = double_sum(m, m, function(i: Nat, j: Nat) { a(i) * b(j) })
-//     }
-//
-//     // Base case: m = 0
-//     partial_zero(a)
-//     partial(a, Nat.0) = Real.0
-//     partial_zero(b)
-//     partial(b, Nat.0) = Real.0
-//     partial(a, Nat.0) * partial(b, Nat.0) = Real.0 * Real.0
-//     Real.0 * Real.0 = Real.0
-//
-//     // double_sum(0, 0, ...) = sum(map(0.range, ...)) = sum(nil) = 0
-//     Nat.0.range = List.nil[Nat]
-//     map(Nat.0.range, function(i: Nat) { sum(map(Nat.0.range, function(j: Nat) { a(i) * b(j) })) }) = List.nil[Real]
-//     sum(List.nil[Real]) = Real.0
-//     double_sum(Nat.0, Nat.0, function(i: Nat, j: Nat) { a(i) * b(j) }) = Real.0
-//
-//     p(Nat.0)
-//
-//     // Inductive step: if p(m), then p(m.suc)
-//     forall(m: Nat) {
-//         if p(m) {
-//             // Induction hypothesis
-//             partial(a, m) * partial(b, m) = double_sum(m, m, function(i: Nat, j: Nat) { a(i) * b(j) })
-//
-//             // Expand partial(a, m.suc)
-//             m.suc.range = m.range + List.singleton(m)
-//             map_add(m.range, List.singleton(m), a)
-//             map(m.suc.range, a) = map(m.range, a) + List.singleton(a(m))
-//             sum_add(map(m.range, a), List.singleton(a(m)))
-//             sum(map(m.suc.range, a)) = sum(map(m.range, a)) + a(m)
-//             partial(a, m.suc) = partial(a, m) + a(m)
-//
-//             // Expand partial(b, m.suc)
-//             map_add(m.range, List.singleton(m), b)
-//             map(m.suc.range, b) = map(m.range, b) + List.singleton(b(m))
-//             sum_add(map(m.range, b), List.singleton(b(m)))
-//             sum(map(m.suc.range, b)) = sum(map(m.range, b)) + b(m)
-//             partial(b, m.suc) = partial(b, m) + b(m)
-//
-//             // Expand the product
-//             partial(a, m.suc) * partial(b, m.suc) = (partial(a, m) + a(m)) * (partial(b, m) + b(m))
-//             (partial(a, m) + a(m)) * (partial(b, m) + b(m)) = partial(a, m) * partial(b, m) + partial(a, m) * b(m) + a(m) * partial(b, m) + a(m) * b(m)
-//
-//             // Apply IH to first term
-//             partial(a, m.suc) * partial(b, m.suc) = double_sum(m, m, function(i: Nat, j: Nat) { a(i) * b(j) }) + partial(a, m) * b(m) + a(m) * partial(b, m) + a(m) * b(m)
-//
-//             // Now show that double_sum(m.suc, m.suc, ...) equals the RHS
-//             // We need: partial(a, m) * b(m) = sum over i in [0,m) of a(i) * b(m)
-//             scalar_mul_sum(b(m), a, m)
-//             b(m) * sum(map(m.range, a)) = sum(map(m.range, mul_fn(b(m), a)))
-//             forall(i: Nat) {
-//                 mul_fn(b(m), a)(i) = b(m) * a(i)
-//                 b(m) * a(i) = a(i) * b(m)
-//                 mul_fn(b(m), a)(i) = a(i) * b(m)
-//             }
-//             sum(map(m.range, mul_fn(b(m), a))) = sum(map(m.range, function(i: Nat) { a(i) * b(m) }))
-//             b(m) * sum(map(m.range, a)) = sum(map(m.range, function(i: Nat) { a(i) * b(m) }))
-//             sum(map(m.range, a)) * b(m) = b(m) * sum(map(m.range, a))
-//             sum(map(m.range, a)) * b(m) = sum(map(m.range, function(i: Nat) { a(i) * b(m) }))
-//             partial(a, m) * b(m) = sum(map(m.range, function(i: Nat) { a(i) * b(m) }))
-//
-//             // Similarly: a(m) * partial(b, m) = sum over j in [0,m) of a(m) * b(j)
-//             scalar_mul_sum(a(m), b, m)
-//             a(m) * sum(map(m.range, b)) = sum(map(m.range, mul_fn(a(m), b)))
-//             forall(j: Nat) {
-//                 mul_fn(a(m), b)(j) = a(m) * b(j)
-//             }
-//             sum(map(m.range, mul_fn(a(m), b))) = sum(map(m.range, function(j: Nat) { a(m) * b(j) }))
-//             a(m) * sum(map(m.range, b)) = sum(map(m.range, function(j: Nat) { a(m) * b(j) }))
-//             a(m) * partial(b, m) = sum(map(m.range, function(j: Nat) { a(m) * b(j) }))
-//
-//             // Now expand double_sum(m.suc, m.suc, ...)
-//             // The structure is: sum of a(i)*b(j) for i,j both in [0, m+1)
-//             // = sum for i,j in [0,m) + sum for i in [0,m), j=m + sum for i=m, j in [0,m] + corner
-//             // TODO: Need lemmas about double_sum expansion
-//         }
-//         p(m.suc)
-//     }
-//
-//     p(n)
-// }
+theorem partial_product_as_double_sum(a: Nat -> Real, b: Nat -> Real, n: Nat) {
+    partial(a, n) * partial(b, n) = double_sum(n, n, prod_fn(a, b))
+} by {
+    from list.list_sum import map_add, sum_add
+
+    define p(m: Nat) -> Bool {
+        partial(a, m) * partial(b, m) = double_sum(m, m, prod_fn(a, b))
+    }
+
+    // Base case: m = 0
+    partial_zero(a)
+    partial(a, Nat.0) = Real.0
+    partial_zero(b)
+    partial(b, Nat.0) = Real.0
+    partial(a, Nat.0) * partial(b, Nat.0) = Real.0 * Real.0
+    Real.0 * Real.0 = Real.0
+    partial(a, Nat.0) * partial(b, Nat.0) = Real.0
+
+    // double_sum(0, 0, ...) = sum(map(0.range, ...)) = sum(nil) = 0
+    Nat.0.range = List.nil[Nat]
+    double_sum_expands(Nat.0, Nat.0, prod_fn(a, b))
+    double_sum(Nat.0, Nat.0, prod_fn(a, b)) = sum(map(Nat.0.range, row_sum(Nat.0, prod_fn(a, b))))
+    map(Nat.0.range, row_sum(Nat.0, prod_fn(a, b))) = List.nil[Real]
+    sum(List.nil[Real]) = Real.0
+    double_sum(Nat.0, Nat.0, prod_fn(a, b)) = Real.0
+
+    // Combine to show p(Nat.0)
+    partial(a, Nat.0) * partial(b, Nat.0) = double_sum(Nat.0, Nat.0, prod_fn(a, b))
+    p(Nat.0)
+
+    // Inductive step: if p(m), then p(m.suc)
+    forall(m: Nat) {
+        if p(m) {
+            // Induction hypothesis
+            p(m)
+            partial(a, m) * partial(b, m) = double_sum(m, m, prod_fn(a, b))
+
+            // Expand partial(a, m.suc)
+            m.suc.range = m.range + List.singleton(m)
+            map_add(m.range, List.singleton(m), a)
+            map(m.suc.range, a) = map(m.range, a) + List.singleton(a(m))
+            sum_add(map(m.range, a), List.singleton(a(m)))
+            sum(map(m.suc.range, a)) = sum(map(m.range, a)) + a(m)
+            partial(a, m.suc) = partial(a, m) + a(m)
+
+            // Expand partial(b, m.suc)
+            map_add(m.range, List.singleton(m), b)
+            map(m.suc.range, b) = map(m.range, b) + List.singleton(b(m))
+            sum_add(map(m.range, b), List.singleton(b(m)))
+            sum(map(m.suc.range, b)) = sum(map(m.range, b)) + b(m)
+            partial(b, m.suc) = partial(b, m) + b(m)
+
+            // Expand the product
+            partial(a, m.suc) * partial(b, m.suc) = (partial(a, m) + a(m)) * (partial(b, m) + b(m))
+            (partial(a, m) + a(m)) * (partial(b, m) + b(m)) = partial(a, m) * partial(b, m) + partial(a, m) * b(m) + a(m) * partial(b, m) + a(m) * b(m)
+
+            // Apply IH to first term
+            partial(a, m.suc) * partial(b, m.suc) = double_sum(m, m, prod_fn(a, b)) + partial(a, m) * b(m) + a(m) * partial(b, m) + a(m) * b(m)
+
+            // Expand partial(a, m) * b(m) = sum over i in [0,m) of a(i) * b(m)
+            scalar_mul_sum(b(m), a, m)
+            b(m) * sum(map(m.range, a)) = sum(map(m.range, mul_fn(b(m), a)))
+            forall(i: Nat) {
+                mul_fn(b(m), a)(i) = b(m) * a(i)
+                b(m) * a(i) = a(i) * b(m)
+            }
+            sum(map(m.range, a)) * b(m) = b(m) * sum(map(m.range, a))
+            sum(map(m.range, a)) * b(m) = sum(map(m.range, mul_fn(b(m), a)))
+            partial(a, m) * b(m) = sum(map(m.range, mul_fn(b(m), a)))
+
+            // Similarly: a(m) * partial(b, m) = sum over j in [0,m) of a(m) * b(j)
+            scalar_mul_sum(a(m), b, m)
+            a(m) * sum(map(m.range, b)) = sum(map(m.range, mul_fn(a(m), b)))
+            a(m) * partial(b, m) = sum(map(m.range, mul_fn(a(m), b)))
+
+            // Now expand double_sum(m.suc, m.suc, ...) using row and column expansion
+            double_sum_row_expand(m, m.suc, prod_fn(a, b))
+            double_sum(m.suc, m.suc, prod_fn(a, b)) = double_sum(m, m.suc, prod_fn(a, b)) + sum(map(m.suc.range, row_val(prod_fn(a, b), m)))
+
+            double_sum_col_expand(m, m, prod_fn(a, b))
+            double_sum(m, m.suc, prod_fn(a, b)) = double_sum(m, m, prod_fn(a, b)) + sum(map(m.range, col_val(prod_fn(a, b), m)))
+
+            // Combine the expansions
+            double_sum(m.suc, m.suc, prod_fn(a, b)) = double_sum(m, m, prod_fn(a, b)) + sum(map(m.range, col_val(prod_fn(a, b), m))) + sum(map(m.suc.range, row_val(prod_fn(a, b), m)))
+
+            // Expand sum(map(m.suc.range, row_val(..., m)))
+            m.suc.range = m.range + List.singleton(m)
+            map_add(m.range, List.singleton(m), row_val(prod_fn(a, b), m))
+            map(m.suc.range, row_val(prod_fn(a, b), m)) = map(m.range, row_val(prod_fn(a, b), m)) + List.singleton(row_val(prod_fn(a, b), m)(m))
+            sum_add(map(m.range, row_val(prod_fn(a, b), m)), List.singleton(row_val(prod_fn(a, b), m)(m)))
+            sum(map(m.suc.range, row_val(prod_fn(a, b), m))) = sum(map(m.range, row_val(prod_fn(a, b), m))) + row_val(prod_fn(a, b), m)(m)
+
+            // Evaluate row_val(..., m)(m)
+            row_val(prod_fn(a, b), m)(m) = prod_fn(a, b)(m, m)
+            prod_fn(a, b)(m, m) = a(m) * b(m)
+
+            double_sum(m.suc, m.suc, prod_fn(a, b)) = double_sum(m, m, prod_fn(a, b)) + sum(map(m.range, col_val(prod_fn(a, b), m))) + sum(map(m.range, row_val(prod_fn(a, b), m))) + a(m) * b(m)
+
+            // Show col_val(..., m)(idx) = a(idx) * b(m) = mul_fn(b(m), a)(idx)
+            forall(idx: Nat) {
+                col_val(prod_fn(a, b), m)(idx) = prod_fn(a, b)(idx, m)
+                prod_fn(a, b)(idx, m) = a(idx) * b(m)
+                mul_fn(b(m), a)(idx) = b(m) * a(idx)
+                b(m) * a(idx) = a(idx) * b(m)
+                col_val(prod_fn(a, b), m)(idx) = mul_fn(b(m), a)(idx)
+            }
+            col_val(prod_fn(a, b), m) = mul_fn(b(m), a)
+            sum(map(m.range, col_val(prod_fn(a, b), m))) = sum(map(m.range, mul_fn(b(m), a)))
+
+            // Show row_val(..., m)(idx) = a(m) * b(idx) = mul_fn(a(m), b)(idx)
+            forall(idx: Nat) {
+                row_val(prod_fn(a, b), m)(idx) = prod_fn(a, b)(m, idx)
+                prod_fn(a, b)(m, idx) = a(m) * b(idx)
+                mul_fn(a(m), b)(idx) = a(m) * b(idx)
+                row_val(prod_fn(a, b), m)(idx) = mul_fn(a(m), b)(idx)
+            }
+            row_val(prod_fn(a, b), m) = mul_fn(a(m), b)
+            sum(map(m.range, row_val(prod_fn(a, b), m))) = sum(map(m.range, mul_fn(a(m), b)))
+
+            // Combine
+            double_sum(m.suc, m.suc, prod_fn(a, b)) = double_sum(m, m, prod_fn(a, b)) + sum(map(m.range, mul_fn(b(m), a))) + sum(map(m.range, mul_fn(a(m), b))) + a(m) * b(m)
+            double_sum(m.suc, m.suc, prod_fn(a, b)) = double_sum(m, m, prod_fn(a, b)) + partial(a, m) * b(m) + a(m) * partial(b, m) + a(m) * b(m)
+            partial(a, m.suc) * partial(b, m.suc) = double_sum(m.suc, m.suc, prod_fn(a, b))
+
+            // This shows p(m.suc)
+            p(m.suc)
+        }
+    }
+
+    p(n)
+}
 
 /// Helper: Cauchy product partial sums of nonnegative sequences are bounded by product of partial sums.
 /// This is the key lemma for proving convergence of Cauchy products.
