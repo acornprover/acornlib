@@ -12,101 +12,77 @@ Define and prove properties of the Cauchy product of two infinite series: `∑ c
 
 ### Phase 1: Basic Infrastructure ✅ COMPLETE
 
-**Core definitions and algebraic properties:**
-- ✅ Definitions: `cauchy_coefficient`, `cauchy_product`, `cauchy_seq`
-- ✅ Commutativity, linearity, distributivity (both arguments)
-- ✅ Partial sum properties (zero behavior, distributivity, linearity)
-
-**Absolute convergence infrastructure:**
-- ✅ `abs_fn`, `absolutely_converges` and basic properties
-- ✅ `absolutely_converges_imp_converges`, `absolutely_converges_scalar_mul`, `absolutely_converges_add`
-- ✅ `abs_conv_tail_bound`: Tail sums of absolutely convergent series can be made arbitrarily small
+All foundational definitions, algebraic properties, absolute convergence infrastructure, and double sum machinery are complete. Key achievement: `double_sum_col_expand` theorem using named helper functions to avoid nested lambdas.
 
 ---
 
 ### Phase 2: Convergence Proofs 🚧 IN PROGRESS
 
-**✅ Recently Completed:**
-- ✅ `sum_triangle_ineq`: |sum(list)| ≤ sum(|elements|) (line 806)
-- ✅ `lte_fn`: Pointwise inequality abstraction (line 850)
-- ✅ `sum_map_range_le`: Pointwise bounds imply sum bounds (line 856)
-  - **Key insight**: Leverages existing `partial_seq_lte` infrastructure
-- ✅ `cauchy_coefficient_abs_bound`: |a(k)*b(n-k)| ≤ |a(k)|*|b(n-k)| (line 884)
-- ✅ `cauchy_product_abs_bound`: |cauchy_product(a,b,n)| ≤ cauchy_product(|a|,|b|,n) (line 899) ⭐
-- ✅ `partial_zero`: Helper lemma showing partial(f, 0) = 0 (line 936)
-- ✅ `partial_nonneg`: Partial sums of nonnegative sequences are nonnegative (line 945) ⭐
-- ✅ `mul_nonneg`: Product of nonnegative numbers is nonnegative (line 1003) ⭐
-- ✅ `partial_mul_scalar_right`: Right scalar multiplication through partial sums (line 1039)
+**🎯 Next Steps:**
 
-**🎯 Next: Prove Convergence (Mertens' Theorem)**
+These theorems complete the proof that Cauchy products of absolutely convergent series converge:
 
-These three theorems complete the proof that Cauchy products of absolutely convergent series converge:
+1. **`partial_product_as_double_sum`** ⏳ TODO
+   - Statement: `partial(a,n) * partial(b,n) = double_sum(n, n, function(i,j) { a(i) * b(j) })`
+   - Strategy: Use `double_sum_col_expand` and induction
+   - Note: Use named helpers like `row_sum` to avoid lambda issues
 
-1. **`cauchy_partial_product_bound`** 🚧 IN PROGRESS (line 987, commented out)
+2. **`cauchy_partial_product_bound`** ⏳ TODO (commented scaffolding around line ~1200)
    - Statement: For nonnegative sequences, `partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)`
-   - Status: Base case proven, inductive step scaffolded.
-   - Current work: Building helper lemmas for double sum manipulation
-   - Helper lemmas needed:
-     - ✅ `partial_nonneg` - Complete (line 945)! Shows partial sums of nonnegative sequences are nonnegative
-     - ✅ `mul_nonneg` - Complete (line 1003)! Shows product of nonnegative numbers is nonnegative
-     - ✅ `partial_mul_scalar_right` - Complete (line 1039)
-     - ✅ `scalar_mul_sum` - Complete (line 1071)! Scalar multiplication distributes into sum
-     - ✅ `double_sum` definition - Complete (line 1063)! Uses tuple type `(Nat, Nat) -> Real`
-     - 🚧 `partial_product_as_double_sum` - Scaffolded (line 1089, commented out)
-       - **Status**: Proof structure complete, needs final step for double_sum expansion
-     - ⏳ Cauchy partial sum as restricted double sum
-     - ⏳ Subset inequality for sums of nonnegative terms
+   - Strategy: Show Cauchy product is subset of full product expansion
+   - Depends on: `partial_product_as_double_sum` or alternative approach
 
-2. **`cauchy_product_abs_converges`** (Mertens' Theorem)
+3. **`cauchy_product_abs_converges`** ⏳ TODO (Mertens' Theorem)
    - Statement: If `absolutely_converges(a)` and `absolutely_converges(b)`, then `absolutely_converges(cauchy_seq(a, b))`
    - Strategy: Use comparison test with `cauchy_partial_product_bound`
-   - Partially scaffolded starting at line 933
 
-3. **Cauchy product formula**
+4. **Cauchy product limit formula** ⏳ TODO
    - Statement: `limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))`
    - Will need: Theorem about products of convergent sequences
 
 ---
 
-### Lessons Learned
+### Key Insight
 
-**Working with Acorn's verifier:**
-- ✅ Reuse existing optimized infrastructure (like `partial_seq_lte`) rather than reproving from scratch
-- ✅ Convert problems to use `partial` when possible - it unlocks powerful existing theorems
-- ✅ Abstract patterns into definitions (like `lte_fn`) for cleaner reasoning
-- ✅ When inequality transitivity is needed, look for existing theorems that already handle it
+⭐ **Avoid nested lambdas in definitions!** Acorn's normalizer struggles with closures. Use named helper functions with partial application instead. Example: `row_sum(m, f)` instead of `function(i) { sum(map(m.range, f(i))) }`
 
-## 2. Define e^x via Power Series
+---
+
+## 2. Define e^x via Power Series ⏳ TODO
 
 Define the exponential function for real numbers using the power series:
 ```
 e^x = ∑_{n=0}^{∞} x^n / n!
 ```
 
+**Dependencies:**
+- Requires Cauchy product convergence (Mertens' Theorem) to prove `e^x * e^y = e^(x+y)`
+
 **Implementation approach:**
 - Define as a limit: `exp(x) = limit(partial(function(n) { x^n / n! }, _))`
 - Prove convergence for all real x
-- May need to work with Real or Rat first, then generalize
-
-**Files involved:**
-- New file `src/real/real_exp.ac` or extend `src/real/real_series.ac`
 - Will need factorial for Real (lift from Nat factorial)
 
-## 3. Prove Properties of e^x
+**Files:**
+- New file `src/real/real_exp.ac` or extend `src/real/real_series.ac`
+
+---
+
+## 3. Prove Properties of e^x ⏳ TODO
 
 Once e^x is defined, prove its fundamental properties:
 
 **Essential theorems:**
-- [ ] `exp_zero`: `e^0 = 1`
-- [ ] `exp_add`: `e^x * e^y = e^(x+y)` (uses Cauchy product!)
-- [ ] `exp_pos`: `e^x > 0` for all x
-- [ ] `exp_derivative`: `d/dx(e^x) = e^x` (if we develop calculus)
-- [ ] Relationship to natural logarithm (if we define ln)
-- [ ] Taylor series convergence properties
+- `exp_zero`: `e^0 = 1`
+- `exp_add`: `e^x * e^y = e^(x+y)` (uses Cauchy product!)
+- `exp_pos`: `e^x > 0` for all x
+- `exp_derivative`: `d/dx(e^x) = e^x` (requires calculus framework)
 
-**Connection to binomial theorem:**
-The binomial theorem gives the finite approximation:
-```
-(1 + x/n)^n = ∑_{k=0}^{n} (n choose k) * (x/n)^k
-```
-As n → ∞, this approaches e^x, providing an alternative definition and a bridge between discrete and continuous mathematics.
+---
+
+## Summary
+
+**Current focus:** Phase 2 - Proving Cauchy product convergence
+**Blocking issue:** Need to prove `partial_product_as_double_sum` using the lambda-avoiding technique
+**Next milestone:** Complete Mertens' Theorem → Define e^x → Prove e^x properties
+

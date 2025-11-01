@@ -73,6 +73,8 @@ Numeric literals must have a type specified. You can write `Nat.0` to indicate z
 
 Variable names must be lowercase.
 
+**Avoid inline lambdas:** Acorn's normalizer has trouble with nested lambda functions and closures. Instead, define named helper functions with explicit parameters and use partial application. Example: define `row_sum(m, f, i)` separately, then use `row_sum(m, f)` instead of `function(i) { ... }`.
+
 ## Fixing Proofs
 
 When a statement could not be verified, there are two possibilities.
