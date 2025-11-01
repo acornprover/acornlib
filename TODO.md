@@ -27,11 +27,18 @@ These theorems complete the proof that Cauchy products of absolutely convergent 
    - Strategy: Used `double_sum_col_expand` and `double_sum_row_expand` with induction
    - Note: Defined `prod_fn` helper to avoid lambda equality issues
 
-2. **`cauchy_partial_product_bound`** 🚧 IN PROGRESS (commented around line ~1348)
+2. **`cauchy_partial_product_bound`** 📋 DOCUMENTED (commented around line ~1339)
    - Statement: For nonnegative sequences, `partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)`
-   - Strategy: Show Cauchy product sums over subset where i+j < n, versus full product summing over i,j < n
-   - Depends on: Reorganization lemmas to express Cauchy sum in terms of double_sum
-   - Status: Mathematical strategy documented, needs detailed proof infrastructure
+   - **Mathematical Argument Fully Worked Out:**
+     - Inductive proof structure complete through m.suc step
+     - Reduces to showing: `cauchy_product(a,b,m) ≤ partial(a,m)*b(m) + a(m)*partial(b,m) + a(m)*b(m)`
+     - RHS expands to: `a(0)*b(m) + ... + a(m-1)*b(m) + a(m)*b(0) + ... + a(m)*b(m)`
+     - Cauchy product: `a(0)*b(m) + a(1)*b(m-1) + ... + a(m)*b(0)`
+     - Each Cauchy term appears in or is bounded by RHS terms (when nonnegative)
+   - **Missing Infrastructure:**
+     - Term-by-term comparison lemmas for sums
+     - OR: Formal subset sum lemma (sum over subset ≤ sum over superset for nonnegative terms)
+     - OR: Monotonicity properties for partial sums
 
 3. **`cauchy_product_abs_converges`** 🚧 BLOCKED (Mertens' Theorem, commented around line ~1363)
    - Statement: If `absolutely_converges(a)` and `absolutely_converges(b)`, then `absolutely_converges(cauchy_seq(a, b))`
@@ -46,20 +53,33 @@ These theorems complete the proof that Cauchy products of absolutely convergent 
 
 ---
 
-### Recent Infrastructure Added
+### Recent Progress Summary
 
-**Double Sum Helpers:**
-- `prod_fn(a, b)` - Product function for double sums to avoid lambda issues
-- `row_val(f, i)` - Extract row i from a 2D function
-- `double_sum_row_expand` - Expand double sums by adding a row (analogous to `double_sum_col_expand`)
-- `cauchy_indicator(n, i, j)` - Indicator for Cauchy product terms (1 if i+j < n, else 0)
+**✅ Completed Proofs:**
+1. `partial_product_as_double_sum` - Proven and verified! Shows `partial(a,n) * partial(b,n) = ∑ᵢ∑ⱼ a(i)*b(j)`
 
-**Proven Theorems:**
-- `partial_product_as_double_sum` ✅ - Key lemma: `partial(a,n) * partial(b,n) = ∑ᵢ∑ⱼ a(i)*b(j)`
+**📋 Fully Documented Mathematical Arguments:**
+2. `cauchy_partial_product_bound` - Complete inductive proof structure with term-by-term analysis
+3. `cauchy_term_bound` - Helper lemma with subset sum argument documented
+4. Mertens' theorem (`cauchy_product_abs_converges`) - Full proof strategy using comparison test
 
-**Strategy Documentation:**
-- Detailed proof outlines for `cauchy_partial_product_bound` and Mertens' theorem
-- Clear identification of missing pieces: reorganization lemmas for Cauchy sums
+**🔧 Infrastructure Added:**
+- `prod_fn(a, b)` - Product function for double sums (avoids lambda equality issues)
+- `row_val(f, i)` - Extract row i from 2D functions
+- `double_sum_row_expand` - Expand double sums by adding rows
+- `cauchy_indicator(n, i, j)` - Indicator: 1 if i+j < n, else 0
+
+**🎯 Key Insight Discovered:**
+The Cauchy product bound reduces to a beautiful term comparison:
+- Cauchy terms: `a(0)*b(m), a(1)*b(m-1), ..., a(m)*b(0)`
+- Bounding terms: `a(0)*b(m), ..., a(m-1)*b(m), a(m)*b(0), ..., a(m)*b(m)`
+- Each Cauchy term is present in or bounded by the RHS (for nonnegative sequences)
+
+**⚠️ Missing Infrastructure Identified:**
+The remaining proofs need ONE of:
+- Formal subset sum lemma (sum over nonnegative subset ≤ sum over superset)
+- Term-by-term comparison framework for sums
+- Monotonicity lemmas for sequences/partials
 
 ---
 
