@@ -27,18 +27,39 @@ These theorems complete the proof that Cauchy products of absolutely convergent 
    - Strategy: Used `double_sum_col_expand` and `double_sum_row_expand` with induction
    - Note: Defined `prod_fn` helper to avoid lambda equality issues
 
-2. **`cauchy_partial_product_bound`** ⏳ TODO (commented scaffolding around line ~1200)
+2. **`cauchy_partial_product_bound`** 🚧 IN PROGRESS (commented around line ~1348)
    - Statement: For nonnegative sequences, `partial(cauchy_seq(a,b),n) ≤ partial(a,n) * partial(b,n)`
-   - Strategy: Show Cauchy product is subset of full product expansion
-   - Depends on: `partial_product_as_double_sum` or alternative approach
+   - Strategy: Show Cauchy product sums over subset where i+j < n, versus full product summing over i,j < n
+   - Depends on: Reorganization lemmas to express Cauchy sum in terms of double_sum
+   - Status: Mathematical strategy documented, needs detailed proof infrastructure
 
-3. **`cauchy_product_abs_converges`** ⏳ TODO (Mertens' Theorem)
+3. **`cauchy_product_abs_converges`** 🚧 BLOCKED (Mertens' Theorem, commented around line ~1363)
    - Statement: If `absolutely_converges(a)` and `absolutely_converges(b)`, then `absolutely_converges(cauchy_seq(a, b))`
-   - Strategy: Use comparison test with `cauchy_partial_product_bound`
+   - Strategy: Use comparison test with `cauchy_partial_product_bound` to show boundedness
+   - Blocked by: Need `cauchy_partial_product_bound` to be proven
+   - Status: Full proof structure documented
 
 4. **Cauchy product limit formula** ⏳ TODO
    - Statement: `limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))`
    - Will need: Theorem about products of convergent sequences
+   - Blocked by: Needs Mertens' theorem first
+
+---
+
+### Recent Infrastructure Added
+
+**Double Sum Helpers:**
+- `prod_fn(a, b)` - Product function for double sums to avoid lambda issues
+- `row_val(f, i)` - Extract row i from a 2D function
+- `double_sum_row_expand` - Expand double sums by adding a row (analogous to `double_sum_col_expand`)
+- `cauchy_indicator(n, i, j)` - Indicator for Cauchy product terms (1 if i+j < n, else 0)
+
+**Proven Theorems:**
+- `partial_product_as_double_sum` ✅ - Key lemma: `partial(a,n) * partial(b,n) = ∑ᵢ∑ⱼ a(i)*b(j)`
+
+**Strategy Documentation:**
+- Detailed proof outlines for `cauchy_partial_product_bound` and Mertens' theorem
+- Clear identification of missing pieces: reorganization lemmas for Cauchy sums
 
 ---
 
