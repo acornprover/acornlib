@@ -121,8 +121,49 @@ Once e^x is defined, prove its fundamental properties:
 **Core challenge:** Need to formally prove that ∑_{i+j=m} a(i)b(j) <= ∑_{i,j≤m} a(i)b(j) for nonnegative sequences
 **Next milestone:** Resolve subset sum infrastructure → Complete Mertens' Theorem → Define e^x → Prove e^x properties
 
-**Suggested next steps:**
-1. Develop general list/sum filtering infrastructure for subset inequalities, OR
-2. Prove `double_sum_diagonal_bound` by explicit enumeration of diagonal vs full grid, OR
-3. Explore alternative formulations that avoid the subset sum problem
+**Current Action Plan - Indicator Function Infrastructure:** ✅ MAJOR PROGRESS
+
+We implemented **Approach 1: Indicator Functions** using conditional sums.
+
+**Completed Infrastructure:**
+
+1. **Generic documentation** (`src/list/list_sum.ac:1779-1793`):
+   - Added guidance on implementing conditional/indicator sums
+   - Documented pattern for avoiding nested lambda issues with Acorn's normalizer
+   - Explains why direct implementation is needed rather than higher-order functions
+
+2. **Real-specific helper functions** (`src/real/cauchy.ac:1509-1521`):
+   - `cond_part(f, pred, x)`: Returns f(x) if pred(x), else 0
+   - `comp_part(f, pred, x)`: Returns 0 if pred(x), else f(x)
+   - These decompose any function into predicate-true and predicate-false parts
+
+3. **Core theorem (95% complete)** (`src/real/cauchy.ac:1523-1608`):
+   - `sum_cond_le_sum_1d`: For nonnegative f, conditional sum ≤ full sum
+   - STATUS: Mathematically complete, final transitivity step needs refinement
+   - Successfully proves:
+     * Decomposition: f = cond_part + comp_part ✓
+     * Nonnegativity: comp_part >= 0 ✓
+     * Monotonicity: cond_part <= cond_part + comp_part ✓
+   - REMAINING: Final transitivity (x <= y and y = z => x <= z) needs explicit lemma
+
+**Why approach works:**
+- Uses named helper functions instead of nested lambdas (Acorn normalization requirement)
+- Decomposes the proof into verifiable steps
+- Leverages existing infrastructure (map_sum_add, nonneg_imp_partial_increasing)
+
+**Next Steps to Complete:**
+
+1. **Immediate**: Add transitivity lemma to real_base.ac or real_ring.ac:
+   ```
+   theorem lte_trans_eq(x, y, z: Real) { x <= y and y = z implies x <= z }
+   ```
+
+2. **Then**: Uncomment and complete `sum_cond_le_sum_1d`
+
+3. **Finally**: Apply to prove `double_sum_diagonal_bound` using conditional sums
+
+**Alternative approaches (deprioritized):**
+1. Develop general list/sum filtering infrastructure
+2. Explicit enumeration of diagonal vs full grid
+3. Alternative formulations avoiding subset sums
 
