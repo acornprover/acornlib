@@ -30,20 +30,33 @@ All foundational definitions, algebraic properties, absolute convergence infrast
    - Proved using existing `nonneg_imp_partial_increasing` theorem
    - Located at cauchy.ac:1354
 
-3. **`double_sum_diagonal_bound`** 🚧 BLOCKED - Needs Infrastructure
-   - Statement: `cauchy_product(a, b, m) <= double_sum(m.suc, m.suc, prod_fn(a, b))` for nonnegative a,b
-   - Status: Mathematical argument complete and documented (cauchy.ac:1380-1398)
-   - Issue: Acorn cannot automatically verify the subset sum property
-   - **Blocking issue**: Needs formal lemma about subset sums of nonnegative terms
-   - Two possible approaches:
-     a) Prove general lemma: summing nonnegative terms over subset ≤ summing over full set
-     b) Explicitly construct: Cauchy sum + additional nonnegative terms = double sum
-   - This is the KEY BLOCKER for all remaining work
+3. **Supporting Infrastructure** ✅ COMPLETE (cauchy.ac:1432-1507)
+   - `add_nonneg_preserves_lte`: Adding nonnegative term preserves ≤
+   - `double_sum_row_monotone`: Row-wise monotonicity for double sums
+   - `double_sum_col_monotone`: Column-wise monotonicity for double sums
+   - `cauchy_term_equals_prod`: Term equality helper
+   - `cauchy_coefficient_nonneg`: Nonnegativity of Cauchy coefficients
 
-4. **`cauchy_partial_product_bound`** 🚧 BLOCKED (depends on #3)
+4. **`double_sum_diagonal_bound`** 🚧 STILL BLOCKED - Fundamental Gap
+   - Statement: `cauchy_product(a, b, m) <= double_sum(m.suc, m.suc, prod_fn(a, b))` for nonnegative a,b
+   - Status: Mathematical argument fully understood and documented (cauchy.ac:1509-1559)
+   - Issue: Acorn cannot verify the core step: ∑_{i+j=m} a(i)b(j) <= ∑_{i,j≤m} a(i)b(j)
+   - **Root cause**: Missing infrastructure for subset sum inequalities
+   - **Blocking issue**: Need to prove that diagonal terms ⊆ all grid terms implies diagonal sum ≤ total sum
+   - Attempted approaches:
+     a) Induction on m - failed at inductive step (line 1575 in earlier version)
+     b) Direct assertion - Acorn cannot verify
+     c) Helper lemmas for nonneg and monotonicity - insufficient
+   - **Required infrastructure**: One of:
+     - General lemma: For nonnegative f, summing over S ⊆ T implies ∑_S f ≤ ∑_T f
+     - Explicit construction showing double_sum = cauchy_sum + (nonnegative remainder)
+     - List filtering lemmas that preserve inequality for nonnegative sums
+   - This remains the KEY BLOCKER for all downstream work
+
+5. **`cauchy_partial_product_bound`** 🚧 BLOCKED (depends on #4)
    - Requires `double_sum_diagonal_bound` to complete the inductive step
    - Mathematical argument fully documented
-   - Cannot proceed until #3 is resolved
+   - Cannot proceed until #4 is resolved
 
 **Previously Completed:**
 
@@ -51,7 +64,7 @@ All foundational definitions, algebraic properties, absolute convergence infrast
 ✅ `double_sum_row_expand` - Infrastructure for row expansion
 ✅ Infrastructure: `prod_fn`, `row_val`, `cauchy_indicator`
 
-5. **`cauchy_product_abs_converges`** (Mertens' Theorem) - Blocked on #4
+6. **`cauchy_product_abs_converges`** (Mertens' Theorem) - Blocked on #5
    - Statement: If `absolutely_converges(a)` and `absolutely_converges(b)`, then `absolutely_converges(cauchy_seq(a, b))`
    - Strategy: Use comparison test with `cauchy_partial_product_bound`
    - Status: Full proof structure documented
@@ -103,6 +116,13 @@ Once e^x is defined, prove its fundamental properties:
 ## Summary
 
 **Current focus:** Phase 2 - Proving Cauchy product convergence
-**Blocking issue:** Need to prove `partial_product_as_double_sum` using the lambda-avoiding technique
-**Next milestone:** Complete Mertens' Theorem → Define e^x → Prove e^x properties
+**Recent progress:** Added supporting infrastructure (double_sum_col_monotone, cauchy_coefficient_nonneg, etc.)
+**Blocking issue:** `double_sum_diagonal_bound` requires subset sum inequality infrastructure
+**Core challenge:** Need to formally prove that ∑_{i+j=m} a(i)b(j) <= ∑_{i,j≤m} a(i)b(j) for nonnegative sequences
+**Next milestone:** Resolve subset sum infrastructure → Complete Mertens' Theorem → Define e^x → Prove e^x properties
+
+**Suggested next steps:**
+1. Develop general list/sum filtering infrastructure for subset inequalities, OR
+2. Prove `double_sum_diagonal_bound` by explicit enumeration of diagonal vs full grid, OR
+3. Explore alternative formulations that avoid the subset sum problem
 
