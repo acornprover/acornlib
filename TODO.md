@@ -31,14 +31,19 @@
 
 ### Missing Lemmas (Priority Order)
 
-**Priority 1: Double Sum Comparison**
+**Priority 1: Double Sum Comparison** ✅ **COMPLETE**
 - **`double_sum_pointwise_le`**: If for all i < n and j < m, f(i, j) <= g(i, j), then double_sum(n, m, f) <= double_sum(n, m, g)
-- Location: `src/real/cauchy.ac`
+- Location: `src/real/cauchy.ac` (line 2018)
+- Status: **Proven and verified** (uses partial_lte_partial for row and column comparisons)
 - Needed for: `cauchy_partial_product_bound`
 
-**Priority 2: Triangular Sum Identity**
+**Priority 2: Triangular Sum Identity** ⏸️ **DEFERRED**
 - **`partial_cauchy_as_triangle`**: partial(cauchy_seq(a, b), n) = double_sum(n, n, triangle_product(a, b, n))
-- Location: `src/real/cauchy.ac`
+- Location: `src/real/cauchy.ac` (commented out, lines 2278-2294)
+- Status: **Requires summation exchange infrastructure** (Fubini-like lemma for finite sums)
+- Issue: LHS sums over (k, i) with i ≤ k < n; RHS sums over (i, j) with i+j < n
+- Both represent the same triangular region but in different summation orders
+- **Action needed**: Implement finite summation exchange lemmas or alternative proof strategy
 - Needed for: `cauchy_partial_product_bound`
 
 **Priority 3: Convergence Bounds**
