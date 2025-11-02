@@ -46,15 +46,40 @@
 - **Action needed**: Implement finite summation exchange lemmas or alternative proof strategy
 - Needed for: `cauchy_partial_product_bound`
 
-**Priority 3: Convergence Bounds**
-- **`convergent_increasing_bounded_by_limit`**: If converges(s) and is_increasing(s), then for all n, s(n) <= limit(s)
-- Location: `src/real/real_series.ac` (may already exist, need to check)
+**Priority 3: Convergence Bounds** ✅ **EXISTS**
+- **`increasing_convergent_bounded_by_limit`**: If is_increasing(a) and converges(a), then is_upper_bound(a, limit(a))
+- Location: `src/real/real_series.ac:143`
+- Status: **Already proven** - shows that for all n, a(n) <= limit(a)
 - Needed for: `cauchy_product_abs_converges`
 
-**Priority 4: Partial Sum Monotonicity**
-- **`is_increasing_partial`**: For nonnegative f, is_increasing(partial(f))
-- Location: `src/real/real_series.ac` (may already exist as `nonneg_partial_increasing`)
+**Priority 4: Partial Sum Monotonicity** ✅ **EXISTS**
+- **`nonneg_partial_increasing`**: is_lower_bound(a, Real.0) implies is_increasing(partial(a))
+- Location: `src/real/real_series.ac:312`
+- Status: **Already proven** - partial sums of nonnegative sequences are increasing
+- Bonus: `nonneg_partial_bounded_above` (line 316) combines this with convergence bounds
 - Needed for: `cauchy_product_abs_converges`
+
+**Priority 5: Multiplication Bound** ✅ **EXISTS**
+- **`mul_le_mul_nonneg`**: Already exists at `src/real/cauchy.ac:1326`
+- Proves: a <= b and c <= d and a,b,c,d >= 0 implies a*c <= b*d
+- Needed for: `cauchy_product_abs_converges`
+
+---
+
+## Critical Blocker: Summation Exchange
+
+**The ONLY missing piece** is a summation exchange lemma for Priority 2:
+
+**Required: `finite_double_sum_exchange` or similar**
+- **Statement**: Enable reordering finite double sums over triangular regions
+- **Specific need**: Prove that
+  ```
+  sum_{k=0}^{n-1} sum_{i=0}^{k} f(i, k-i) = sum_{i=0}^{n-1} sum_{j : i+j<n} f(i, j)
+  ```
+- **Why needed**: To prove `partial_cauchy_as_triangle`, which connects:
+  - Cauchy products: `sum_{k<n} sum_{i≤k} a(i)*b(k-i)`
+  - Triangular double sum: `sum_{i<n} sum_{j<n} [i+j<n ? a(i)*b(j) : 0]`
+- **Difficulty**: Requires infrastructure for reasoning about finite sum reindexing
 
 
 3. **Cauchy product limit formula** - TODO
