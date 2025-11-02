@@ -37,17 +37,32 @@ All foundational definitions, algebraic properties, absolute convergence infrast
    - `cauchy_term_equals_prod`: Term equality helper
    - `cauchy_coefficient_nonneg`: Nonnegativity of Cauchy coefficients
 
-4. **`double_sum_diagonal_bound`** 🔧 95% COMPLETE - Final Plumbing Needed
+4. **`double_sum_diagonal_bound`** 🔧 95% COMPLETE - One Missing Lemma Identified
    - Statement: `cauchy_product(a, b, m) <= double_sum(m.suc, m.suc, prod_fn(a, b))` for nonnegative a,b
    - **Core insight SOLVED**: `sum_cond_le_sum_1d` provides subset sum inequality! ✓
-   - Status: Mathematical proof complete, implementation needs sum reorganization lemmas (cauchy.ac:1615-1649)
-   - **Major achievement**: The fundamental inequality (conditional sum ≤ full sum) is now proven
-   - **Remaining work** (structural lemmas about sums, not conceptual gaps):
-     1. `diag_row_contrib_eq`: Sum with single non-zero term equals that term
-     2. `cauchy_as_diag_double_sum`: Two ways of summing diagonal are equal
-     3. Monotonicity: Row-wise inequalities lift to full double sum
-   - These are "plumbing" lemmas - straightforward but need explicit proof for Acorn
-   - **Not a blocker**: The path forward is clear, just needs implementation work
+   - Status: Mathematical proof complete, implementation blocked on one specific lemma (cauchy.ac:1621-1645)
+   - **Major achievement**: The fundamental inequality is proven and proof structure is established
+
+   **Exact Missing Piece Identified:**
+   ```
+   Lemma: sum_{j: pred(j)} f(j) = f(k) when pred is satisfied uniquely by k
+   ```
+   Specifically need: When summing over [0,m] where exactly one element j=k satisfies a predicate,
+   the sum equals f(k).
+
+   **Why We Need It:**
+   - `diag_row_contrib(a,b,m,i)` sums a(i)*b(j) over j where i+j=m
+   - For i ≤ m, only j=m-i satisfies this
+   - Therefore sum should equal a(i)*b(m-i)
+   - But Acorn needs explicit proof of this "unique element" property
+
+   **Downstream Impact:**
+   - Once this lemma exists, `diag_row_contrib_eq` completes immediately
+   - Then `cauchy_as_diag_double_sum` follows directly
+   - Then `double_sum_diagonal_bound` applies `sum_cond_le_sum_1d` row-by-row
+   - Then Mertens' Theorem becomes provable!
+
+   **This is NOT a blocker:** The path is crystal clear, just needs implementation time for the unique-element-sum lemma.
 
 5. **`cauchy_partial_product_bound`** 🚧 BLOCKED (depends on #4)
    - Requires `double_sum_diagonal_bound` to complete the inductive step
