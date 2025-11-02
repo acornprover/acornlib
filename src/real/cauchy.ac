@@ -7,7 +7,7 @@ from list.list_sum import map_range, list_extensionality, sum_scalar_mul, map_su
 from option import Option
 from real.real_ring import Real, converges, converges_to, limit, lift_seq
 from real.real_series import seq_lte, is_lower_bound, add_seq, mul_seq
-from real.real_base import lte_add_left
+from real.real_base import lte_add_left, lte_add_right, lte_trans
 from semigroup import mul_fn
 from add_semigroup import add_fn
 from add_comm_monoid import AddCommMonoid
@@ -947,7 +947,6 @@ theorem partial_nonneg(f: Nat -> Real, n: Nat) {
     is_lower_bound(f, Real.0) implies partial(f, n) >= Real.0
 } by {
     from list.list_sum import map_add, sum_add
-    from real.real_base import lte_add_right
 
     define p(m: Nat) -> Bool {
         is_lower_bound(f, Real.0) implies partial(f, m) >= Real.0
@@ -1429,30 +1428,729 @@ theorem double_sum_row_monotone(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
     }
 }
 
+/// Helper: Extending a double sum column-wise with nonnegative terms doesn't decrease the sum.
+theorem double_sum_col_monotone(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
+    (forall(i: Nat, j: Nat) { f(i, j) >= Real.0 })
+    implies
+    double_sum(n, m, f) <= double_sum(n, m.suc, f)
+} by {
+    from real.real_series import nonneg_imp_partial_increasing, distant_increasing, is_increasing
+
+    if forall(i: Nat, j: Nat) { f(i, j) >= Real.0 } {
+        // Use double_sum_col_expand
+        double_sum_col_expand(n, m, f)
+        double_sum(n, m.suc, f) = double_sum(n, m, f) + sum(map(n.range, col_val(f, m)))
+
+        // The added column terms are nonnegative
+        forall(i: Nat) {
+            col_val(f, m)(i) = f(i, m)
+            f(i, m) >= Real.0
+            col_val(f, m)(i) >= Real.0
+        }
+
+        // Therefore col_val(f, m) is lower bounded by 0
+        is_lower_bound(col_val(f, m), Real.0)
+
+        // Sum of nonnegative terms is nonnegative
+        nonneg_imp_partial_increasing(col_val(f, m))
+        is_increasing(partial(col_val(f, m)))
+
+        // partial(col_val(f, m), Nat.0) = Real.0
+        partial(col_val(f, m), Nat.0) = Real.0
+
+        // By distant_increasing: partial(..., Nat.0) <= partial(..., n)
+        Nat.0 <= n
+        distant_increasing(partial(col_val(f, m)), Nat.0, n)
+        partial(col_val(f, m), Nat.0) <= partial(col_val(f, m), n)
+        Real.0 <= partial(col_val(f, m), n)
+
+        // sum(map(n.range, col_val(f, m))) = partial(col_val(f, m), n)
+        partial(col_val(f, m), n) = sum(map(n.range, col_val(f, m)))
+        sum(map(n.range, col_val(f, m))) >= Real.0
+
+        // Therefore adding it preserves <=
+        add_nonneg_preserves_lte(double_sum(n, m, f), sum(map(n.range, col_val(f, m))))
+        double_sum(n, m, f) <= double_sum(n, m, f) + sum(map(n.range, col_val(f, m)))
+        double_sum(n, m, f) <= double_sum(n, m.suc, f)
+    }
+}
+
 /// Helper: Indicator for diagonal elements in a double sum.
 /// Returns 1 if i + j = m, otherwise 0.
 define diagonal_indicator(m: Nat, i: Nat, j: Nat) -> Real {
     if i + j = m { Real.1 } else { Real.0 }
 }
 
-// /// Key lemma: Cauchy product (diagonal sum) is bounded by the full double sum.
-// /// For nonnegative a, b: The sum over the diagonal i+j=m is at most the sum over the full square.
+/// Helper: Each term in cauchy_coefficient is equal to a specific product term.
+theorem cauchy_term_equals_prod(a: Nat -> Real, b: Nat -> Real, m: Nat, k: Nat) {
+    k <= m implies cauchy_coefficient(a, b, m)(k) = a(k) * b(m - k)
+} by {
+    if k <= m {
+        cauchy_coefficient(a, b, m)(k) = a(k) * b(m - k)
+    }
+}
+
+/// Helper: All cauchy_coefficient terms are nonnegative when a and b are nonnegative.
+theorem cauchy_coefficient_nonneg(a: Nat -> Real, b: Nat -> Real, m: Nat, k: Nat) {
+    is_lower_bound(a, Real.0) and is_lower_bound(b, Real.0)
+    implies
+    cauchy_coefficient(a, b, m)(k) >= Real.0
+} by {
+    if is_lower_bound(a, Real.0) and is_lower_bound(b, Real.0) {
+        cauchy_coefficient(a, b, m)(k) = a(k) * b(m - k)
+        a(k) >= Real.0
+        b(m - k) >= Real.0
+        a(k) * b(m - k) >= Real.0
+        cauchy_coefficient(a, b, m)(k) >= Real.0
+    }
+}
+
+// ============================================================================
+// Conditional Sum Infrastructure for Subset Sum Inequalities
+// ============================================================================
+
+/// Helper: decompose a sum into two parts based on a predicate.
+/// The first part sums f(x) where pred(x) is true, the second where pred(x) is false.
+define cond_part(f: Nat -> Real, pred: Nat -> Bool, x: Nat) -> Real {
+    if pred(x) { f(x) } else { Real.0 }
+}
+
+define comp_part(f: Nat -> Real, pred: Nat -> Bool, x: Nat) -> Real {
+    if pred(x) { Real.0 } else { f(x) }
+}
+
+/// For nonnegative f, conditional sum is bounded by full sum (single variable case).
+///
+/// This is the key lemma for subset sum inequalities: if we sum f only where
+/// a predicate is true, the result is at most the full sum of f.
+theorem sum_cond_le_sum_1d(f: Nat -> Real, pred: Nat -> Bool, n: Nat) {
+    (forall(x: Nat) { f(x) >= Real.0 })
+    implies
+    sum(map(n.range, cond_part(f, pred))) <= sum(map(n.range, f))
+} by {
+    from real.real_series import nonneg_imp_partial_increasing, is_increasing, distant_increasing
+    from real.real_base import lte_trans_eq
+
+    if forall(x: Nat) { f(x) >= Real.0 } {
+        // Strategy: Decompose f = cond_part + comp_part, show comp_part >= 0,
+        // then cond_part <= cond_part + comp_part = f
+
+        // Show decomposition: f(x) = cond_part(f, pred, x) + comp_part(f, pred, x)
+        forall(x: Nat) {
+            if pred(x) {
+                cond_part(f, pred, x) = f(x)
+                comp_part(f, pred, x) = Real.0
+                cond_part(f, pred, x) + comp_part(f, pred, x) = f(x) + Real.0
+                f(x) + Real.0 = f(x)
+                add_fn(cond_part(f, pred), comp_part(f, pred))(x) = f(x)
+            } else {
+                cond_part(f, pred, x) = Real.0
+                comp_part(f, pred, x) = f(x)
+                cond_part(f, pred, x) + comp_part(f, pred, x) = Real.0 + f(x)
+                Real.0 + f(x) = f(x)
+                add_fn(cond_part(f, pred), comp_part(f, pred))(x) = f(x)
+            }
+        }
+
+        // Apply map_sum_add to lift decomposition to sums
+        map_sum_add(n.range, cond_part(f, pred), comp_part(f, pred))
+        let sum_cond = sum(map(n.range, cond_part(f, pred)))
+        let sum_comp = sum(map(n.range, comp_part(f, pred)))
+        sum_cond + sum_comp = sum(map(n.range, add_fn(cond_part(f, pred), comp_part(f, pred))))
+        sum(map(n.range, add_fn(cond_part(f, pred), comp_part(f, pred)))) = sum(map(n.range, f))
+        sum_cond + sum_comp = sum(map(n.range, f))
+
+        // Show comp_part is nonnegative
+        forall(x: Nat) {
+            if pred(x) {
+                comp_part(f, pred, x) = Real.0
+                comp_part(f, pred, x) >= Real.0
+            } else {
+                comp_part(f, pred, x) = f(x)
+                f(x) >= Real.0
+                comp_part(f, pred, x) >= Real.0
+            }
+        }
+
+        // Therefore sum_comp >= 0
+        nonneg_imp_partial_increasing(comp_part(f, pred))
+        is_increasing(partial(comp_part(f, pred)))
+        partial(comp_part(f, pred), Nat.0) = Real.0
+        Nat.0 <= n
+        distant_increasing(partial(comp_part(f, pred)), Nat.0, n)
+        partial(comp_part(f, pred), Nat.0) <= partial(comp_part(f, pred), n)
+        Real.0 <= partial(comp_part(f, pred), n)
+        sum_comp = partial(comp_part(f, pred), n)
+        sum_comp >= Real.0
+
+        // Final step: sum_cond <= sum_cond + sum_comp = sum(f), therefore sum_cond <= sum(f)
+        add_nonneg_preserves_lte(sum_cond, sum_comp)
+        sum_cond <= sum_cond + sum_comp
+
+        // We have: sum_cond + sum_comp = sum(f)
+        let sum_f = sum(map(n.range, f))
+        sum_cond + sum_comp = sum_f
+
+        // Apply transitivity: sum_cond <= sum_cond + sum_comp and sum_cond + sum_comp = sum_f
+        lte_trans_eq(sum_cond, sum_cond + sum_comp, sum_f)
+        sum_cond <= sum_f
+
+        // Therefore
+        sum(map(n.range, cond_part(f, pred))) <= sum(map(n.range, f))
+    }
+}
+
+/// Helper: Conditional product for diagonal elements.
+/// Returns a(i)*b(j) if i+j=m, otherwise 0.
+define diag_cond_prod(a: Nat -> Real, b: Nat -> Real, m: Nat, i: Nat, j: Nat) -> Real {
+    if i + j = m { a(i) * b(j) } else { Real.0 }
+}
+
+/// Helper: For a fixed row i, the conditional product in column j.
+define row_cond_prod(a: Nat -> Real, b: Nat -> Real, m: Nat, i: Nat) -> (Nat -> Real) {
+    function(j: Nat) { diag_cond_prod(a, b, m, i, j) }
+}
+
+/// Helper: For a fixed row i and diagonal m, sum over columns conditionally.
+/// This computes sum_{j: i+j=m} a(i)*b(j), which is just a(i)*b(m-i) when i <= m.
+define diag_row_contrib(a: Nat -> Real, b: Nat -> Real, m: Nat, i: Nat) -> Real {
+    sum(map(m.suc.range, function(j: Nat) { diag_cond_prod(a, b, m, i, j) }))
+}
+
+/// Helper: Partial sum of constant zero function is zero.
+theorem partial_all_zeros(g: Nat -> Real, m: Nat) {
+    (forall(j: Nat) { j < m implies g(j) = Real.0 })
+    implies
+    partial(g, m) = Real.0
+} by {
+    define p(k: Nat) -> Bool {
+        (forall(j: Nat) { j < k implies g(j) = Real.0 })
+        implies
+        partial(g, k) = Real.0
+    }
+
+    // Base case
+    partial(g, Nat.0) = Real.0
+    p(Nat.0)
+
+    // Inductive step
+    forall(k: Nat) {
+        if p(k) {
+            if forall(j: Nat) { j < k.suc implies g(j) = Real.0 } {
+                // g(j) = 0 for all j < k
+                forall(j: Nat) {
+                    if j < k {
+                        j < k.suc
+                        g(j) = Real.0
+                    }
+                }
+
+                // By IH: partial(g, k) = 0
+                p(k)
+                partial(g, k) = Real.0
+
+                // Also g(k) = 0
+                k < k.suc
+                g(k) = Real.0
+
+                // Therefore partial(g, k.suc) = 0 + 0 = 0
+                partial(g, k.suc) = partial(g, k) + g(k)
+                partial(g, k.suc) = Real.0 + Real.0
+                partial(g, k.suc) = Real.0
+            }
+            p(k.suc)
+        }
+    }
+
+    p(m)
+}
+
+/// Helper lemma: Sum of a function that equals a constant at one index and zero elsewhere.
+/// If g(j) = c when j = k, and g(j) = 0 otherwise, then sum(g, n) = c (when k < n).
+theorem sum_singleton(g: Nat -> Real, c: Real, k: Nat, n: Nat) {
+    k < n and
+    g(k) = c and
+    (forall(j: Nat) { j < n and j != k implies g(j) = Real.0 })
+    implies
+    partial(g, n) = c
+} by {
+    if k < n and g(k) = c and (forall(j: Nat) { j < n and j != k implies g(j) = Real.0 }) {
+        // Step 1: Show partial(g, k) = 0
+        forall(j: Nat) {
+            if j < k {
+                j < n
+                j != k
+                g(j) = Real.0
+            }
+        }
+        partial_all_zeros(g, k)
+        partial(g, k) = Real.0
+
+        // Step 2: Show partial(g, k.suc) = c
+        partial(g, k.suc) = partial(g, k) + g(k)
+        partial(g, k.suc) = Real.0 + c
+        partial(g, k.suc) = c
+
+        // Step 3: Extend from k.suc to n by induction on the distance
+        // Define predicate in terms of distance d, where m = k.suc + d
+        define q(d: Nat) -> Bool {
+            (forall(j: Nat) { k < j and j < k.suc + d implies g(j) = Real.0 })
+            implies
+            partial(g, k.suc + d) = c
+        }
+
+        // Base case: d = 0
+        // Then k.suc + 0 = k.suc, and partial(g, k.suc) = c (proven above)
+        k.suc + Nat.0 = k.suc
+        partial(g, k.suc + Nat.0) = c
+        q(Nat.0)
+
+        // Inductive step: if q(d), then q(d.suc)
+        forall(d: Nat) {
+            if q(d) {
+                if forall(j: Nat) { k < j and j < k.suc + d.suc implies g(j) = Real.0 } {
+                    // Split: j < k.suc + d or j = k.suc + d
+                    forall(j: Nat) {
+                        if k < j and j < k.suc + d {
+                            j < k.suc + d.suc
+                            g(j) = Real.0
+                        }
+                    }
+
+                    // Apply IH
+                    q(d)
+                    partial(g, k.suc + d) = c
+
+                    // Show g(k.suc + d) = 0
+                    // We have k < k.suc + d (since d >= 0)
+                    // And k.suc + d < k.suc + d.suc
+                    // So g(k.suc + d) = 0
+                    k.suc + d < k.suc + d.suc
+                    k < k.suc + d
+                    g(k.suc + d) = Real.0
+
+                    // Therefore partial(g, k.suc + d.suc) = c
+                    partial(g, k.suc + d.suc) = partial(g, k.suc + d) + g(k.suc + d)
+                    partial(g, k.suc + d.suc) = c + Real.0
+                    partial(g, k.suc + d.suc) = c
+                }
+                q(d.suc)
+            }
+        }
+
+        // Now apply q to the distance (n - k.suc)
+        // Since k < n, we have k.suc <= n, so there exists d where n = k.suc + d
+        k < n
+        let d: Nat satisfy { k.suc + d = n }
+
+        // We know g(j) = 0 for all k < j < n
+        forall(j: Nat) {
+            if k < j and j < n {
+                j < n
+                j != k
+                g(j) = Real.0
+            }
+        }
+
+        q(d)
+        partial(g, k.suc + d) = c
+        partial(g, n) = c
+    }
+}
+
+/// Lemma: Sum of conditional where exactly one index satisfies predicate.
+/// When pred(k) holds and is the unique satisfier in [0,n), sum of cond_part equals f(k).
+theorem sum_cond_unique(f: Nat -> Real, pred: Nat -> Bool, n: Nat, k: Nat) {
+    k < n and
+    pred(k) and
+    (forall(j: Nat) { j < n and j != k implies not pred(j) })
+    implies
+    sum(map(n.range, cond_part(f, pred))) = f(k)
+} by {
+    from list.list_sum import partial_pointwise_eq
+
+    if k < n and pred(k) and (forall(j: Nat) { j < n and j != k implies not pred(j) }) {
+        // Define a simpler function that's f(k) at index k, 0 elsewhere
+        define singleton_fn(j: Nat) -> Real {
+            if j = k { f(k) } else { Real.0 }
+        }
+
+        // Show cond_part(f, pred) = singleton_fn pointwise
+        forall(j: Nat) {
+            if j < n {
+                if j = k {
+                    pred(j)
+                    cond_part(f, pred, j) = f(j)
+                    f(j) = f(k)
+                    cond_part(f, pred, j) = f(k)
+                    singleton_fn(j) = f(k)
+                    cond_part(f, pred, j) = singleton_fn(j)
+                } else {
+                    j < n
+                    j != k
+                    not pred(j)
+                    cond_part(f, pred, j) = Real.0
+                    singleton_fn(j) = Real.0
+                    cond_part(f, pred, j) = singleton_fn(j)
+                }
+            }
+        }
+
+        // By pointwise equality, their sums are equal
+        partial_pointwise_eq(cond_part(f, pred), singleton_fn, n)
+        sum(map(n.range, cond_part(f, pred))) = sum(map(n.range, singleton_fn))
+
+        // Now show sum(map(n.range, singleton_fn)) = f(k)
+        // Proof by induction
+
+        // First, prove that partial(singleton_fn, k) = Real.0
+        // (all terms before k are zero)
+
+        // Use the sum_singleton helper lemma
+        // We have: singleton_fn(k) = f(k) and singleton_fn(j) = 0 for j != k
+        singleton_fn(k) = f(k)
+        forall(j: Nat) {
+            if j < n and j != k {
+                j != k
+                singleton_fn(j) = Real.0
+            }
+        }
+
+        // Apply sum_singleton
+        sum_singleton(singleton_fn, f(k), k, n)
+        partial(singleton_fn, n) = f(k)
+        sum(map(n.range, singleton_fn)) = f(k)
+        sum(map(n.range, cond_part(f, pred))) = f(k)
+    }
+}
+
+/// Lemma: For each row i <= m, the diagonal contribution equals a(i)*b(m-i).
+/// In row i, only column j=m-i satisfies i+j=m, so only that term is non-zero.
+theorem diag_row_contrib_eq(a: Nat -> Real, b: Nat -> Real, m: Nat, i: Nat) {
+    i <= m implies diag_row_contrib(a, b, m, i) = a(i) * b(m - i)
+} by {
+    from list.list_sum import partial_pointwise_eq
+
+    if i <= m {
+        // Define the predicate: j satisfies the diagonal condition i+j=m
+        define is_diag(j: Nat) -> Bool {
+            i + j = m
+        }
+
+        // Define the function: product a(i)*b(j) if on diagonal, else 0
+        define diag_fn(j: Nat) -> Real {
+            if i + j = m { a(i) * b(j) } else { Real.0 }
+        }
+
+        // Show diag_fn = cond_part(prod_fn(a,b)(i), is_diag)
+        forall(j: Nat) {
+            prod_fn(a, b)(i)(j) = a(i) * b(j)
+            if i + j = m {
+                is_diag(j)
+                cond_part(prod_fn(a, b)(i), is_diag, j) = prod_fn(a, b)(i)(j)
+                cond_part(prod_fn(a, b)(i), is_diag, j) = a(i) * b(j)
+                diag_fn(j) = a(i) * b(j)
+                cond_part(prod_fn(a, b)(i), is_diag, j) = diag_fn(j)
+            } else {
+                not is_diag(j)
+                cond_part(prod_fn(a, b)(i), is_diag, j) = Real.0
+                diag_fn(j) = Real.0
+                cond_part(prod_fn(a, b)(i), is_diag, j) = diag_fn(j)
+            }
+        }
+
+        // Show diag_cond_prod(a,b,m,i,j) = diag_fn(j)
+        forall(j: Nat) {
+            if i + j = m {
+                diag_cond_prod(a, b, m, i, j) = a(i) * b(j)
+                diag_fn(j) = a(i) * b(j)
+                diag_cond_prod(a, b, m, i, j) = diag_fn(j)
+            } else {
+                diag_cond_prod(a, b, m, i, j) = Real.0
+                diag_fn(j) = Real.0
+                diag_cond_prod(a, b, m, i, j) = diag_fn(j)
+            }
+        }
+
+        // Therefore their sums are equal
+        partial_pointwise_eq(function(j: Nat) { diag_cond_prod(a, b, m, i, j) }, diag_fn, m.suc)
+        sum(map(m.suc.range, function(j: Nat) { diag_cond_prod(a, b, m, i, j) })) = sum(map(m.suc.range, diag_fn))
+        diag_row_contrib(a, b, m, i) = sum(map(m.suc.range, diag_fn))
+
+        // Now show that exactly one j satisfies i+j=m when i <= m
+        // That j is m-i, and we have m-i < m.suc
+        i <= m
+        let j_unique: Nat satisfy { j_unique + i = m }
+        j_unique = m - i
+        i + j_unique = m
+        is_diag(j_unique)
+        j_unique <= m
+        j_unique < m.suc
+
+        // Show uniqueness: no other j < m.suc satisfies i+j=m
+        forall(j: Nat) {
+            if j < m.suc and j != j_unique {
+                if i + j = m {
+                    i + j_unique = m
+                    i + j = i + j_unique
+                    j = j_unique
+                    false
+                }
+                not (i + j = m)
+                not is_diag(j)
+            }
+        }
+
+        // Apply sum_cond_unique
+        sum_cond_unique(prod_fn(a, b)(i), is_diag, m.suc, j_unique)
+        sum(map(m.suc.range, cond_part(prod_fn(a, b)(i), is_diag))) = prod_fn(a, b)(i)(j_unique)
+
+        // Connect through diag_fn
+        sum(map(m.suc.range, diag_fn)) = sum(map(m.suc.range, cond_part(prod_fn(a, b)(i), is_diag)))
+        sum(map(m.suc.range, diag_fn)) = prod_fn(a, b)(i)(j_unique)
+        diag_row_contrib(a, b, m, i) = prod_fn(a, b)(i)(j_unique)
+
+        // Simplify
+        prod_fn(a, b)(i)(j_unique) = a(i) * b(j_unique)
+        j_unique = m - i
+        b(j_unique) = b(m - i)
+        prod_fn(a, b)(i)(j_unique) = a(i) * b(m - i)
+        diag_row_contrib(a, b, m, i) = a(i) * b(m - i)
+    }
+}
+
+/// Lemma: Cauchy product equals sum over rows of diagonal contributions.
+/// This shows that cauchy_product(a,b,m) = sum_{i=0}^m diag_row_contrib(a,b,m,i).
+theorem cauchy_as_diag_double_sum(a: Nat -> Real, b: Nat -> Real, m: Nat) {
+    cauchy_product(a, b, m) = sum(map(m.suc.range, function(i: Nat) { diag_row_contrib(a, b, m, i) }))
+} by {
+    from list.list_sum import partial_pointwise_eq
+
+    // Show that cauchy_coefficient and diag_row_contrib are pointwise equal
+    forall(i: Nat) {
+        if i < m.suc {
+            i <= m
+            diag_row_contrib_eq(a, b, m, i)
+            diag_row_contrib(a, b, m, i) = a(i) * b(m - i)
+            cauchy_coefficient(a, b, m)(i) = a(i) * b(m - i)
+            cauchy_coefficient(a, b, m)(i) = diag_row_contrib(a, b, m, i)
+        }
+    }
+
+    // Apply pointwise equality to conclude sums are equal
+    partial_pointwise_eq(cauchy_coefficient(a, b, m), function(i: Nat) { diag_row_contrib(a, b, m, i) }, m.suc)
+    sum(map(m.suc.range, cauchy_coefficient(a, b, m))) = sum(map(m.suc.range, function(i: Nat) { diag_row_contrib(a, b, m, i) }))
+    cauchy_product(a, b, m) = sum(map(m.suc.range, function(i: Nat) { diag_row_contrib(a, b, m, i) }))
+}
+
+/// Adding two inequalities preserves the inequality.
+/// If a ≤ b and c ≤ d, then a + c ≤ b + d.
+theorem add_lte_add(a: Real, b: Real, c: Real, d: Real) {
+    a <= b and c <= d implies a + c <= b + d
+} by {
+    if a <= b and c <= d {
+        lte_add_right(a, b, c)
+        a + c <= b + c
+        lte_add_left(c, d, b)
+        b + c <= b + d
+        lte_trans(a + c, b + c, b + d)
+        a + c <= b + d
+    }
+}
+
+/// Sum monotonicity: if f(i) ≤ g(i) for all i in range, then sum(f) ≤ sum(g).
+theorem partial_lte_partial(f: Nat -> Real, g: Nat -> Real, n: Nat) {
+    (forall(i: Nat) { i < n implies f(i) <= g(i) })
+    implies
+    partial(f, n) <= partial(g, n)
+} by {
+    // Prove by induction on n
+    define p(m: Nat) -> Bool {
+        (forall(i: Nat) { i < m implies f(i) <= g(i) }) implies partial(f, m) <= partial(g, m)
+    }
+
+    // Base case: m = 0
+    partial(f, Nat.0) = Real.0
+    partial(g, Nat.0) = Real.0
+    partial(f, Nat.0) <= partial(g, Nat.0)
+    p(Nat.0)
+
+    // Inductive step: p(m) implies p(m.suc)
+    forall(m: Nat) {
+        if p(m) {
+            if forall(i: Nat) { i < m.suc implies f(i) <= g(i) } {
+                // Split the range [0, m.suc) into [0, m) and {m}
+                forall(i: Nat) {
+                    if i < m {
+                        i < m.suc
+                        f(i) <= g(i)
+                    }
+                }
+
+                // Apply induction hypothesis to get partial(f, m) <= partial(g, m)
+                p(m)
+                partial(f, m) <= partial(g, m)
+
+                // Now handle the m-th element
+                m < m.suc
+                f(m) <= g(m)
+
+                // Use partial_split_last to expand
+                partial(f, m.suc) = partial(f, m) + f(m)
+                partial(g, m.suc) = partial(g, m) + g(m)
+
+                // Since partial(f, m) <= partial(g, m) and f(m) <= g(m), we have:
+                // partial(f, m) + f(m) <= partial(g, m) + g(m)
+                partial(f, m) <= partial(g, m)
+                f(m) <= g(m)
+                add_lte_add(partial(f, m), partial(g, m), f(m), g(m))
+                partial(f, m) + f(m) <= partial(g, m) + g(m)
+                partial(f, m.suc) <= partial(g, m.suc)
+            }
+            p(m.suc)
+        }
+    }
+
+    // Apply induction to conclude p(n)
+    p(n)
+}
+
+/// For nonnegative sequences a and b, the Cauchy product up to m
+/// is bounded by the double sum (full product of partial sums).
+/// This is the key inequality: ∑_{i+j=m} a(i)b(j) <= ∑_{i,j≤m} a(i)b(j).
+theorem double_sum_diagonal_bound(a: Nat -> Real, b: Nat -> Real, m: Nat) {
+    is_lower_bound(a, Real.0) and is_lower_bound(b, Real.0)
+    implies
+    cauchy_product(a, b, m) <= double_sum(m.suc, m.suc, prod_fn(a, b))
+} by {
+    from list.list_sum import partial_pointwise_eq
+
+    if is_lower_bound(a, Real.0) and is_lower_bound(b, Real.0) {
+        // Express Cauchy product as sum of diagonal contributions
+        cauchy_as_diag_double_sum(a, b, m)
+        cauchy_product(a, b, m) = sum(map(m.suc.range, function(i: Nat) { diag_row_contrib(a, b, m, i) }))
+
+        // Show each diagonal contribution is bounded by its full row sum
+        // For each row i, diag_row_contrib(a,b,m,i) is a conditional sum
+        forall(i: Nat) {
+            if i < m.suc {
+                i <= m
+
+                // Define the predicate for this row
+                define is_diag_i(j: Nat) -> Bool {
+                    i + j = m
+                }
+
+                // Show diag_row_contrib equals conditional sum
+                diag_row_contrib(a, b, m, i) = sum(map(m.suc.range, function(j: Nat) { diag_cond_prod(a, b, m, i, j) }))
+
+                // Show diag_cond_prod = cond_part(prod_fn(a,b)(i), is_diag_i)
+                forall(j: Nat) {
+                    prod_fn(a, b)(i)(j) = a(i) * b(j)
+                    if i + j = m {
+                        is_diag_i(j)
+                        diag_cond_prod(a, b, m, i, j) = a(i) * b(j)
+                        cond_part(prod_fn(a, b)(i), is_diag_i, j) = prod_fn(a, b)(i)(j)
+                        cond_part(prod_fn(a, b)(i), is_diag_i, j) = a(i) * b(j)
+                        diag_cond_prod(a, b, m, i, j) = cond_part(prod_fn(a, b)(i), is_diag_i, j)
+                    } else {
+                        not is_diag_i(j)
+                        diag_cond_prod(a, b, m, i, j) = Real.0
+                        cond_part(prod_fn(a, b)(i), is_diag_i, j) = Real.0
+                        diag_cond_prod(a, b, m, i, j) = cond_part(prod_fn(a, b)(i), is_diag_i, j)
+                    }
+                }
+
+                // Apply partial_pointwise_eq
+                partial_pointwise_eq(function(j: Nat) { diag_cond_prod(a, b, m, i, j) }, cond_part(prod_fn(a, b)(i), is_diag_i), m.suc)
+                sum(map(m.suc.range, function(j: Nat) { diag_cond_prod(a, b, m, i, j) })) = sum(map(m.suc.range, cond_part(prod_fn(a, b)(i), is_diag_i)))
+                diag_row_contrib(a, b, m, i) = sum(map(m.suc.range, cond_part(prod_fn(a, b)(i), is_diag_i)))
+
+                // Show prod_fn(a,b)(i) is nonnegative
+                forall(j: Nat) {
+                    a(i) >= Real.0
+                    b(j) >= Real.0
+                    mul_le_mul_nonneg(a(i), b(j), Real.0, Real.0)
+                    a(i) * b(j) >= Real.0
+                    prod_fn(a, b)(i)(j) >= Real.0
+                }
+
+                // Apply sum_cond_le_sum_1d
+                sum_cond_le_sum_1d(prod_fn(a, b)(i), is_diag_i, m.suc)
+                sum(map(m.suc.range, cond_part(prod_fn(a, b)(i), is_diag_i))) <= sum(map(m.suc.range, prod_fn(a, b)(i)))
+
+                // Conclude this row inequality
+                diag_row_contrib(a, b, m, i) <= sum(map(m.suc.range, prod_fn(a, b)(i)))
+                diag_row_contrib(a, b, m, i) <= row_sum(m.suc, prod_fn(a, b), i)
+            }
+        }
+
+        // Now lift the row-wise inequalities to the full sum
+        // We have: forall i < m.suc. diag_row_contrib(a,b,m,i) <= row_sum(m.suc, prod_fn(a,b), i)
+        // Therefore: sum(diag_row_contrib) <= sum(row_sum) = double_sum
+
+        // Apply partial_lte_partial
+        partial_lte_partial(function(i: Nat) { diag_row_contrib(a, b, m, i) }, row_sum(m.suc, prod_fn(a, b)), m.suc)
+        partial(function(i: Nat) { diag_row_contrib(a, b, m, i) }, m.suc) <= partial(row_sum(m.suc, prod_fn(a, b)), m.suc)
+        sum(map(m.suc.range, function(i: Nat) { diag_row_contrib(a, b, m, i) })) <= sum(map(m.suc.range, row_sum(m.suc, prod_fn(a, b))))
+
+        // Connect to double_sum
+        double_sum_row_expand(m.suc, m.suc, prod_fn(a, b))
+        double_sum(m.suc, m.suc, prod_fn(a, b)) = sum(map(m.suc.range, row_sum(m.suc, prod_fn(a, b))))
+
+        sum(map(m.suc.range, function(i: Nat) { diag_row_contrib(a, b, m, i) })) <= double_sum(m.suc, m.suc, prod_fn(a, b))
+        cauchy_product(a, b, m) <= double_sum(m.suc, m.suc, prod_fn(a, b))
+    }
+}
+
 // ///
-// /// Mathematical argument: By partial_product_as_double_sum, we have
+// /// We prove this using partial_product_as_double_sum which shows that
 // /// partial(a,m.suc) * partial(b,m.suc) = double_sum(m.suc, m.suc, prod_fn(a,b)).
-// /// The product expands to (m+1)² terms, including all Cauchy terms plus additional nonnegative terms.
-// /// The Cauchy product sums over the diagonal {(i,j) : i+j=m}, which is a subset of the full grid.
-// /// Since all terms a(i)*b(j) >= 0, summing over diagonal <= summing over full grid.
+// /// Each term in cauchy_product appears in the double_sum, and since all terms are nonnegative,
+// /// the Cauchy product (a subset of terms) is bounded by the double_sum (all terms).
 // ///
-// /// TODO: This theorem is geometrically and algebraically obvious, but requires formal infrastructure:
-// /// - A general lemma about subset sums of nonnegative terms, OR
-// /// - Explicit construction showing Cauchy sum + additional nonnegative terms = double sum
+// /// The mathematical argument relies on the fact that for nonnegative sequences:
+// /// Each cauchy_product term a(i)*b(m-i) appears in the expansion of ∑a(i) * ∑b(j),
+// /// and the expansion contains additional nonnegative terms, so cauchy_product <= product of sums.
 // ///
-// /// Blocking: `cauchy_partial_product_bound` and therefore Mertens' Theorem.
+// /// STATUS: Blocked - Requires explicit proof that diagonal terms ⊆ full grid terms.
+// /// The missing piece is showing: ∑_{i+j=m} a(i)b(j) <= ∑_{i,j≤m} a(i)b(j) for nonnegative a,b.
+// /// This is mathematically obvious but needs formal infrastructure for subset sums.
 // theorem double_sum_diagonal_bound(a: Nat -> Real, b: Nat -> Real, m: Nat) {
 //     is_lower_bound(a, Real.0) and is_lower_bound(b, Real.0)
 //     implies
 //     cauchy_product(a, b, m) <= double_sum(m.suc, m.suc, prod_fn(a, b))
+// } by {
+//     if is_lower_bound(a, Real.0) and is_lower_bound(b, Real.0) {
+//         // Use partial_product_as_double_sum to relate double_sum to product of partials
+//         partial_product_as_double_sum(a, b, m.suc)
+//         partial(a, m.suc) * partial(b, m.suc) = double_sum(m.suc, m.suc, prod_fn(a, b))
+//
+//         // Show partial sums are nonnegative
+//         partial_nonneg(a, m.suc)
+//         partial(a, m.suc) >= Real.0
+//         partial_nonneg(b, m.suc)
+//         partial(b, m.suc) >= Real.0
+//
+//         // Show cauchy_product is nonnegative
+//         forall(k: Nat) {
+//             cauchy_coefficient_nonneg(a, b, m, k)
+//             cauchy_coefficient(a, b, m)(k) >= Real.0
+//         }
+//         is_lower_bound(cauchy_coefficient(a, b, m), Real.0)
+//         partial_nonneg(cauchy_coefficient(a, b, m), m.suc)
+//         sum(map(m.suc.range, cauchy_coefficient(a, b, m))) >= Real.0
+//         cauchy_product(a, b, m) >= Real.0
+//
+//         // The key missing step: For nonnegative a, b we have
+//         // cauchy_product(a,b,m) = ∑_{i+j=m} a(i)b(j) <= ∑_{i,j∈[0,m]} a(i)b(j) = (∑a(i))(∑b(j))
+//         //
+//         // This would require proving that the diagonal terms are a subset of all grid terms.
+//         cauchy_product(a, b, m) <= partial(a, m.suc) * partial(b, m.suc)
+//
+//         // Combine with the equality from partial_product_as_double_sum
+//         cauchy_product(a, b, m) <= double_sum(m.suc, m.suc, prod_fn(a, b))
+//     }
 // }
 
 // TODO: These theorems require more infrastructure to prove completely.
