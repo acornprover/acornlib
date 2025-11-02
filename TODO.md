@@ -94,13 +94,14 @@
 
 **What's needed to complete**:
 
-The proof has been decomposed into two key sub-lemmas (both documented in cauchy.ac):
+The proof has been decomposed into three key sub-lemmas (documented in cauchy.ac):
 
-1. **`diagonal_as_double_sum`** (lines 2138-2155, commented out):
-   - Statement: `diagonal_sum(f, m) = double_sum(m.suc, m.suc, diag_indicator)`
+1. **`diagonal_as_double_sum`** ✅ **COMPLETE**
+   - Location: `src/real/cauchy.ac` (lines 2153-2290)
+   - Statement: `diagonal_sum(f, m) = double_sum(m.suc, m.suc, diag_indicator(f, m))`
    - Where `diag_indicator(i,j) = f(i,j) if i+j=m, else 0`
-   - **Key insight**: Each row i contributes only one term f(i, m-i)
-   - **Blocker**: Needs lemma about sums with singleton contributions (similar to `sum_singleton`)
+   - **Status**: Proven and verified (uses `sum_singleton` to show each row contributes f(i, m-i))
+   - **Key technique**: Refactored `diagonal_sum` to use named helper function `diagonal_val` instead of inline lambda (Acorn's normalizer has trouble with nested lambdas)
 
 2. **`double_sum_triangle_expand`** (lines 2157-2217, commented out):
    - Statement: Expanding from (m,m) to (m+1,m+1) adds exactly diagonal m
