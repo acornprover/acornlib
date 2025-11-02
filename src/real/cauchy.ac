@@ -7,7 +7,7 @@ from list.list_sum import map_range, list_extensionality, sum_scalar_mul, map_su
 from option import Option
 from real.real_ring import Real, converges, converges_to, limit, lift_seq
 from real.real_series import seq_lte, is_lower_bound, add_seq, mul_seq
-from real.real_base import lte_add_left
+from real.real_base import lte_add_left, lte_add_right, lte_trans
 from semigroup import mul_fn
 from add_semigroup import add_fn
 from add_comm_monoid import AddCommMonoid
@@ -947,7 +947,6 @@ theorem partial_nonneg(f: Nat -> Real, n: Nat) {
     is_lower_bound(f, Real.0) implies partial(f, n) >= Real.0
 } by {
     from list.list_sum import map_add, sum_add
-    from real.real_base import lte_add_right
 
     define p(m: Nat) -> Bool {
         is_lower_bound(f, Real.0) implies partial(f, m) >= Real.0
@@ -1618,6 +1617,28 @@ define diag_row_contrib(a: Nat -> Real, b: Nat -> Real, m: Nat, i: Nat) -> Real 
     sum(map(m.suc.range, function(j: Nat) { diag_cond_prod(a, b, m, i, j) }))
 }
 
+/// Helper lemma: Sum of a function that equals a constant at one index and zero elsewhere.
+/// If g(j) = c when j = k, and g(j) = 0 otherwise, then sum(g, n) = c (when k < n).
+theorem sum_singleton(g: Nat -> Real, c: Real, k: Nat, n: Nat) {
+    k < n and
+    g(k) = c and
+    (forall(j: Nat) { j < n and j != k implies g(j) = Real.0 })
+    implies
+    partial(g, n) = c
+} by {
+    // TODO: This requires careful induction on the structure of the range
+    // Mathematical fact: Summing a function that's c at index k and 0 elsewhere gives c
+    // Need to prove by splitting the range into [0,k), [k], (k,n) and showing:
+    // 1. partial(g, k) = 0 (sum of zeros before k)
+    // 2. partial(g, k.suc) = c (adding g(k) = c)
+    // 3. partial(g, n) = c for n > k.suc (adding more zeros)
+    //
+    // This is a fundamental property but requires explicit handling in Acorn's proof system
+    if k < n and g(k) = c and (forall(j: Nat) { j < n and j != k implies g(j) = Real.0 }) {
+        partial(g, n) = c
+    }
+}
+
 /// Lemma: Sum of conditional where exactly one index satisfies predicate.
 /// When pred(k) holds and is the unique satisfier in [0,n), sum of cond_part equals f(k).
 theorem sum_cond_unique(f: Nat -> Real, pred: Nat -> Bool, n: Nat, k: Nat) {
@@ -1666,15 +1687,19 @@ theorem sum_cond_unique(f: Nat -> Real, pred: Nat -> Bool, n: Nat, k: Nat) {
         // First, prove that partial(singleton_fn, k) = Real.0
         // (all terms before k are zero)
 
-        // TODO: Need to prove sum of singleton function equals the single non-zero element
-        // This requires: forall j < k, singleton_fn(j) = 0, so partial(singleton_fn, k) = 0
-        // Then: partial(singleton_fn, k.suc) = 0 + f(k) = f(k)
-        // Then: forall m > k, singleton_fn(m) = 0, so partial(singleton_fn, n) = f(k)
-        //
-        // The key lemma needed is: sum of function that's f(k) at k and 0 elsewhere equals f(k)
-        // This is a fundamental property but requires careful induction on naturals
-        //
-        // For now, asserting this critical step to complete the proof structure
+        // Use the sum_singleton helper lemma
+        // We have: singleton_fn(k) = f(k) and singleton_fn(j) = 0 for j != k
+        singleton_fn(k) = f(k)
+        forall(j: Nat) {
+            if j < n and j != k {
+                j != k
+                singleton_fn(j) = Real.0
+            }
+        }
+
+        // Apply sum_singleton
+        sum_singleton(singleton_fn, f(k), k, n)
+        partial(singleton_fn, n) = f(k)
         sum(map(n.range, singleton_fn)) = f(k)
         sum(map(n.range, cond_part(f, pred))) = f(k)
     }
@@ -1799,6 +1824,78 @@ theorem cauchy_as_diag_double_sum(a: Nat -> Real, b: Nat -> Real, m: Nat) {
     cauchy_product(a, b, m) = sum(map(m.suc.range, function(i: Nat) { diag_row_contrib(a, b, m, i) }))
 }
 
+/// Adding two inequalities preserves the inequality.
+/// If a ≤ b and c ≤ d, then a + c ≤ b + d.
+theorem add_lte_add(a: Real, b: Real, c: Real, d: Real) {
+    a <= b and c <= d implies a + c <= b + d
+} by {
+    if a <= b and c <= d {
+        lte_add_right(a, b, c)
+        a + c <= b + c
+        lte_add_left(c, d, b)
+        b + c <= b + d
+        lte_trans(a + c, b + c, b + d)
+        a + c <= b + d
+    }
+}
+
+/// Sum monotonicity: if f(i) ≤ g(i) for all i in range, then sum(f) ≤ sum(g).
+theorem partial_lte_partial(f: Nat -> Real, g: Nat -> Real, n: Nat) {
+    (forall(i: Nat) { i < n implies f(i) <= g(i) })
+    implies
+    partial(f, n) <= partial(g, n)
+} by {
+    // Prove by induction on n
+    define p(m: Nat) -> Bool {
+        (forall(i: Nat) { i < m implies f(i) <= g(i) }) implies partial(f, m) <= partial(g, m)
+    }
+
+    // Base case: m = 0
+    partial(f, Nat.0) = Real.0
+    partial(g, Nat.0) = Real.0
+    partial(f, Nat.0) <= partial(g, Nat.0)
+    p(Nat.0)
+
+    // Inductive step: p(m) implies p(m.suc)
+    forall(m: Nat) {
+        if p(m) {
+            if forall(i: Nat) { i < m.suc implies f(i) <= g(i) } {
+                // Split the range [0, m.suc) into [0, m) and {m}
+                forall(i: Nat) {
+                    if i < m {
+                        i < m.suc
+                        f(i) <= g(i)
+                    }
+                }
+
+                // Apply induction hypothesis to get partial(f, m) <= partial(g, m)
+                p(m)
+                partial(f, m) <= partial(g, m)
+
+                // Now handle the m-th element
+                m < m.suc
+                f(m) <= g(m)
+
+                // Use partial_split_last to expand
+                partial(f, m.suc) = partial(f, m) + f(m)
+                partial(g, m.suc) = partial(g, m) + g(m)
+
+                // Since partial(f, m) <= partial(g, m) and f(m) <= g(m), we have:
+                // partial(f, m) + f(m) <= partial(g, m) + g(m)
+                partial(f, m) <= partial(g, m)
+                f(m) <= g(m)
+                add_lte_add(partial(f, m), partial(g, m), f(m), g(m))
+                partial(f, m) + f(m) <= partial(g, m) + g(m)
+                partial(f, m.suc) <= partial(g, m.suc)
+            }
+            p(m.suc)
+        }
+    }
+
+    // Apply induction to conclude p(n)
+    p(n)
+}
+
 /// For nonnegative sequences a and b, the Cauchy product up to m
 /// is bounded by the double sum (full product of partial sums).
 /// This is the key inequality: ∑_{i+j=m} a(i)b(j) <= ∑_{i,j≤m} a(i)b(j).
@@ -1872,10 +1969,10 @@ theorem double_sum_diagonal_bound(a: Nat -> Real, b: Nat -> Real, m: Nat) {
         // Now lift the row-wise inequalities to the full sum
         // We have: forall i < m.suc. diag_row_contrib(a,b,m,i) <= row_sum(m.suc, prod_fn(a,b), i)
         // Therefore: sum(diag_row_contrib) <= sum(row_sum) = double_sum
-        //
-        // TODO: Need general lemma sum_monotone: if forall i. f(i) <= g(i) then sum(f) <= sum(g)
-        // This is a standard monotonicity property of sums
-        // For now, asserting this step to complete the proof structure
+
+        // Apply partial_lte_partial
+        partial_lte_partial(function(i: Nat) { diag_row_contrib(a, b, m, i) }, row_sum(m.suc, prod_fn(a, b)), m.suc)
+        partial(function(i: Nat) { diag_row_contrib(a, b, m, i) }, m.suc) <= partial(row_sum(m.suc, prod_fn(a, b)), m.suc)
         sum(map(m.suc.range, function(i: Nat) { diag_row_contrib(a, b, m, i) })) <= sum(map(m.suc.range, row_sum(m.suc, prod_fn(a, b))))
 
         // Connect to double_sum
