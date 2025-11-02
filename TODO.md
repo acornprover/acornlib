@@ -1,33 +1,28 @@
 # TODO
 
-## 1. Cauchy Products - Phase 2: Convergence Proofs
+## 1. Cauchy Products - Phase 2: Convergence Proofs ✅ **COMPLETE**
 
 **File:** `src/real/cauchy.ac`
 
-**Status:** Proof structures completed and documented. Theorems commented out pending additional lemmas.
+**Status:** All theorems proven and verified!
 
 ### Completed Work
 
-1. **`cauchy_partial_product_bound`** - PROOF STRUCTURE COMPLETE (commented out)
+1. **`cauchy_partial_product_bound`** ✅ **COMPLETE**
+   - Location: `src/real/cauchy.ac` (lines 2907-2970)
    - Statement: `partial(cauchy_seq(a, b), n) <= partial(a, n) * partial(b, n)` for nonnegative a, b
-   - Strategy documented: Compare triangular sum (i+j < n) vs square sum (i < n, j < n)
-   - Helper function `triangle_product` defined
+   - Strategy: Compare triangular sum (i+j < n) vs square sum (i < n, j < n)
+   - Uses `partial_cauchy_as_triangle` + `double_sum_pointwise_le`
    - Key insight: Triangular region ⊆ square region, with nonnegative terms
-   - **Remaining work:** Needs the following lemmas:
-     * `double_sum_pointwise_le`: If f(i,j) <= g(i,j) for all i < n, j < m, then double_sum(n, m, f) <= double_sum(n, m, g)
-     * `partial_cauchy_as_triangle`: Prove that partial(cauchy_seq(a, b), n) = double_sum(n, n, triangle_product(a, b, n))
 
-2. **`cauchy_product_abs_converges`** (Mertens' Theorem) - PROOF STRUCTURE COMPLETE (commented out)
+2. **`cauchy_product_abs_converges`** (Mertens' Theorem) ✅ **COMPLETE**
+   - Location: `src/real/cauchy.ac` (lines 2972-3074)
    - Statement: If `absolutely_converges(a)` and `absolutely_converges(b)`, then `absolutely_converges(cauchy_seq(a, b))`
-   - Strategy documented:
-     * Show `abs_fn(cauchy_seq(a, b)) <= cauchy_seq(abs_fn(a), abs_fn(b))` pointwise
-     * Apply `cauchy_partial_product_bound` to abs_fn sequences
-     * Use monotone_convergence_principle with bounded increasing sequence
-   - All key steps outlined with clear reasoning
-   - **Remaining work:** Needs the following lemmas:
-     * `convergent_increasing_bounded_by_limit`: If converges(s) and is_increasing(s), then for all n, s(n) <= limit(s)
-     * `mul_bounded_by_product`: If a <= A and b <= B and all are nonnegative, then a * b <= A * B (may already exist as `mul_le_mul_nonneg`)
-     * `is_increasing_partial`: For nonnegative f, partial(f) is increasing
+   - Proof strategy:
+     * Shows `abs_fn(cauchy_seq(a, b)) <= cauchy_seq(abs_fn(a), abs_fn(b))` pointwise
+     * Applies `cauchy_partial_product_bound` to abs_fn sequences
+     * Uses `monotone_convergence_principle` with bounded increasing sequence
+   - This is the critical theorem needed to prove `e^x * e^y = e^(x+y)`
 
 ### Missing Lemmas (Priority Order)
 
@@ -37,14 +32,13 @@
 - Status: **Proven and verified** (uses partial_lte_partial for row and column comparisons)
 - Needed for: `cauchy_partial_product_bound`
 
-**Priority 2: Triangular Sum Identity** ⏸️ **DEFERRED**
+**Priority 2: Triangular Sum Identity** ✅ **COMPLETE**
 - **`partial_cauchy_as_triangle`**: partial(cauchy_seq(a, b), n) = double_sum(n, n, triangle_product(a, b, n))
-- Location: `src/real/cauchy.ac` (commented out, lines 2278-2294)
-- Status: **Requires summation exchange infrastructure** (Fubini-like lemma for finite sums)
-- Issue: LHS sums over (k, i) with i ≤ k < n; RHS sums over (i, j) with i+j < n
-- Both represent the same triangular region but in different summation orders
-- **Action needed**: Implement finite summation exchange lemmas or alternative proof strategy
-- Needed for: `cauchy_partial_product_bound`
+- Location: `src/real/cauchy.ac` (lines 2789-2906)
+- Status: **Proven and verified**
+- Connects Cauchy product (diagonal sum) to triangular region (double sum)
+- Uses `finite_double_sum_exchange` to reorder summation
+- Needed for: `cauchy_partial_product_bound` ✅
 
 **Priority 3: Convergence Bounds** ✅ **EXISTS**
 - **`increasing_convergent_bounded_by_limit`**: If is_increasing(a) and converges(a), then is_upper_bound(a, limit(a))
@@ -66,57 +60,38 @@
 
 ---
 
-## Critical Blocker: Summation Exchange
+## Supporting Lemmas: Summation Exchange ✅ **COMPLETE**
 
-**The ONLY missing piece** is a summation exchange lemma for Priority 2:
+All supporting lemmas for summation exchange over triangular regions have been proven!
 
-**Required: `finite_double_sum_exchange`**
-- **Location**: `src/real/cauchy.ac` (lines 2138-2158, currently commented out)
-- **Statement**: Enable reordering finite double sums over triangular regions
-- **Specific need**: Prove that
-  ```
-  sum_{k=0}^{n-1} sum_{i=0}^{k} f(i, k-i) = sum_{i=0}^{n-1} sum_{j<n} [i+j<n ? f(i,j) : 0]
-  ```
+**Completed: `finite_double_sum_exchange`** ✅
+- **Location**: `src/real/cauchy.ac` (lines 2562-2631)
+- **Statement**: `sum(map(n.range, diagonal_sum(f))) = double_sum(n, n, triangle_fn(f, n))`
+- **Purpose**: Enables reordering finite double sums from diagonal form to triangular region form
 - **Why needed**: To prove `partial_cauchy_as_triangle`, which connects:
   - Cauchy products: `sum_{k<n} sum_{i≤k} a(i)*b(k-i)`
   - Triangular double sum: `sum_{i<n} sum_{j<n} [i+j<n ? a(i)*b(j) : 0]`
 
-**Progress made:**
-- ✅ Defined helper functions: `diagonal_sum`, `triangle_region`, `triangle_fn`
-- ✅ Proved base case (n=0): both sides equal 0
-- ✅ Set up induction structure
-- ⏸️ **Blocker in inductive step**: Need to prove that expanding `double_sum(m.suc, m.suc, triangle_fn(f, m.suc))` adds exactly `diagonal_sum(f, m)`
-
-**Key insight identified**:
-- `triangle_fn(f, m.suc)` differs from `triangle_fn(f, m)` only on the m-th diagonal (where i+j=m)
-- New terms added when going from m×m to (m+1)×(m+1) are precisely those with i+j=m
-- This should equal `diagonal_sum(f, m) = sum_{i=0}^m f(i, m-i)`
-
-**What's needed to complete**:
-
-The proof has been decomposed into three key sub-lemmas (documented in cauchy.ac):
+**Supporting lemmas proven:**
 
 1. **`diagonal_as_double_sum`** ✅ **COMPLETE**
-   - Location: `src/real/cauchy.ac` (lines 2153-2290)
+   - Location: `src/real/cauchy.ac` (lines 2391-2560)
    - Statement: `diagonal_sum(f, m) = double_sum(m.suc, m.suc, diag_indicator(f, m))`
    - Where `diag_indicator(i,j) = f(i,j) if i+j=m, else 0`
-   - **Status**: Proven and verified (uses `sum_singleton` to show each row contributes f(i, m-i))
-   - **Key technique**: Refactored `diagonal_sum` to use named helper function `diagonal_val` instead of inline lambda (Acorn's normalizer has trouble with nested lambdas)
+   - Uses `sum_singleton` to show each row contributes f(i, m-i)
+   - Key technique: Named helper function `diagonal_val` instead of inline lambda
 
-2. **`double_sum_triangle_expand`** (lines 2157-2217, commented out):
+2. **`double_sum_triangle_expand`** ✅ **COMPLETE**
+   - Location: `src/real/cauchy.ac` (lines 2633-2787)
    - Statement: Expanding from (m,m) to (m+1,m+1) adds exactly diagonal m
-   - **Depends on**: diagonal_as_double_sum + double_sum additivity
-   - **Key insight**: triangle_fn(f, m.suc) = extended(triangle_fn(f, m)) + diag_indicator
+   - Uses `diagonal_as_double_sum` + `double_sum_pointwise_add`
+   - Key insight: `triangle_fn(f, m.suc) = triangle_fn(f, m) + diag_indicator(f, m)` pointwise
 
-3. **`finite_double_sum_exchange`** (lines 2219-2227, commented out):
-   - The main theorem proving summation exchange
-   - **Depends on**: double_sum_triangle_expand
-   - **Status**: Induction structure complete, just needs the expansion lemma
-
-**Alternative approaches to consider**:
-- Direct bijection between (k, i≤k) pairs and (i,j:i+j<n) pairs
-- Using existing `cauchy_as_diag_double_sum` machinery differently
-- Proving via a different summation order entirely
+3. **`double_sum_pointwise_add`** ✅ **COMPLETE**
+   - Location: `src/real/cauchy.ac` (lines 2292-2389)
+   - Statement: `double_sum(n, m, f) + double_sum(n, m, g) = double_sum(n, m, add_fn(f, g))`
+   - Distributes addition over double sums pointwise
+   - Used to combine triangle expansions
 
 
 3. **Cauchy product limit formula** - TODO
