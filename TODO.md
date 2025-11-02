@@ -4,19 +4,25 @@
 
 **File:** `src/real/cauchy.ac`
 
-**Status:** Infrastructure complete. Ready to prove convergence theorems.
+**Status:** Proof structures completed and documented. Theorems commented out pending additional lemmas.
 
-### Next Steps
+### Completed Work
 
-1. **`cauchy_partial_product_bound`** - TODO
-   - Prove: `cauchy_product(a, b, m) <= partial(a, m.suc) * partial(b, m.suc)` for nonnegative a, b
-   - Strategy: Use `double_sum_diagonal_bound` + `partial_product_as_double_sum`
-   - This bounds each Cauchy partial product by the product of partial sums
+1. **`cauchy_partial_product_bound`** - PROOF STRUCTURE COMPLETE (commented out)
+   - Statement: `partial(cauchy_seq(a, b), n) <= partial(a, n) * partial(b, n)` for nonnegative a, b
+   - Strategy documented: Compare triangular sum (i+j < n) vs square sum (i < n, j < n)
+   - Helper function `triangle_product` defined
+   - Key insight: Triangular region ⊆ square region, with nonnegative terms
+   - **Remaining work:** Need lemma to compare double sums pointwise, and prove `partial_cauchy_as_triangle`
 
-2. **`cauchy_product_abs_converges`** (Mertens' Theorem) - TODO
+2. **`cauchy_product_abs_converges`** (Mertens' Theorem) - PROOF STRUCTURE COMPLETE (commented out)
    - Statement: If `absolutely_converges(a)` and `absolutely_converges(b)`, then `absolutely_converges(cauchy_seq(a, b))`
-   - Strategy: Use comparison test with `cauchy_partial_product_bound`
-   - This is the key convergence theorem for Cauchy products
+   - Strategy documented:
+     * Show `abs_fn(cauchy_seq(a, b)) <= cauchy_seq(abs_fn(a), abs_fn(b))` pointwise
+     * Apply `cauchy_partial_product_bound` to abs_fn sequences
+     * Use monotone_convergence_principle with bounded increasing sequence
+   - All key steps outlined with clear reasoning
+   - **Remaining work:** Need to formalize upper bound extraction from convergent sequences and complete the monotone convergence argument
 
 3. **Cauchy product limit formula** - TODO
    - Statement: `limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))`
