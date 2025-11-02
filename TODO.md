@@ -93,9 +93,29 @@
 - This should equal `diagonal_sum(f, m) = sum_{i=0}^m f(i, m-i)`
 
 **What's needed to complete**:
-1. Lemma showing how `triangle_fn(f, m.suc)` decomposes into `triangle_fn(f, m)` plus diagonal m terms
-2. Lemma relating `double_sum` expansion with the triangle restriction
-3. OR: Alternative proof approach that avoids the induction altogether
+
+The proof has been decomposed into two key sub-lemmas (both documented in cauchy.ac):
+
+1. **`diagonal_as_double_sum`** (lines 2138-2155, commented out):
+   - Statement: `diagonal_sum(f, m) = double_sum(m.suc, m.suc, diag_indicator)`
+   - Where `diag_indicator(i,j) = f(i,j) if i+j=m, else 0`
+   - **Key insight**: Each row i contributes only one term f(i, m-i)
+   - **Blocker**: Needs lemma about sums with singleton contributions (similar to `sum_singleton`)
+
+2. **`double_sum_triangle_expand`** (lines 2157-2217, commented out):
+   - Statement: Expanding from (m,m) to (m+1,m+1) adds exactly diagonal m
+   - **Depends on**: diagonal_as_double_sum + double_sum additivity
+   - **Key insight**: triangle_fn(f, m.suc) = extended(triangle_fn(f, m)) + diag_indicator
+
+3. **`finite_double_sum_exchange`** (lines 2219-2227, commented out):
+   - The main theorem proving summation exchange
+   - **Depends on**: double_sum_triangle_expand
+   - **Status**: Induction structure complete, just needs the expansion lemma
+
+**Alternative approaches to consider**:
+- Direct bijection between (k, i≤k) pairs and (i,j:i+j<n) pairs
+- Using existing `cauchy_as_diag_double_sum` machinery differently
+- Proving via a different summation order entirely
 
 
 3. **Cauchy product limit formula** - TODO
