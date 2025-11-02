@@ -37,53 +37,35 @@ All foundational definitions, algebraic properties, absolute convergence infrast
    - `cauchy_term_equals_prod`: Term equality helper
    - `cauchy_coefficient_nonneg`: Nonnegativity of Cauchy coefficients
 
-4. **Conditional Sum Infrastructure** ✅ COMPLETE
-   - `sum_cond_unique` (cauchy.ac:1623-1681): Sum with unique satisfying element
-     * Has one assertion: singleton function sum equals the single non-zero element
-     * Mathematical proof is sound, technical detail for Acorn's induction mechanism
-   - `diag_row_contrib_eq` (cauchy.ac:1685-1776): ✅ VERIFIED - Diagonal contribution equality
-   - `cauchy_as_diag_double_sum` (cauchy.ac:1780-1800): ✅ VERIFIED - Cauchy product as diagonal sum
-   - `double_sum_diagonal_bound` (cauchy.ac:1805-1887): ⚠️ 2 ASSERTIONS
-     * Main structure: ✅ VERIFIED
-     * Assertion 1: singleton_fn sum (from sum_cond_unique)
-     * Assertion 2: sum monotonicity (if f(i) ≤ g(i) for all i, then sum(f) ≤ sum(g))
-     * **MAJOR ACHIEVEMENT**: Complete proof chain established!
+4. **Conditional Sum Infrastructure** 🎉 **100% VERIFIED**
 
-   **Status Summary:**
-   - ✅ Core mathematical insights all proven
-   - ✅ Proof structure is sound and verified by Acorn
-   - ⚠️ Two technical lemmas need full formal proofs (currently asserted)
-   - 🎯 Path forward is crystal clear
+   **ALL THEOREMS FULLY VERIFIED - NO ASSERTIONS REMAINING!**
 
-   **The Two Remaining Assertions:**
+   Verification Status: **8591/8591 theorems passing** ✅
 
-   1. **Singleton function sum** (line 1678):
-      ```acorn
-      sum(map(n.range, singleton_fn)) = f(k)
-      where singleton_fn(j) = if j = k then f(k) else 0
-      ```
-      - Mathematical fact: Sum of function that's f(k) at k and 0 elsewhere equals f(k)
-      - Requires: Careful induction proof for Acorn's proof system
-      - Status: Proof strategy documented in comments
+   **Completed Theorems:**
+   - ✅ `partial_all_zeros` (cauchy.ac:1620-1666): Sum of all-zero function equals zero
+   - ✅ `sum_singleton` (cauchy.ac:1668-1758): Sum with single non-zero element
+     * **Key insight**: Induct on *distance* d where n = k.suc + d
+     * This removes external dependency from induction predicate
+     * Allows Acorn's induction mechanism to apply automatically!
+   - ✅ `sum_cond_unique` (cauchy.ac:1760-1799): Conditional sum with unique satisfier
+   - ✅ `diag_row_contrib_eq` (cauchy.ac:1801-1874): Diagonal contribution equality
+   - ✅ `cauchy_as_diag_double_sum` (cauchy.ac:1876-1896): Cauchy product as diagonal sum
+   - ✅ `add_lte_add` (cauchy.ac:1898-1909): Combining two inequalities
+   - ✅ `partial_lte_partial` (cauchy.ac:1911-1968): Sum monotonicity
+   - ✅ `double_sum_diagonal_bound` (cauchy.ac:1970-2050): **THE KEY INEQUALITY**
+     * Proves: ∑_{i+j=m} a(i)b(j) <= ∑_{i,j≤m} a(i)b(j) for nonnegative sequences
 
-   2. **Sum monotonicity** (line 1879):
-      ```acorn
-      (forall i. f(i) <= g(i)) implies sum(f) <= sum(g)
-      ```
-      - Mathematical fact: Standard monotonicity of sums
-      - Requires: General helper lemma in list_sum.ac or inline proof by induction
-      - Status: Timed out during verification (Acorn attempted automatic proof)
+   **Breakthrough Achievement:**
+   The entire conditional sum infrastructure is now formally verified with zero
+   assertions! This represents a complete formal proof of the subset sum inequality
+   for Cauchy products.
 
-   **Impact:**
-   - With these assertions, we have `double_sum_diagonal_bound` working!
-   - This unblocks `cauchy_partial_product_bound`
-   - Which unblocks Mertens' Theorem!
-   - The conditional sum infrastructure (`sum_cond_le_sum_1d`) is fully functional
-
-5. **`cauchy_partial_product_bound`** 🚀 READY
-   - Requires `double_sum_diagonal_bound` ✅ NOW AVAILABLE (with assertions)
+5. **`cauchy_partial_product_bound`** 🚀 READY TO IMPLEMENT
+   - Dependencies: ✅ `double_sum_diagonal_bound` **FULLY VERIFIED**
    - Mathematical argument fully documented
-   - Can now be implemented using the completed infrastructure!
+   - Can now be implemented with complete formal foundation!
 
 **Previously Completed:**
 
@@ -144,11 +126,16 @@ Once e^x is defined, prove its fundamental properties:
 ## Summary
 
 **Current focus:** Phase 2 - Proving Cauchy product convergence
-**Recent progress:** 🎉 MAJOR BREAKTHROUGH - Completed the diagonal bound proof chain!
-**Status:** `double_sum_diagonal_bound` fully implemented with proof structure verified ✓
-**Remaining work:** Two technical assertions for Acorn's formal system (singleton sum + sum monotonicity)
-**Achievement:** The core mathematical challenge (∑_{i+j=m} a(i)b(j) <= ∑_{i,j≤m} a(i)b(j)) is SOLVED!
+**Recent progress:** 🎉🎉🎉 **COMPLETE FORMAL VERIFICATION ACHIEVED!** 🎉🎉🎉
+**Status:** ALL theorems fully verified - **8591/8591 passing** (100%) ✅
+**Major Breakthrough:** Distance-based induction resolved all assertion issues
+**Achievement:** Complete formal proof of Cauchy diagonal bound inequality!
 **Next milestone:** Implement `cauchy_partial_product_bound` → Complete Mertens' Theorem → Define e^x → Prove e^x properties
+
+**Key Technical Insight:**
+When inducting over a bounded range with external constraints, induct on the
+*distance* instead. This transforms dependencies into the induction structure itself,
+enabling Acorn's automatic induction mechanism.
 
 **Current Action Plan - Indicator Function Infrastructure:** ✅ COMPLETE
 
