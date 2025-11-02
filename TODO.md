@@ -70,16 +70,32 @@
 
 **The ONLY missing piece** is a summation exchange lemma for Priority 2:
 
-**Required: `finite_double_sum_exchange` or similar**
+**Required: `finite_double_sum_exchange`**
+- **Location**: `src/real/cauchy.ac` (lines 2138-2158, currently commented out)
 - **Statement**: Enable reordering finite double sums over triangular regions
 - **Specific need**: Prove that
   ```
-  sum_{k=0}^{n-1} sum_{i=0}^{k} f(i, k-i) = sum_{i=0}^{n-1} sum_{j : i+j<n} f(i, j)
+  sum_{k=0}^{n-1} sum_{i=0}^{k} f(i, k-i) = sum_{i=0}^{n-1} sum_{j<n} [i+j<n ? f(i,j) : 0]
   ```
 - **Why needed**: To prove `partial_cauchy_as_triangle`, which connects:
   - Cauchy products: `sum_{k<n} sum_{i≤k} a(i)*b(k-i)`
   - Triangular double sum: `sum_{i<n} sum_{j<n} [i+j<n ? a(i)*b(j) : 0]`
-- **Difficulty**: Requires infrastructure for reasoning about finite sum reindexing
+
+**Progress made:**
+- ✅ Defined helper functions: `diagonal_sum`, `triangle_region`, `triangle_fn`
+- ✅ Proved base case (n=0): both sides equal 0
+- ✅ Set up induction structure
+- ⏸️ **Blocker in inductive step**: Need to prove that expanding `double_sum(m.suc, m.suc, triangle_fn(f, m.suc))` adds exactly `diagonal_sum(f, m)`
+
+**Key insight identified**:
+- `triangle_fn(f, m.suc)` differs from `triangle_fn(f, m)` only on the m-th diagonal (where i+j=m)
+- New terms added when going from m×m to (m+1)×(m+1) are precisely those with i+j=m
+- This should equal `diagonal_sum(f, m) = sum_{i=0}^m f(i, m-i)`
+
+**What's needed to complete**:
+1. Lemma showing how `triangle_fn(f, m.suc)` decomposes into `triangle_fn(f, m)` plus diagonal m terms
+2. Lemma relating `double_sum` expansion with the triangle restriction
+3. OR: Alternative proof approach that avoids the induction altogether
 
 
 3. **Cauchy product limit formula** - TODO
