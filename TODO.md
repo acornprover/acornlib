@@ -16,18 +16,30 @@ All theorems for Cauchy product convergence are now proven and verified:
 
 ## Next Steps
 
-### 1. Cauchy Product Limit Formula
+### 1. Cauchy Product Limit Formula (IN PROGRESS)
 
 **File:** `src/real/cauchy.ac`
 
-Prove that the limit of the Cauchy product equals the product of the limits:
-```
-limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))
-```
+**Status:** Partially complete. The theorem statement and proof structure are outlined, but the proof requires additional infrastructure.
 
-**Dependencies:**
-- Will need a theorem about products of convergent sequences
-- May need to show that `cauchy_seq(a, b)` converges (not just absolutely)
+**What's needed:**
+1. **Theorem about products of convergent sequences**: If `a_n -> L` and `b_n -> M`, then `a_n * b_n -> L * M`
+   - This is a classical result in real analysis
+   - For rational sequences, we have `mul_rat_seq_converges` in `real_seq.ac`
+   - Need an analogous theorem for real sequences
+
+2. **Corner region analysis**: Show that the "corner" terms (products `a(i)*b(j)` where `i < n`, `j < n`, but `i+j >= n`) vanish in the limit
+   - The corner region represents the difference between `partial(a, n) * partial(b, n)` and `partial(cauchy_seq(a, b), n)`
+   - For absolutely convergent series, these terms should go to zero as the tail sums vanish
+
+3. **Double sum manipulation lemmas**: More infrastructure for working with limits of double sums
+
+**Current state:**
+- Commented-out theorem `cauchy_product_limit` with proof outline
+- The key facts are established:
+  - `cauchy_product_abs_converges`: Cauchy product of absolutely convergent series is absolutely convergent (Mertens' Theorem)
+  - `partial_cauchy_as_triangle`: Connection between Cauchy partial sums and double sums
+  - `partial_product_as_double_sum`: Product of partials as a double sum
 
 ---
 
