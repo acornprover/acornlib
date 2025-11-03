@@ -37,20 +37,51 @@ All theorems for Cauchy product convergence are now proven and verified:
      - Epsilon divisions with multiple multiplications
 
 **What's still needed:**
-1. **Either:**
-   - (a) Enhance Acorn's constraint solver to handle these complex inequalities, OR
-   - (b) Find a different proof strategy that avoids the problematic constraint patterns, OR
-   - (c) Prove the necessary helper lemmas (convergent sequences are bounded, etc.) in a way the prover accepts
 
-2. **Corner region analysis**: Show that the "corner" terms vanish in the limit
-   - This also likely requires limit_mul_seq or similar infrastructure
+**Approach: Break down into helper lemmas**
 
-3. **Complete cauchy_product_limit**: Once limit_mul_seq is proven, complete the main theorem
+To prove `limit_mul_seq`, we need these helper lemmas (in order of dependency):
+
+1. ⚠️ **converges_imp_bounded**: Convergent sequences are bounded (ATTEMPTED - BLOCKED)
+   - Statement: `converges(a) implies exists(bound: Real) { bound.is_positive and forall(i: Nat) { a(i).abs < bound } }`
+   - This is fundamental - any Cauchy sequence is bounded
+   - **Status**: Attempted multiple proof strategies but all fail with constraint solver:
+     - Cannot find existential witness for `eventual_ub` on real sequences
+     - Cannot find finite bound for initial segment
+     - Triangle inequality not automatically applied
+   - **Note**: The analogous theorem `converges_imp_bounded(a: Nat -> Rat)` works for rational sequences
+   - **Issue**: Constraint solver treats Real (Dedekind cuts) differently from Rat
+
+2. ⬜ **limit_bounded_by_seq_bound**: The limit is bounded by the sequence bound
+   - Statement: `converges_to(a, lim_a) and bound.is_positive and (forall(i: Nat) { a(i).abs < bound }) implies lim_a.abs <= bound`
+   - The limit can't be larger than the bound on all sequence elements
+
+3. ⬜ **epsilon_division_helper**: Dividing epsilon by a positive bound
+   - Statement: `eps.is_positive and bound.is_positive implies exists(eps2: Real) { eps2.is_positive and bound * eps2 + bound * eps2 < eps }`
+   - This is algebraic: just take eps2 = eps / (2 * bound + 1)
+
+4. ⬜ **triangle_ineq_mul_diff**: Triangle inequality for product differences
+   - Statement: `(a * b - c * d).abs <= a.abs * (b - d).abs + d.abs * (a - c).abs`
+   - Key algebraic fact: a*b - c*d = a*(b-d) + d*(a-c)
+
+5. ⬜ **mul_pos_lt_mul**: Multiplication preserves strict inequality for non-negative reals
+   - Statement: `a < bound and b < eps and not a.is_negative and not b.is_negative and bound.is_positive and eps.is_positive implies a * b < bound * eps`
+   - This should be provable from existing real number axioms
+
+6. ⬜ **limit_mul_seq**: The main theorem
+   - Once all helpers are proven, complete the proof using these lemmas
+
+**Then:**
+7. ⬜ **Corner region analysis**: Show that the "corner" terms vanish in the limit
+8. ⬜ **cauchy_product_limit**: Complete the main Cauchy product limit formula theorem
 
 **Current state:**
 - Theorem outline exists in `cauchy.ac` (commented out)
 - `limit_mul_seq` attempted in `real_series.ac` but commented out due to constraint solver limitations
-- All existing theorems verify successfully (8951/8951 OK)
+- Helper lemma `converges_imp_bounded` attempted with multiple approaches, all blocked by constraint solver
+- All existing theorems verify successfully (8956/8959 OK - failures are only in the new helper lemma attempts)
+
+**Key finding**: The constraint solver cannot handle existential quantifiers over Real sequences in the same way it handles Rat sequences. For Rat, it accepts `let a_ub: Rat satisfy { forall(i: Nat) { a(i).abs < a_ub } }` but for Real this fails. This is likely due to the difference in type definitions (Rat is algebraic, Real is Dedekind cuts).
 
 ---
 
