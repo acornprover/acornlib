@@ -2,16 +2,16 @@ from util import constant, compose
 from nat import Nat
 from list import partial, sum, map, List
 from list.list_functional import reverse, sum_reverse, reverse_get_idx
-from list.list_sum import map_range, list_extensionality, sum_scalar_mul, map_sum_add, scalar_mul
+from list.list_sum import map_range, list_extensionality, sum_scalar_mul, map_sum_add, scalar_mul, map_map
 from option import Option
 from real.real_ring import Real, converges, converges_to, limit, lift_seq
 from real.real_series import seq_lte, is_lower_bound, add_seq, mul_seq
-from real.real_base import lte_add_left, lte_add_right, lte_trans
+from real.real_base import lte_add_left, lte_add_right, lte_trans, sub_moves_sides, add_zero_left, add_zero_right
 from semigroup import mul_fn
 from add_semigroup import add_fn
 from real.double_sum import double_sum, row_sum, row_val, double_sum_expands, double_sum_row_expand, prod_fn, partial_product_as_double_sum
 from real.double_sum import mul_nonneg, mul_le_mul_nonneg, cond_part, diag_cond_prod, diag_row_contrib, diag_row_contrib_eq, sum_cond_le_sum_1d
-from real.double_sum import partial_lte_partial, double_sum_pointwise_le, diagonal_val, diagonal_sum, triangle_fn, finite_double_sum_exchange
+from real.double_sum import partial_lte_partial, double_sum_pointwise_le, double_sum_pointwise_add, diagonal_val, diagonal_sum, triangle_fn, finite_double_sum_exchange
 
 numerals Real
 
@@ -911,7 +911,6 @@ theorem cauchy_product_abs_bound(a: Nat -> Real, b: Nat -> Real, n: Nat) {
     (sum(map(n.suc.range, cauchy_coefficient(a, b, n)))).abs <= sum(map(map(n.suc.range, cauchy_coefficient(a, b, n)), Real.abs))
 
     // Use map composition
-    from list.list_sum import map_map
     map_map(n.suc.range, cauchy_coefficient(a, b, n), Real.abs)
     map(map(n.suc.range, cauchy_coefficient(a, b, n)), Real.abs) = map(n.suc.range, compose(Real.abs, cauchy_coefficient(a, b, n)))
 
@@ -1256,6 +1255,223 @@ theorem partial_cauchy_as_triangle(a: Nat -> Real, b: Nat -> Real, n: Nat) {
     partial(cauchy_seq(a, b), n) = double_sum(n, n, triangle_fn(prod_fn(a, b), n))
     double_sum(n, n, triangle_fn(prod_fn(a, b), n)) = double_sum(n, n, triangle_product(a, b, n))
     partial(cauchy_seq(a, b), n) = double_sum(n, n, triangle_product(a, b, n))
+}
+
+/// Helper: Complementary region of the triangle where i + j >= n.
+/// This captures the terms in the product of partial sums that are not part of the
+/// Cauchy product partial sums at index n.
+define tail_triangle_product(a: Nat -> Real, b: Nat -> Real, n: Nat, i: Nat, j: Nat) -> Real {
+    if i + j < n { Real.0 } else { a(i) * b(j) }
+}
+
+/// Decompose the rectangular product region into triangle and tail components.
+theorem prod_fn_triangle_tail_decomp(a: Nat -> Real, b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    prod_fn(a, b)(i, j) = triangle_product(a, b, n, i, j) + tail_triangle_product(a, b, n, i, j)
+} by {
+    if i + j < n {
+        prod_fn(a, b)(i, j) = a(i) * b(j)
+        triangle_product(a, b, n, i, j) = a(i) * b(j)
+        tail_triangle_product(a, b, n, i, j) = Real.0
+        triangle_product(a, b, n, i, j) + tail_triangle_product(a, b, n, i, j) = a(i) * b(j) + Real.0
+        add_zero_right(a(i) * b(j))
+        a(i) * b(j) + Real.0 = a(i) * b(j)
+        triangle_product(a, b, n, i, j) + tail_triangle_product(a, b, n, i, j) = a(i) * b(j)
+        prod_fn(a, b)(i, j) = triangle_product(a, b, n, i, j) + tail_triangle_product(a, b, n, i, j)
+    } else {
+        not (i + j < n)
+        prod_fn(a, b)(i, j) = a(i) * b(j)
+        triangle_product(a, b, n, i, j) = Real.0
+        tail_triangle_product(a, b, n, i, j) = a(i) * b(j)
+        triangle_product(a, b, n, i, j) + tail_triangle_product(a, b, n, i, j) = Real.0 + a(i) * b(j)
+        add_zero_left(a(i) * b(j))
+        Real.0 + a(i) * b(j) = a(i) * b(j)
+        triangle_product(a, b, n, i, j) + tail_triangle_product(a, b, n, i, j) = a(i) * b(j)
+        prod_fn(a, b)(i, j) = triangle_product(a, b, n, i, j) + tail_triangle_product(a, b, n, i, j)
+    }
+}
+
+/// Double sum over the tail region equals the difference between the full product
+/// double sum and the triangular region.
+theorem double_sum_tail_decomp(a: Nat -> Real, b: Nat -> Real, n: Nat) {
+    double_sum(n, n, tail_triangle_product(a, b, n)) =
+        double_sum(n, n, prod_fn(a, b)) - double_sum(n, n, triangle_product(a, b, n))
+} by {
+    // Use pointwise decomposition of prod_fn into triangle + tail
+    forall(i: Nat, j: Nat) {
+        prod_fn_triangle_tail_decomp(a, b, n, i, j)
+    }
+    double_sum_pointwise_add(n, n, triangle_product(a, b, n), tail_triangle_product(a, b, n), prod_fn(a, b))
+    double_sum(n, n, prod_fn(a, b)) =
+        double_sum(n, n, triangle_product(a, b, n)) + double_sum(n, n, tail_triangle_product(a, b, n))
+
+    sub_moves_sides(
+        double_sum(n, n, tail_triangle_product(a, b, n)),
+        double_sum(n, n, triangle_product(a, b, n)),
+        double_sum(n, n, prod_fn(a, b)))
+    double_sum(n, n, tail_triangle_product(a, b, n)) =
+        double_sum(n, n, prod_fn(a, b)) - double_sum(n, n, triangle_product(a, b, n))
+}
+
+/// Express the difference between the product of partial sums and the partial sum of the
+/// Cauchy product via the tail double sum.
+theorem partial_product_minus_cauchy(a: Nat -> Real, b: Nat -> Real, n: Nat) {
+    partial(a, n) * partial(b, n) - partial(cauchy_seq(a, b), n) =
+        double_sum(n, n, tail_triangle_product(a, b, n))
+} by {
+    partial_product_as_double_sum(a, b, n)
+    partial(a, n) * partial(b, n) = double_sum(n, n, prod_fn(a, b))
+
+    partial_cauchy_as_triangle(a, b, n)
+    partial(cauchy_seq(a, b), n) = double_sum(n, n, triangle_product(a, b, n))
+
+    double_sum_tail_decomp(a, b, n)
+    double_sum(n, n, tail_triangle_product(a, b, n)) =
+        double_sum(n, n, prod_fn(a, b)) - double_sum(n, n, triangle_product(a, b, n))
+
+    partial(a, n) * partial(b, n) - partial(cauchy_seq(a, b), n) =
+        double_sum(n, n, tail_triangle_product(a, b, n))
+}
+
+/// Absolute value of the tail contribution matches the tail built from absolute values.
+theorem tail_triangle_abs_eq(a: Nat -> Real, b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    (tail_triangle_product(a, b, n, i, j)).abs = tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j)
+} by {
+    if i + j < n {
+        tail_triangle_product(a, b, n, i, j) = Real.0
+        Real.0.abs = Real.0
+        tail_triangle_product(a, b, n, i, j).abs = Real.0
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) = Real.0
+        tail_triangle_product(a, b, n, i, j).abs = tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j)
+    } else {
+        not (i + j < n)
+        tail_triangle_product(a, b, n, i, j) = a(i) * b(j)
+        (a(i) * b(j)).abs = a(i).abs * b(j).abs
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) = abs_fn(a)(i) * abs_fn(b)(j)
+        abs_fn(a)(i) = a(i).abs
+        abs_fn(b)(j) = b(j).abs
+        tail_triangle_product(a, b, n, i, j).abs = tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j)
+    }
+}
+
+/// Tail triangle terms built from absolute values are nonnegative.
+theorem tail_triangle_abs_nonneg(a: Nat -> Real, b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) >= Real.0
+} by {
+    if i + j < n {
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) = Real.0
+        Real.0 >= Real.0
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) >= Real.0
+    } else {
+        not (i + j < n)
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) = abs_fn(a)(i) * abs_fn(b)(j)
+        abs_fn(a)(i) >= Real.0
+        abs_fn(b)(j) >= Real.0
+        mul_nonneg(abs_fn(a)(i), abs_fn(b)(j))
+        abs_fn(a)(i) * abs_fn(b)(j) >= Real.0
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) >= Real.0
+    }
+}
+
+/// Each row sum built from |a| and |b| is nonnegative.
+theorem row_sum_tail_triangle_abs_nonneg(a: Nat -> Real, b: Nat -> Real, n: Nat, i: Nat) {
+    row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) >= Real.0
+} by {
+    from real.double_sum import partial_nonneg
+
+    define row(j: Nat) -> Real { tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) }
+
+    forall(j: Nat) {
+        tail_triangle_abs_nonneg(a, b, n, i, j)
+        row(j) = tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j)
+        row(j) >= Real.0
+    }
+    is_lower_bound(row, Real.0)
+
+    row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) = sum(map(n.range, row))
+    sum(map(n.range, row)) = partial(row, n)
+    partial_nonneg(row, n)
+    partial(row, n) >= Real.0
+    row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) >= Real.0
+}
+
+/// Bound the magnitude of the difference between product of partial sums and the partial
+/// sums of the Cauchy product.
+theorem partial_product_diff_abs_le(a: Nat -> Real, b: Nat -> Real, n: Nat) {
+    (partial(a, n) * partial(b, n) - partial(cauchy_seq(a, b), n)).abs <= double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n))
+} by {
+    partial_product_minus_cauchy(a, b, n)
+    partial(a, n) * partial(b, n) - partial(cauchy_seq(a, b), n) =
+        double_sum(n, n, tail_triangle_product(a, b, n))
+
+    // Apply triangle inequality to the double sum representation.
+    double_sum_expands(n, n, tail_triangle_product(a, b, n))
+    double_sum(n, n, tail_triangle_product(a, b, n)) =
+        sum(map(n.range, row_sum(n, tail_triangle_product(a, b, n))))
+
+    // Bound each row sum using triangle inequality.
+    forall(i: Nat) {
+        define row(j: Nat) -> Real { tail_triangle_product(a, b, n, i, j) }
+        define row_abs(j: Nat) -> Real { tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) }
+
+        forall(j: Nat) {
+            row(j) = tail_triangle_product(a, b, n, i, j)
+            row_abs(j) = tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j)
+            tail_triangle_abs_eq(a, b, n, i, j)
+            (row(j)).abs = row_abs(j)
+            compose(Real.abs, row)(j) = (row(j)).abs
+            compose(Real.abs, row)(j) = row_abs(j)
+        }
+
+        sum_triangle_ineq(map(n.range, row))
+        (sum(map(n.range, row))).abs <= sum(map(map(n.range, row), Real.abs))
+
+        map_map(n.range, row, Real.abs)
+        map(map(n.range, row), Real.abs) = map(n.range, compose(Real.abs, row))
+
+        from list.list_sum import partial_pointwise_eq
+        partial_pointwise_eq(compose(Real.abs, row), row_abs, n)
+        sum(map(n.range, compose(Real.abs, row))) = sum(map(n.range, row_abs))
+
+        (sum(map(n.range, row))).abs <= sum(map(n.range, row_abs))
+
+        row_sum(n, tail_triangle_product(a, b, n), i) = sum(map(n.range, row))
+        row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) = sum(map(n.range, row_abs))
+        (row_sum(n, tail_triangle_product(a, b, n), i)).abs <= row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i)
+    }
+
+    // Apply sum_triangle_ineq again to combine row contributions.
+    sum_triangle_ineq(map(n.range, row_sum(n, tail_triangle_product(a, b, n))))
+    (sum(map(n.range, row_sum(n, tail_triangle_product(a, b, n))))).abs <= sum(map(map(n.range, row_sum(n, tail_triangle_product(a, b, n))), Real.abs))
+
+    map_map(n.range, row_sum(n, tail_triangle_product(a, b, n)), Real.abs)
+    map(map(n.range, row_sum(n, tail_triangle_product(a, b, n))), Real.abs) =
+        map(n.range, compose(Real.abs, row_sum(n, tail_triangle_product(a, b, n))))
+
+    forall(i: Nat) {
+        compose(Real.abs, row_sum(n, tail_triangle_product(a, b, n)))(i) =
+            (row_sum(n, tail_triangle_product(a, b, n), i)).abs
+        (row_sum(n, tail_triangle_product(a, b, n), i)).abs <= row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i)
+    }
+    lte_fn(compose(Real.abs, row_sum(n, tail_triangle_product(a, b, n))),
+        row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n)))
+    sum_map_range_le(n,
+        compose(Real.abs, row_sum(n, tail_triangle_product(a, b, n))),
+        row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n)))
+
+    sum(map(n.range, compose(Real.abs, row_sum(n, tail_triangle_product(a, b, n))))) <= sum(map(n.range, row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n))))
+
+    (sum(map(n.range, row_sum(n, tail_triangle_product(a, b, n))))).abs <= sum(map(n.range, row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n))))
+
+    double_sum(n, n, tail_triangle_product(a, b, n)) =
+        sum(map(n.range, row_sum(n, tail_triangle_product(a, b, n))))
+    double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n)) =
+        sum(map(n.range, row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n))))
+
+    (double_sum(n, n, tail_triangle_product(a, b, n))).abs <= double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n))
+
+    partial(a, n) * partial(b, n) - partial(cauchy_seq(a, b), n) =
+        double_sum(n, n, tail_triangle_product(a, b, n))
+    (partial(a, n) * partial(b, n) - partial(cauchy_seq(a, b), n)).abs <= double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n))
 }
 
 /// Helper: Cauchy product partial sums of nonnegative sequences are bounded by product of partial sums.
