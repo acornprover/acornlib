@@ -24,7 +24,7 @@ The current goal for `acornlib` is to support the mathematics needed for the mos
 
 - Exponentiation
 - The definition and properties of `e`
-- Complex numbers
+- Calculus with complex numbers
 - Trigonometry: sine, cosine, pi
 - Vectors
 - Matrices
