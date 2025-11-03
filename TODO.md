@@ -18,30 +18,39 @@ All theorems for Cauchy product convergence are now proven and verified:
 
 ## Next Steps
 
-### 1. Cauchy Product Limit Formula (IN PROGRESS)
+### 1. Cauchy Product Limit Formula (IN PROGRESS - BLOCKED)
 
 **File:** `src/real/cauchy.ac`
 
-**Status:** Partially complete. The theorem statement and proof structure are outlined, but the proof requires additional infrastructure.
+**Status:** Progress blocked by Acorn constraint solver limitations.
 
-**What's needed:**
-1. **Theorem about products of convergent sequences**: If `a_n -> L` and `b_n -> M`, then `a_n * b_n -> L * M`
-   - This is a classical result in real analysis
-   - For rational sequences, we have `mul_rat_seq_converges` in `real_seq.ac`
-   - Need an analogous theorem for real sequences
+**Work completed:**
+1. ✅ **Double sum infrastructure**: Core infrastructure extracted to `src/real/double_sum.ac`
+2. ✅ **Mertens' Theorem**: `cauchy_product_abs_converges` proven - Cauchy product of absolutely convergent series is absolutely convergent
+3. ✅ **Supporting lemmas**: `partial_cauchy_as_triangle`, `partial_product_as_double_sum`
+4. ⚠️ **Limit of product theorem**: Attempted to prove `limit_mul_seq` in `real_series.ac`
+   - Theorem statement: If `a_n -> L` and `b_n -> M`, then `a_n * b_n -> L * M`
+   - Mathematical proof is sound and follows the pattern from `mul_rat_seq_converges`
+   - **Blocked**: Acorn's constraint solver cannot handle the complex inequality chains involving:
+     - Existential quantifiers for bounds on convergent sequences
+     - Triangle inequality for products: `|ab - cd| <= |a||b-d| + |d||a-c|`
+     - Epsilon divisions with multiple multiplications
 
-2. **Corner region analysis**: Show that the "corner" terms (products `a(i)*b(j)` where `i < n`, `j < n`, but `i+j >= n`) vanish in the limit
-   - The corner region represents the difference between `partial(a, n) * partial(b, n)` and `partial(cauchy_seq(a, b), n)`
-   - For absolutely convergent series, these terms should go to zero as the tail sums vanish
+**What's still needed:**
+1. **Either:**
+   - (a) Enhance Acorn's constraint solver to handle these complex inequalities, OR
+   - (b) Find a different proof strategy that avoids the problematic constraint patterns, OR
+   - (c) Prove the necessary helper lemmas (convergent sequences are bounded, etc.) in a way the prover accepts
 
-3. **Double sum manipulation lemmas**: More infrastructure for working with limits of double sums
+2. **Corner region analysis**: Show that the "corner" terms vanish in the limit
+   - This also likely requires limit_mul_seq or similar infrastructure
+
+3. **Complete cauchy_product_limit**: Once limit_mul_seq is proven, complete the main theorem
 
 **Current state:**
-- Commented-out theorem `cauchy_product_limit` with proof outline
-- The key facts are established:
-  - `cauchy_product_abs_converges`: Cauchy product of absolutely convergent series is absolutely convergent (Mertens' Theorem)
-  - `partial_cauchy_as_triangle`: Connection between Cauchy partial sums and double sums
-  - `partial_product_as_double_sum`: Product of partials as a double sum
+- Theorem outline exists in `cauchy.ac` (commented out)
+- `limit_mul_seq` attempted in `real_series.ac` but commented out due to constraint solver limitations
+- All existing theorems verify successfully (8951/8951 OK)
 
 ---
 
