@@ -25,9 +25,13 @@ Prove that the limit of the Cauchy product equals the product of the limits:
 limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))
 ```
 
-**Dependencies:**
-- Will need a theorem about products of convergent sequences
-- May need to show that `cauchy_seq(a, b)` converges (not just absolutely)
+**Recent progress:**
+- Added `tail_triangle_abs_nonneg` and `row_sum_tail_triangle_abs_nonneg` to control the sign of the tail region.
+
+**Next steps:**
+- Lift the nonnegativity lemmas to obtain quantitative tail bounds.
+- Will need a theorem about products of convergent sequences.
+- May need to show that `cauchy_seq(a, b)` converges (not just absolutely).
 
 ---
 
