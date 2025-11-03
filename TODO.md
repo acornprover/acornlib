@@ -4,13 +4,15 @@
 
 ### ✅ Cauchy Product Convergence (Mertens' Theorem)
 
-**File:** `src/real/cauchy.ac`
+**Files:** `src/real/cauchy.ac`, `src/real/double_sum.ac`
 
 All theorems for Cauchy product convergence are now proven and verified:
 
 - **`cauchy_product_abs_converges`** (Mertens' Theorem): The Cauchy product of two absolutely convergent series is absolutely convergent. This is the critical theorem needed to prove `e^x * e^y = e^(x+y)`.
 
 - **Supporting infrastructure**: `finite_double_sum_exchange` (discrete Fubini), `partial_cauchy_as_triangle`, `cauchy_partial_product_bound`, and all necessary double sum lemmas.
+
+- **New modular structure**: Basic double sum infrastructure has been extracted to `src/real/double_sum.ac` for better code organization. This is an incremental refactoring - more infrastructure can be moved as needed.
 
 ---
 

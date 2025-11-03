@@ -1,0 +1,124 @@
+/// This file defines double sums and proves general theorems about them.
+/// Double sums are sums over two-dimensional grids: ∑_{i=0}^{n-1} ∑_{j=0}^{m-1} f(i, j).
+///
+/// TODO: This file is a work in progress. More infrastructure should be moved here from cauchy.ac:
+/// - Monotonicity theorems (double_sum_row_monotone, double_sum_col_monotone)
+/// - Pointwise operation theorems (double_sum_pointwise_le, double_sum_pointwise_add)
+/// - Diagonal/triangle sum infrastructure
+/// - Fubini's theorem for finite sums (finite_double_sum_exchange)
+///
+/// For now, this file contains the core definitions and basic expansion theorems.
+/// The refactoring can be completed incrementally as needed.
+
+from nat import Nat
+from list import partial, sum, map, List
+from list.list_sum import map_range, list_extensionality, map_sum_add, partial_pointwise_eq
+from real.real_set import Real
+from add_semigroup import add_fn
+
+numerals Real
+
+attributes Real {
+    // Placeholder to let other modules import Real from here.
+}
+
+/// Helper: compute the sum of row i in a double sum.
+/// This avoids nested lambdas by making all parameters explicit.
+define row_sum(m: Nat, f: (Nat, Nat) -> Real, i: Nat) -> Real {
+    sum(map(m.range, f(i)))
+}
+
+/// Helper: get the value at column j for row i.
+/// This extracts f(i, j) in a way that can be partially applied.
+define col_val(f: (Nat, Nat) -> Real, j: Nat, i: Nat) -> Real {
+    f(i, j)
+}
+
+/// Double sum: sum over pairs (i, j) where i ∈ [0, n) and j ∈ [0, m).
+/// This computes ∑_{i=0}^{n-1} ∑_{j=0}^{m-1} f(i, j).
+/// Using a named helper function instead of nested lambdas to help Acorn's normalizer.
+define double_sum(n: Nat, m: Nat, f: (Nat, Nat) -> Real) -> Real {
+    sum(map(n.range, row_sum(m, f)))
+}
+
+/// Test: Can we just expand the double_sum definition?
+/// This should be trivially true since it's literally the definition.
+theorem double_sum_expands(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
+    double_sum(n, m, f) = sum(map(n.range, row_sum(m, f)))
+} by {
+    // This is literally just the definition
+}
+
+/// Expanding double_sum by adding a column: when we increment the column count,
+/// we get the old double_sum plus the sum over the new column.
+theorem double_sum_col_expand(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
+    double_sum(n, m.suc, f) = double_sum(n, m, f) + sum(map(n.range, col_val(f, m)))
+} by {
+    from list.list_sum import map_add, sum_add
+
+    // For each i, row_sum(m.suc, f, i) = row_sum(m, f, i) + f(i, m)
+    forall(i: Nat) {
+        m.suc.range = m.range + List.singleton(m)
+        map_add(m.range, List.singleton(m), f(i))
+        sum_add(map(m.range, f(i)), List.singleton(f(i, m)))
+        row_sum(m.suc, f, i) = row_sum(m, f, i) + f(i, m)
+    }
+
+    // Apply map_sum_add
+    map_sum_add(n.range, row_sum(m, f), col_val(f, m))
+    sum(map(n.range, row_sum(m, f))) + sum(map(n.range, col_val(f, m))) = sum(map(n.range, add_fn(row_sum(m, f), col_val(f, m))))
+
+    // Connect add_fn to row_sum(m.suc)
+    forall(i: Nat) {
+        add_fn(row_sum(m, f), col_val(f, m))(i) = row_sum(m, f, i) + col_val(f, m, i)
+        col_val(f, m, i) = f(i, m)
+        add_fn(row_sum(m, f), col_val(f, m))(i) = row_sum(m, f, i) + f(i, m)
+        add_fn(row_sum(m, f), col_val(f, m))(i) = row_sum(m.suc, f, i)
+    }
+
+    sum(map(n.range, add_fn(row_sum(m, f), col_val(f, m)))) = sum(map(n.range, row_sum(m.suc, f)))
+
+    double_sum(n, m.suc, f) = double_sum(n, m, f) + sum(map(n.range, col_val(f, m)))
+}
+
+/// Helper: get the value at row i for column j.
+/// This extracts f(i, j) as a function of j for a fixed i.
+define row_val(f: (Nat, Nat) -> Real, i: Nat) -> (Nat -> Real) {
+    function(j: Nat) { f(i, j) }
+}
+
+/// Expanding double_sum by adding a row: when we increment the row count,
+/// we get the old double_sum plus the sum over the new row.
+theorem double_sum_row_expand(n: Nat, m: Nat, f: (Nat, Nat) -> Real) {
+    double_sum(n.suc, m, f) = double_sum(n, m, f) + sum(map(m.range, row_val(f, n)))
+} by {
+    from list.list_sum import map_add, sum_add
+
+    // Expand the definition of double_sum
+    double_sum(n.suc, m, f) = sum(map(n.suc.range, row_sum(m, f)))
+    double_sum(n, m, f) = sum(map(n.range, row_sum(m, f)))
+
+    // Expand n.suc.range
+    n.suc.range = n.range + List.singleton(n)
+    map_add(n.range, List.singleton(n), row_sum(m, f))
+    map(n.suc.range, row_sum(m, f)) = map(n.range, row_sum(m, f)) + map(List.singleton(n), row_sum(m, f))
+
+    // Evaluate map on singleton
+    map(List.singleton(n), row_sum(m, f)) = List.singleton(row_sum(m, f, n))
+    row_sum(m, f, n) = sum(map(m.range, f(n)))
+
+    // Show that f(n) = row_val(f, n)
+    forall(j: Nat) {
+        f(n)(j) = f(n, j)
+        row_val(f, n)(j) = f(n, j)
+    }
+    f(n) = row_val(f, n)
+    row_sum(m, f, n) = sum(map(m.range, row_val(f, n)))
+
+    // Combine using sum_add
+    map(n.suc.range, row_sum(m, f)) = map(n.range, row_sum(m, f)) + List.singleton(sum(map(m.range, row_val(f, n))))
+    sum_add(map(n.range, row_sum(m, f)), List.singleton(sum(map(m.range, row_val(f, n)))))
+    sum(map(n.suc.range, row_sum(m, f))) = sum(map(n.range, row_sum(m, f))) + sum(map(m.range, row_val(f, n)))
+
+    double_sum(n.suc, m, f) = double_sum(n, m, f) + sum(map(m.range, row_val(f, n)))
+}
