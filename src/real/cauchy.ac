@@ -1,17 +1,18 @@
 from util import constant, compose
 from nat import Nat
+from nat.nat_base import add_assoc, add_comm, add_sub, lt_add_left, lte_imp_not_lt
 from list import partial, sum, map, List
 from list.list_functional import reverse, sum_reverse, reverse_get_idx
 from list.list_sum import map_range, list_extensionality, sum_scalar_mul, map_sum_add, scalar_mul, map_map
 from option import Option
-from real.real_ring import Real, converges, converges_to, limit, lift_seq
+from real.real_ring import Real, converges, converges_to, limit, lift_seq, zero_lte_imp_non_neg, real_mul_comm, lte_mul_nonneg_right
 from real.real_series import seq_lte, is_lower_bound, add_seq, mul_seq
 from real.real_base import lte_add_left, lte_add_right, lte_trans, sub_moves_sides, add_zero_left, add_zero_right
 from semigroup import mul_fn
 from add_semigroup import add_fn
 from real.double_sum import double_sum, row_sum, row_val, double_sum_expands, double_sum_row_expand, prod_fn, partial_product_as_double_sum
 from real.double_sum import mul_nonneg, mul_le_mul_nonneg, cond_part, diag_cond_prod, diag_row_contrib, diag_row_contrib_eq, sum_cond_le_sum_1d
-from real.double_sum import partial_lte_partial, double_sum_pointwise_le, double_sum_pointwise_add, diagonal_val, diagonal_sum, triangle_fn, finite_double_sum_exchange
+from real.double_sum import partial_lte_partial, double_sum_pointwise_le, double_sum_pointwise_add, diagonal_val, diagonal_sum, triangle_fn, finite_double_sum_exchange, partial_mul_scalar_right
 
 numerals Real
 
@@ -1392,6 +1393,389 @@ theorem row_sum_tail_triangle_abs_nonneg(a: Nat -> Real, b: Nat -> Real, n: Nat,
     partial_nonneg(row, n)
     partial(row, n) >= Real.0
     row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) >= Real.0
+}
+
+/// Adding the same natural number on the left preserves ≤.
+theorem nat_add_le_left(a: Nat, b: Nat, c: Nat) {
+    b <= c implies a + b <= a + c
+} by {
+    if b <= c {
+        let (d: Nat) satisfy { b + d = c }
+
+        add_assoc(a, b, d)
+        a + b + d = a + (b + d)
+        b + d = c
+        a + (b + d) = a + c
+        a + b + d = a + c
+        a + b <= a + c
+    }
+}
+
+/// Helper: if i < n and j < n - i then i + j < n.
+theorem tail_triangle_lt_of_lt_diff(n: Nat, i: Nat, j: Nat) {
+    i < n and j < n - i implies i + j < n
+} by {
+    if i < n and j < n - i {
+        let (gap: Nat) satisfy { i + gap = n and gap != Nat.0 }
+        i + gap = n
+        i <= n
+
+        add_sub(n, i)
+        (n - i) + i = n
+        add_comm(i, n - i)
+        i + (n - i) = n
+
+        lt_add_left(i, j, n - i)
+        i + j < i + (n - i)
+        i + (n - i) = n
+        i + j < n
+    }
+}
+
+/// Helper: if i < n and n - i <= j then i + j is not less than n.
+theorem tail_triangle_not_lt_of_le_diff(n: Nat, i: Nat, j: Nat) {
+    i < n and n - i <= j implies not (i + j < n)
+} by {
+    if i < n and n - i <= j {
+        let (gap: Nat) satisfy { i + gap = n and gap != Nat.0 }
+        i + gap = n
+        i <= n
+
+        add_sub(n, i)
+        (n - i) + i = n
+        add_comm(i, n - i)
+        i + (n - i) = n
+
+        nat_add_le_left(i, n - i, j)
+        i + (n - i) <= i + j
+        i + (n - i) = n
+        n <= i + j
+        lte_imp_not_lt(n, i + j)
+        not (i + j < n)
+    }
+}
+
+/// Helper: captures the |b(j)| contribution in a fixed tail triangle row.
+define tail_triangle_row_indicator(b: Nat -> Real, n: Nat, i: Nat, j: Nat) -> Real {
+    if i + j < n { Real.0 } else { abs_fn(b)(j) }
+}
+
+/// Factor |a(i)| out of a tail triangle entry built from absolute values.
+theorem tail_triangle_abs_row_factor(a: Nat -> Real, b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) =
+        abs_fn(a)(i) * tail_triangle_row_indicator(b, n, i, j)
+} by {
+    if i + j < n {
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) = Real.0
+        tail_triangle_row_indicator(b, n, i, j) = Real.0
+        abs_fn(a)(i) * tail_triangle_row_indicator(b, n, i, j) = abs_fn(a)(i) * Real.0
+        abs_fn(a)(i) * Real.0 = Real.0
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) =
+            abs_fn(a)(i) * tail_triangle_row_indicator(b, n, i, j)
+    } else {
+        not (i + j < n)
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) = abs_fn(a)(i) * abs_fn(b)(j)
+        tail_triangle_row_indicator(b, n, i, j) = abs_fn(b)(j)
+        abs_fn(a)(i) * tail_triangle_row_indicator(b, n, i, j) = abs_fn(a)(i) * abs_fn(b)(j)
+        tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) =
+            abs_fn(a)(i) * tail_triangle_row_indicator(b, n, i, j)
+}
+}
+
+/// Helper: captures the |b(j)| contribution inside the triangular region of a row.
+define triangle_row_indicator(b: Nat -> Real, n: Nat, i: Nat, j: Nat) -> Real {
+    if i + j < n { abs_fn(b)(j) } else { Real.0 }
+}
+
+/// On the triangle region the indicator agrees with |b(j)|.
+theorem triangle_row_indicator_eq_abs(b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    i + j < n implies triangle_row_indicator(b, n, i, j) = abs_fn(b)(j)
+} by {
+    if i + j < n {
+        triangle_row_indicator(b, n, i, j) = abs_fn(b)(j)
+    }
+}
+
+/// Off the triangle region the indicator vanishes.
+theorem triangle_row_indicator_zero(b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    not (i + j < n) implies triangle_row_indicator(b, n, i, j) = Real.0
+} by {
+    if not (i + j < n) {
+        triangle_row_indicator(b, n, i, j) = Real.0
+    }
+}
+
+/// Split |b(j)| into triangular and tail row indicators.
+theorem abs_row_indicator_split(b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    abs_fn(b)(j) = triangle_row_indicator(b, n, i, j) + tail_triangle_row_indicator(b, n, i, j)
+} by {
+    if i + j < n {
+        triangle_row_indicator(b, n, i, j) = abs_fn(b)(j)
+        tail_triangle_row_indicator(b, n, i, j) = Real.0
+        triangle_row_indicator(b, n, i, j) + tail_triangle_row_indicator(b, n, i, j) =
+            abs_fn(b)(j) + Real.0
+        add_zero_right(abs_fn(b)(j))
+        abs_fn(b)(j) + Real.0 = abs_fn(b)(j)
+        abs_fn(b)(j) = triangle_row_indicator(b, n, i, j) + tail_triangle_row_indicator(b, n, i, j)
+    } else {
+        not (i + j < n)
+        triangle_row_indicator(b, n, i, j) = Real.0
+        tail_triangle_row_indicator(b, n, i, j) = abs_fn(b)(j)
+        triangle_row_indicator(b, n, i, j) + tail_triangle_row_indicator(b, n, i, j) =
+            Real.0 + abs_fn(b)(j)
+        add_zero_left(abs_fn(b)(j))
+        Real.0 + abs_fn(b)(j) = abs_fn(b)(j)
+        abs_fn(b)(j) = triangle_row_indicator(b, n, i, j) + tail_triangle_row_indicator(b, n, i, j)
+    }
+}
+
+/// Decompose the partial sum of |b| into triangular and tail contributions for a fixed row.
+theorem tail_triangle_indicator_partial_split(b: Nat -> Real, n: Nat, i: Nat) {
+    partial(abs_fn(b), n) =
+        partial(triangle_row_indicator(b, n, i), n) + partial(tail_triangle_row_indicator(b, n, i), n)
+} by {
+    define tri(col_idx: Nat) -> Real { triangle_row_indicator(b, n, i, col_idx) }
+    define tail(col_idx: Nat) -> Real { tail_triangle_row_indicator(b, n, i, col_idx) }
+
+    forall(col_idx: Nat) {
+        add_fn(tri, tail)(col_idx) = tri(col_idx) + tail(col_idx)
+        tri(col_idx) = triangle_row_indicator(b, n, i, col_idx)
+        tail(col_idx) = tail_triangle_row_indicator(b, n, i, col_idx)
+        abs_row_indicator_split(b, n, i, col_idx)
+        tri(col_idx) + tail(col_idx) = abs_fn(b)(col_idx)
+        add_fn(tri, tail)(col_idx) = abs_fn(b)(col_idx)
+    }
+
+    from list.list_sum import partial_pointwise_eq
+    partial_pointwise_eq(tri, triangle_row_indicator(b, n, i), n)
+    partial(tri, n) = partial(triangle_row_indicator(b, n, i), n)
+
+    partial_pointwise_eq(tail, tail_triangle_row_indicator(b, n, i), n)
+    partial(tail, n) = partial(tail_triangle_row_indicator(b, n, i), n)
+
+    partial_pointwise_eq(add_fn(tri, tail), abs_fn(b), n)
+    partial(add_fn(tri, tail), n) = partial(abs_fn(b), n)
+
+    from list.list_sum import partial_add
+    partial_add(tri, tail, n)
+    partial(tri, n) + partial(tail, n) = partial(add_fn(tri, tail), n)
+
+    partial(triangle_row_indicator(b, n, i), n) + partial(tail_triangle_row_indicator(b, n, i), n) =
+        partial(add_fn(tri, tail), n)
+    partial(add_fn(tri, tail), n) = partial(abs_fn(b), n)
+    partial(triangle_row_indicator(b, n, i), n) + partial(tail_triangle_row_indicator(b, n, i), n) =
+        partial(abs_fn(b), n)
+    partial(abs_fn(b), n) =
+        partial(triangle_row_indicator(b, n, i), n) + partial(tail_triangle_row_indicator(b, n, i), n)
+}
+
+/// Solve for the tail indicator partial sum in terms of |b| and the triangular indicator.
+theorem tail_triangle_indicator_partial_eq_diff(b: Nat -> Real, n: Nat, i: Nat) {
+    partial(tail_triangle_row_indicator(b, n, i), n) =
+        partial(abs_fn(b), n) - partial(triangle_row_indicator(b, n, i), n)
+} by {
+    tail_triangle_indicator_partial_split(b, n, i)
+    partial(abs_fn(b), n) =
+        partial(triangle_row_indicator(b, n, i), n) + partial(tail_triangle_row_indicator(b, n, i), n)
+
+    sub_moves_sides(partial(tail_triangle_row_indicator(b, n, i), n),
+        partial(triangle_row_indicator(b, n, i), n), partial(abs_fn(b), n))
+    partial(tail_triangle_row_indicator(b, n, i), n) =
+        partial(abs_fn(b), n) - partial(triangle_row_indicator(b, n, i), n)
+}
+
+/// Row sums equal |a(i)| times the difference between |b| and the triangular contribution.
+theorem tail_triangle_row_sum_abs_eq_abs_diff(seq_a: Nat -> Real, seq_b: Nat -> Real, bound: Nat, row_idx: Nat) {
+    row_sum(bound, tail_triangle_product(abs_fn(seq_a), abs_fn(seq_b), bound), row_idx) =
+        abs_fn(seq_a)(row_idx) * (
+            partial(abs_fn(seq_b), bound) -
+                partial(triangle_row_indicator(seq_b, bound, row_idx), bound))
+} by {
+    define row(col_idx: Nat) -> Real {
+        tail_triangle_product(abs_fn(seq_a), abs_fn(seq_b), bound, row_idx, col_idx)
+    }
+    define indicator(col_idx: Nat) -> Real {
+        tail_triangle_row_indicator(seq_b, bound, row_idx, col_idx)
+    }
+    define scaled(col_idx: Nat) -> Real {
+        abs_fn(seq_a)(row_idx) * indicator(col_idx)
+    }
+
+    forall(col_idx: Nat) {
+        row(col_idx) = tail_triangle_product(abs_fn(seq_a), abs_fn(seq_b), bound, row_idx, col_idx)
+        tail_triangle_abs_row_factor(seq_a, seq_b, bound, row_idx, col_idx)
+        row(col_idx) = abs_fn(seq_a)(row_idx) * indicator(col_idx)
+        scaled(col_idx) = abs_fn(seq_a)(row_idx) * indicator(col_idx)
+    }
+
+    from list.list_sum import partial_pointwise_eq
+    partial_pointwise_eq(row, scaled, bound)
+    sum(map(bound.range, row)) = sum(map(bound.range, scaled))
+
+    row_sum(bound, tail_triangle_product(abs_fn(seq_a), abs_fn(seq_b), bound), row_idx) =
+        sum(map(bound.range, row))
+    sum(map(bound.range, row)) = sum(map(bound.range, scaled))
+    row_sum(bound, tail_triangle_product(abs_fn(seq_a), abs_fn(seq_b), bound), row_idx) =
+        sum(map(bound.range, scaled))
+
+    partial_mul_scalar_right(indicator, abs_fn(seq_a)(row_idx), bound)
+    partial(indicator, bound) * abs_fn(seq_a)(row_idx) =
+        sum(map(bound.range, mul_fn(abs_fn(seq_a)(row_idx), indicator)))
+
+    forall(col_idx: Nat) {
+        mul_fn(abs_fn(seq_a)(row_idx), indicator, col_idx) =
+            abs_fn(seq_a)(row_idx) * indicator(col_idx)
+        mul_fn(abs_fn(seq_a)(row_idx), indicator, col_idx) = scaled(col_idx)
+    }
+
+    partial_pointwise_eq(mul_fn(abs_fn(seq_a)(row_idx), indicator), scaled, bound)
+    sum(map(bound.range, mul_fn(abs_fn(seq_a)(row_idx), indicator))) =
+        sum(map(bound.range, scaled))
+
+    partial(indicator, bound) * abs_fn(seq_a)(row_idx) =
+        sum(map(bound.range, scaled))
+    row_sum(bound, tail_triangle_product(abs_fn(seq_a), abs_fn(seq_b), bound), row_idx) =
+        partial(indicator, bound) * abs_fn(seq_a)(row_idx)
+
+    real_mul_comm(partial(indicator, bound), abs_fn(seq_a)(row_idx))
+    abs_fn(seq_a)(row_idx) * partial(indicator, bound) =
+        partial(indicator, bound) * abs_fn(seq_a)(row_idx)
+
+    partial(indicator, bound) = partial(tail_triangle_row_indicator(seq_b, bound, row_idx), bound)
+    row_sum(bound, tail_triangle_product(abs_fn(seq_a), abs_fn(seq_b), bound), row_idx) =
+        abs_fn(seq_a)(row_idx) * partial(tail_triangle_row_indicator(seq_b, bound, row_idx), bound)
+
+    tail_triangle_indicator_partial_eq_diff(seq_b, bound, row_idx)
+    partial(tail_triangle_row_indicator(seq_b, bound, row_idx), bound) =
+        partial(abs_fn(seq_b), bound) - partial(triangle_row_indicator(seq_b, bound, row_idx), bound)
+
+    abs_fn(seq_a)(row_idx) * partial(tail_triangle_row_indicator(seq_b, bound, row_idx), bound) =
+        abs_fn(seq_a)(row_idx) * (
+            partial(abs_fn(seq_b), bound) -
+                partial(triangle_row_indicator(seq_b, bound, row_idx), bound))
+
+    row_sum(bound, tail_triangle_product(abs_fn(seq_a), abs_fn(seq_b), bound), row_idx) =
+        abs_fn(seq_a)(row_idx) * (
+            partial(abs_fn(seq_b), bound) -
+                partial(triangle_row_indicator(seq_b, bound, row_idx), bound))
+}
+
+/// The row indicator never exceeds |b(j)|.
+theorem tail_triangle_row_indicator_le_abs(b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    tail_triangle_row_indicator(b, n, i, j) <= abs_fn(b)(j)
+} by {
+    if i + j < n {
+        tail_triangle_row_indicator(b, n, i, j) = Real.0
+        abs_fn_nonneg(b, j)
+        abs_fn(b)(j) >= Real.0
+        Real.0 <= abs_fn(b)(j)
+        tail_triangle_row_indicator(b, n, i, j) <= abs_fn(b)(j)
+    } else {
+        not (i + j < n)
+        tail_triangle_row_indicator(b, n, i, j) = abs_fn(b)(j)
+        tail_triangle_row_indicator(b, n, i, j) <= abs_fn(b)(j)
+    }
+}
+
+/// On the lower triangular region, the indicator is zero.
+theorem tail_triangle_row_indicator_zero(b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    i + j < n implies tail_triangle_row_indicator(b, n, i, j) = Real.0
+} by {
+    if i + j < n {
+        tail_triangle_row_indicator(b, n, i, j) = Real.0
+    }
+}
+
+/// Past the diagonal threshold, the indicator is exactly |b(j)|.
+theorem tail_triangle_row_indicator_ge_abs(b: Nat -> Real, n: Nat, i: Nat, j: Nat) {
+    not (i + j < n) implies tail_triangle_row_indicator(b, n, i, j) = abs_fn(b)(j)
+} by {
+    if not (i + j < n) {
+        tail_triangle_row_indicator(b, n, i, j) = abs_fn(b)(j)
+    }
+}
+
+/// Bound a row sum by |a(i)| times the partial sum of |b|.
+theorem tail_triangle_row_sum_abs_le(a: Nat -> Real, b: Nat -> Real, n: Nat, i: Nat) {
+    row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) <= abs_fn(a)(i) * partial(abs_fn(b), n)
+} by {
+    define row(j: Nat) -> Real { tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j) }
+    define indicator(j: Nat) -> Real { tail_triangle_row_indicator(b, n, i, j) }
+
+    forall(j: Nat) {
+        row(j) = tail_triangle_product(abs_fn(a), abs_fn(b), n, i, j)
+        tail_triangle_abs_row_factor(a, b, n, i, j)
+        row(j) = abs_fn(a)(i) * indicator(j)
+        mul_fn(abs_fn(a)(i), indicator)(j) = abs_fn(a)(i) * indicator(j)
+        row(j) = mul_fn(abs_fn(a)(i), indicator)(j)
+    }
+
+    from list.list_sum import partial_pointwise_eq
+    partial_pointwise_eq(row, mul_fn(abs_fn(a)(i), indicator), n)
+    sum(map(n.range, row)) = sum(map(n.range, mul_fn(abs_fn(a)(i), indicator)))
+
+    partial_mul_scalar_right(indicator, abs_fn(a)(i), n)
+    partial(indicator, n) * abs_fn(a)(i) = sum(map(n.range, mul_fn(abs_fn(a)(i), indicator)))
+
+    row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) = sum(map(n.range, row))
+    row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) =
+        partial(indicator, n) * abs_fn(a)(i)
+
+    forall(j: Nat) {
+        tail_triangle_row_indicator_le_abs(b, n, i, j)
+        indicator(j) <= abs_fn(b)(j)
+    }
+    partial_lte_partial(indicator, abs_fn(b), n)
+    partial(indicator, n) <= partial(abs_fn(b), n)
+
+    abs_fn_nonneg(a, i)
+    abs_fn(a)(i) >= Real.0
+    zero_lte_imp_non_neg(abs_fn(a)(i))
+    not abs_fn(a)(i).is_negative
+    lte_mul_nonneg_right(partial(indicator, n), partial(abs_fn(b), n), abs_fn(a)(i))
+    partial(indicator, n) * abs_fn(a)(i) <= partial(abs_fn(b), n) * abs_fn(a)(i)
+
+    real_mul_comm(partial(abs_fn(b), n), abs_fn(a)(i))
+    partial(abs_fn(b), n) * abs_fn(a)(i) = abs_fn(a)(i) * partial(abs_fn(b), n)
+
+    row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) <= abs_fn(a)(i) * partial(abs_fn(b), n)
+}
+
+/// Bound the tail triangle double sum by the product of partial absolute sums.
+theorem tail_triangle_double_sum_abs_le_partial_product(a: Nat -> Real, b: Nat -> Real, n: Nat) {
+    double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n)) <= partial(abs_fn(a), n) * partial(abs_fn(b), n)
+} by {
+    define rows(i: Nat) -> Real { row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) }
+    define bound(i: Nat) -> Real { abs_fn(a)(i) * partial(abs_fn(b), n) }
+
+    forall(i: Nat) {
+        if i < n {
+            tail_triangle_row_sum_abs_le(a, b, n, i)
+            rows(i) <= bound(i)
+        }
+    }
+
+    partial_lte_partial(rows, bound, n)
+    sum(map(n.range, rows)) <= sum(map(n.range, bound))
+
+    double_sum_expands(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n))
+    double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n)) = sum(map(n.range, rows))
+
+    forall(i: Nat) {
+        bound(i) = abs_fn(a)(i) * partial(abs_fn(b), n)
+        real_mul_comm(abs_fn(a)(i), partial(abs_fn(b), n))
+        abs_fn(a)(i) * partial(abs_fn(b), n) = partial(abs_fn(b), n) * abs_fn(a)(i)
+        mul_fn(partial(abs_fn(b), n), abs_fn(a))(i) = partial(abs_fn(b), n) * abs_fn(a)(i)
+        bound(i) = mul_fn(partial(abs_fn(b), n), abs_fn(a))(i)
+    }
+    from list.list_sum import partial_pointwise_eq
+    partial_pointwise_eq(bound, mul_fn(partial(abs_fn(b), n), abs_fn(a)), n)
+    sum(map(n.range, bound)) = sum(map(n.range, mul_fn(partial(abs_fn(b), n), abs_fn(a))))
+
+    partial_mul_scalar_right(abs_fn(a), partial(abs_fn(b), n), n)
+    partial(abs_fn(a), n) * partial(abs_fn(b), n) = sum(map(n.range, mul_fn(partial(abs_fn(b), n), abs_fn(a))))
+
+    double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n)) <= partial(abs_fn(a), n) * partial(abs_fn(b), n)
 }
 
 /// Bound the magnitude of the difference between product of partial sums and the partial

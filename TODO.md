@@ -27,9 +27,11 @@ limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))
 
 **Recent progress:**
 - Added `tail_triangle_abs_nonneg` and `row_sum_tail_triangle_abs_nonneg` to control the sign of the tail region.
+- Established `tail_triangle_row_sum_abs_le` and `tail_triangle_double_sum_abs_le_partial_product` to bound tail contributions by products of absolute partial sums.
+- Proved indicator lemmas (`tail_triangle_row_indicator_zero` / `_ge_abs`) to isolate the exact |b|-tail contribution of each row, preparing sharper tail decompositions.
+- Refined the indicator machinery with `tail_triangle_indicator_partial_split`, `tail_triangle_indicator_partial_eq_diff`, and `tail_triangle_row_sum_abs_eq_abs_diff`, giving exact formulas for tail row sums in terms of |b| partial sums.
 
 **Next steps:**
-- Lift the nonnegativity lemmas to obtain quantitative tail bounds.
 - Will need a theorem about products of convergent sequences.
 - May need to show that `cauchy_seq(a, b)` converges (not just absolutely).
 
