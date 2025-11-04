@@ -8,28 +8,39 @@
 
 - ✅ **Partial difference helper** (`src/real/cauchy.ac:2081`): Proved `partial_diff_vanishes_fixed_offset`, showing that for absolutely convergent series with fixed offset k, the difference `partial(abs_fn(a), n) - partial(abs_fn(a), n-k) → 0` as n → ∞. This is a key building block for showing individual tail triangle rows vanish.
 
+- ⚠️ **Sum of vanishing sequences** (`src/real/cauchy.ac:2157`): **Partially complete**. Proved `sum_vanishing_converges_to_zero`, showing that if two sequences both converge to zero, their sum converges to zero. This is the key building block for finite sums. The general induction proof for arbitrary m sequences (`finite_sum_vanishing_converges_to_zero`) is drafted but commented out due to Acorn's current limitations with function extensionality. The proof structure is sound but cannot be automatically verified.
+
 ---
 
 ## Next Steps
 
-### 1. Finite Sum of Vanishing Terms
+### 1. Finite Sum of Vanishing Terms - Complete the General Case
 
-**File:** `src/real/cauchy.ac` or new helper file
+**File:** `src/real/cauchy.ac` (lines 2193-2200, currently commented out)
 
-**Goal:** Prove that a finite sum of vanishing sequences vanishes:
+**Status:** Partially complete - base case (m=2) proved as `sum_vanishing_converges_to_zero`
+
+**Goal:** Complete the proof that a finite sum of vanishing sequences vanishes:
 ```
 If f_i(n) → 0 for each fixed i < m, then sum(f_i(n) for i < m) → 0 as n → ∞
 ```
 
-**Why needed:** For the tail triangle proof, we need to show that the contribution from rows `i ∈ [0, m)` (fixed number of rows) vanishes. Each individual row vanishes by `partial_diff_vanishes_fixed_offset`, but we need to sum them.
+**What's done:**
+- ✅ `sum_vanishing_converges_to_zero`: Proved for m=2 (sum of two vanishing sequences vanishes)
+- ✅ Helper function `sum_at_index` defined
+- ✅ Induction structure drafted (base case, inductive step)
+- ✅ All arithmetic and limit manipulations work
 
-**Approach:**
-- Prove by induction on m
-- Base case: empty sum is zero
-- Inductive step: if sum of first m terms vanishes and f_m vanishes, their sum vanishes
-- Use epsilon/m argument: given ε, choose N such that each |f_i(n)| < ε/m for n ≥ N
+**What's blocked:**
+- ❌ Function extensionality: Acorn cannot automatically verify that two functions returning the same values at all points are equal
+- ❌ This prevents completing p(Nat.0) and p(k.suc) in the induction proof
 
-**Difficulty:** Medium (3-5 helper lemmas about limits and sums)
+**Workaround options:**
+1. Use `sum_vanishing_converges_to_zero` repeatedly for small fixed m (m=2,3,4,...)
+2. Wait for Acorn to add better support for function extensionality
+3. Refactor to avoid function types in the induction (use direct ε-δ proofs at each step)
+
+**Difficulty:** Hard (blocked on Acorn feature support)
 
 ---
 
