@@ -30,9 +30,14 @@ limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))
 - Established `tail_triangle_row_sum_abs_le` and `tail_triangle_double_sum_abs_le_partial_product` to bound tail contributions by products of absolute partial sums.
 - Proved indicator lemmas (`tail_triangle_row_indicator_zero` / `_ge_abs`) to isolate the exact |b|-tail contribution of each row, preparing sharper tail decompositions.
 - Refined the indicator machinery with `tail_triangle_indicator_partial_split`, `tail_triangle_indicator_partial_eq_diff`, and `tail_triangle_row_sum_abs_eq_abs_diff`, giving exact formulas for tail row sums in terms of |b| partial sums.
+- **BLOCKED**: Attempted to prove `limit_prod_seq` (limit of pointwise products) in `real_series.ac`, but verification failed due to complexity of multiplication inequalities and bounds handling.
 
 **Next steps:**
-- Will need a theorem about products of convergent sequences.
+- **Critical blocker**: Need a theorem about products of convergent sequences (`limit_prod_seq`), OR find an alternative proof approach that doesn't require this general theorem.
+- Options to unblock:
+  1. Wait for Real division (from `real_field.ac`) which might simplify the proof
+  2. Try a more direct proof specific to the Cauchy product case
+  3. Use rational sequence approximations more cleverly
 - May need to show that `cauchy_seq(a, b)` converges (not just absolutely).
 
 ---
