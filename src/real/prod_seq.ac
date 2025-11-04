@@ -1,0 +1,282 @@
+/// This file defines the pointwise product of sequences and proves convergence properties.
+from nat import Nat
+from real.real_seq import converges, converges_to, limit, tail_bound, eps_lt_half
+from real.real_ring import Real
+from real.real_series import triangle_ineq
+
+/// The pointwise product of two sequences of real numbers.
+define prod_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
+    a(n) * b(n)
+}
+
+// =============================================================================
+// HELPER LEMMAS FOR CONVERGENCE PROOF
+// =============================================================================
+
+/// LEMMA 3: Bounding absolute value when close
+/// If x is close to y within eps, then |x| ≤ |y| + eps.
+theorem abs_le_abs_add_eps(x: Real, y: Real, eps: Real) {
+    x.is_close(y, eps) implies x.abs <= y.abs + eps
+} by {
+    // |x| = |(x-y) + y| <= |x-y| + |y| < eps + |y|
+    x = (x - y) + y
+    x.abs = ((x - y) + y).abs
+    triangle_ineq(x - y, y)
+    x.abs <= (x - y).abs + y.abs
+    (x - y).abs < eps
+    (x - y).abs <= eps
+    x.abs <= eps + y.abs
+    x.abs <= y.abs + eps
+}
+
+/// LEMMA 4: Mixed inequality transitivity
+/// If a <= b < c, then a < c.
+theorem lte_lt_trans(a: Real, b: Real, c: Real) {
+    a <= b and b < c implies a < c
+} by {
+    if a = b {
+        b < c
+        a < c
+    } else {
+        a < b
+        a < c
+    }
+}
+
+/// LEMMA 5: Multiplication preserves mixed inequalities for non-negatives
+/// If a <= b, c < d, with appropriate sign conditions, then a*c < b*d.
+theorem mul_le_lt_of_nonneg_pos(a: Real, b: Real, c: Real, d: Real) {
+    a <= b and c < d
+    and not a.is_negative and not c.is_negative
+    and b.is_positive and d.is_positive
+    implies
+    a * c < b * d
+} by {
+    // Step 1: a * c <= b * c (using lte_mul_nonneg_right)
+    not c.is_negative
+    a <= b
+    a * c <= b * c
+
+    // Step 2: b * c < b * d (using lt_mul_pos_left)
+    b.is_positive
+    c < d
+    b * c < b * d
+
+    // Step 3: Combine using transitivity
+    a * c <= b * c
+    b * c < b * d
+    lte_lt_trans(a * c, b * c, b * d)
+    a * c < b * d
+}
+
+/// LEMMA 6: Closeness of products (THE MAIN HELPER)
+/// If a1 ≈ a2 and b1 ≈ b2, with bounds on |a1| and |b2|, then a1*b1 ≈ a2*b2.
+theorem mul_close_from_close(a1: Real, a2: Real, b1: Real, b2: Real,
+                              a_eps: Real, b_eps: Real,
+                              a_bound: Real, b_bound: Real) {
+    a1.is_close(a2, a_eps) and b1.is_close(b2, b_eps)
+    and a1.abs <= a_bound and b2.abs <= b_bound
+    and a_bound.is_positive and b_bound.is_positive
+    and a_eps.is_positive and b_eps.is_positive
+    implies
+    (a1 * b1).is_close(a2 * b2, a_bound * b_eps + a_eps * b_bound)
+} by {
+    // Use algebraic identity
+    let diff = a1 * b1 - a2 * b2
+    diff = a1 * b1 - a1 * b2 + a1 * b2 - a2 * b2
+    diff = a1 * (b1 - b2) + (a1 - a2) * b2
+
+    // Apply triangle inequality
+    triangle_ineq(a1 * (b1 - b2), (a1 - a2) * b2)
+    diff.abs <= (a1 * (b1 - b2)).abs + ((a1 - a2) * b2).abs
+
+    // Apply mul_abs
+    (a1 * (b1 - b2)).abs = a1.abs * (b1 - b2).abs
+    ((a1 - a2) * b2).abs = (a1 - a2).abs * b2.abs
+
+    // Use closeness conditions
+    (a1 - a2).abs < a_eps
+    (b1 - b2).abs < b_eps
+
+    // Use bound conditions
+    a1.abs <= a_bound
+    b2.abs <= b_bound
+
+    // Apply mul_le_lt_of_nonneg_pos twice
+    not a1.abs.is_negative
+    not (b1 - b2).abs.is_negative
+    a_bound.is_positive
+    b_eps.is_positive
+    mul_le_lt_of_nonneg_pos(a1.abs, a_bound, (b1 - b2).abs, b_eps)
+    a1.abs * (b1 - b2).abs < a_bound * b_eps
+
+    not (a1 - a2).abs.is_negative
+    not b2.abs.is_negative
+    a_eps.is_positive
+    b_bound.is_positive
+    mul_le_lt_of_nonneg_pos((a1 - a2).abs, a_eps, b2.abs, b_bound)
+    (a1 - a2).abs * b2.abs < a_eps * b_bound
+
+    // Combine
+    (a1 * (b1 - b2)).abs < a_bound * b_eps
+    ((a1 - a2) * b2).abs < a_eps * b_bound
+    (a1 * (b1 - b2)).abs + ((a1 - a2) * b2).abs < a_bound * b_eps + a_eps * b_bound
+    diff.abs <= (a1 * (b1 - b2)).abs + ((a1 - a2) * b2).abs
+    lte_lt_trans(diff.abs, (a1 * (b1 - b2)).abs + ((a1 - a2) * b2).abs, a_bound * b_eps + a_eps * b_bound)
+    diff.abs < a_bound * b_eps + a_eps * b_bound
+    (a1 * b1 - a2 * b2).abs < a_bound * b_eps + a_eps * b_bound
+    (a1 * b1).is_close(a2 * b2, a_bound * b_eps + a_eps * b_bound)
+}
+
+// =============================================================================
+// MAIN CONVERGENCE THEOREM
+// =============================================================================
+
+/// The product of two convergent sequences converges to the product of their limits.
+theorem limit_prod_seq(a: Nat -> Real, b: Nat -> Real) {
+    converges(a) and converges(b)
+    implies
+    converges_to(prod_seq(a, b), limit(a) * limit(b))
+} by {
+    let q = prod_seq(a, b)
+    let ql = limit(a) * limit(b)
+
+    converges_to(a, limit(a))
+    converges_to(b, limit(b))
+
+    forall(eps: Real) {
+        if eps.is_positive {
+            // Get bounds for limit(a) and limit(b)
+            let a_abs_bound: Real satisfy {
+                limit(a).abs < a_abs_bound
+            }
+            let a_bound = a_abs_bound + Real.1
+            a_bound.is_positive
+
+            let b_abs_bound: Real satisfy {
+                limit(b).abs < b_abs_bound
+            }
+            let b_bound = b_abs_bound + Real.1
+            b_bound.is_positive
+
+            // Find small_eps such that a_bound * small_eps + small_eps * b_bound < eps
+            let sum_bound = a_bound + b_bound
+            sum_bound.is_positive
+            sum_bound + sum_bound > Real.0
+            (sum_bound + sum_bound).is_positive
+
+            Real.1.is_positive
+            eps_lt_half(Real.1)
+            let eps_half: Real satisfy {
+                eps_half.is_positive and eps_half + eps_half < Real.1
+            }
+
+            let eps_candidate: Real satisfy {
+                eps_candidate.is_positive and
+                eps_candidate * (sum_bound + sum_bound) < eps
+            }
+
+            let small_eps = eps_candidate.min(eps_half)
+            eps_candidate.is_positive
+            eps_half.is_positive
+            small_eps.is_positive
+            small_eps <= eps_candidate
+            small_eps <= eps_half
+            eps_half + eps_half < Real.1
+            small_eps + small_eps <= eps_half + eps_half
+            small_eps + small_eps < Real.1
+            small_eps < Real.1
+            small_eps * (sum_bound + sum_bound) <= eps_candidate * (sum_bound + sum_bound)
+            eps_candidate * (sum_bound + sum_bound) < eps
+            lte_lt_trans(small_eps * (sum_bound + sum_bound), eps_candidate * (sum_bound + sum_bound), eps)
+            small_eps * (sum_bound + sum_bound) < eps
+
+            // Get convergence points
+            let n1: Nat satisfy {
+                tail_bound(a, limit(a), n1, small_eps)
+            }
+
+            let n2: Nat satisfy {
+                tail_bound(b, limit(b), n2, small_eps)
+            }
+
+            let n: Nat satisfy {
+                n1 <= n and n2 <= n
+            }
+
+            forall(i: Nat) {
+                if n <= i {
+                    a(i).is_close(limit(a), small_eps)
+                    b(i).is_close(limit(b), small_eps)
+
+                    // Bound a(i) using abs_le_abs_add_eps
+                    abs_le_abs_add_eps(a(i), limit(a), small_eps)
+                    a(i).abs <= limit(a).abs + small_eps
+                    limit(a).abs + small_eps < a_abs_bound + small_eps
+                    a_abs_bound + small_eps < a_abs_bound + Real.1
+                    lte_lt_trans(a(i).abs, limit(a).abs + small_eps, a_abs_bound + small_eps)
+                    a(i).abs < a_abs_bound + small_eps
+                    lte_lt_trans(a(i).abs, a_abs_bound + small_eps, a_bound)
+                    a(i).abs < a_bound
+
+                    // Bound limit(b)
+                    limit(b).abs < b_abs_bound
+                    b_abs_bound < b_bound
+                    lte_lt_trans(limit(b).abs, b_abs_bound, b_bound)
+                    limit(b).abs < b_bound
+
+                    // Apply mul_close_from_close
+                    a(i).abs < a_bound
+                    a(i).abs <= a_bound
+                    limit(b).abs < b_bound
+                    limit(b).abs <= b_bound
+
+                    mul_close_from_close(
+                        a(i), limit(a), b(i), limit(b),
+                        small_eps, small_eps, a_bound, b_bound)
+
+                    (a(i) * b(i)).is_close(
+                        limit(a) * limit(b),
+                        a_bound * small_eps + small_eps * b_bound)
+
+                    // Show this is < eps
+                    a_bound * small_eps + small_eps * b_bound < small_eps * sum_bound + small_eps * sum_bound
+                    small_eps * sum_bound + small_eps * sum_bound = small_eps * (sum_bound + sum_bound)
+                    a_bound * small_eps + small_eps * b_bound < small_eps * (sum_bound + sum_bound)
+                    small_eps * (sum_bound + sum_bound) < eps
+                    lte_lt_trans(a_bound * small_eps + small_eps * b_bound, small_eps * (sum_bound + sum_bound), eps)
+                    a_bound * small_eps + small_eps * b_bound < eps
+
+                    // Conclude
+                    (a(i) * b(i) - (limit(a) * limit(b))).abs < eps
+                    (q(i) - ql).abs < eps
+                    q(i).is_close(ql, eps)
+                }
+            }
+            tail_bound(q, ql, n, eps)
+        }
+    }
+    converges_to(q, ql)
+}
+
+/// The product of two convergent sequences converges.
+theorem prod_seq_converges(a: Nat -> Real, b: Nat -> Real) {
+    converges(a) and converges(b)
+    implies
+    converges(prod_seq(a, b))
+} by {
+    limit_prod_seq(a, b)
+    converges_to(prod_seq(a, b), limit(a) * limit(b))
+}
+
+/// The limit of the product is the product of the limits.
+theorem limit_of_prod(a: Nat -> Real, b: Nat -> Real) {
+    converges(a) and converges(b)
+    implies
+    limit(prod_seq(a, b)) = limit(a) * limit(b)
+} by {
+    limit_prod_seq(a, b)
+    converges_to(prod_seq(a, b), limit(a) * limit(b))
+    converges(prod_seq(a, b))
+    converges_to(prod_seq(a, b), limit(prod_seq(a, b)))
+}
