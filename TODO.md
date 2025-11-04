@@ -4,34 +4,48 @@
 
 - ✅ **Product of sequences** (`src/real/prod_seq.ac`): Defined `prod_seq` and proved that the product of two convergent sequences converges to the product of their limits. Includes helper lemmas for mixed inequality transitivity and closeness of products.
 
+- ✅ **Cauchy product convergence** (`src/real/cauchy.ac:2030`): Proved `cauchy_seq_converges`, showing that the Cauchy product of two absolutely convergent series converges (not just absolutely converges). Uses `cauchy_product_abs_converges` combined with `absolutely_converges_imp_converges`.
+
 ---
 
 ## Next Steps
 
-### 1. Cauchy Product Convergence
+### 1. Cauchy Product Limit Formula (Mertens' Theorem - Part 2)
 
 **File:** `src/real/cauchy.ac`
 
-**Goal:** Prove that the Cauchy product of two convergent series converges to the product of their limits:
+**Goal:** Prove the limit formula for the Cauchy product:
 
 ```
 limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))
 ```
 
-**Already proven:**
-- ✅ **Mertens' Theorem** (`cauchy_product_abs_converges`): The Cauchy product of two absolutely convergent series is absolutely convergent
-- ✅ Extensive machinery for tail triangles, double sums, and indicator functions
-- ✅ Bounds relating tail contributions to products of absolute partial sums
+**Progress:**
+- ✅ **Convergence proven**: `cauchy_seq_converges` shows the Cauchy product converges
+- ✅ **Infrastructure exists**:
+  - `partial_product_diff_abs_le`: bounds error in terms of tail triangle
+  - `abs_conv_tail_bound`: tail sums can be made arbitrarily small
+  - `limit_of_prod`: product of sequences has limit equal to product of limits
+  - Extensive tail triangle analysis machinery
 
 **What's needed:**
-1. Prove that `cauchy_seq(a, b)` converges (not just absolutely converges)
-   - Use the absolute convergence result plus the fact that absolute convergence implies convergence
-2. Prove the limit formula using the convergence of products (can now use `limit_of_prod` from `prod_seq.ac`)
+1. **Prove tail triangle vanishes**: Show that `double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n)) → 0`
+   - Split analysis by fixing index m where tails are small
+   - Bound contributions from regions where i≥m or j≥m
+   - Use `abs_conv_tail_bound` to show these vanish
+
+2. **Prove limit preservation under vanishing difference**:
+   - Show if `seq1` converges and `|seq1(n) - seq2(n)| → 0`, then `limit(seq1) = limit(seq2)`
+   - Or equivalently: express as `seq2 = seq1 - diff` and use limit subtraction laws
 
 **Strategy:**
-- The new `prod_seq` theorems should be helpful for relating limits of products
-- May need to connect the Cauchy product partial sums to products of partial sums
-- The extensive tail analysis already done provides the key estimates
+- The standard proof of Mertens' theorem involves a two-stage epsilon argument
+- First, fix m such that tails past m are small (using `abs_conv_tail_bound`)
+- Then, for large n, show the Cauchy partial sum captures the "head×head" product
+- The "head×tail" and "tail×tail" contributions vanish as n increases
+- This is a substantial proof requiring multiple helper lemmas
+
+**Note:** See `src/real/cauchy.ac:2045-2076` for detailed proof outline and missing pieces.
 
 ---
 
