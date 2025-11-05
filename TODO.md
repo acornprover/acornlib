@@ -2,6 +2,7 @@
 
 ## Recently Completed
 
+- ✅ **Finite sum of vanishing sequences** (`src/real/cauchy.ac:2145`): Added the helper definitions `finite_sum_seq` and proved `finite_sum_vanishes`, showing that summing a fixed number of sequences that each tend to zero also tends to zero.
 - ✅ **Product of sequences** (`src/real/prod_seq.ac`): Defined `prod_seq` and proved that the product of two convergent sequences converges to the product of their limits. Includes helper lemmas for mixed inequality transitivity and closeness of products.
 
 - ✅ **Cauchy product convergence** (`src/real/cauchy.ac:2031`): Proved `cauchy_seq_converges`, showing that the Cauchy product of two absolutely convergent series converges (not just absolutely converges). Uses `cauchy_product_abs_converges` combined with `absolutely_converges_imp_converges`.
@@ -12,28 +13,7 @@
 
 ## Next Steps
 
-### 1. Finite Sum of Vanishing Terms
-
-**File:** `src/real/cauchy.ac` or new helper file
-
-**Goal:** Prove that a finite sum of vanishing sequences vanishes:
-```
-If f_i(n) → 0 for each fixed i < m, then sum(f_i(n) for i < m) → 0 as n → ∞
-```
-
-**Why needed:** For the tail triangle proof, we need to show that the contribution from rows `i ∈ [0, m)` (fixed number of rows) vanishes. Each individual row vanishes by `partial_diff_vanishes_fixed_offset`, but we need to sum them.
-
-**Approach:**
-- Prove by induction on m
-- Base case: empty sum is zero
-- Inductive step: if sum of first m terms vanishes and f_m vanishes, their sum vanishes
-- Use epsilon/m argument: given ε, choose N such that each |f_i(n)| < ε/m for n ≥ N
-
-**Difficulty:** Medium (3-5 helper lemmas about limits and sums)
-
----
-
-### 2. Tail Bound Convergence to Limit Difference
+### 1. Tail Bound Convergence to Limit Difference
 
 **File:** `src/real/cauchy.ac`
 
@@ -54,7 +34,7 @@ For m fixed and n large: partial(abs_fn(a), n) - partial(abs_fn(a), m)
 
 ---
 
-### 3. Split Double Sum by Row Index
+### 2. Split Double Sum by Row Index
 
 **File:** `src/real/cauchy.ac` or `src/real/double_sum.ac`
 
@@ -74,7 +54,7 @@ double_sum(n, n, f) = sum over i in [0, m) + sum over i in [m, n)
 
 ---
 
-### 4. Tail Triangle Vanishes
+### 3. Tail Triangle Vanishes
 
 **File:** `src/real/cauchy.ac`
 
@@ -114,7 +94,7 @@ row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) =
 
 ---
 
-### 5. Limit Preservation Under Vanishing Difference
+### 4. Limit Preservation Under Vanishing Difference
 
 **File:** `src/real/cauchy.ac` or `src/real/real_seq.ac`
 
@@ -138,7 +118,7 @@ converges(s) and (forall ε > 0, exists N, forall n ≥ N, |s(n) - t(n)| < ε)
 
 ---
 
-### 6. Mertens' Theorem - Limit Formula
+### 5. Mertens' Theorem - Limit Formula
 
 **File:** `src/real/cauchy.ac`
 
@@ -163,7 +143,7 @@ limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))
 
 ---
 
-### 7. Define e^x via Power Series
+### 6. Define e^x via Power Series
 
 **File:** New file `src/real/real_exp.ac`
 
@@ -185,7 +165,7 @@ exp(x) = ∑_{n=0}^{∞} x^n / n!
 
 ---
 
-### 8. Prove exp(x + y) = exp(x) * exp(y)
+### 7. Prove exp(x + y) = exp(x) * exp(y)
 
 **File:** `src/real/real_exp.ac`
 
@@ -202,7 +182,7 @@ exp(x) = ∑_{n=0}^{∞} x^n / n!
 
 ---
 
-### 9. Additional Properties of e^x
+### 8. Additional Properties of e^x
 
 **File:** `src/real/real_exp.ac`
 
