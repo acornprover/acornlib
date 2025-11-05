@@ -1,11 +1,12 @@
 from util import constant, compose
 from nat import Nat
-from nat.nat_base import add_assoc, add_comm, add_sub, lt_add_left, lte_imp_not_lt
+from nat.nat_base import add_assoc, add_comm, add_sub, lt_add_left, lte_imp_not_lt, lt_imp_lt_suc, lt_suc
 from list import partial, sum, map, List
 from list.list_functional import reverse, sum_reverse, reverse_get_idx
-from list.list_sum import map_range, list_extensionality, sum_scalar_mul, map_sum_add, scalar_mul, map_map
+from list.list_sum import map_range, list_extensionality, sum_scalar_mul, map_sum_add, scalar_mul, map_map, map_add, sum_add
 from option import Option
 from real.real_ring import Real, converges, converges_to, limit, lift_seq, zero_lte_imp_non_neg, real_mul_comm, lte_mul_nonneg_right
+from real.real_seq import limit_add_seq, converges_imp_converges_to, converges_to_imp_converges, converges_to_unique
 from real.real_series import seq_lte, is_lower_bound, add_seq, mul_seq
 from real.real_base import lte_add_left, lte_add_right, lte_trans, sub_moves_sides, add_zero_left, add_zero_right
 from semigroup import mul_fn
@@ -20,6 +21,170 @@ numerals Real
 
 attributes Real {
     // Placeholder to let other modules import Real from here.
+}
+
+/// Evaluate the ith sequence in a family at index n.
+define family_eval(f: Nat -> (Nat -> Real), i: Nat, n: Nat) -> Real {
+    f(i)(n)
+}
+
+/// For a fixed n, view the family as a function of the index i.
+define finite_sum_terms(f: Nat -> (Nat -> Real), n: Nat) -> (Nat -> Real) {
+    function(i: Nat) { family_eval(f, i, n) }
+}
+
+/// Sum the first m sequences in the family at index n.
+define finite_sum_value(f: Nat -> (Nat -> Real), m: Nat, n: Nat) -> Real {
+    sum(map(m.range, finite_sum_terms(f, n)))
+}
+
+/// The sequence obtained by summing the first m sequences in the family.
+define finite_sum_seq(f: Nat -> (Nat -> Real), m: Nat) -> (Nat -> Real) {
+    function(n: Nat) { finite_sum_value(f, m, n) }
+}
+
+/// Summing zero sequences produces the zero sequence.
+theorem finite_sum_value_zero(f: Nat -> (Nat -> Real), n: Nat) {
+    finite_sum_value(f, Nat.0, n) = Real.0
+} by {
+    Nat.0.range = List.nil[Nat]
+    map(Nat.0.range, finite_sum_terms(f, n)) = map(List.nil[Nat], finite_sum_terms(f, n))
+    map(List.nil[Nat], finite_sum_terms(f, n)) = List.nil[Real]
+    sum(map(Nat.0.range, finite_sum_terms(f, n))) = sum(List.nil[Real])
+    sum(List.nil[Real]) = Real.0
+}
+
+/// Splitting off the last sequence in the finite family turns the sum into an addition.
+theorem finite_sum_value_suc(f: Nat -> (Nat -> Real), m: Nat, n: Nat) {
+    finite_sum_value(f, m.suc, n) = finite_sum_value(f, m, n) + f(m)(n)
+} by {
+    let terms = finite_sum_terms(f, n)
+    m.suc.range = m.range + List.singleton(m)
+    map(m.suc.range, terms) = map(m.range + List.singleton(m), terms)
+    map(m.range + List.singleton(m), terms) = map(m.range, terms) + map(List.singleton(m), terms)
+    sum(map(m.suc.range, terms)) = sum(map(m.range, terms) + map(List.singleton(m), terms))
+    sum(map(m.suc.range, terms)) = sum(map(m.range, terms)) + sum(map(List.singleton(m), terms))
+    finite_sum_value(f, m, n) = sum(map(m.range, terms))
+
+    List.singleton(m) = List.cons(m, List.nil[Nat])
+    map(List.singleton(m), terms) = map(List.cons(m, List.nil[Nat]), terms)
+    map(List.cons(m, List.nil[Nat]), terms) = List.cons(terms(m), map(List.nil[Nat], terms))
+    map(List.nil[Nat], terms) = List.nil[Real]
+    map(List.singleton(m), terms) = List.cons(terms(m), List.nil[Real])
+    terms(m) = family_eval(f, m, n)
+    family_eval(f, m, n) = f(m)(n)
+    map(List.singleton(m), terms) = List.cons(f(m)(n), List.nil[Real])
+    sum(map(List.singleton(m), terms)) = sum(List.cons(f(m)(n), List.nil[Real]))
+    sum(List.cons(f(m)(n), List.nil[Real])) = f(m)(n) + sum(List.nil[Real])
+    sum(List.nil[Real]) = Real.0
+    sum(map(List.singleton(m), terms)) = f(m)(n)
+
+    finite_sum_value(f, m.suc, n) = finite_sum_value(f, m, n) + f(m)(n)
+}
+
+/// Successor sums agree pointwise with the addition of the previous sum and the extra term.
+theorem finite_sum_seq_suc_eq_add(f: Nat -> (Nat -> Real), m: Nat, n: Nat) {
+    finite_sum_seq(f, m.suc)(n) = add_seq(finite_sum_seq(f, m), f(m))(n)
+} by {
+    finite_sum_seq(f, m.suc)(n) = finite_sum_value(f, m.suc, n)
+    finite_sum_seq(f, m)(n) = finite_sum_value(f, m, n)
+    add_seq(finite_sum_seq(f, m), f(m))(n) = finite_sum_seq(f, m)(n) + f(m)(n)
+    finite_sum_value(f, m.suc, n) = finite_sum_value(f, m, n) + f(m)(n)
+    finite_sum_seq(f, m.suc)(n) = add_seq(finite_sum_seq(f, m), f(m))(n)
+}
+
+/// The sum of two vanishing sequences also vanishes.
+theorem add_seq_vanishes(a: Nat -> Real, b: Nat -> Real) {
+    converges_to(a, Real.0) and converges_to(b, Real.0)
+    implies
+    converges_to(add_seq(a, b), Real.0)
+} by {
+    if converges_to(a, Real.0) and converges_to(b, Real.0) {
+        converges_to_imp_converges(a, Real.0)
+        converges(a)
+        converges_imp_converges_to(a)
+        converges_to(a, limit(a))
+        converges_to_unique(a, limit(a), Real.0)
+        limit(a) = Real.0
+
+        converges_to_imp_converges(b, Real.0)
+        converges(b)
+        converges_imp_converges_to(b)
+        converges_to(b, limit(b))
+        converges_to_unique(b, limit(b), Real.0)
+        limit(b) = Real.0
+
+        limit_add_seq(a, b)
+        converges_to(add_seq(a, b), limit(a) + limit(b))
+        limit(a) = Real.0
+        limit(b) = Real.0
+        add_zero_right(Real.0)
+        Real.0 + Real.0 = Real.0
+        converges_to(add_seq(a, b), Real.0)
+    }
+}
+
+/// A finite sum of vanishing sequences also vanishes.
+theorem finite_sum_vanishes(f: Nat -> (Nat -> Real), m: Nat) {
+    (forall(i: Nat) { i < m implies converges_to(f(i), Real.0) })
+    implies
+    converges_to(finite_sum_seq(f, m), Real.0)
+} by {
+    define p(k: Nat) -> Bool {
+        (forall(i: Nat) { i < k implies converges_to(f(i), Real.0) })
+        implies
+        converges_to(finite_sum_seq(f, k), Real.0)
+    }
+
+    // Base case: empty sum equals the zero sequence.
+    if forall(i: Nat) { i < Nat.0 implies converges_to(f(i), Real.0) } {
+        forall(n: Nat) {
+            finite_sum_seq(f, Nat.0)(n) = finite_sum_value(f, Nat.0, n)
+            finite_sum_value_zero(f, n)
+            finite_sum_value(f, Nat.0, n) = Real.0
+            constant[Nat, Real](Real.0)(n) = Real.0
+            finite_sum_seq(f, Nat.0)(n) = constant[Nat, Real](Real.0)(n)
+        }
+        finite_sum_seq(f, Nat.0) = constant[Nat, Real](Real.0)
+        converges_to(constant[Nat, Real](Real.0), Real.0)
+        converges_to(finite_sum_seq(f, Nat.0), Real.0)
+    }
+    p(Nat.0)
+
+    // Inductive step: add the next vanishing sequence.
+    forall(k: Nat) {
+        if p(k) {
+            if forall(i: Nat) { i < k.suc implies converges_to(f(i), Real.0) } {
+                // Establish the hypothesis for the first k indices.
+                forall(i: Nat) {
+                    if i < k {
+                        lt_imp_lt_suc(i, k)
+                        i < k.suc
+                        converges_to(f(i), Real.0)
+                    }
+                }
+
+                p(k)
+                converges_to(finite_sum_seq(f, k), Real.0)
+
+                lt_suc(k)
+                k < k.suc
+                converges_to(f(k), Real.0)
+
+                add_seq_vanishes(finite_sum_seq(f, k), f(k))
+                converges_to(add_seq(finite_sum_seq(f, k), f(k)), Real.0)
+
+                forall(n: Nat) {
+                    finite_sum_seq_suc_eq_add(f, k, n)
+                }
+                finite_sum_seq(f, k.suc) = add_seq(finite_sum_seq(f, k), f(k))
+                converges_to(finite_sum_seq(f, k.suc), Real.0)
+            }
+            p(k.suc)
+        }
+    }
+
+    p(m)
 }
 
 /// The coefficient function for the Cauchy product at index n.
