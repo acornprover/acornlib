@@ -2,6 +2,7 @@
 
 ## Recently Completed
 
+- ✅ **Split double sum by row index** (`src/real/double_sum.ac`): Added the helper `row_sum_offset` and proved `double_sum_split_row_index`, allowing a double sum to be decomposed into initial and tail row segments.
 - ✅ **Finite sum of vanishing sequences** (`src/real/cauchy.ac:2145`): Added the helper definitions `finite_sum_seq` and proved `finite_sum_vanishes`, showing that summing a fixed number of sequences that each tend to zero also tends to zero.
 - ✅ **Product of sequences** (`src/real/prod_seq.ac`): Defined `prod_seq` and proved that the product of two convergent sequences converges to the product of their limits. Includes helper lemmas for mixed inequality transitivity and closeness of products.
 
@@ -34,27 +35,7 @@ For m fixed and n large: partial(abs_fn(a), n) - partial(abs_fn(a), m)
 
 ---
 
-### 2. Split Double Sum by Row Index
-
-**File:** `src/real/cauchy.ac` or `src/real/double_sum.ac`
-
-**Goal:** Prove ability to split double sums into two regions:
-```
-double_sum(n, n, f) = sum over i in [0, m) + sum over i in [m, n)
-```
-
-**Why needed:** The tail triangle vanishing proof splits rows into fixed (i < m) and growing (i ≥ m) regions.
-
-**Approach:**
-- Use existing `double_sum_expands` to express as sum over rows
-- Split the range [0, n) into [0, m) and [m, n)
-- May need lemmas about list splitting or range manipulation
-
-**Difficulty:** Medium (depends on existing list/sum infrastructure)
-
----
-
-### 3. Tail Triangle Vanishes
+### 2. Tail Triangle Vanishes
 
 **File:** `src/real/cauchy.ac`
 
@@ -94,7 +75,7 @@ row_sum(n, tail_triangle_product(abs_fn(a), abs_fn(b), n), i) =
 
 ---
 
-### 4. Limit Preservation Under Vanishing Difference
+### 3. Limit Preservation Under Vanishing Difference
 
 **File:** `src/real/cauchy.ac` or `src/real/real_seq.ac`
 
@@ -118,7 +99,7 @@ converges(s) and (forall ε > 0, exists N, forall n ≥ N, |s(n) - t(n)| < ε)
 
 ---
 
-### 5. Mertens' Theorem - Limit Formula
+### 4. Mertens' Theorem - Limit Formula
 
 **File:** `src/real/cauchy.ac`
 
@@ -143,7 +124,7 @@ limit(partial(cauchy_seq(a, b))) = limit(partial(a)) * limit(partial(b))
 
 ---
 
-### 6. Define e^x via Power Series
+### 5. Define e^x via Power Series
 
 **File:** New file `src/real/real_exp.ac`
 
@@ -165,7 +146,7 @@ exp(x) = ∑_{n=0}^{∞} x^n / n!
 
 ---
 
-### 7. Prove exp(x + y) = exp(x) * exp(y)
+### 6. Prove exp(x + y) = exp(x) * exp(y)
 
 **File:** `src/real/real_exp.ac`
 
@@ -182,7 +163,7 @@ exp(x) = ∑_{n=0}^{∞} x^n / n!
 
 ---
 
-### 8. Additional Properties of e^x
+### 7. Additional Properties of e^x
 
 **File:** `src/real/real_exp.ac`
 
