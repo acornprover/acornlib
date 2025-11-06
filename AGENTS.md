@@ -43,7 +43,7 @@ Make sure to run the verifier before you tell the user you're finished. If you h
 
 ## Plan Documents
 
-Plan documents are kept in the `plans/` directory. If you are working off of one, keep that up to date as you make changes.
+Plan documents are kept in the `plans/` directory.
 
 A good plan document has four sections:
 
@@ -56,12 +56,20 @@ A good plan document has four sections:
 4. **Outline**: A summary of what we need to do after the next steps are complete.
 
 To work on a plan, go step by step.
-Add one theorem at a time, along with the definitions needed for that theorem, and prove it.
-Once a theorem is proven, you can add another theorem.
-If all the theorems in "next steps" are proven, convert the next part of the "outline" into specific theorems for "next steps".
-At this point, it's a good time to stop and make a pull request.
-If you run out of time, but have proven some theorems, that's useful progress.
-If a single theorem is too hard to prove, tell the user which theorem you are stuck on.
+
+If the next step is a definition, add it to the Acorn code, in an appropriate location.
+
+If the next step is a theorem, prove it.
+
+If a theorem is too hard to prove, stop and tell the user which theorem you are stuck on.
+
+Once you prove a theorem, update the plan document appropriately.
+Finished "next steps" should either go into "notes" or be removed.
+Then you can go on to the next step.
+
+If all the "next steps" are proven, think hard about the next part of the "outline".
+Break it down into specific definitions and theorems for "next steps".
+Then, stop and ask the user for feedback on the new "next steps".
 
 
 ## Documentation Style
