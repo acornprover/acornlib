@@ -55,7 +55,7 @@ A good plan document has four sections:
 
 4. **Outline**: A summary of what we need to do after the next steps are complete.
 
-To work on a plan, go step by step.
+To "work on a plan", follow this procedure, step by step:
 
 If the next step is a definition, add it to the Acorn code, in an appropriate location.
 
