@@ -17,6 +17,9 @@ Prove the exponential function satisfies `exp(x + y) = exp(x) * exp(y)` using Me
 - `partial_diff`, `tail_limit_diff`, `sub_seq`, and `vanishing_diff`: Implemented in `src/real/cauchy.ac`
 - `tail_triangle_sum`: Absolute-value tail double sum in `src/real/cauchy.ac`
 - `tail_diff_converges`: Fixed-offset tail differences converge to the tail limit difference
+- `vanishes_of_abs_seq`: Absolute-value vanishing implies raw vanishing (proved in `src/real/cauchy.ac`)
+- `vanishes_neg_seq`: Negating a vanishing sequence preserves vanishing (proved in `src/real/cauchy.ac`)
+- Plan to reuse `double_sum_split_row_index` to isolate finitely many tail triangle rows and bound the remaining rows by tail estimates from absolute convergence
 
 **Strategy for tail triangle vanishing:**
 Two-stage epsilon argument:
@@ -32,18 +35,18 @@ Two-stage epsilon argument:
 ```acorn
 // In src/real/cauchy.ac
 
+/// Vanishing differences allow us to transfer limits across sequences.
+theorem limit_preserved_by_vanishing_diff(s: Nat -> Real, t: Nat -> Real) {
+  converges(s) and vanishing_diff(s, t)
+  implies
+  converges(t) and limit(s) = limit(t)
+}
+
 /// The tail triangle double sum vanishes as n → ∞.
 theorem tail_triangle_vanishes(a: Nat -> Real, b: Nat -> Real) {
   absolutely_converges(a) and absolutely_converges(b)
   implies
   vanishes(tail_triangle_sum(a, b))
-}
-
-/// Two sequences with vanishing difference have the same limit.
-theorem limit_preserved_by_vanishing_diff(s: Nat -> Real, t: Nat -> Real) {
-  converges(s) and vanishing_diff(s, t)
-  implies
-  converges(t) and limit(s) = limit(t)
 }
 
 /// Mertens' theorem: Cauchy product limit equals product of limits.

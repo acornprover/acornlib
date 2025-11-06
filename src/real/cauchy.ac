@@ -1,15 +1,15 @@
 from util import constant, compose
 from nat import Nat
-from nat.nat_base import add_assoc, add_comm, add_sub, lt_add_left, lte_imp_not_lt, lt_imp_lt_suc, lt_suc
+from nat.nat_base import add_comm, add_sub, lt_add_left, lte_imp_not_lt, lt_imp_lt_suc, lt_suc
 from list import partial, sum, map, List
 from list.list_functional import reverse, sum_reverse, reverse_get_idx
 from list.list_sum import map_range, list_extensionality, sum_scalar_mul, map_sum_add, scalar_mul, map_map, map_add, sum_add
 from option import Option
-from real.real_ring import Real, converges, converges_to, limit, lift_seq, zero_lte_imp_non_neg, real_mul_comm, lte_mul_nonneg_right
-from real.real_seq import limit_add_seq, converges_imp_converges_to, converges_to_imp_converges, converges_to_unique
-from real.real_series import seq_lte, is_lower_bound, add_seq, mul_seq, const_converges, const_limit
-from real.limits import vanishes
-from real.real_base import lte_add_left, lte_add_right, lte_trans, sub_moves_sides, add_zero_left, add_zero_right
+from real.real_ring import Real, converges, converges_to, limit, lift_seq, zero_lte_imp_non_neg, real_mul_comm, lte_mul_nonneg_right, mul_zero_right, mul_neg_one_left
+from real.real_seq import limit_add_seq, converges_imp_converges_to, converges_to_imp_converges, converges_to_unique, abs_lt_imp_close_to_zero, tail_bound
+from real.real_series import seq_lte, is_lower_bound, add_seq, mul_seq, const_converges, const_limit, neg_seq, mul_seq_converges_to
+from real.limits import vanishes, abs_seq, abs_abs
+from real.real_base import lte_add_left, lte_add_right, lte_trans, sub_moves_sides, add_zero_left, add_zero_right, add_assoc, add_neg_eq_zero, neg_neg, abs_neg
 from semigroup import mul_fn
 from add_semigroup import add_fn
 from real.double_sum import double_sum, row_sum, row_val, double_sum_expands, double_sum_row_expand, prod_fn, partial_product_as_double_sum
@@ -157,9 +157,155 @@ define sub_seq(s: Nat -> Real, t: Nat -> Real, n: Nat) -> Real {
     s(n) - t(n)
 }
 
+/// Absolute value of the difference between two sequences.
+define abs_diff_seq(s: Nat -> Real, t: Nat -> Real, n: Nat) -> Real {
+    sub_seq(s, t, n).abs
+}
+
 /// Two sequences differ by a vanishing amount.
 define vanishing_diff(s: Nat -> Real, t: Nat -> Real) -> Bool {
-    vanishes(function(n: Nat) { sub_seq(s, t, n).abs })
+    vanishes(abs_diff_seq(s, t))
+}
+
+/// A sequence vanishes if and only if its absolute value sequence vanishes.
+theorem vanishes_of_abs_seq(a: Nat -> Real) {
+    vanishes(abs_seq(a))
+    implies
+    vanishes(a)
+} by {
+    if vanishes(abs_seq(a)) {
+        // Extract convergence information for the absolute sequence.
+        converges(abs_seq(a))
+        limit(abs_seq(a)) = Real.0
+        converges_imp_converges_to(abs_seq(a))
+        converges_to_unique(abs_seq(a), limit(abs_seq(a)), Real.0)
+
+        // Establish convergence of a by bounding its tail via the absolute sequence.
+        forall(eps: Real) {
+            if eps.is_positive {
+                let n: Nat satisfy {
+                    tail_bound(abs_seq(a), Real.0, n, eps)
+                }
+                forall(i: Nat) {
+                    if n <= i {
+                        abs_seq(a)(i).is_close(Real.0, eps)
+                        abs_seq(a)(i).abs < eps
+                        abs_abs(a(i))
+                        abs_lt_imp_close_to_zero(a(i), eps)
+                        a(i).is_close(Real.0, eps)
+                    }
+                }
+                tail_bound(a, Real.0, n, eps)
+            }
+        }
+        converges_to(a, Real.0)
+        converges_to_imp_converges(a, Real.0)
+        converges_imp_converges_to(a)
+        converges_to_unique(a, limit(a), Real.0)
+        vanishes(a)
+    }
+}
+
+/// Taking negatives preserves the vanishing property.
+theorem vanishes_neg_seq(a: Nat -> Real) {
+    vanishes(a)
+    implies
+    vanishes(neg_seq(a))
+} by {
+    if vanishes(a) {
+        // Negating a vanishing sequence still converges to zero.
+        converges(a)
+        limit(a) = Real.0
+        mul_seq_converges_to(-Real.1, a)
+        mul_zero_right(-Real.1)
+        converges_to(neg_seq(a), Real.0)
+        converges_to_imp_converges(neg_seq(a), Real.0)
+        converges_imp_converges_to(neg_seq(a))
+        converges_to_unique(neg_seq(a), limit(neg_seq(a)), Real.0)
+        vanishes(neg_seq(a))
+    }
+}
+
+/// Vanishing is preserved under pointwise equality.
+theorem vanishes_congr_left(a: Nat -> Real, b: Nat -> Real) {
+    a = b and vanishes(b)
+    implies
+    vanishes(a)
+} by {
+    if a = b and vanishes(b) {
+        vanishes(a)
+    }
+}
+
+/// Negating the difference sequence swaps the order of the arguments.
+theorem neg_seq_sub_seq_eq(s: Nat -> Real, t: Nat -> Real) {
+    neg_seq(sub_seq(s, t)) = sub_seq(t, s)
+} by {
+    forall(n: Nat) {
+        // Show that the two differences sum to zero.
+        let lhs = sub_seq(s, t, n)
+        let rhs = sub_seq(t, s, n)
+
+        lhs + rhs = (s(n) - t(n)) + (t(n) - s(n))
+        add_assoc(s(n), -t(n), t(n) + -s(n))
+        add_assoc(-t(n), t(n), -s(n))
+        add_neg_eq_zero(-t(n))
+        neg_neg(t(n))
+        add_zero_right(s(n))
+        add_neg_eq_zero(s(n))
+        lhs + rhs = Real.0
+
+        sub_moves_sides(rhs, lhs, Real.0)
+        add_zero_left(-lhs)
+
+        mul_neg_one_left(lhs)
+        neg_seq(sub_seq(s, t))(n) = sub_seq(t, s, n)
+    }
+}
+
+/// Absolute values of the raw difference equal the absolute difference sequence (original order).
+theorem abs_seq_sub_seq_eq_abs_diff_left(s: Nat -> Real, t: Nat -> Real) {
+    abs_seq(sub_seq(s, t)) = abs_diff_seq(s, t)
+} by {
+    forall(n: Nat) {
+        abs_seq(sub_seq(s, t))(n) = sub_seq(s, t, n).abs
+        abs_diff_seq(s, t, n) = sub_seq(s, t, n).abs
+        abs_seq(sub_seq(s, t))(n) = abs_diff_seq(s, t, n)
+    }
+}
+
+/// Absolute values of the reversed difference also equal the absolute difference sequence.
+theorem abs_seq_sub_seq_eq_abs_diff_right(s: Nat -> Real, t: Nat -> Real) {
+    abs_seq(sub_seq(t, s)) = abs_diff_seq(s, t)
+} by {
+    forall(n: Nat) {
+        abs_diff_seq(s, t, n) = sub_seq(s, t, n).abs
+        neg_seq_sub_seq_eq(s, t)
+        neg_seq(sub_seq(s, t))(n) = sub_seq(t, s, n)
+        mul_neg_one_left(sub_seq(s, t, n))
+        sub_seq(t, s, n) = -sub_seq(s, t, n)
+        abs_neg(sub_seq(s, t, n))
+        abs_seq(sub_seq(t, s))(n) = sub_seq(t, s, n).abs
+        abs_seq(sub_seq(t, s))(n) = abs_diff_seq(s, t, n)
+    }
+}
+
+/// Absolute vanishing differences imply raw differences vanish.
+theorem vanishing_diff_abs_eq(s: Nat -> Real, t: Nat -> Real) {
+    vanishing_diff(s, t)
+    implies
+    vanishes(sub_seq(t, s))
+} by {
+    if vanishing_diff(s, t) {
+        // Convert the vanishing absolute difference to raw vanishing for both orientations.
+        abs_seq_sub_seq_eq_abs_diff_left(s, t)
+        vanishes_congr_left(abs_seq(sub_seq(s, t)), abs_diff_seq(s, t))
+        vanishes_of_abs_seq(sub_seq(s, t))
+
+        abs_seq_sub_seq_eq_abs_diff_right(s, t)
+        vanishes_congr_left(abs_seq(sub_seq(t, s)), abs_diff_seq(s, t))
+        vanishes_of_abs_seq(sub_seq(t, s))
+    }
 }
 
 theorem cauchy_product_zero(a: Nat -> Real, b: Nat -> Real) {
@@ -1462,8 +1608,6 @@ theorem partial_diff_vanishes_fixed_offset(a: Nat -> Real, k: Nat, eps: Real) {
         }
     }
 } by {
-    from real.real_seq import tail_bound
-
     if absolutely_converges(a) and eps.is_positive {
         // abs_fn(a) partial sums converge
         let lim = limit(partial(abs_fn(a)))
