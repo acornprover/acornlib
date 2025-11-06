@@ -19,6 +19,7 @@ Prove the exponential function satisfies `exp(x + y) = exp(x) * exp(y)` using Me
 - `tail_diff_converges`: Fixed-offset tail differences converge to the tail limit difference
 - `vanishes_of_abs_seq`: Absolute-value vanishing implies raw vanishing (proved in `src/real/cauchy.ac`)
 - `vanishes_neg_seq`: Negating a vanishing sequence preserves vanishing (proved in `src/real/cauchy.ac`)
+- `limit_preserved_by_vanishing_diff`: Vanishing differences transfer limits (`src/real/cauchy.ac`)
 - Plan to reuse `double_sum_split_row_index` to isolate finitely many tail triangle rows and bound the remaining rows by tail estimates from absolute convergence
 
 **Strategy for tail triangle vanishing:**
@@ -34,13 +35,6 @@ Two-stage epsilon argument:
 
 ```acorn
 // In src/real/cauchy.ac
-
-/// Vanishing differences allow us to transfer limits across sequences.
-theorem limit_preserved_by_vanishing_diff(s: Nat -> Real, t: Nat -> Real) {
-  converges(s) and vanishing_diff(s, t)
-  implies
-  converges(t) and limit(s) = limit(t)
-}
 
 /// The tail triangle double sum vanishes as n → ∞.
 theorem tail_triangle_vanishes(a: Nat -> Real, b: Nat -> Real) {
