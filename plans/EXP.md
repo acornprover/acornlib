@@ -14,6 +14,9 @@ Prove the exponential function satisfies `exp(x + y) = exp(x) * exp(y)` using Me
 - `double_sum_split_row_index`: Split double sum into initial and tail row segments
 - `tail_triangle_row_sum_abs_eq_abs_diff`: Each tail triangle row equals `abs_fn(a)(i) * (partial(abs_fn(b), n) - partial(abs_fn(b), n-i))`
 - `limit_of_prod`: Product of convergent sequences
+- `partial_diff`, `tail_limit_diff`, `sub_seq`, and `vanishing_diff`: Implemented in `src/real/cauchy.ac`
+- `tail_triangle_sum`: Absolute-value tail double sum in `src/real/cauchy.ac`
+- `tail_diff_converges`: Fixed-offset tail differences converge to the tail limit difference
 
 **Strategy for tail triangle vanishing:**
 Two-stage epsilon argument:
@@ -28,38 +31,6 @@ Two-stage epsilon argument:
 
 ```acorn
 // In src/real/cauchy.ac
-
-/// Difference between partial sum at n and partial sum at m.
-define partial_diff(f: Nat -> Real, m: Nat, n: Nat) -> Real {
-  partial(f, n) - partial(f, m)
-}
-
-/// The limit of the tail sum difference.
-define tail_limit_diff(f: Nat -> Real, m: Nat) -> Real {
-  limit(partial(f)) - partial(f, m)
-}
-
-/// The tail triangle double sum at index n.
-define tail_triangle_sum(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
-  double_sum(n, n, tail_triangle_product(abs_fn(a), abs_fn(b), n))
-}
-
-/// Difference between two sequences.
-define sub_seq(s: Nat -> Real, t: Nat -> Real, n: Nat) -> Real {
-  s(n) - t(n)
-}
-
-/// Two sequences differ by a vanishing amount.
-define vanishing_diff(s: Nat -> Real, t: Nat -> Real) -> Bool {
-  vanishes(function(n: Nat) { abs(sub_seq(s, t, n)) })
-}
-
-/// For fixed m, the tail sum difference converges to the limit minus the cutoff.
-theorem tail_diff_converges(a: Nat -> Real, m: Nat) {
-  absolutely_converges(a)
-  implies
-  converges_to(partial_diff(abs_fn(a), m), tail_limit_diff(abs_fn(a), m))
-}
 
 /// The tail triangle double sum vanishes as n → ∞.
 theorem tail_triangle_vanishes(a: Nat -> Real, b: Nat -> Real) {
