@@ -1,4 +1,4 @@
-This code is tricky, because it uses Acorn, a theorem proving language that you don't know.
+This code uses Acorn, a theorem proving language.
 
 Before writing a proof, look at at least one Acorn file to understand the syntax. For proofs by induction, look at nat.ac. For proofs involving limits, look at real_ring.ac.
 
@@ -54,6 +54,15 @@ A good plan document has four sections:
 3. **Next Steps**: A list of definitions to write, and theorems that we intend to prove next. It's best to write these as function signatures, in Acorn code.
 
 4. **Outline**: A summary of what we need to do after the next steps are complete.
+
+To work on a plan, go step by step.
+Add one theorem at a time, along with the definitions needed for that theorem, and prove it.
+Once a theorem is proven, you can add another theorem.
+If all the theorems in "next steps" are proven, convert the next part of the "outline" into specific theorems for "next steps".
+At this point, it's a good time to stop and make a pull request.
+If you run out of time, but have proven some theorems, that's useful progress.
+If a single theorem is too hard to prove, tell the user which theorem you are stuck on.
+
 
 ## Documentation Style
 
