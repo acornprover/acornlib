@@ -41,7 +41,19 @@ The binary can be used directly without the npm wrapper.
 
 Make sure to run the verifier before you tell the user you're finished. If you have made some progress but you're still working on a big proof, it's okay to comment that out so the user can check in your work.
 
-There is a todo list in TODO.md. If you are working off of it, keep that up to date as you make changes.
+## Plan Documents
+
+Plan documents are kept in the `plans/` directory. If you are working off of one, keep that up to date as you make changes.
+
+A good plan document has four sections:
+
+1. **Overall Goal**: A brief description of the goal of this document.
+
+2. **Notes**: A list of theorems that might come in handy for the next steps, and strategies we might use. We don't need to track work that is already done, unless we will use it in the plan.
+
+3. **Next Steps**: A list of definitions to write, and theorems that we intend to prove next. It's best to write these as function signatures, in Acorn code.
+
+4. **Outline**: A summary of what we need to do after the next steps are complete.
 
 ## Documentation Style
 
@@ -65,21 +77,36 @@ Comments should be written using mathematical language, not using programming la
 
 ## Tips
 
-As mentioned above, it is very important to run `acorn` after every change.
+**Always run `acorn` after every change.**
 
-Before proving a theorem, consider whether there is a lemma that could be factored out into a separate theorem. If there is, ask the user whether they would prefer you to prove the lemma first.
+**Proof strategy:**
+- Check if theorem statement is actually true before attempting proof
+- Consider factoring out lemmas - ask user if lemma should be separate
+- For large proofs: start with outline, fill in details incrementally (partial completion is ok)
+- Check for similar existing theorems to leverage
 
-Before proving a theorem, check if the theorem statement is actually true. If the user asks you to prove a false theorem, explain why you can't.
+**Syntax requirements:**
+- Variable names must be lowercase
+- Numeric literals need explicit types: `Nat.0`, `Real.0`
+- Check if `numerals` declaration already exists before adding
 
-Numeric literals must have a type specified. You can write `Nat.0` to indicate zero, the natural number. `Real.0` indicates zero, the real number. A `numerals Nat` statement will set the default, but don't add that if it isn't already there.
+**Keep definitions and theorems simple:**
+- Avoid inline lambdas: Define named helpers with explicit parameters. Example: `row_sum(m, f, i)` then use `row_sum(m, f)`, not `function(i) { ... }`
+- Avoid complex theorem statements: Extract inline `forall`/`exists`/`function` into separate definitions
+- Define helper functions to simplify expressions in theorem signatures
 
-Variable names must be lowercase.
+**File organization:**
+- Place definitions and theorems in the most general file that applies
+- Example: `sub_seq` belongs with `add_seq` in `real_seq.ac`, not in `cauchy.ac` where it's used
 
-**Avoid inline lambdas:** Acorn's normalizer has trouble with nested lambda functions and closures. Instead, define named helper functions with explicit parameters and use partial application. Example: define `row_sum(m, f, i)` separately, then use `row_sum(m, f)` instead of `function(i) { ... }`.
+**Prover capabilities:**
+- Rarely need to import theorems (prover is powerful)
+- Rarely need explicit theorem names in same file
+- Write natural expressions (`n + 1` not `n.suc`)
 
-The Acorn prover is surprisingly powerful. You will almost never have to import theorems from other files since the prover can usually figure them out on its own. You will also almost never have to use explicit theorem names even in the same file. For example, if you need to do some basic arithmetic on the natural numbers, you will almost never have to write `n.suc` (just write `n + 1`) or import anything from `nat` other than `Nat`.
+**Bounded induction pattern:** When inducting over bounded ranges with external constraints, induct on the _distance_ to enable automatic induction.
 
-If the proof seems very large, it is worth beginning with a proof outline and thinking through it, then starting to fill in the details step by step, even if the complete proof does not pass.
+**Arithmetic explicitness:** Be explicit with inequalities - Acorn may not automatically prove `n - k >= big_n` from `big_n + k <= n`.
 
 ## Fixing Proofs
 
