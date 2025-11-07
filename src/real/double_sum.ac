@@ -1,19 +1,112 @@
+from util import constant
 from nat import Nat
-from nat.nat_base import add_zero_right, add_suc_right, add_comm, add_imp_sub
+from nat.nat_base import add_suc_right, add_comm, add_imp_sub, lt_suc
 from list import partial, sum, map, List
 from list.list_sum import map_add, sum_add, map_sum_add, partial_pointwise_eq, partial_scalar_mul, partial_split_last, partial_zero
 from add_comm_monoid import AddCommMonoid
 from add_semigroup import add_fn
 from semigroup import mul_fn
-from real.real_ring import Real, lte_mul_nonneg_right, lte_mul_nonneg_left, mul_distrib_left, mul_distrib_right
-from real.real_series import is_lower_bound, nonneg_imp_partial_increasing, is_increasing, distant_increasing, partial_mul_scalar_right
-from real.real_base import lte_add_right, lte_trans_eq
+from real.real_ring import Real, lte_mul_nonneg_right, lte_mul_nonneg_left, mul_distrib_left, mul_distrib_right, converges, converges_to, limit
+from real.real_seq import limit_add_seq, converges_imp_converges_to, converges_to_imp_converges, converges_to_unique
+from real.real_series import is_lower_bound, nonneg_imp_partial_increasing, is_increasing, distant_increasing, partial_mul_scalar_right, add_seq, neg_seq
+from real.real_base import lte_add_right, lte_trans_eq, add_zero_left, add_zero_right
 
 numerals Real
 
 // This module proves theorems about double sums.
 // It uses the "indicator method" of representing a sum over just some parts, ie putting zeros
 // in the other parts, which ended up seeming ugly and maybe was a mistake.
+
+/// Flip is a standard combinator, so maybe we should put it elsewhere eventually.
+define flip(f: (Nat, Nat) -> Real, a: Nat, b: Nat) -> Real {
+    f(b, a)
+}
+
+/// Sum the first m sequences in the family at index n.
+define finite_sum_value(f: Nat -> (Nat -> Real), m: Nat, n: Nat) -> Real {
+    sum(map(m.range, flip(f, n)))
+}
+
+/// The sequence obtained by summing the first m sequences in the family.
+define finite_sum_seq(f: Nat -> (Nat -> Real), m: Nat) -> (Nat -> Real) {
+    function(n: Nat) { finite_sum_value(f, m, n) }
+}
+
+/// Summing zero sequences produces the zero sequence.
+theorem finite_sum_value_zero(f: Nat -> (Nat -> Real), n: Nat) {
+    finite_sum_value(f, Nat.0, n) = Real.0
+} by {
+    sum(List.nil[Real]) = Real.0
+}
+
+/// Splitting off the last sequence in the finite family turns the sum into an addition.
+theorem finite_sum_value_suc(f: Nat -> (Nat -> Real), m: Nat, n: Nat) {
+    finite_sum_value(f, m.suc, n) = finite_sum_value(f, m, n) + f(m)(n)
+} by {
+    sum(map(List.singleton(m), flip(f, n))) = f(m)(n)
+}
+
+/// Successor sums agree pointwise with the addition of the previous sum and the extra term.
+theorem finite_sum_seq_suc_eq_add(f: Nat -> (Nat -> Real), m: Nat, n: Nat) {
+    finite_sum_seq(f, m.suc)(n) = add_seq(finite_sum_seq(f, m), f(m))(n)
+}
+
+/// The sum of two vanishing sequences also vanishes.
+theorem add_seq_vanishes(a: Nat -> Real, b: Nat -> Real) {
+    converges_to(a, Real.0) and converges_to(b, Real.0)
+    implies
+    converges_to(add_seq(a, b), Real.0)
+} by {
+    if converges_to(a, Real.0) and converges_to(b, Real.0) {
+        converges_to_imp_converges(a, Real.0)
+        converges_imp_converges_to(a)
+        converges_to_unique(a, limit(a), Real.0)
+
+        converges_to_imp_converges(b, Real.0)
+        converges_imp_converges_to(b)
+        converges_to_unique(b, limit(b), Real.0)
+
+        limit_add_seq(a, b)
+        add_zero_right(Real.0)
+        converges_to(add_seq(a, b), Real.0)
+    }
+}
+
+/// A finite sum of vanishing sequences also vanishes.
+theorem finite_sum_vanishes(f: Nat -> (Nat -> Real), m: Nat) {
+    (forall(i: Nat) { i < m implies converges_to(f(i), Real.0) })
+    implies
+    converges_to(finite_sum_seq(f, m), Real.0)
+} by {
+    define p(k: Nat) -> Bool {
+        (forall(i: Nat) { i < k implies converges_to(f(i), Real.0) })
+        implies
+        converges_to(finite_sum_seq(f, k), Real.0)
+    }
+
+    // Base case: empty sum equals the zero sequence.
+    if forall(i: Nat) { i < Nat.0 implies converges_to(f(i), Real.0) } {
+        finite_sum_seq(f, Nat.0) = constant[Nat, Real](Real.0)
+        converges_to(finite_sum_seq(f, Nat.0), Real.0)
+    }
+
+    // Inductive step: add the next vanishing sequence.
+    forall(k: Nat) {
+        if p(k) {
+            if forall(i: Nat) { i < k.suc implies converges_to(f(i), Real.0) } {
+                lt_suc(k)
+
+                add_seq_vanishes(finite_sum_seq(f, k), f(k))
+
+                finite_sum_seq(f, k.suc) = add_seq(finite_sum_seq(f, k), f(k))
+                converges_to(finite_sum_seq(f, k.suc), Real.0)
+            }
+            p(k.suc)
+        }
+    }
+
+    p(m)
+}
 
 /// Helper: compute the sum of row i in a double sum.
 /// This avoids nested lambdas by making all parameters explicit.
@@ -92,7 +185,6 @@ theorem double_sum_split_row_index(n: Nat, m: Nat, f: (Nat, Nat) -> Real, k: Nat
             double_sum(k + d, m, f) = double_sum(k, m, f) + sum(map(d.range, tail))
         }
 
-        add_zero_right(k)
         q(Nat.0)
 
         forall(d: Nat) {
