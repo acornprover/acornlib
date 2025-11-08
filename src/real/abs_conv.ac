@@ -3,11 +3,13 @@ from nat import Nat
 from list import partial, sum, map, List
 from semigroup import mul_fn
 from add_semigroup import add_fn
-from real.real_ring import Real, converges, limit, converges_to, mul_neg_one_left
+from real.real_ring import Real, converges, limit, converges_to, mul_neg_one_left, mul_abs
 from real.real_seq import limit_add_seq, converges_imp_converges_to, converges_to_imp_converges, converges_to_unique, tail_bound, cauchy_bound
-from real.real_series import is_lower_bound, add_seq, const_converges, const_limit, neg_seq, mul_seq
+from real.real_series import is_lower_bound, add_seq, const_converges, const_limit, neg_seq, mul_seq, comparison_test, seq_lte, is_upper_bound
+from real.double_sum import mul_le_mul_nonneg
 from real.limits import vanishes, abs_seq
-from real.real_base import add_assoc, add_neg_eq_zero, add_zero_left, add_zero_right, neg_neg, sub_moves_sides, abs_neg
+from real.real_base import add_assoc, add_neg_eq_zero, add_zero_left, add_zero_right, neg_neg, sub_moves_sides, abs_neg, lte_trans
+from real.prod_seq import prod_seq
 
 numerals Real
 
@@ -22,6 +24,11 @@ define abs_fn(a: Nat -> Real) -> (Nat -> Real) {
 /// A series converges absolutely if the series of absolute values converges.
 define absolutely_converges(a: Nat -> Real) -> Bool {
     converges(partial(abs_fn(a)))
+}
+
+/// A sequence admits an upper bound if some real number bounds every term from above.
+define has_upper_bound(a: Nat -> Real) -> Bool {
+    exists(bound: Real) { is_upper_bound(a, bound) }
 }
 
 /// The absolute value of any element in the constant zero sequence is zero.
@@ -42,6 +49,18 @@ theorem abs_fn_scalar_mul(c: Real, a: Nat -> Real, n: Nat) {
 /// abs_fn is equivalent to composing with Real.abs.
 theorem abs_fn_eq_compose(a: Nat -> Real, n: Nat) {
     abs_fn(a)(n) = compose(Real.abs, a)(n)
+}
+
+/// The absolute value of a pointwise product is the product of absolute values.
+theorem abs_fn_prod_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) {
+    abs_fn(prod_seq(a, b))(n) = abs_fn(a)(n) * abs_fn(b)(n)
+} by {
+    abs_fn(prod_seq(a, b))(n) = prod_seq(a, b, n).abs
+    prod_seq(a, b, n) = a(n) * b(n)
+    mul_abs(a(n), b(n))
+    (a(n) * b(n)).abs = a(n).abs * b(n).abs
+    abs_fn(a)(n) = a(n).abs
+    abs_fn(b)(n) = b(n).abs
 }
 
 /// Difference between two partial sums of the same series.
@@ -195,13 +214,65 @@ theorem absolutely_converges_scalar_mul(c: Real, a: Nat -> Real) {
     }
 }
 
+/// Absolute convergence is preserved by multiplication with a bounded sequence.
+/// If |b(n)| ≤ bound for all n and ∑|a(n)| converges, then ∑|a(n) * b(n)| converges.
+theorem absolutely_converges_mul_bounded(a: Nat -> Real, b: Nat -> Real) {
+    absolutely_converges(a)
+    and has_upper_bound(abs_fn(b))
+    implies
+    absolutely_converges(prod_seq(a, b))
+} by {
+    from real.real_series import converges_mul_seq
+
+    let bound: Real satisfy {
+        is_upper_bound(abs_fn(b), bound)
+    }
+
+    is_upper_bound(abs_fn(b), bound)
+
+    abs_fn_nonneg(b, Nat.0)
+    abs_fn(b)(Nat.0) >= Real.0
+    abs_fn(b)(Nat.0) <= bound
+    lte_trans(Real.0, abs_fn(b)(Nat.0), bound)
+    Real.0 <= bound
+
+    forall(n: Nat) {
+        is_upper_bound(abs_fn(b), bound)
+        abs_fn_prod_seq(a, b, n)
+        abs_fn_nonneg(a, n)
+        abs_fn_nonneg(b, n)
+        abs_fn(b)(n) <= bound
+        mul_le_mul_nonneg(abs_fn(a)(n), abs_fn(b)(n), abs_fn(a)(n), bound)
+        abs_fn(prod_seq(a, b))(n) = abs_fn(a)(n) * abs_fn(b)(n)
+        mul_fn(bound, abs_fn(a))(n) = bound * abs_fn(a)(n)
+        abs_fn(prod_seq(a, b))(n) <= mul_fn(bound, abs_fn(a))(n)
+    }
+
+    forall(n: Nat) {
+        abs_fn_nonneg(prod_seq(a, b), n)
+    }
+    is_lower_bound(abs_fn(prod_seq(a, b)), Real.0)
+
+    partial(mul_fn(bound, abs_fn(a))) = mul_fn(bound, partial(abs_fn(a)))
+    mul_fn(bound, partial(abs_fn(a))) = mul_seq(bound, partial(abs_fn(a)))
+
+    absolutely_converges(a)
+    converges(partial(abs_fn(a)))
+    converges_mul_seq(bound, partial(abs_fn(a)))
+    converges(mul_seq(bound, partial(abs_fn(a))))
+    converges(partial(mul_fn(bound, abs_fn(a))))
+
+    comparison_test(abs_fn(prod_seq(a, b)), mul_fn(bound, abs_fn(a)))
+    absolutely_converges(prod_seq(a, b))
+}
+
 /// Absolute convergence is preserved under addition of sequences.
 theorem absolutely_converges_add(a: Nat -> Real, b: Nat -> Real) {
     absolutely_converges(a) and absolutely_converges(b)
     implies
     absolutely_converges(add_fn(a, b))
 } by {
-    from real.real_series import add_seq_converges, comparison_test
+    from real.real_series import add_seq_converges
 
     if absolutely_converges(a) and absolutely_converges(b) {
         forall(n: Nat) {
@@ -219,6 +290,24 @@ theorem absolutely_converges_add(a: Nat -> Real, b: Nat -> Real) {
         comparison_test(abs_fn(add_fn(a, b)), add_fn(abs_fn(a), abs_fn(b)))
         absolutely_converges(add_fn(a, b))
     }
+}
+
+/// Comparison test for absolute convergence.
+/// If |a(n)| ≤ b(n), the b(n) are nonnegative, and ∑ b(n) converges, then ∑ a(n) converges absolutely.
+theorem absolutely_converges_comparison(a: Nat -> Real, b: Nat -> Real) {
+    is_lower_bound(b, Real.0)
+    and seq_lte(abs_fn(a), b)
+    and converges(partial(b))
+    implies
+    absolutely_converges(a)
+} by {
+    forall(n: Nat) {
+        abs_fn_nonneg(a, n)
+    }
+    is_lower_bound(abs_fn(a), Real.0)
+
+    comparison_test(abs_fn(a), b)
+    absolutely_converges(a)
 }
 
 /// Tail bound for absolutely convergent series.
