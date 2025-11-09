@@ -4,13 +4,13 @@ from list import partial, sum, map, List
 from semigroup import mul_fn
 from add_semigroup import add_fn
 from real.real_ring import Real, converges, limit, converges_to, mul_neg_one_left, mul_abs
-from real.real_seq import limit_add_seq, converges_imp_converges_to, converges_to_imp_converges, converges_to_unique, tail_bound, cauchy_bound, eventual_ub, ub_imp_limit_lte, eventual_lb, lb_lte_limit
+from real.real_seq import limit_add_seq, converges_imp_converges_to, converges_to_imp_converges, converges_to_unique, tail_bound, cauchy_bound, eventual_ub, ub_imp_limit_lte, eventual_lb, lb_lte_limit, abs_lt_imp_close_to_zero
 from real.real_series import is_lower_bound, add_seq, const_converges, const_limit, neg_seq, mul_seq, comparison_test, seq_lte, is_upper_bound, tail
 from real.double_sum import mul_le_mul_nonneg
 from real.limits import vanishes, abs_seq
-from real.real_base import add_assoc, add_neg_eq_zero, add_zero_left, add_zero_right, neg_neg, sub_moves_sides, abs_neg, lte_trans, lte_lt_trans, lt_trans, lt_add_pos, not_lt_imp_gte
+from real.real_base import add_assoc, add_neg_eq_zero, add_zero_left, add_zero_right, neg_neg, sub_moves_sides, abs_neg, lte_trans, lte_lt_trans, lt_lte_trans, lt_trans, lt_add_pos, not_lt_imp_gte
 from real.prod_seq import prod_seq
-from set import Set
+from set import Set, is_decreasing, seq_intersection, decreasing_seq_transitive
 
 numerals Real
 
@@ -880,5 +880,359 @@ theorem subseries_bounded_by_tail(a: Nat -> Real, s: Set[Nat], n: Nat) {
         limit(partial(subseries(abs_fn(a), nat_from(n)))) = tail_limit_diff(abs_fn(a), n)
 
         limit(partial(subseries(abs_fn(a), s))) <= tail_limit_diff(abs_fn(a), n)
+    }
+}
+
+/// The absolute value of the sum of an absolutely convergent series
+/// is bounded by the sum of the absolute values.
+theorem abs_limit_le_abs_series(a: Nat -> Real) {
+    absolutely_converges(a)
+    implies
+    limit(partial(a)).abs <= limit(partial(abs_fn(a)))
+} by {
+    from real.real_series import sum_abs_le_abs_sum, nonneg_partial_nonneg
+    from real.limits import limit_abs_seq
+
+    if absolutely_converges(a) {
+        absolutely_converges_imp_converges(a)
+        converges(partial(a))
+
+        // Use triangle inequality on partial sums
+        forall(n: Nat) {
+            // partial(a, n) = sum(map(n.range, a))
+            // partial(abs_fn(a), n) = sum(map(n.range, abs_fn(a)))
+            // map(n.range, abs_fn(a)) = map(map(n.range, a), Real.abs)
+
+            let items = map(n.range, a)
+            partial(a, n) = sum(items)
+            partial(a, n).abs = sum(items).abs
+
+            sum_abs_le_abs_sum(items)
+            sum(items).abs <= sum(map(items, Real.abs))
+
+            // Show that map(items, Real.abs) = map(n.range, abs_fn(a))
+            // This follows from the fact that abs_fn(a) = compose(Real.abs, a)
+            abs_fn_eq_compose(a, Nat.0)
+            // Note: We rely on the prover to see that map(n.range, abs_fn(a)) = map(map(n.range, a), Real.abs)
+            // because abs_fn is defined as function(n) { a(n).abs }
+
+            // Conclude
+            sum(map(items, Real.abs)) <= partial(abs_fn(a), n)
+            partial(a, n).abs <= partial(abs_fn(a), n)
+        }
+
+        // Take limit of both sides using limit_abs_seq
+        limit_abs_seq(partial(a))
+        converges_to(abs_seq(partial(a)), limit(partial(a)).abs)
+        converges_to_imp_converges(abs_seq(partial(a)), limit(partial(a)).abs)
+        converges(abs_seq(partial(a)))
+
+        forall(n: Nat) {
+            abs_seq(partial(a))(n) = partial(a, n).abs
+        }
+
+        converges_imp_converges_to(abs_seq(partial(a)))
+        converges_to_unique(abs_seq(partial(a)), limit(abs_seq(partial(a))), limit(partial(a)).abs)
+        limit(abs_seq(partial(a))) = limit(partial(a)).abs
+
+        // Now show limit(partial(a)).abs <= limit(partial(abs_fn(a)))
+        // using the fact that partial(a, n).abs <= partial(abs_fn(a), n) for all n
+
+        // Proof by contradiction - assume limit(partial(a)).abs > limit(partial(abs_fn(a)))
+        if limit(partial(a)).abs > limit(partial(abs_fn(a))) {
+            let diff = limit(partial(a)).abs - limit(partial(abs_fn(a)))
+            diff.is_positive
+
+            let eps: Real satisfy {
+                eps.is_positive and eps + eps < diff
+            }
+
+            converges(partial(abs_fn(a)))
+            converges_imp_converges_to(partial(abs_fn(a)))
+
+            forall(eps2: Real) {
+                if eps2.is_positive {
+                    tail_bound(partial(abs_fn(a)), limit(partial(abs_fn(a))), Nat.0, eps2)
+                }
+            }
+            let n1: Nat satisfy {
+                forall(n: Nat) {
+                    n1 <= n implies partial(abs_fn(a), n).is_close(limit(partial(abs_fn(a))), eps)
+                }
+            }
+
+            forall(eps2: Real) {
+                if eps2.is_positive {
+                    tail_bound(abs_seq(partial(a)), limit(partial(a)).abs, Nat.0, eps2)
+                }
+            }
+            let n2: Nat satisfy {
+                forall(n: Nat) {
+                    n2 <= n implies abs_seq(partial(a))(n).is_close(limit(partial(a)).abs, eps)
+                }
+            }
+
+            if n1 <= n2 {
+                partial(a, n2).abs.is_close(limit(partial(a)).abs, eps)
+                partial(abs_fn(a), n2).is_close(limit(partial(abs_fn(a))), eps)
+
+                partial(a, n2).abs >= limit(partial(a)).abs - eps
+                partial(abs_fn(a), n2) <= limit(partial(abs_fn(a))) + eps
+
+                partial(a, n2).abs <= partial(abs_fn(a), n2)
+                limit(partial(a)).abs - eps <= partial(abs_fn(a), n2)
+                limit(partial(a)).abs - eps <= limit(partial(abs_fn(a))) + eps
+                limit(partial(a)).abs <= limit(partial(abs_fn(a))) + eps + eps
+                lt_add_pos(eps, eps)
+                lt_trans(eps, eps + eps, diff)
+                eps < diff
+                lte_lt_trans(limit(partial(abs_fn(a))) + eps + eps,
+                             limit(partial(abs_fn(a))) + diff,
+                             limit(partial(a)).abs)
+                limit(partial(abs_fn(a))) + diff = limit(partial(a)).abs
+                limit(partial(a)).abs < limit(partial(a)).abs
+                not (limit(partial(a)).abs < limit(partial(a)).abs)
+            } else {
+                partial(a, n1).abs.is_close(limit(partial(a)).abs, eps)
+                partial(abs_fn(a), n1).is_close(limit(partial(abs_fn(a))), eps)
+
+                partial(a, n1).abs >= limit(partial(a)).abs - eps
+                partial(abs_fn(a), n1) <= limit(partial(abs_fn(a))) + eps
+
+                partial(a, n1).abs <= partial(abs_fn(a), n1)
+                limit(partial(a)).abs - eps <= partial(abs_fn(a), n1)
+                limit(partial(a)).abs - eps <= limit(partial(abs_fn(a))) + eps
+                limit(partial(a)).abs <= limit(partial(abs_fn(a))) + eps + eps
+                lt_add_pos(eps, eps)
+                lt_trans(eps, eps + eps, diff)
+                eps < diff
+                lte_lt_trans(limit(partial(abs_fn(a))) + eps + eps,
+                             limit(partial(abs_fn(a))) + diff,
+                             limit(partial(a)).abs)
+                limit(partial(abs_fn(a))) + diff = limit(partial(a)).abs
+                limit(partial(a)).abs < limit(partial(a)).abs
+                not (limit(partial(a)).abs < limit(partial(a)).abs)
+            }
+        }
+
+        limit(partial(a)).abs <= limit(partial(abs_fn(a)))
+    }
+}
+
+/// For a decreasing sequence of sets with empty intersection,
+/// eventually all elements in the sets are at least n.
+theorem decreasing_empty_intersection_eventually_bounded(s: Nat -> Set[Nat], tail_n: Nat) {
+    is_decreasing(s) and seq_intersection(s).is_empty
+    implies
+    exists(big_n: Nat) {
+        set_lower_bound(s(big_n), tail_n)
+    }
+} by {
+    define p(n: Nat) -> Bool {
+        is_decreasing(s) and seq_intersection(s).is_empty
+        implies
+        exists(big_n: Nat) {
+            set_lower_bound(s(big_n), n)
+        }
+    }
+
+    // Base case: n = 0
+    forall(big_n: Nat) {
+        forall(k: Nat) {
+            s(big_n).contains(k) implies k >= Nat.0
+        }
+        set_lower_bound(s(big_n), Nat.0)
+    }
+    p(Nat.0)
+
+    // Inductive step
+    forall(n: Nat) {
+        if p(n) and is_decreasing(s) and seq_intersection(s).is_empty {
+            let big_n_prev: Nat satisfy {
+                set_lower_bound(s(big_n_prev), n)
+            }
+
+            seq_intersection(s).is_empty
+            forall(k: Nat) {
+                not seq_intersection(s).contains(k)
+            }
+            not seq_intersection(s).contains(n)
+
+            // seq_intersection(s) = intersection_family(s) = Set.new(and_family(s))
+            // seq_intersection(s).contains(n) means and_family(s, n)
+            // which means forall(i: Nat) { s(i).contains(n) }
+            // So not seq_intersection(s).contains(n) means exists(i: Nat) { not s(i).contains(n) }
+
+            // Unpack the definition
+            if forall(i: Nat) { s(i).contains(n) } {
+                // Then seq_intersection(s).contains(n) would be true
+                seq_intersection(s).contains(n)
+                // But we know it's false
+                not seq_intersection(s).contains(n)
+            }
+
+            // So there exists i such that not s(i).contains(n)
+            let i_n: Nat satisfy {
+                not s(i_n).contains(n)
+            }
+
+            if big_n_prev <= i_n {
+                decreasing_seq_transitive(s, big_n_prev, i_n)
+                s(big_n_prev).superset(s(i_n))
+
+                forall(k: Nat) {
+                    if s(i_n).contains(k) {
+                        s(big_n_prev).contains(k)
+                        set_lower_bound(s(big_n_prev), n)
+                        k >= n
+
+                        not s(i_n).contains(n)
+                        if k = n {
+                            s(i_n).contains(n)
+                        }
+                        k != n
+                        k >= n.suc
+                    }
+                }
+                set_lower_bound(s(i_n), n.suc)
+
+                exists(big_n: Nat) {
+                    big_n = i_n and set_lower_bound(s(big_n), n.suc)
+                }
+            } else {
+                decreasing_seq_transitive(s, i_n, big_n_prev)
+                s(i_n).superset(s(big_n_prev))
+
+                forall(k: Nat) {
+                    if s(big_n_prev).contains(k) {
+                        s(i_n).contains(k)
+
+                        not s(i_n).contains(n)
+                        if k = n {
+                            s(i_n).contains(n)
+                        }
+                        k != n
+
+                        set_lower_bound(s(big_n_prev), n)
+                        k >= n
+                        k >= n.suc
+                    }
+                }
+                set_lower_bound(s(big_n_prev), n.suc)
+
+                exists(big_n: Nat) {
+                    big_n = big_n_prev and set_lower_bound(s(big_n), n.suc)
+                }
+            }
+        }
+    }
+
+    p(tail_n)
+}
+
+/// For a decreasing sequence of sets with empty intersection,
+/// the sequence of subseries sums vanishes.
+/// This captures the intuition that as sets shrink while avoiding all finite elements,
+/// only arbitrarily large elements remain, making the subseries sum arbitrarily small.
+theorem decreasing_empty_intersection_subseries_vanishes(a: Nat -> Real, s: Nat -> Set[Nat]) {
+    absolutely_converges(a)
+    and is_decreasing(s)
+    and seq_intersection(s).is_empty
+    implies
+    vanishes(subseries_seq_sum(a, s))
+} by {
+    if absolutely_converges(a) and is_decreasing(s) and seq_intersection(s).is_empty {
+        // First show that subseries_seq_sum(a, s) converges
+        forall(i: Nat) {
+            absolutely_converges_subseries(a, s(i))
+            absolutely_converges_imp_converges(subseries(a, s(i)))
+            converges(partial(subseries(a, s(i))))
+
+            subseries_seq_sum(a, s, i) = limit(partial(subseries(a, s(i))))
+        }
+
+        // Now show it converges to zero
+        forall(eps: Real) {
+            if eps.is_positive {
+                // Find tail_n such that tail sum is small
+                abs_conv_tail_sum_small(a, eps)
+                let tail_n: Nat satisfy {
+                    tail_limit_diff(abs_fn(a), tail_n) < eps
+                }
+
+                // Find big_n such that s(big_n) is bounded below by tail_n
+                decreasing_empty_intersection_eventually_bounded(s, tail_n)
+                let big_n: Nat satisfy {
+                    set_lower_bound(s(big_n), tail_n)
+                }
+
+                forall(i: Nat) {
+                    if i >= big_n {
+                        // s(i) is a subset of s(big_n) by decreasing property
+                        if i = big_n {
+                            s(i) = s(big_n)
+                        } else {
+                            decreasing_seq_transitive(s, big_n, i)
+                            s(big_n).superset(s(i))
+                        }
+
+                        // s(big_n) has lower bound tail_n, so s(i) also has lower bound tail_n
+                        forall(k: Nat) {
+                            if s(i).contains(k) {
+                                if i = big_n {
+                                    s(big_n).contains(k)
+                                    set_lower_bound(s(big_n), tail_n)
+                                    k >= tail_n
+                                } else {
+                                    s(big_n).contains(k)
+                                    set_lower_bound(s(big_n), tail_n)
+                                    k >= tail_n
+                                }
+                            }
+                        }
+                        set_lower_bound(s(i), tail_n)
+
+                        // Apply subseries_bounded_by_tail
+                        subseries_bounded_by_tail(a, s(i), tail_n)
+                        limit(partial(subseries(abs_fn(a), s(i)))) <= tail_limit_diff(abs_fn(a), tail_n)
+
+                        // Use abs_limit_le_abs_series
+                        absolutely_converges_subseries(a, s(i))
+                        abs_limit_le_abs_series(subseries(a, s(i)))
+                        limit(partial(subseries(a, s(i)))).abs <= limit(partial(abs_fn(subseries(a, s(i)))))
+
+                        abs_fn_subseries(a, s(i))
+                        abs_fn(subseries(a, s(i))) = subseries(abs_fn(a), s(i))
+                        partial(abs_fn(subseries(a, s(i)))) = partial(subseries(abs_fn(a), s(i)))
+                        limit(partial(abs_fn(subseries(a, s(i))))) = limit(partial(subseries(abs_fn(a), s(i))))
+                        limit(partial(subseries(a, s(i)))).abs <= limit(partial(subseries(abs_fn(a), s(i))))
+
+                        subseries_seq_sum(a, s, i) = limit(partial(subseries(a, s(i))))
+                        subseries_seq_sum(a, s, i).abs <= limit(partial(subseries(abs_fn(a), s(i))))
+
+                        lte_trans(subseries_seq_sum(a, s, i).abs,
+                                  limit(partial(subseries(abs_fn(a), s(i)))),
+                                  tail_limit_diff(abs_fn(a), tail_n))
+                        subseries_seq_sum(a, s, i).abs <= tail_limit_diff(abs_fn(a), tail_n)
+
+                        lt_lte_trans(subseries_seq_sum(a, s, i).abs,
+                                    tail_limit_diff(abs_fn(a), tail_n),
+                                    eps)
+                        subseries_seq_sum(a, s, i).abs < eps
+
+                        abs_lt_imp_close_to_zero(subseries_seq_sum(a, s, i), eps)
+                        subseries_seq_sum(a, s, i).is_close(Real.0, eps)
+                    }
+                }
+                tail_bound(subseries_seq_sum(a, s), Real.0, big_n, eps)
+            }
+        }
+        converges_to(subseries_seq_sum(a, s), Real.0)
+        converges_to_imp_converges(subseries_seq_sum(a, s), Real.0)
+        converges(subseries_seq_sum(a, s))
+        converges_imp_converges_to(subseries_seq_sum(a, s))
+        converges_to_unique(subseries_seq_sum(a, s), limit(subseries_seq_sum(a, s)), Real.0)
+        limit(subseries_seq_sum(a, s)) = Real.0
+        vanishes(subseries_seq_sum(a, s))
     }
 }
