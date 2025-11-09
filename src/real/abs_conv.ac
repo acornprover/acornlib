@@ -883,6 +883,40 @@ theorem subseries_bounded_by_tail(a: Nat -> Real, s: Set[Nat], n: Nat) {
     }
 }
 
+/// Helper: map(map(range, f), g) = map(range, compose(g, f))
+theorem map_compose_helper(f: Nat -> Real, n: Nat) {
+    map(map(n.range, f), Real.abs) = map(n.range, compose(Real.abs, f))
+} by {
+    forall(i: Nat) {
+        if i < n.range.length {
+            map(map(n.range, f), Real.abs) = map(n.range, compose(Real.abs, f))
+        }
+    }
+}
+
+/// Helper: partial of abs_fn equals sum of absolute values
+theorem partial_abs_fn_eq(a: Nat -> Real, n: Nat) {
+    partial(abs_fn(a), n) = sum(map(map(n.range, a), Real.abs))
+} by {
+    let items = map(n.range, a)
+    partial(abs_fn(a), n) = sum(map(n.range, abs_fn(a)))
+
+    forall(i: Nat) {
+        abs_fn(a)(i) = a(i).abs
+        compose(Real.abs, a)(i) = a(i).abs
+        abs_fn(a)(i) = compose(Real.abs, a)(i)
+    }
+    abs_fn(a) = compose(Real.abs, a)
+    map(n.range, abs_fn(a)) = map(n.range, compose(Real.abs, a))
+
+    map_compose_helper(a, n)
+    map(n.range, compose(Real.abs, a)) = map(map(n.range, a), Real.abs)
+    map(items, Real.abs) = map(n.range, abs_fn(a))
+
+    sum(map(n.range, abs_fn(a))) = sum(map(items, Real.abs))
+    partial(abs_fn(a), n) = sum(map(items, Real.abs))
+}
+
 /// The absolute value of the sum of an absolutely convergent series
 /// is bounded by the sum of the absolute values.
 theorem abs_limit_le_abs_series(a: Nat -> Real) {
@@ -899,10 +933,6 @@ theorem abs_limit_le_abs_series(a: Nat -> Real) {
 
         // Use triangle inequality on partial sums
         forall(n: Nat) {
-            // partial(a, n) = sum(map(n.range, a))
-            // partial(abs_fn(a), n) = sum(map(n.range, abs_fn(a)))
-            // map(n.range, abs_fn(a)) = map(map(n.range, a), Real.abs)
-
             let items = map(n.range, a)
             partial(a, n) = sum(items)
             partial(a, n).abs = sum(items).abs
@@ -910,14 +940,9 @@ theorem abs_limit_le_abs_series(a: Nat -> Real) {
             sum_abs_le_abs_sum(items)
             sum(items).abs <= sum(map(items, Real.abs))
 
-            // Show that map(items, Real.abs) = map(n.range, abs_fn(a))
-            // This follows from the fact that abs_fn(a) = compose(Real.abs, a)
-            abs_fn_eq_compose(a, Nat.0)
-            // Note: We rely on the prover to see that map(n.range, abs_fn(a)) = map(map(n.range, a), Real.abs)
-            // because abs_fn is defined as function(n) { a(n).abs }
+            partial_abs_fn_eq(a, n)
+            partial(abs_fn(a), n) = sum(map(items, Real.abs))
 
-            // Conclude
-            sum(map(items, Real.abs)) <= partial(abs_fn(a), n)
             partial(a, n).abs <= partial(abs_fn(a), n)
         }
 
@@ -936,86 +961,83 @@ theorem abs_limit_le_abs_series(a: Nat -> Real) {
         limit(abs_seq(partial(a))) = limit(partial(a)).abs
 
         // Now show limit(partial(a)).abs <= limit(partial(abs_fn(a)))
-        // using the fact that partial(a, n).abs <= partial(abs_fn(a), n) for all n
+        // We have partial(a, n).abs <= partial(abs_fn(a), n) for all n
+        // Both sequences converge, so limits preserve the inequality
 
-        // Proof by contradiction - assume limit(partial(a)).abs > limit(partial(abs_fn(a)))
-        if limit(partial(a)).abs > limit(partial(abs_fn(a))) {
-            let diff = limit(partial(a)).abs - limit(partial(abs_fn(a)))
-            diff.is_positive
+        // Show that abs_seq(partial(a)) has limit(partial(abs_fn(a))) as an upper bound
+        // partial(abs_fn(a)) is increasing and converges, so bounded by its limit
+        from real.real_series import nonneg_partial_increasing, increasing_convergent_bounded_by_limit
 
-            let eps: Real satisfy {
-                eps.is_positive and eps + eps < diff
-            }
+        nonneg_partial_increasing(abs_fn(a))
+        converges(partial(abs_fn(a)))
+        increasing_convergent_bounded_by_limit(partial(abs_fn(a)))
+        is_upper_bound(partial(abs_fn(a)), limit(partial(abs_fn(a))))
 
-            converges(partial(abs_fn(a)))
-            converges_imp_converges_to(partial(abs_fn(a)))
-
-            forall(eps2: Real) {
-                if eps2.is_positive {
-                    tail_bound(partial(abs_fn(a)), limit(partial(abs_fn(a))), Nat.0, eps2)
-                }
-            }
-            let n1: Nat satisfy {
-                forall(n: Nat) {
-                    n1 <= n implies partial(abs_fn(a), n).is_close(limit(partial(abs_fn(a))), eps)
-                }
-            }
-
-            forall(eps2: Real) {
-                if eps2.is_positive {
-                    tail_bound(abs_seq(partial(a)), limit(partial(a)).abs, Nat.0, eps2)
-                }
-            }
-            let n2: Nat satisfy {
-                forall(n: Nat) {
-                    n2 <= n implies abs_seq(partial(a))(n).is_close(limit(partial(a)).abs, eps)
-                }
-            }
-
-            if n1 <= n2 {
-                partial(a, n2).abs.is_close(limit(partial(a)).abs, eps)
-                partial(abs_fn(a), n2).is_close(limit(partial(abs_fn(a))), eps)
-
-                partial(a, n2).abs >= limit(partial(a)).abs - eps
-                partial(abs_fn(a), n2) <= limit(partial(abs_fn(a))) + eps
-
-                partial(a, n2).abs <= partial(abs_fn(a), n2)
-                limit(partial(a)).abs - eps <= partial(abs_fn(a), n2)
-                limit(partial(a)).abs - eps <= limit(partial(abs_fn(a))) + eps
-                limit(partial(a)).abs <= limit(partial(abs_fn(a))) + eps + eps
-                lt_add_pos(eps, eps)
-                lt_trans(eps, eps + eps, diff)
-                eps < diff
-                lte_lt_trans(limit(partial(abs_fn(a))) + eps + eps,
-                             limit(partial(abs_fn(a))) + diff,
-                             limit(partial(a)).abs)
-                limit(partial(abs_fn(a))) + diff = limit(partial(a)).abs
-                limit(partial(a)).abs < limit(partial(a)).abs
-                not (limit(partial(a)).abs < limit(partial(a)).abs)
-            } else {
-                partial(a, n1).abs.is_close(limit(partial(a)).abs, eps)
-                partial(abs_fn(a), n1).is_close(limit(partial(abs_fn(a))), eps)
-
-                partial(a, n1).abs >= limit(partial(a)).abs - eps
-                partial(abs_fn(a), n1) <= limit(partial(abs_fn(a))) + eps
-
-                partial(a, n1).abs <= partial(abs_fn(a), n1)
-                limit(partial(a)).abs - eps <= partial(abs_fn(a), n1)
-                limit(partial(a)).abs - eps <= limit(partial(abs_fn(a))) + eps
-                limit(partial(a)).abs <= limit(partial(abs_fn(a))) + eps + eps
-                lt_add_pos(eps, eps)
-                lt_trans(eps, eps + eps, diff)
-                eps < diff
-                lte_lt_trans(limit(partial(abs_fn(a))) + eps + eps,
-                             limit(partial(abs_fn(a))) + diff,
-                             limit(partial(a)).abs)
-                limit(partial(abs_fn(a))) + diff = limit(partial(a)).abs
-                limit(partial(a)).abs < limit(partial(a)).abs
-                not (limit(partial(a)).abs < limit(partial(a)).abs)
-            }
+        // So for all n, partial(abs_fn(a), n) <= limit(partial(abs_fn(a)))
+        forall(n: Nat) {
+            partial(abs_fn(a), n) <= limit(partial(abs_fn(a)))
         }
 
+        // And abs_seq(partial(a))(n) <= partial(abs_fn(a), n) <= limit(partial(abs_fn(a)))
+        forall(n: Nat) {
+            abs_seq(partial(a))(n) <= partial(abs_fn(a), n)
+            partial(abs_fn(a), n) <= limit(partial(abs_fn(a)))
+            lte_trans(abs_seq(partial(a))(n), partial(abs_fn(a), n), limit(partial(abs_fn(a))))
+            abs_seq(partial(a))(n) <= limit(partial(abs_fn(a)))
+        }
+
+        // So limit(partial(abs_fn(a))) is an upper bound for abs_seq(partial(a))
+        is_upper_bound(abs_seq(partial(a)), limit(partial(abs_fn(a))))
+        eventual_ub(abs_seq(partial(a)), limit(partial(abs_fn(a))))
+
+        ub_imp_limit_lte(abs_seq(partial(a)), limit(partial(abs_fn(a))))
+        limit(abs_seq(partial(a))) <= limit(partial(abs_fn(a)))
         limit(partial(a)).abs <= limit(partial(abs_fn(a)))
+    }
+}
+
+/// Helper: forall i implies membership in intersection
+theorem forall_contains_imp_in_intersection(s: Nat -> Set[Nat], n: Nat) {
+    (forall(i: Nat) { s(i).contains(n) })
+    implies
+    seq_intersection(s).contains(n)
+} by {
+    // seq_intersection(s) = Set.new(and_family(s))
+    // and_family(s, n) = forall(i) { s(i).contains(n) }
+    // So if forall(i) { s(i).contains(n) }, then seq_intersection(s).contains(n)
+    if forall(i: Nat) { s(i).contains(n) } {
+        // The definition of seq_intersection gives us this directly
+        seq_intersection(s).contains(n)
+    }
+}
+
+/// Helper: if seq_intersection is empty, then for any element there exists an index where it's not contained
+theorem seq_intersection_empty_imp_exists_not_contains(s: Nat -> Set[Nat], n: Nat) {
+    seq_intersection(s).is_empty
+    implies
+    exists(i: Nat) {
+        not s(i).contains(n)
+    }
+} by {
+    if seq_intersection(s).is_empty {
+        forall(k: Nat) {
+            not seq_intersection(s).contains(k)
+        }
+        not seq_intersection(s).contains(n)
+
+        // By contradiction: assume forall(i) { s(i).contains(n) }
+        if forall(i: Nat) { s(i).contains(n) } {
+            // Use helper to show n is in intersection
+            forall_contains_imp_in_intersection(s, n)
+            seq_intersection(s).contains(n)
+            // But we know it's not
+            not seq_intersection(s).contains(n)
+        }
+
+        // So exists i such that not s(i).contains(n)
+        exists(i: Nat) {
+            not s(i).contains(n)
+        }
     }
 }
 
@@ -1052,26 +1074,8 @@ theorem decreasing_empty_intersection_eventually_bounded(s: Nat -> Set[Nat], tai
                 set_lower_bound(s(big_n_prev), n)
             }
 
-            seq_intersection(s).is_empty
-            forall(k: Nat) {
-                not seq_intersection(s).contains(k)
-            }
-            not seq_intersection(s).contains(n)
-
-            // seq_intersection(s) = intersection_family(s) = Set.new(and_family(s))
-            // seq_intersection(s).contains(n) means and_family(s, n)
-            // which means forall(i: Nat) { s(i).contains(n) }
-            // So not seq_intersection(s).contains(n) means exists(i: Nat) { not s(i).contains(n) }
-
-            // Unpack the definition
-            if forall(i: Nat) { s(i).contains(n) } {
-                // Then seq_intersection(s).contains(n) would be true
-                seq_intersection(s).contains(n)
-                // But we know it's false
-                not seq_intersection(s).contains(n)
-            }
-
-            // So there exists i such that not s(i).contains(n)
+            // Use helper lemma to get index where n is not contained
+            seq_intersection_empty_imp_exists_not_contains(s, n)
             let i_n: Nat satisfy {
                 not s(i_n).contains(n)
             }
@@ -1099,6 +1103,7 @@ theorem decreasing_empty_intersection_eventually_bounded(s: Nat -> Set[Nat], tai
                 exists(big_n: Nat) {
                     big_n = i_n and set_lower_bound(s(big_n), n.suc)
                 }
+                p(n.suc)
             } else {
                 decreasing_seq_transitive(s, i_n, big_n_prev)
                 s(i_n).superset(s(big_n_prev))
@@ -1123,10 +1128,15 @@ theorem decreasing_empty_intersection_eventually_bounded(s: Nat -> Set[Nat], tai
                 exists(big_n: Nat) {
                     big_n = big_n_prev and set_lower_bound(s(big_n), n.suc)
                 }
+                p(n.suc)
             }
         }
     }
 
+    // Invoke induction
+    forall(n: Nat) {
+        p(n)
+    }
     p(tail_n)
 }
 
