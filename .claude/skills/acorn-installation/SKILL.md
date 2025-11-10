@@ -7,44 +7,19 @@ description: "Install and set up the Acorn theorem prover CLI. Use when the envi
 
 This skill helps install the Acorn theorem prover CLI in various environments.
 
-## Standard Installation
+## Installation
 
-If you have npm and normal internet access, install Acorn with:
-
-```bash
-npm i -g @acornprover/cli
-```
-
-## Restricted Network Environments
-
-If `api.github.com` is blocked (common in some sandbox environments), the npm-installed `acorn` command will fail. Use this workaround to download and use the binary directly:
+Simply run the installation script:
 
 ```bash
-# Get latest version
-LATEST=$(git ls-remote --tags https://github.com/acornprover/acorn.git | grep -o 'v[0-9.]*$' | sort -V | tail -1)
-
-# Download binary
-mkdir -p ~/.local/bin
-curl -L "https://github.com/acornprover/acorn/releases/download/${LATEST}/acorn-${LATEST#v}-linux-x64" \
-  -o ~/.local/bin/acorn
-chmod +x ~/.local/bin/acorn
-
-# Ensure ~/.local/bin is in PATH
-export PATH="$HOME/.local/bin:$PATH"
-
-# Now use acorn normally
-acorn --version
+bash .claude/skills/acorn-installation/install-acorn.sh
 ```
 
-The binary can be used directly without the npm wrapper.
-
-## Verification
-
-After installation, verify that Acorn is working by running:
-
-```bash
-acorn --version
-```
+The script will:
+- Check if Acorn is already installed (if so, it exits successfully)
+- Download the latest Acorn binary from GitHub releases
+- Install it to `~/.local/bin/acorn`
+- Verify the installation works
 
 ## Running the Verifier
 
@@ -56,12 +31,10 @@ acorn
 
 This should be run after every change to ensure proofs are verifiable.
 
-## Progressive Disclosure
+## Instructions for the Agent
 
-When invoked, this skill should:
+When this skill is invoked:
 
-1. First check if Acorn is already installed with `acorn --version`
-2. If not installed, determine the environment (check for npm availability and network restrictions)
-3. Choose the appropriate installation method
-4. Verify the installation was successful
-5. Confirm the user can run `acorn` to verify proofs
+1. Run the installation script: `bash .claude/skills/acorn-installation/install-acorn.sh`
+2. The script handles checking for existing installation automatically
+3. After the script completes successfully, run `acorn` to verify proofs in the current project
