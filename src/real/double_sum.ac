@@ -1,6 +1,8 @@
 from nat import Nat
 from list import List, partial, sum, map
-from real.real_series import Real, is_lower_bound, seq_lte, is_increasing, is_upper_bound
+from util import flip
+from add_semigroup import add_fn
+from real.real_series import Real, is_lower_bound, seq_lte, is_increasing, is_upper_bound, prod_fn
 from real.real_seq import converges, limit
 
 numerals Real
@@ -12,14 +14,43 @@ numerals Nat
 attributes Real {
 }
 
+/// True if f is nonnegative everywhere.
+define nonneg_fn_2(f: (Nat, Nat) -> Real) -> Bool {
+    forall(i: Nat, j: Nat) {
+        f(i, j) >= Real.0
+    }
+}
+
+/// True if f is pointwise less than or equal to g.
+define lte_fn_2(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real) -> Bool {
+    forall(i: Nat, j: Nat) {
+        f(i, j) <= g(i, j)
+    }
+}
+
+/// Pointwise addition of two-argument functions.
+define add_fn_2(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, i: Nat, j: Nat) -> Real {
+    f(i, j) + g(i, j)
+}
+
+/// Shift the first argument of f by offset.
+define shift_rows(f: (Nat, Nat) -> Real, offset: Nat, i: Nat, j: Nat) -> Real {
+    f(offset + i, j)
+}
+
+/// Shift the second argument of f by offset.
+define shift_cols(f: (Nat, Nat) -> Real, offset: Nat, i: Nat, j: Nat) -> Real {
+    f(i, offset + j)
+}
+
 /// Helper function to compute the sum over row i.
 define row_sum(f: (Nat, Nat) -> Real, m: Nat, i: Nat) -> Real {
-    partial(function(j: Nat) { f(i, j) }, m)
+    partial(f(i), m)
 }
 
 /// Helper function to compute the sum over column j.
 define col_sum(f: (Nat, Nat) -> Real, n: Nat, j: Nat) -> Real {
-    partial(function(i: Nat) { f(i, j) }, n)
+    partial(flip(f, j), n)
 }
 
 /// The sum of f over an m × n rectangle.
@@ -107,7 +138,7 @@ theorem rectangular_fubini(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
 
                 // Now prove that partial sums are equal
                 define r(n3: Nat) -> Bool {
-                    partial(col_sum(f, k.suc), n3) = partial(col_sum(f, k), n3) + partial(function(j: Nat) { f(k, j) }, n3)
+                    partial(col_sum(f, k.suc), n3) = partial(col_sum(f, k), n3) + partial(f(k), n3)
                 }
 
                 r(Nat.0)
@@ -133,13 +164,13 @@ theorem rectangular_fubini(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
 
 /// Rectangular sum is monotone for nonnegative functions.
 theorem rectangular_sum_nonneg(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
-    (forall(i: Nat, j: Nat) { f(i, j) >= Real.0 })
+    nonneg_fn_2(f)
     implies
     rectangular_sum(f, m, n) >= Real.0
 } by {
     define p(k: Nat) -> Bool {
         forall(n2: Nat) {
-            (forall(i: Nat, j: Nat) { f(i, j) >= Real.0 })
+            nonneg_fn_2(f)
             implies
             rectangular_sum(f, k, n2) >= Real.0
         }
@@ -150,7 +181,7 @@ theorem rectangular_sum_nonneg(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
     forall(k: Nat) {
         if p(k) {
             forall(n2: Nat) {
-                if forall(i: Nat, j: Nat) { f(i, j) >= Real.0 } {
+                if nonneg_fn_2(f) {
                     // Prove row_sum(f, n2, k) >= 0
                     define r(n3: Nat) -> Bool {
                         row_sum(f, n3, k) >= Real.0
@@ -180,13 +211,13 @@ theorem rectangular_sum_nonneg(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
 
 /// If f <= g pointwise, then their rectangular sums satisfy the same inequality.
 theorem rectangular_sum_monotone(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, m: Nat, n: Nat) {
-    (forall(i: Nat, j: Nat) { f(i, j) <= g(i, j) })
+    lte_fn_2(f, g)
     implies
     rectangular_sum(f, m, n) <= rectangular_sum(g, m, n)
 } by {
     define p(k: Nat) -> Bool {
         forall(n2: Nat) {
-            (forall(i: Nat, j: Nat) { f(i, j) <= g(i, j) })
+            lte_fn_2(f, g)
             implies
             rectangular_sum(f, k, n2) <= rectangular_sum(g, k, n2)
         }
@@ -197,7 +228,7 @@ theorem rectangular_sum_monotone(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, m
     forall(k: Nat) {
         if p(k) {
             forall(n2: Nat) {
-                if forall(i: Nat, j: Nat) { f(i, j) <= g(i, j) } {
+                if lte_fn_2(f, g) {
                     // Prove row_sum(f, n2, k) <= row_sum(g, n2, k)
                     define r(n3: Nat) -> Bool {
                         row_sum(f, n3, k) <= row_sum(g, n3, k)
@@ -227,13 +258,13 @@ theorem rectangular_sum_monotone(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, m
 
 /// Rectangular sum is additive in the function.
 theorem rectangular_sum_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, m: Nat, n: Nat) {
-    rectangular_sum(function(i: Nat, j: Nat) { f(i, j) + g(i, j) }, m, n)
+    rectangular_sum(add_fn_2(f, g), m, n)
     =
     rectangular_sum(f, m, n) + rectangular_sum(g, m, n)
 } by {
     define p(k: Nat) -> Bool {
         forall(n2: Nat) {
-            rectangular_sum(function(i: Nat, j: Nat) { f(i, j) + g(i, j) }, k, n2)
+            rectangular_sum(add_fn_2(f, g), k, n2)
             =
             rectangular_sum(f, k, n2) + rectangular_sum(g, k, n2)
         }
@@ -246,7 +277,7 @@ theorem rectangular_sum_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, m: Nat
             forall(n2: Nat) {
                 // Prove row_sum additivity
                 define r(n3: Nat) -> Bool {
-                    row_sum(function(i: Nat, j: Nat) { f(i, j) + g(i, j) }, n3, k) = row_sum(f, n3, k) + row_sum(g, n3, k)
+                    row_sum(add_fn_2(f, g), n3, k) = row_sum(f, n3, k) + row_sum(g, n3, k)
                 }
 
                 r(Nat.0)
@@ -257,7 +288,7 @@ theorem rectangular_sum_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, m: Nat
                     }
                 }
 
-                row_sum(function(i: Nat, j: Nat) { f(i, j) + g(i, j) }, n2, k) = row_sum(f, n2, k) + row_sum(g, n2, k)
+                row_sum(add_fn_2(f, g), n2, k) = row_sum(f, n2, k) + row_sum(g, n2, k)
             }
             p(k.suc)
         }
@@ -318,11 +349,11 @@ theorem rectangular_sum_extend_col(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
 
 /// Rectangular sum over increasing dimensions is monotone for nonnegative functions.
 theorem rectangular_sum_increasing_rows(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
-    (forall(i: Nat, j: Nat) { f(i, j) >= Real.0 })
+    nonneg_fn_2(f)
     implies
     rectangular_sum(f, m, n) <= rectangular_sum(f, m.suc, n)
 } by {
-    if forall(i: Nat, j: Nat) { f(i, j) >= Real.0 } {
+    if nonneg_fn_2(f) {
         // Prove row_sum(f, n, m) >= 0
         define r(n3: Nat) -> Bool {
             row_sum(f, n3, m) >= Real.0
@@ -345,11 +376,11 @@ theorem rectangular_sum_increasing_rows(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
 }
 
 theorem rectangular_sum_increasing_cols(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
-    (forall(i: Nat, j: Nat) { f(i, j) >= Real.0 })
+    nonneg_fn_2(f)
     implies
     rectangular_sum(f, m, n) <= rectangular_sum(f, m, n.suc)
 } by {
-    if forall(i: Nat, j: Nat) { f(i, j) >= Real.0 } {
+    if nonneg_fn_2(f) {
         // Prove col_sum(f, m, n) >= 0
         define c(m3: Nat) -> Bool {
             col_sum(f, m3, n) >= Real.0
@@ -376,7 +407,7 @@ theorem rectangular_sum_increasing_cols(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
 
 /// Product of two sequences viewed as a rectangular sum.
 define product_sum(a: Nat -> Real, b: Nat -> Real, m: Nat, n: Nat) -> Real {
-    rectangular_sum(function(i: Nat, j: Nat) { a(i) * b(j) }, m, n)
+    rectangular_sum(prod_fn(a, b), m, n)
 }
 
 /// Product sum factors as product of partial sums.
@@ -394,9 +425,9 @@ theorem product_sum_factors(a: Nat -> Real, b: Nat -> Real, m: Nat, n: Nat) {
     forall(k: Nat) {
         if p(k) {
             forall(n2: Nat) {
-                // Prove row_sum(function(i, j) { a(i) * b(j) }, n2, k) = a(k) * partial(b, n2)
+                // Prove row_sum(prod_fn(a, b), n2, k) = a(k) * partial(b, n2)
                 define r(n3: Nat) -> Bool {
-                    row_sum(function(i: Nat, j: Nat) { a(i) * b(j) }, n3, k) = a(k) * partial(b, n3)
+                    row_sum(prod_fn(a, b), n3, k) = a(k) * partial(b, n3)
                 }
 
                 r(Nat.0)
@@ -407,7 +438,7 @@ theorem product_sum_factors(a: Nat -> Real, b: Nat -> Real, m: Nat, n: Nat) {
                     }
                 }
 
-                row_sum(function(i: Nat, j: Nat) { a(i) * b(j) }, n2, k) = a(k) * partial(b, n2)
+                row_sum(prod_fn(a, b), n2, k) = a(k) * partial(b, n2)
             }
             p(k.suc)
         }
@@ -418,18 +449,18 @@ theorem product_sum_factors(a: Nat -> Real, b: Nat -> Real, m: Nat, n: Nat) {
 theorem rectangular_sum_split_rows(f: (Nat, Nat) -> Real, m1: Nat, m2: Nat, n: Nat) {
     rectangular_sum(f, m1 + m2, n)
     =
-    rectangular_sum(f, m1, n) + rectangular_sum(function(i: Nat, j: Nat) { f(m1 + i, j) }, m2, n)
+    rectangular_sum(f, m1, n) + rectangular_sum(shift_rows(f, m1), m2, n)
 } by {
     define p(k: Nat) -> Bool {
         forall(m: Nat, n2: Nat) {
             rectangular_sum(f, m + k, n2)
             =
-            rectangular_sum(f, m, n2) + rectangular_sum(function(i: Nat, j: Nat) { f(m + i, j) }, k, n2)
+            rectangular_sum(f, m, n2) + rectangular_sum(shift_rows(f, m), k, n2)
         }
     }
 
     forall(m: Nat, n2: Nat) {
-        rectangular_sum(function(i: Nat, j: Nat) { f(m + i, j) }, Nat.0, n2) = Real.0
+        rectangular_sum(shift_rows(f, m), Nat.0, n2) = Real.0
         rectangular_sum(f, m + Nat.0, n2) = rectangular_sum(f, m, n2) + Real.0
     }
     p(Nat.0)
@@ -439,7 +470,7 @@ theorem rectangular_sum_split_rows(f: (Nat, Nat) -> Real, m1: Nat, m2: Nat, n: N
             forall(m: Nat, n2: Nat) {
                 // Prove row_sum equality
                 define r(n3: Nat) -> Bool {
-                    row_sum(function(i: Nat, j: Nat) { f(m + i, j) }, n3, k) = row_sum(f, n3, m + k)
+                    row_sum(shift_rows(f, m), n3, k) = row_sum(f, n3, m + k)
                 }
 
                 r(Nat.0)
@@ -450,7 +481,7 @@ theorem rectangular_sum_split_rows(f: (Nat, Nat) -> Real, m1: Nat, m2: Nat, n: N
                     }
                 }
 
-                row_sum(function(i: Nat, j: Nat) { f(m + i, j) }, n2, k) = row_sum(f, n2, m + k)
+                row_sum(shift_rows(f, m), n2, k) = row_sum(f, n2, m + k)
             }
             p(k.suc)
         }
@@ -461,9 +492,9 @@ theorem rectangular_sum_split_rows(f: (Nat, Nat) -> Real, m1: Nat, m2: Nat, n: N
 theorem rectangular_sum_split_cols(f: (Nat, Nat) -> Real, m: Nat, n1: Nat, n2: Nat) {
     rectangular_sum(f, m, n1 + n2)
     =
-    rectangular_sum(f, m, n1) + rectangular_sum(function(i: Nat, j: Nat) { f(i, n1 + j) }, m, n2)
+    rectangular_sum(f, m, n1) + rectangular_sum(shift_cols(f, n1), m, n2)
 } by {
     rectangular_sum(f, m, n1 + n2) = rectangular_sum_col_first(f, m, n1 + n2)
     rectangular_sum(f, m, n1) = rectangular_sum_col_first(f, m, n1)
-    rectangular_sum(function(i: Nat, j: Nat) { f(i, n1 + j) }, m, n2) = rectangular_sum_col_first(function(i: Nat, j: Nat) { f(i, n1 + j) }, m, n2)
+    rectangular_sum(shift_cols(f, n1), m, n2) = rectangular_sum_col_first(shift_cols(f, n1), m, n2)
 }
