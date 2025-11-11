@@ -4,7 +4,7 @@ from list.list_sum import partial_add, partial_pointwise_eq, reverse_index, part
 from util import flip
 from add_semigroup import add_fn
 from real.real_series import Real
-from real.rectangular_sum import nat_to_real, nonneg_fn_2, is_upper_bound_fn_2, is_lower_bound_fn_2, lte_fn_2, const_fn_2, add_fn_2, sub_fn_2, scalar_mul_fn_2, rectangular_sum, row_sum
+from real.rectangular_sum import nat_to_real, nonneg_fn_2, is_upper_bound_fn_2, is_lower_bound_fn_2, lte_fn_2, const_fn_2, add_fn_2, sub_fn_2, scalar_mul_fn_2, rectangular_sum, row_sum, shift_rows, shift_cols
 
 numerals Real
 numerals Nat
@@ -966,4 +966,166 @@ theorem triangular_sum_flip(f: (Nat, Nat) -> Real, n: Nat) {
             p(m.suc)
         }
     }
+}
+
+/// Helper: relate shifted partial sums.
+define shift_fn(g: Nat -> Real, offset: Nat, j: Nat) -> Real {
+    g(offset + j)
+}
+
+/// Split a partial sum at a boundary.
+theorem partial_split(g: Nat -> Real, n: Nat, k: Nat) {
+    partial(g, n + k) = partial(g, n) + partial(shift_fn(g, n), k)
+} by {
+    define p(m: Nat) -> Bool {
+        partial(g, n + m) = partial(g, n) + partial(shift_fn(g, n), m)
+    }
+
+    p(Nat.0)
+
+    forall(m: Nat) {
+        if p(m) {
+            partial(g, n + m.suc) = partial(g, n + m) + g(n + m)
+            partial(g, n + m) = partial(g, n) + partial(shift_fn(g, n), m)
+            partial(g, n + m.suc) = partial(g, n) + partial(shift_fn(g, n), m) + g(n + m)
+
+            shift_fn(g, n, m) = g(n + m)
+            partial(shift_fn(g, n), m.suc) = partial(shift_fn(g, n), m) + shift_fn(g, n, m)
+            partial(shift_fn(g, n), m.suc) = partial(shift_fn(g, n), m) + g(n + m)
+
+            partial(g, n + m.suc) = partial(g, n) + partial(shift_fn(g, n), m.suc)
+            p(m.suc)
+        }
+    }
+}
+
+/// Triangle decomposition: a triangular sum equals a rectangular sum plus two shifted triangular sums.
+/// The triangular region {(i,j) : i+j < m+n} decomposes into:
+/// 1. Rectangle {(i,j) : i < m, j < n}
+/// 2. Shifted triangle {(i,j) : i+j < m} shifted by n columns
+/// 3. Shifted triangle {(i,j) : i+j < n} shifted by m rows
+theorem triangular_sum_decomposition(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    triangular_sum(f, m + n) =
+        rectangular_sum(f, m, n) +
+        triangular_sum(shift_cols(f, n), m) +
+        triangular_sum(shift_rows(f, m), n)
+} by {
+    // Step 1: Show that for i < m, the row sum splits correctly
+    forall(i: Nat) {
+        if i < m {
+            i < m
+            i.suc <= m
+            m >= i
+
+            // Prove m + n - i = n + (m - i) explicitly
+            // Since m >= i, we have m = i + (m-i), so m + n = i + (m-i) + n = i + n + (m-i)
+            // Thus m + n - i = n + (m-i)
+            (m - i) + i = m
+            (m - i) + i + n = m + n
+            n + (m - i) + i = m + n
+            m + n - i = n + (m - i)
+
+            tri_row_sum(f, m + n, i) = partial(f(i), m + n - i)
+            tri_row_sum(f, m + n, i) = partial(f(i), n + (m - i))
+
+            // Use partial_split to decompose this sum            partial(f(i), n + (m - i)) = partial(f(i), n) + partial(shift_fn(f(i), n), m - i)
+
+            // Show shift_fn(f(i), n) equals shift_cols(f, n, i)
+            forall(j: Nat) {
+                shift_fn(f(i), n, j) = f(i, n + j)
+                shift_cols(f, n, i, j) = f(i, n + j)
+                shift_fn(f(i), n, j) = shift_cols(f, n, i, j)
+            }
+
+            partial(shift_fn(f(i), n), m - i) = partial(shift_cols(f, n, i), m - i)
+
+            tri_row_sum(f, m + n, i) = partial(f(i), n) + partial(shift_cols(f, n, i), m - i)
+
+            row_sum(f, n, i) = partial(f(i), n)
+            tri_row_sum(shift_cols(f, n), m, i) = partial(shift_cols(f, n, i), m - i)
+
+            tri_row_sum(f, m + n, i) = row_sum(f, n, i) + tri_row_sum(shift_cols(f, n), m, i)
+        }
+    }
+
+    // Step 2: Show that for i >= m and i < m+n, the row sum equals shift_rows contribution
+    forall(i: Nat) {
+        if i >= m and i < m + n {
+            // When i >= m, write i = m + i' where i' = i - m
+            // Then tri_row_sum(f, m+n, i) = partial(f(i), m+n-i) = partial(f(m+i'), n-i')
+            i >= m
+            m + n > i
+            m + n - i > Nat.0
+
+            tri_row_sum(f, m + n, i) = partial(f(i), m + n - i)
+
+            // Show that i - m < n and m + n - i = n - (i - m)
+            // From i >= m, we have (i-m) + m = i
+            // From i < m+n, we have (i-m) + m < m+n
+            (i - m) + m = i
+            (i - m) + m < m + n
+
+            // Therefore i-m < n
+            // Also, m + n - i = m + n - ((i-m) + m) = n - (i-m)
+            // This follows from nat arithmetic
+
+            tri_row_sum(shift_rows(f, m), n, i - m) = partial(shift_rows(f, m, i - m), n - (i - m))
+
+            tri_row_sum(f, m + n, i) = partial(f(i), n - (i - m))
+
+            // Now f(i) = f(m + (i-m)) = shift_rows(f, m, i-m)
+            forall(j: Nat) {
+                f(i, j) = f(m + (i - m), j)
+                shift_rows(f, m, i - m, j) = f(m + (i - m), j)
+                f(i, j) = shift_rows(f, m, i - m, j)
+            }
+
+            partial(f(i), n - (i - m)) = partial(shift_rows(f, m, i - m), n - (i - m))
+
+            tri_row_sum(shift_rows(f, m), n, i - m) = partial(shift_rows(f, m, i - m), n - (i - m))
+
+            tri_row_sum(f, m + n, i) = tri_row_sum(shift_rows(f, m), n, i - m)
+        }
+    }
+
+    // Step 3: Combine the row sums
+    triangular_sum(f, m + n) = partial(tri_row_sum(f, m + n), m + n)
+
+    // Use partial_split to split at position m
+    partial(tri_row_sum(f, m + n), m + n) = partial(tri_row_sum(f, m + n), m) + partial(shift_fn(tri_row_sum(f, m + n), m), n)
+
+    // For i < m, we showed tri_row_sum(f, m+n, i) = row_sum(f, n, i) + tri_row_sum(shift_cols(f, n), m, i)
+    forall(i: Nat) {
+        if i < m {
+            tri_row_sum(f, m + n, i) = row_sum(f, n, i) + tri_row_sum(shift_cols(f, n), m, i)
+            add_fn(row_sum(f, n), tri_row_sum(shift_cols(f, n), m), i) = row_sum(f, n, i) + tri_row_sum(shift_cols(f, n), m, i)
+            tri_row_sum(f, m + n, i) = add_fn(row_sum(f, n), tri_row_sum(shift_cols(f, n), m), i)
+        }
+    }
+
+    partial(tri_row_sum(f, m + n), m) = partial(add_fn(row_sum(f, n), tri_row_sum(shift_cols(f, n), m)), m)
+    partial(add_fn(row_sum(f, n), tri_row_sum(shift_cols(f, n), m)), m) = partial(row_sum(f, n), m) + partial(tri_row_sum(shift_cols(f, n), m), m)
+    partial(row_sum(f, n), m) = rectangular_sum(f, m, n)
+    partial(tri_row_sum(shift_cols(f, n), m), m) = triangular_sum(shift_cols(f, n), m)
+    partial(tri_row_sum(f, m + n), m) = rectangular_sum(f, m, n) + triangular_sum(shift_cols(f, n), m)
+
+    // For i >= m, we showed tri_row_sum(f, m+n, i) = tri_row_sum(shift_rows(f, m), n, i-m)
+    // So shift_fn(tri_row_sum(f, m+n), m, j) = tri_row_sum(f, m+n, m+j) = tri_row_sum(shift_rows(f, m), n, j)
+    forall(j: Nat) {
+        if j < n {
+            m + j < m + n
+            m + j >= m
+            tri_row_sum(f, m + n, m + j) = tri_row_sum(shift_rows(f, m), n, (m + j) - m)
+            (m + j) - m = j
+            tri_row_sum(f, m + n, m + j) = tri_row_sum(shift_rows(f, m), n, j)
+            shift_fn(tri_row_sum(f, m + n), m, j) = tri_row_sum(f, m + n, m + j)
+            shift_fn(tri_row_sum(f, m + n), m, j) = tri_row_sum(shift_rows(f, m), n, j)
+        }
+    }
+
+    partial(shift_fn(tri_row_sum(f, m + n), m), n) = partial(tri_row_sum(shift_rows(f, m), n), n)
+    partial(tri_row_sum(shift_rows(f, m), n), n) = triangular_sum(shift_rows(f, m), n)
+
+    triangular_sum(f, m + n) = partial(tri_row_sum(f, m + n), m) + partial(shift_fn(tri_row_sum(f, m + n), m), n)
+    triangular_sum(f, m + n) = rectangular_sum(f, m, n) + triangular_sum(shift_cols(f, n), m) + triangular_sum(shift_rows(f, m), n)
 }
