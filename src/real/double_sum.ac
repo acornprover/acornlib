@@ -1,8 +1,12 @@
 /// Double sums (limits of rectangular sums) for functions from (Nat, Nat) to Real.
 from nat import Nat
+from list import partial
+from util import flip
 from real.real_base import Real
-from real.rectangular_sum import rectangular_sum
+from real.rectangular_sum import rectangular_sum, row_sum, col_sum, nonneg_fn_2
 from real.double_limit import double_limit_condition, double_converges_to, double_converges, double_limit
+from real.real_seq import converges, limit
+from real.real_series import is_increasing, is_upper_bound, increasing_convergent_bounded_by_limit
 
 /// The condition that the rectangular sum of f is within eps of a for all dimensions beyond n.
 define double_sum_bounded(f: (Nat, Nat) -> Real, a: Real, n: Nat, eps: Real) -> Bool {
@@ -22,4 +26,176 @@ define double_sum_converges(f: (Nat, Nat) -> Real) -> Bool {
 /// The limit of the double sum of f. Only meaningful when f converges.
 define double_sum(f: (Nat, Nat) -> Real) -> Real {
     double_limit(rectangular_sum(f))
+}
+
+/// The infinite sum over row i: sum_{j=0}^∞ f(i, j).
+/// Only meaningful when the row series converges.
+define row_infinite_sum(f: (Nat, Nat) -> Real, i: Nat) -> Real {
+    limit(partial(f(i)))
+}
+
+/// The infinite sum over column j: sum_{i=0}^∞ f(i, j).
+/// Only meaningful when the column series converges.
+define col_infinite_sum(f: (Nat, Nat) -> Real, j: Nat) -> Real {
+    limit(partial(flip(f, j)))
+}
+
+/// Sequence of row infinite sums: maps each row index to its infinite sum.
+define row_sums_seq(f: (Nat, Nat) -> Real, i: Nat) -> Real {
+    row_infinite_sum(f, i)
+}
+
+/// Sequence of column infinite sums: maps each column index to its infinite sum.
+define col_sums_seq(f: (Nat, Nat) -> Real, j: Nat) -> Real {
+    col_infinite_sum(f, j)
+}
+
+/// True if all row series of f converge.
+define all_rows_converge(f: (Nat, Nat) -> Real) -> Bool {
+    forall(i: Nat) { converges(partial(f(i))) }
+}
+
+/// True if all column series of f converge.
+define all_cols_converge(f: (Nat, Nat) -> Real) -> Bool {
+    forall(j: Nat) { converges(partial(flip(f, j))) }
+}
+
+/// For nonnegative functions, partial sums of a row are increasing.
+theorem row_partial_increasing(f: (Nat, Nat) -> Real, i: Nat) {
+    nonneg_fn_2(f)
+    implies
+    is_increasing(partial(f(i)))
+} by {
+    if nonneg_fn_2(f) {
+        forall(n: Nat) {
+            partial(f(i), n) <= partial(f(i), n) + f(i, n)
+            partial(f(i), n.suc) = partial(f(i), n) + f(i, n)
+            partial(f(i), n) <= partial(f(i), n.suc)
+        }
+    }
+}
+
+/// For nonnegative functions, partial sums of a column are increasing.
+theorem col_partial_increasing(f: (Nat, Nat) -> Real, j: Nat) {
+    nonneg_fn_2(f)
+    implies
+    is_increasing(partial(flip(f, j)))
+} by {
+    if nonneg_fn_2(f) {
+        forall(n: Nat) {
+            flip(f, j)(n) >= Real.0
+            Real.0 <= flip(f, j)(n)
+            partial(flip(f, j), n) <= partial(flip(f, j), n) + flip(f, j)(n)
+            partial(flip(f, j), n.suc) = partial(flip(f, j), n) + flip(f, j)(n)
+            partial(flip(f, j), n) <= partial(flip(f, j), n.suc)
+        }
+    }
+}
+
+/// Finite row sum is bounded by infinite row sum.
+theorem row_sum_bounded_by_infinite(f: (Nat, Nat) -> Real, i: Nat, n: Nat) {
+    nonneg_fn_2(f) and converges(partial(f(i)))
+    implies
+    row_sum(f, n, i) <= row_infinite_sum(f, i)
+} by {
+    if nonneg_fn_2(f) and converges(partial(f(i))) {
+        row_partial_increasing(f, i)
+        increasing_convergent_bounded_by_limit(partial(f(i)))
+        row_sum(f, n, i) = partial(f(i), n)
+        row_infinite_sum(f, i) = limit(partial(f(i)))
+        partial(f(i), n) <= limit(partial(f(i)))
+        row_sum(f, n, i) <= row_infinite_sum(f, i)
+    }
+}
+
+/// Finite column sum is bounded by infinite column sum.
+theorem col_sum_bounded_by_infinite(f: (Nat, Nat) -> Real, j: Nat, m: Nat) {
+    nonneg_fn_2(f) and converges(partial(flip(f, j)))
+    implies
+    col_sum(f, m, j) <= col_infinite_sum(f, j)
+} by {
+    if nonneg_fn_2(f) and converges(partial(flip(f, j))) {
+        col_partial_increasing(f, j)
+        increasing_convergent_bounded_by_limit(partial(flip(f, j)))
+        col_sum(f, m, j) = partial(flip(f, j), m)
+        col_infinite_sum(f, j) = limit(partial(flip(f, j)))
+        partial(flip(f, j), m) <= limit(partial(flip(f, j)))
+        col_sum(f, m, j) <= col_infinite_sum(f, j)
+    }
+}
+
+/// Rectangular partial sum is bounded by sum of row infinite sums.
+/// If a_{m,n} ≥ 0 and b_i = sum_{j=0}^∞ a_{i,j}, then
+/// sum_{i=0}^{m-1} sum_{j=0}^{n-1} a_{i,j} ≤ sum_{i=0}^{m-1} b_i.
+theorem rectangular_sum_bounded_by_row_sums(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    nonneg_fn_2(f) and all_rows_converge(f)
+    implies
+    rectangular_sum(f, m, n) <= partial(row_sums_seq(f), m)
+} by {
+    define p(k: Nat) -> Bool {
+        forall(n2: Nat) {
+            nonneg_fn_2(f) and all_rows_converge(f)
+            implies
+            rectangular_sum(f, k, n2) <= partial(row_sums_seq(f), k)
+        }
+    }
+
+    p(Nat.0)
+
+    forall(k: Nat) {
+        if p(k) {
+            forall(n2: Nat) {
+                if nonneg_fn_2(f) and all_rows_converge(f) {
+                    rectangular_sum(f, k.suc, n2) = rectangular_sum(f, k, n2) + row_sum(f, n2, k)
+                    rectangular_sum(f, k, n2) <= partial(row_sums_seq(f), k)
+                    converges(partial(f(k)))
+                    row_sum(f, n2, k) <= row_infinite_sum(f, k)
+                    row_sums_seq(f, k) = row_infinite_sum(f, k)
+                    row_sum(f, n2, k) <= row_sums_seq(f, k)
+                    rectangular_sum(f, k, n2) + row_sum(f, n2, k) <= partial(row_sums_seq(f), k) + row_sums_seq(f, k)
+                    partial(row_sums_seq(f), k.suc) = partial(row_sums_seq(f), k) + row_sums_seq(f, k)
+                    rectangular_sum(f, k.suc, n2) <= partial(row_sums_seq(f), k.suc)
+                }
+            }
+            p(k.suc)
+        }
+    }
+}
+
+/// Rectangular partial sum is bounded by sum of column infinite sums.
+/// If a_{m,n} ≥ 0 and c_j = sum_{i=0}^∞ a_{i,j}, then
+/// sum_{i=0}^{m-1} sum_{j=0}^{n-1} a_{i,j} ≤ sum_{j=0}^{n-1} c_j.
+theorem rectangular_sum_bounded_by_col_sums(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    nonneg_fn_2(f) and all_cols_converge(f)
+    implies
+    rectangular_sum(f, m, n) <= partial(col_sums_seq(f), n)
+} by {
+    define p(k: Nat) -> Bool {
+        forall(m2: Nat) {
+            nonneg_fn_2(f) and all_cols_converge(f)
+            implies
+            rectangular_sum(f, m2, k) <= partial(col_sums_seq(f), k)
+        }
+    }
+
+    p(Nat.0)
+
+    forall(k: Nat) {
+        if p(k) {
+            forall(m2: Nat) {
+                if nonneg_fn_2(f) and all_cols_converge(f) {
+                    rectangular_sum(f, m2, k.suc) = rectangular_sum(f, m2, k) + col_sum(f, m2, k)
+                    rectangular_sum(f, m2, k) <= partial(col_sums_seq(f), k)
+                    converges(partial(flip(f, k)))
+                    col_sum(f, m2, k) <= col_infinite_sum(f, k)
+                    col_sums_seq(f, k) = col_infinite_sum(f, k)
+                    col_sum(f, m2, k) <= col_sums_seq(f, k)
+                    rectangular_sum(f, m2, k) + col_sum(f, m2, k) <= partial(col_sums_seq(f), k) + col_sums_seq(f, k)
+                    partial(col_sums_seq(f), k.suc) = partial(col_sums_seq(f), k) + col_sums_seq(f, k)
+                    rectangular_sum(f, m2, k.suc) <= partial(col_sums_seq(f), k.suc)
+                }
+            }
+            p(k.suc)
+        }
+    }
 }
