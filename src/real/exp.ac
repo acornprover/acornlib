@@ -3,16 +3,28 @@ from int import Int
 from rat import Rat
 from real.real_field import Real
 from real.real_ring import converges, limit, mul_abs, from_nat_is_from_rat
+from real.real_seq import converges_to
 from real.real_base import abs_from_rat
 from real.abs_conv import absolutely_converges, abs_fn, absolutely_converges_comparison
 from real.real_series import seq_lte, abs_pow, tail, partial_tail_conv_imp_partial_conv, comparison_test, const_converges, mul_seq, is_lower_bound, geom_converges
-from list import partial
+from real.cauchy import cauchy_product, cauchy_seq, cauchy_product_converges, cauchy_coefficient
+from list import partial, sum, map
+from list.list_sum import partial_scalar_mul
+from semigroup import mul_fn
+from add_semigroup import add_fn
 from util import constant
 from nat.nat_combo import choose
 from semiring.from_nat import from_nat
+from comm_ring.binomial import binomial_term, binomial
 
 numerals Real
 numerals Nat
+
+/// Division function: returns a function that divides each value by a constant.
+/// Similar to mul_fn, but for division.
+define div_fn(f: Nat -> Real, c: Real) -> (Nat -> Real) {
+    function(k: Nat) { f(k) / c }
+}
 
 /// The nth term in the Taylor series expansion of e^x.
 /// For a real number x and natural number n, this returns x^n / n!
@@ -782,6 +794,25 @@ theorem exp_term_abs_converges(x: Real) {
     }
 }
 
+/// The exponential function exp(x) = e^x.
+/// Defined as the limit of the partial sums of the Taylor series.
+define exp(x: Real) -> Real {
+    limit(partial(exp_term(x)))
+}
+
+/// The partial sums of exp_term converge.
+theorem exp_term_partial_converges(x: Real) {
+    converges(partial(exp_term(x)))
+} by {
+    // Since exp_term(x) converges absolutely, its partial sums converge
+    absolutely_converges(exp_term(x))
+    converges(partial(abs_fn(exp_term(x))))
+
+    // Need to show converges(partial(exp_term(x)))
+    // This follows from absolute convergence implying convergence
+    converges(partial(exp_term(x)))
+}
+
 // Binomial coefficient lemmas for exp
 
 /// Helper: Rat.from_nat preserves multiplication.
@@ -986,4 +1017,234 @@ theorem exp_term_product_binomial(x: Real, y: Real, n: Nat, k: Nat) {
     (x.pow(k) * y.pow(n - k)) /
     (Real.from_rat(Rat.from_nat(k.factorial)) * Real.from_rat(Rat.from_nat((n - k).factorial))) =
         (from_nat[Real](n.choose(k)) * x.pow(k) * y.pow(n - k)) / Real.from_rat(Rat.from_nat(n.factorial))
+}
+
+/// Two functions are equal if they're equal pointwise on a domain
+theorem function_extensionality_on_range(f: Nat -> Real, g: Nat -> Real, n: Nat) {
+    (forall(k: Nat) { k < n implies f(k) = g(k) })
+    implies
+    partial(f, n) = partial(g, n)
+} by {
+    // Proof by induction on n
+    define p(m: Nat) -> Bool {
+        (forall(k: Nat) { k < m implies f(k) = g(k) })
+        implies
+        partial(f, m) = partial(g, m)
+    }
+
+    // Base case: n = 0
+    // partial(f, 0) = 0 = partial(g, 0)
+    p(Nat.0)
+
+    // Inductive step
+    forall(m: Nat) {
+        if p(m) {
+            if forall(k: Nat) { k < m.suc implies f(k) = g(k) } {
+                // By IH: partial(f, m) = partial(g, m)
+                forall(k: Nat) { k < m implies f(k) = g(k) }
+                partial(f, m) = partial(g, m)
+
+                // Also f(m) = g(m) since m < m.suc
+                f(m) = g(m)
+
+                // partial(f, m.suc) = partial(f, m) + f(m)
+                // partial(g, m.suc) = partial(g, m) + g(m)
+                // Therefore partial(f, m.suc) = partial(g, m.suc)
+                partial(f, m.suc) = partial(g, m.suc)
+            }
+            p(m.suc)
+        }
+    }
+
+    p(n)
+}
+
+/// div_fn equals mul_fn with reciprocal
+theorem div_fn_as_mul_fn(f: Nat -> Real, c: Real) {
+    c != Real.0 implies
+    div_fn(f, c) = mul_fn(c.reciprocal, f)
+} by {
+    if c != Real.0 {
+        // Show pointwise equality
+        forall(k: Nat) {
+            div_fn(f, c)(k) = f(k) / c
+            f(k) / c = f(k) * c.reciprocal
+            mul_fn(c.reciprocal, f)(k) = c.reciprocal * f(k)
+            c.reciprocal * f(k) = f(k) * c.reciprocal
+            div_fn(f, c)(k) = mul_fn(c.reciprocal, f)(k)
+        }
+
+        // Use function extensionality (if we had it globally, but we only have it on ranges)
+        // For now, rely on the prover to infer function equality from pointwise equality
+    }
+}
+
+/// Factoring a constant divisor out of a partial sum.
+/// sum(div_fn(f, c)) = (sum f) / c when c != 0
+theorem partial_div_fn(f: Nat -> Real, c: Real, n: Nat) {
+    c != Real.0 implies
+    partial(div_fn(f, c), n) = partial(f, n) / c
+} by {
+    if c != Real.0 {
+        // Show div_fn(f, c) = mul_fn(c.reciprocal, f)
+        div_fn_as_mul_fn(f, c)
+        div_fn(f, c) = mul_fn(c.reciprocal, f)
+
+        // Apply partial_scalar_mul
+        partial_scalar_mul[Real](c.reciprocal, f, n)
+        c.reciprocal * partial(f, n) = partial(mul_fn(c.reciprocal, f), n)
+
+        // Substitute
+        partial(div_fn(f, c), n) = partial(mul_fn(c.reciprocal, f), n)
+        partial(mul_fn(c.reciprocal, f), n) = c.reciprocal * partial(f, n)
+
+        // Convert multiplication to division
+        c.reciprocal * partial(f, n) = partial(f, n) * c.reciprocal
+        partial(f, n) * c.reciprocal = partial(f, n) / c
+        partial(div_fn(f, c), n) = partial(f, n) / c
+    }
+}
+
+/// The Cauchy product of exp_term sequences equals exp_term of the sum.
+theorem exp_cauchy_product_eq(x: Real, y: Real, n: Nat) {
+    cauchy_product(exp_term(x), exp_term(y), n) = exp_term(x + y, n)
+} by {
+    let n_fact = Real.from_rat(Rat.from_nat(n.factorial))
+    n_fact != Real.0
+
+    // Apply exp_term_product_binomial to show pointwise equality
+    forall(k: Nat) {
+        if k <= n {
+            exp_term_product_binomial(x, y, n, k)
+            exp_term(x, k) * exp_term(y, n - k) = binomial_term[Real](x, y, n, k) / n_fact
+            exp_term(x, k) * exp_term(y, n - k) = div_fn(binomial_term[Real](x, y, n), n_fact)(k)
+        }
+    }
+
+    // Show the functions are equal on the range [0, n]
+    define f(k: Nat) -> Real {
+        exp_term(x, k) * exp_term(y, n - k)
+    }
+    define g(k: Nat) -> Real {
+        div_fn(binomial_term[Real](x, y, n), n_fact)(k)
+    }
+
+    forall(k: Nat) {
+        if k < n.suc {
+            k <= n
+            f(k) = g(k)
+        }
+    }
+
+    // Use function_extensionality_on_range
+    function_extensionality_on_range(f, g, n.suc)
+    partial(f, n.suc) = partial(g, n.suc)
+    partial(g, n.suc) = partial(div_fn(binomial_term[Real](x, y, n), n_fact), n.suc)
+
+    // Use partial_div_fn to factor out the division
+    partial_div_fn(binomial_term[Real](x, y, n), n_fact, n.suc)
+    partial(div_fn(binomial_term[Real](x, y, n), n_fact), n.suc) = partial(binomial_term[Real](x, y, n), n.suc) / n_fact
+
+    // Apply binomial theorem
+    binomial[Real](x, y, n)
+    (x + y).pow(n) = partial(binomial_term[Real](x, y, n), n.suc)
+    partial(binomial_term[Real](x, y, n), n.suc) / n_fact = (x + y).pow(n) / n_fact
+
+    // This is exp_term(x+y, n)
+    exp_term(x + y, n) = (x + y).pow(n) / n_fact
+
+    // Connect through the chain of equalities:
+    // partial(f, n.suc) = partial(g, n.suc) by function_extensionality
+    // partial(g, n.suc) = partial(div_fn(binomial_term, n_fact), n.suc) by def of g
+    // partial(div_fn(binomial_term, n_fact), n.suc) = partial(binomial_term, n.suc) / n_fact by partial_div_fn
+    // partial(binomial_term, n.suc) = (x+y)^n by binomial theorem
+    // Therefore partial(f, n.suc) = (x+y)^n / n_fact
+
+    // We've already shown these steps above, so:
+    partial(f, n.suc) = partial(g, n.suc)
+    partial(g, n.suc) = partial(div_fn(binomial_term[Real](x, y, n), n_fact), n.suc)
+    partial(div_fn(binomial_term[Real](x, y, n), n_fact), n.suc) = partial(binomial_term[Real](x, y, n), n.suc) / n_fact
+    partial(binomial_term[Real](x, y, n), n.suc) = (x + y).pow(n)
+
+    // Chain them together
+    partial(f, n.suc) = (x + y).pow(n) / n_fact
+
+    // Connect cauchy_product to partial(f, n.suc) using function extensionality
+    // cauchy_coefficient(exp_term(x), exp_term(y), n)(k) = exp_term(x, k) * exp_term(y, n - k)
+    // which equals f(k) by definition, so the functions are equal
+    define cc(k: Nat) -> Real {
+        cauchy_coefficient(exp_term(x), exp_term(y), n)(k)
+    }
+
+    forall(k: Nat) {
+        if k < n.suc {
+            // cauchy_coefficient unfolds to the product
+            cc(k) = cauchy_coefficient(exp_term(x), exp_term(y), n)(k)
+            cc(k) = exp_term(x, k) * exp_term(y, n - k)
+            cc(k) = f(k)
+        }
+    }
+
+    // Use function extensionality
+    function_extensionality_on_range(cc, f, n.suc)
+    partial(cc, n.suc) = partial(f, n.suc)
+
+    // By definition: cauchy_product(a, b, n) = sum(map(n.suc.range, cauchy_coefficient(a, b, n)))
+    // which equals partial(cauchy_coefficient(a, b, n), n.suc)
+    cauchy_product(exp_term(x), exp_term(y), n) = partial(cauchy_coefficient(exp_term(x), exp_term(y), n), n.suc)
+    partial(cauchy_coefficient(exp_term(x), exp_term(y), n), n.suc) = partial(cc, n.suc)
+
+    // Therefore
+    cauchy_product(exp_term(x), exp_term(y), n) = partial(f, n.suc)
+    partial(f, n.suc) = (x + y).pow(n) / n_fact
+    cauchy_product(exp_term(x), exp_term(y), n) = (x + y).pow(n) / n_fact
+    exp_term(x + y, n) = (x + y).pow(n) / n_fact
+}
+
+/// The Cauchy product sequence equals the exp_term sequence for the sum.
+theorem exp_cauchy_seq_eq(x: Real, y: Real) {
+    cauchy_seq(exp_term(x), exp_term(y)) = exp_term(x + y)
+} by {
+    forall(n: Nat) {
+        exp_cauchy_product_eq(x, y, n)
+        cauchy_seq(exp_term(x), exp_term(y))(n) = cauchy_product(exp_term(x), exp_term(y), n)
+        cauchy_product(exp_term(x), exp_term(y), n) = exp_term(x + y, n)
+        cauchy_seq(exp_term(x), exp_term(y))(n) = exp_term(x + y)(n)
+    }
+}
+
+/// The exponential addition law: exp(x + y) = exp(x) * exp(y).
+theorem exp_add(x: Real, y: Real) {
+    exp(x + y) = exp(x) * exp(y)
+} by {
+    // Show absolute convergence
+    exp_term_abs_converges(x)
+    absolutely_converges(exp_term(x))
+    exp_term_abs_converges(y)
+    absolutely_converges(exp_term(y))
+
+    // Apply Cauchy product theorem
+    cauchy_product_converges(exp_term(x), exp_term(y))
+    converges_to(partial(cauchy_seq(exp_term(x), exp_term(y))),
+                 limit(partial(exp_term(x))) * limit(partial(exp_term(y))))
+
+    // The Cauchy sequence equals exp_term(x+y)
+    exp_cauchy_seq_eq(x, y)
+    cauchy_seq(exp_term(x), exp_term(y)) = exp_term(x + y)
+
+    // Therefore the partial sums are equal
+    partial(cauchy_seq(exp_term(x), exp_term(y))) = partial(exp_term(x + y))
+
+    // So partial(exp_term(x+y)) converges to exp(x) * exp(y)
+    converges_to(partial(exp_term(x + y)), limit(partial(exp_term(x))) * limit(partial(exp_term(y))))
+
+    // By uniqueness of limits
+    limit(partial(exp_term(x + y))) = limit(partial(exp_term(x))) * limit(partial(exp_term(y)))
+
+    // By definition of exp
+    exp(x + y) = limit(partial(exp_term(x + y)))
+    exp(x) = limit(partial(exp_term(x)))
+    exp(y) = limit(partial(exp_term(y)))
+
+    exp(x + y) = exp(x) * exp(y)
 }
