@@ -4,9 +4,10 @@ from rat import Rat
 from real.real_field import Real
 from real.real_ring import converges, limit, mul_abs
 from real.real_base import abs_from_rat
-from real.abs_conv import absolutely_converges, abs_fn
-from real.real_series import seq_lte, abs_pow
+from real.abs_conv import absolutely_converges, abs_fn, absolutely_converges_comparison
+from real.real_series import seq_lte, abs_pow, tail, partial_tail_conv_imp_partial_conv, comparison_test, const_converges, mul_seq, is_lower_bound, geom_converges
 from list import partial
+from util import constant
 
 numerals Real
 numerals Nat
@@ -169,6 +170,24 @@ theorem exp_term_mul_recurrence(x: Real, n: Nat) {
 
 theorem exp_term_mul_recurrence_abs(x: Real, n: Nat) {
     exp_term(x, n.suc).abs * Real.from_rat(Rat.from_nat(n.suc)) = x.abs * exp_term(x, n).abs
+} by {
+    // Use exp_term_mul_recurrence: exp_term(x, n.suc) * (n+1) = x * exp_term(x, n)
+    let n_plus_1 = Real.from_rat(Rat.from_nat(n.suc))
+    exp_term(x, n.suc) * n_plus_1 = x * exp_term(x, n)
+
+    // Take absolute value of both sides
+    (exp_term(x, n.suc) * n_plus_1).abs = (x * exp_term(x, n)).abs
+
+    // Use mul_abs: |a * b| = |a| * |b|
+    (exp_term(x, n.suc) * n_plus_1).abs = exp_term(x, n.suc).abs * n_plus_1.abs
+    (x * exp_term(x, n)).abs = x.abs * exp_term(x, n).abs
+
+    // n_plus_1 is positive, so |n_plus_1| = n_plus_1
+    n_plus_1 > Real.0
+    not n_plus_1.is_negative
+    n_plus_1.abs = n_plus_1
+
+    exp_term(x, n.suc).abs * n_plus_1 = x.abs * exp_term(x, n).abs
 }
 
 /// The ratio of absolute values of consecutive exp_term values.
@@ -178,6 +197,40 @@ theorem exp_term_mul_recurrence_abs(x: Real, n: Nat) {
 theorem exp_term_ratio(x: Real, n: Nat) {
     exp_term(x, n).abs != Real.0 implies
     exp_term(x, n.suc).abs / exp_term(x, n).abs = x.abs / Real.from_rat(Rat.from_nat(n.suc))
+} by {
+    if exp_term(x, n).abs != Real.0 {
+        let n_plus_1 = Real.from_rat(Rat.from_nat(n.suc))
+
+        // From exp_term_mul_recurrence_abs:
+        // |exp_term(x, n+1)| * (n+1) = |x| * |exp_term(x, n)|
+        exp_term(x, n.suc).abs * n_plus_1 = x.abs * exp_term(x, n).abs
+
+        // n_plus_1 is positive and nonzero
+        n_plus_1 > Real.0
+        n_plus_1 != Real.0
+
+        // exp_term(x, n).abs is nonzero by assumption
+        exp_term(x, n).abs != Real.0
+
+        // Divide both sides by (n_plus_1 * |exp_term(x, n)|)
+        // LHS: |exp_term(x, n+1)| * (n+1) / ((n+1) * |exp_term(x, n)|)
+        //    = |exp_term(x, n+1)| / |exp_term(x, n)|
+        // RHS: |x| * |exp_term(x, n)| / ((n+1) * |exp_term(x, n)|)
+        //    = |x| / (n+1)
+
+        exp_term(x, n.suc).abs * n_plus_1 / (n_plus_1 * exp_term(x, n).abs) =
+            x.abs * exp_term(x, n).abs / (n_plus_1 * exp_term(x, n).abs)
+
+        // Simplify LHS using commutativity and cancellation
+        exp_term(x, n.suc).abs * n_plus_1 / (n_plus_1 * exp_term(x, n).abs) =
+            exp_term(x, n.suc).abs / exp_term(x, n).abs
+
+        // Simplify RHS using commutativity and cancellation
+        x.abs * exp_term(x, n).abs / (n_plus_1 * exp_term(x, n).abs) =
+            x.abs / n_plus_1
+
+        exp_term(x, n.suc).abs / exp_term(x, n).abs = x.abs / n_plus_1
+    }
 }
 
 /// For n >= 1, 0^n = 0.
@@ -389,51 +442,340 @@ theorem div_preserves_half_bound(x: Real, n: Nat) {
     x / Real.from_rat(Rat.from_nat(n)) < Real.1 / two
 }
 
+/// Helper predicate: sequence is always nonzero
+define always_nonzero(f: Nat -> Real) -> Bool {
+    forall(k: Nat) {
+        f(k) != Real.0
+    }
+}
+
+/// exp_term(x, n) is nonzero when x is nonzero.
+theorem exp_term_nonzero(x: Real, n: Nat) {
+    x != Real.0 implies exp_term(x, n) != Real.0
+} by {
+    if x != Real.0 {
+        // exp_term(x, n) = x^n / n!
+        // x != 0 implies x^n != 0
+        // n! > 0 always, so n! != 0
+        // Therefore x^n / n! != 0
+        x.pow(n) != Real.0
+        Real.from_rat(Rat.from_nat(n.factorial)) != Real.0
+        exp_term(x, n) != Real.0
+    }
+}
+
+/// When x != 0, exp_term(x) is always nonzero.
+theorem exp_term_always_nonzero(x: Real) {
+    x != Real.0 implies always_nonzero(exp_term(x))
+} by {
+    if x != Real.0 {
+        forall(k: Nat) {
+            exp_term_nonzero(x, k)
+            exp_term(x, k) != Real.0
+        }
+        always_nonzero(exp_term(x))
+    }
+}
+
+/// A sequence has a ratio bound if the ratio of consecutive terms is bounded by alpha.
+/// This is used for ratio test-style convergence arguments.
+define has_ratio_bound(f: Nat -> Real, alpha: Real) -> Bool {
+    forall(k: Nat) {
+        f(k) != Real.0 implies (f(k.suc).abs / f(k).abs) < alpha
+    }
+}
+
+/// A sequence eventually has a ratio bound if there exists an index after which
+/// the ratio of consecutive terms is bounded by alpha.
+define has_ratio_bound_eventually(f: Nat -> Real, alpha: Real) -> Bool {
+    exists(big_n: Nat) {
+        forall(k: Nat) {
+            k >= big_n and f(k) != Real.0 implies (f(k.suc).abs / f(k).abs) < alpha
+        }
+    }
+}
+
+/// If a sequence has ratio bound alpha and is always nonzero,
+/// then |f(k)| ≤ |f(0)| * alpha^k.
+/// This is proven by induction on k.
+theorem ratio_bound_geometric_bound(f: Nat -> Real, alpha: Real, k: Nat) {
+    has_ratio_bound(f, alpha) and Real.0 <= alpha and always_nonzero(f)
+    implies
+    f(k).abs <= f(Nat.0).abs * alpha.pow(k)
+} by {
+    // Proof by induction on k
+    define p(n: Nat) -> Bool {
+        has_ratio_bound(f, alpha) and Real.0 <= alpha and always_nonzero(f)
+        implies
+        f(n).abs <= f(Nat.0).abs * alpha.pow(n)
+    }
+
+    // Base case: k = 0
+    // f(0).abs ≤ f(0).abs * alpha^0 = f(0).abs * 1 = f(0).abs
+    alpha.pow(Nat.0) = Real.1
+    f(Nat.0).abs * alpha.pow(Nat.0) = f(Nat.0).abs
+    p(Nat.0)
+
+    // Inductive step
+    forall(n: Nat) {
+        if p(n) {
+            if has_ratio_bound(f, alpha) and Real.0 <= alpha and always_nonzero(f) {
+                // By IH: f(n).abs ≤ f(0).abs * alpha^n
+                f(n).abs <= f(Nat.0).abs * alpha.pow(n)
+
+                // By always_nonzero: f(n) != 0
+                f(n) != Real.0
+
+                // By has_ratio_bound: |f(n+1)| / |f(n)| < alpha
+                (f(n.suc).abs / f(n).abs) < alpha
+
+                // Since f(n) != 0, we have |f(n)| > 0
+                f(n).abs >= Real.0
+                f(n).abs > Real.0
+                f(n).abs != Real.0
+
+                // From: |f(n+1)| / |f(n)| < alpha and |f(n)| > 0
+                // We get: |f(n+1)| < |f(n)| * alpha
+                // (using div_lt_mul_pos from real_field.ac)
+                f(n.suc).abs < f(n).abs * alpha
+
+                // By IH: f(n).abs ≤ f(0).abs * alpha^n
+                // So: f(n).abs * alpha ≤ f(0).abs * alpha^n * alpha = f(0).abs * alpha^(n+1)
+                alpha.pow(n.suc) = alpha * alpha.pow(n)
+                f(n).abs * alpha <= f(Nat.0).abs * alpha.pow(n) * alpha
+                f(Nat.0).abs * alpha.pow(n) * alpha = f(Nat.0).abs * alpha.pow(n.suc)
+
+                // Combining: f(n+1).abs < f(n).abs * alpha ≤ f(0).abs * alpha^(n+1)
+                f(n.suc).abs <= f(Nat.0).abs * alpha.pow(n.suc)
+            }
+            p(n.suc)
+        }
+    }
+
+    // By induction, p holds for all n
+    p(k)
+}
+
+/// Ratio test for absolute convergence.
+/// If a series has ratio bound alpha < 1 and is always nonzero, then it converges absolutely.
+///
+/// Proof strategy:
+/// 1. Use ratio_bound_geometric_bound to show |f(k)| ≤ |f(0)| * alpha^k
+/// 2. The series is dominated by the geometric series |f(0)| * alpha^k
+/// 3. Since alpha < 1, the geometric series converges (by geom_converges)
+/// 4. Apply absolutely_converges_comparison to conclude
+theorem ratio_bound_implies_abs_conv(f: Nat -> Real, alpha: Real) {
+    has_ratio_bound(f, alpha) and alpha < Real.1 and Real.0 <= alpha and always_nonzero(f)
+    implies
+    absolutely_converges(f)
+} by {
+    if has_ratio_bound(f, alpha) and alpha < Real.1 and Real.0 <= alpha and always_nonzero(f) {
+        // By ratio_bound_geometric_bound, for all k: |f(k)| ≤ |f(0)| * alpha^k
+        forall(k: Nat) {
+            ratio_bound_geometric_bound(f, alpha, k)
+            f(k).abs <= f(Nat.0).abs * alpha.pow(k)
+        }
+
+        // Define comparison sequence: b(k) = |f(0)| * alpha^k
+        let c = f(Nat.0).abs
+        define b(k: Nat) -> Real {
+            c * alpha.pow(k)
+        }
+
+        // Show that abs_fn(f) ≤ b pointwise
+        forall(k: Nat) {
+            abs_fn(f)(k) = f(k).abs
+            f(k).abs <= c * alpha.pow(k)
+            abs_fn(f)(k) <= b(k)
+        }
+        seq_lte(abs_fn(f), b)
+
+        // Show b is nonnegative
+        forall(k: Nat) {
+            Real.0 <= alpha
+            Real.0 <= alpha.pow(k)
+            Real.0 <= c * alpha.pow(k)
+            Real.0 <= b(k)
+        }
+        is_lower_bound(b, Real.0)
+
+        // Show that partial(b) converges
+        // b(k) = c * alpha^k, so partial(b) = c * partial(alpha.pow)
+        // Since alpha < 1 and alpha >= 0, we have alpha.abs = alpha < 1
+        // So by geom_converges, partial(alpha.pow) converges
+        Real.0 <= alpha
+        not alpha.is_negative
+        alpha.abs = alpha
+        alpha.abs < Real.1
+        converges(partial(alpha.pow))
+        // partial(mul_seq(c, alpha.pow)) = mul_seq(c, partial(alpha.pow))
+        b = mul_seq(c, alpha.pow)
+        partial(b) = partial(mul_seq(c, alpha.pow))
+        partial(mul_seq(c, alpha.pow)) = mul_seq(c, partial(alpha.pow))
+        converges(mul_seq(c, partial(alpha.pow)))
+        converges(partial(b))
+
+        // Apply comparison test
+        absolutely_converges_comparison(f, b)
+        absolutely_converges(f)
+    }
+}
+
+/// Eventual ratio test for absolute convergence.
+/// If a series eventually has ratio bound alpha < 1 and is always nonzero, then it converges absolutely.
+///
+/// Proof strategy:
+/// 1. Find big_n such that for all k >= big_n, |f(k+1)| / |f(k)| < alpha
+/// 2. Show that tail(f, big_n) has_ratio_bound alpha and is always nonzero
+/// 3. Apply ratio_bound_implies_abs_conv to the tail
+/// 4. Use partial_tail_conv_imp_partial_conv to conclude the full series converges
+theorem eventual_ratio_bound_implies_abs_conv(f: Nat -> Real, alpha: Real) {
+    has_ratio_bound_eventually(f, alpha) and alpha < Real.1 and Real.0 <= alpha and always_nonzero(f)
+    implies
+    absolutely_converges(f)
+} by {
+    if has_ratio_bound_eventually(f, alpha) and alpha < Real.1 and Real.0 <= alpha and always_nonzero(f) {
+        // Get the index after which the ratio bound holds
+        let big_n: Nat satisfy {
+            forall(k: Nat) {
+                k >= big_n and f(k) != Real.0 implies (f(k.suc).abs / f(k).abs) < alpha
+            }
+        }
+
+        // Show that tail(f, big_n) is always nonzero
+        forall(i: Nat) {
+            tail(f, big_n)(i) = f(big_n + i)
+            f(big_n + i) != Real.0
+            tail(f, big_n)(i) != Real.0
+        }
+        always_nonzero(tail(f, big_n))
+
+        // Show that tail(f, big_n) has ratio bound alpha
+        // For any index i in the tail: tail(f, big_n)(i) = f(big_n + i)
+        // We have big_n + i >= big_n, so the ratio bound applies
+        forall(i: Nat) {
+            if tail(f, big_n)(i) != Real.0 {
+                f(big_n + i) != Real.0
+                big_n + i >= big_n
+                (f(big_n + i.suc).abs / f(big_n + i).abs) < alpha
+                (tail(f, big_n)(i.suc).abs / tail(f, big_n)(i).abs) < alpha
+            }
+        }
+        has_ratio_bound(tail(f, big_n), alpha)
+
+        // Apply ratio test to the tail
+        ratio_bound_implies_abs_conv(tail(f, big_n), alpha)
+        absolutely_converges(tail(f, big_n))
+
+        // The tail converges absolutely, so its partial sums converge
+        converges(partial(abs_fn(tail(f, big_n))))
+
+        // By partial_tail_conv_imp_partial_conv, the full series converges
+        converges(partial(abs_fn(f)))
+        absolutely_converges(f)
+    }
+}
+
 /// For all x, the series with terms exp_term(x) converges absolutely.
 ///
 /// Proof strategy:
-/// 1. For any x, choose N such that |x| < N (using archimedean property - DONE via exists_nat_gt)
-/// 2. For n >= 2N, we have |x|/(n+1) <= |x|/n < N/n <= 1/2
-/// 3. By exp_term_ratio, the ratio of consecutive terms is < 1/2 for large n
-/// 4. This means the tail of the series is dominated by a geometric series with ratio 1/2
-/// 5. By comparison_test (available in real_series.ac), the series converges absolutely
-///
-/// Progress so far:
-/// - abs_reciprocal: |1/x| = 1/|x| ✓
-/// - abs_div: |a/b| = |a|/|b| ✓
-/// - zero_pow_pos: 0^n = 0 for n >= 1 ✓
-/// - exp_term_zero_vanishes: exp_term(0, n) = 0 for n >= 1 ✓
-/// - exists_nat_gt: Archimedean property ✓
-/// - two_positive, two_nonzero: constants ✓
-/// - reciprocal_pos: c > 0 implies 1/c > 0 ✓
-/// - div_lt_div_pos: a < b and c > 0 implies a/c < b/c ✓
-/// - div_div_same: (a/b)/b = a/(b*b) ✓
-/// - exists_nat_half_bound: for any x > 0, exists N such that x < N/2 ✓
-/// - div_preserves_half_bound: if x < n/2 then x/n < 1/2 ✓
-/// - exp_term_abs: |exp_term(x, n)| = |x|^n / n! ✓
-/// - factorial_suc_real, factorial_pos, suc_pos: factorial arithmetic ✓
-/// - pow_suc: power arithmetic ✓
-///
-/// New lemmas in real_field.ac:
-/// - mul_reciprocal_comm: a * (b * c) = b * (a * c) ✓
-/// - div_mul_cancel_right: a / (b * a) = 1 / b ✓
-/// - div_mul_cancel_left: (a * b) / a = b ✓
-///
-/// Still needed for full convergence proof:
-/// - exp_term_ratio: |exp_term(x, n+1)| / |exp_term(x, n)| = |x| / (n+1)
-///   (commented out - requires more field division lemmas)
-/// - Comparison with geometric series for the tail
-/// - Main convergence theorem combining all pieces
-//
-// theorem exp_term_abs_converges(x: Real) {
-//     absolutely_converges(exp_term(x))
-// } by {
-//     // For the case x = 0, the series is trivially convergent (all terms are 0 after the first)
-//     if x = Real.0 {
-//         // exp_term(Real.0, n) = Real.0 for all n >= 1
-//         absolutely_converges(exp_term(x))
-//     } else {
-//         // For x != 0, use the ratio test argument outlined above
-//         // This requires substantial development of helper lemmas
-//     }
-// }
+/// 1. For x = 0: series is eventually zero, hence converges
+/// 2. For x ≠ 0: use eventual ratio test with ratio bound 1/2
+///    a. Show exp_term(x) is always nonzero
+///    b. Find N such that |x| < N/2 (Archimedean property)
+///    c. For n >= N, show |x|/(n+1) < 1/2 (by exp_term_ratio)
+///    d. Apply eventual_ratio_bound_implies_abs_conv
+theorem exp_term_abs_converges(x: Real) {
+    absolutely_converges(exp_term(x))
+} by {
+    if x = Real.0 {
+        // For x = 0, all terms are zero for n >= 1, so the series trivially converges
+        forall(i: Nat) {
+            tail(abs_fn(exp_term(Real.0)), Nat.1)(i) = abs_fn(exp_term(Real.0))(Nat.1 + i)
+            abs_fn(exp_term(Real.0))(Nat.1 + i) = exp_term(Real.0, Nat.1 + i).abs
+            Nat.1 + i >= Nat.1
+            exp_term(Real.0, Nat.1 + i) = Real.0
+            exp_term(Real.0, Nat.1 + i).abs = Real.0
+            tail(abs_fn(exp_term(Real.0)), Nat.1)(i) = Real.0
+        }
+        tail(abs_fn(exp_term(Real.0)), Nat.1) = constant[Nat, Real](Real.0)
+        partial(constant[Nat, Real](Real.0)) = constant[Nat, Real](Real.0)
+        converges(constant[Nat, Real](Real.0))
+        converges(partial(tail(abs_fn(exp_term(Real.0)), Nat.1)))
+        converges(partial(abs_fn(exp_term(Real.0))))
+        absolutely_converges(exp_term(Real.0))
+    } else {
+        // For x != 0, show exp_term(x) converges absolutely using the ratio test
+        x != Real.0
+
+        // Show exp_term(x) is always nonzero
+        exp_term_always_nonzero(x)
+        always_nonzero(exp_term(x))
+
+        // Show exp_term(x) has eventual ratio bound 1/2
+        x.abs.is_positive
+
+        // By Archimedean property: there exists N such that |x| * 2 < N
+        let big_n: Nat satisfy {
+            x.abs * two < Real.from_rat(Rat.from_nat(big_n))
+        }
+
+        // From x.abs * 2 < big_n, we get x.abs < big_n/2
+        two > Real.0
+        two != Real.0
+        x.abs < Real.from_rat(Rat.from_nat(big_n)) / two
+
+        // Show that for all k >= big_n, the ratio < 1/2
+        forall(k: Nat) {
+            if k >= big_n and exp_term(x, k) != Real.0 {
+                // By exp_term_ratio: |exp_term(x, k+1)| / |exp_term(x, k)| = |x| / (k+1)
+                exp_term(x, k).abs != Real.0
+                (exp_term(x, k.suc).abs / exp_term(x, k).abs) = x.abs / Real.from_rat(Rat.from_nat(k.suc))
+
+                // Since k >= big_n, we have: k.suc > big_n
+                // From x.abs < big_n/2 and big_n < k.suc, we get x.abs < k.suc/2
+                // Therefore x.abs / k.suc < (k.suc / 2) / k.suc = 1/2
+                let ksucc = Real.from_rat(Rat.from_nat(k.suc))
+                k.suc > k
+                k >= big_n
+                k.suc > big_n
+                big_n < k.suc
+                Rat.from_nat(big_n) < Rat.from_nat(k.suc)
+                Real.from_rat(Rat.from_nat(big_n)) < Real.from_rat(Rat.from_nat(k.suc))
+                Real.from_rat(Rat.from_nat(big_n)) < ksucc
+                ksucc > Real.0
+                ksucc != Real.0
+                ksucc / two > Real.from_rat(Rat.from_nat(big_n)) / two
+                x.abs < ksucc / two
+
+                // Use our new field lemma: x.abs / ksucc < 1/2 from x.abs < ksucc/2
+                x.abs / ksucc < (ksucc / two) / ksucc
+                ksucc / (ksucc * two) = Real.1 / two
+                (ksucc / two) / ksucc = Real.1 / two
+                x.abs / ksucc < Real.1 / two
+
+                (exp_term(x, k.suc).abs / exp_term(x, k).abs) < Real.1 / two
+            }
+        }
+
+        // So exp_term(x) has eventual ratio bound 1/2
+        has_ratio_bound_eventually(exp_term(x), Real.1 / two)
+
+        // Apply the eventual ratio test
+        // Check preconditions: has_ratio_bound_eventually, alpha < 1, alpha >= 0, always_nonzero
+        // Need to show 1/2 < 1
+        two > Real.1
+        two.is_positive
+        not two.is_negative
+        two.reciprocal < Real.1.reciprocal
+        Real.1.reciprocal = Real.1
+        two.reciprocal < Real.1
+        Real.1 / two = Real.1 * two.reciprocal
+        Real.1 * two.reciprocal < Real.1 * Real.1
+        Real.1 * Real.1 = Real.1
+        Real.1 / two < Real.1
+        Real.0 <= Real.1 / two
+        eventual_ratio_bound_implies_abs_conv(exp_term(x), Real.1 / two)
+        absolutely_converges(exp_term(x))
+    }
+}
