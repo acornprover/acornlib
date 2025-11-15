@@ -4,7 +4,7 @@ from rat import Rat
 from real.real_field import Real
 from real.real_ring import converges, limit, mul_abs, from_nat_is_from_rat
 from real.real_seq import converges_to, eventual_lb, lb_lte_limit
-from real.real_base import abs_from_rat
+from real.real_base import abs_from_rat, real_is_transitive
 from real.abs_conv import absolutely_converges, abs_fn, absolutely_converges_comparison
 from real.real_series import seq_lte, abs_pow, tail, partial_tail_conv_imp_partial_conv, comparison_test, const_converges, mul_seq, is_lower_bound, geom_converges, partial_monotone
 from real.cauchy import cauchy_product, cauchy_seq, cauchy_product_converges, cauchy_coefficient
@@ -12,7 +12,7 @@ from list import partial, sum, map
 from list.list_sum import partial_scalar_mul
 from semigroup import mul_fn
 from add_semigroup import add_fn
-from util import constant, compose
+from util import constant, compose, is_transitive
 from nat.nat_combo import choose
 from semiring.from_nat import from_nat
 from comm_ring.binomial import binomial_term, binomial
@@ -1399,19 +1399,59 @@ theorem exp_term_pos(x: Real, n: Nat) {
     }
 }
 
+/// Helper lemma: partial sums with offset are >= base partial sum.
+/// If all terms are nonnegative, then partial(f, n + i) >= partial(f, n).
+theorem partial_offset_ge(f: Nat -> Real, n: Nat, i: Nat) {
+    is_lower_bound(f, Real.0) implies partial(f, n + i) >= partial(f, n)
+} by {
+    if is_lower_bound(f, Real.0) {
+        define p(j: Nat) -> Bool {
+            partial(f, n + j) >= partial(f, n)
+        }
+
+        // Base case: j = 0
+        p(Nat.0)
+
+        // Inductive step
+        forall(j: Nat) {
+            if p(j) {
+                // IH: partial(f, n + j) >= partial(f, n)
+                partial(f, n + j) >= partial(f, n)
+
+                // By partial_monotone: partial(f, n + j) <= partial(f, n + j.suc)
+                partial_monotone(f, n + j)
+                partial(f, n + j) <= partial(f, (n + j).suc)
+                (n + j).suc = n + j.suc
+                partial(f, n + j) <= partial(f, n + j.suc)
+
+                // Need to show: partial(f, n + j.suc) >= partial(f, n)
+                // We have: partial(f, n) <= partial(f, n + j) <= partial(f, n + j.suc)
+                // By transitivity:
+                partial(f, n) <= partial(f, n + j.suc)
+                partial(f, n + j.suc) >= partial(f, n)
+
+                p(j.suc)
+            }
+        }
+
+        p(i)
+        partial(f, n + i) >= partial(f, n)
+    }
+}
+
 /// For positive x, exp(x) > 1.
 /// This follows from the fact that exp(x) is the limit of partial sums,
 /// and each partial sum (for n ≥ 2) is at least 1 + x.
-///
-/// TODO: This proof is partially complete. The key step that needs to be proven is that
-/// for all i >= 0, partial(exp_term(x), 2 + i) >= 1 + x, which follows from the fact
-/// that partial sums of nonnegative terms are monotonically increasing.
 theorem exp_pos_gt_one(x: Real) {
     x > Real.0 implies exp(x) > Real.1
 } by {
     if x > Real.0 {
         // exp(x) = limit(partial(exp_term(x)))
         exp(x) = limit(partial(exp_term(x)))
+
+        // The partial sums converge
+        exp_term_partial_converges(x)
+        converges(partial(exp_term(x)))
 
         // exp_term(x, 0) = 1 and exp_term(x, 1) = x
         exp_term_zero_index(x)
@@ -1429,18 +1469,40 @@ theorem exp_pos_gt_one(x: Real) {
         forall(k: Nat) {
             exp_term_pos(x, k)
             exp_term(x, k) >= Real.0
+            Real.0 <= exp_term(x, k)
         }
         is_lower_bound(exp_term(x), Real.0)
 
-        // Since 1 + x > 1, if we can show exp(x) >= 1 + x, we're done
-        // We know partial(exp_term(x), 2) = 1 + x
-        // Since all terms are >= 0, the limit must be >= any partial sum
-        // In particular, exp(x) >= partial(exp_term(x), 2) = 1 + x > 1
+        // Use partial_offset_ge to show partial sums stay >= 1 + x for all n >= 2
+        forall(i: Nat) {
+            partial_offset_ge(exp_term(x), Nat.0.suc.suc, i)
+            partial(exp_term(x), Nat.0.suc.suc + i) >= partial(exp_term(x), Nat.0.suc.suc)
+            partial(exp_term(x), Nat.0.suc.suc + i) >= Real.1 + x
+            Real.1 + x <= partial(exp_term(x))(Nat.0.suc.suc + i)
+        }
 
-        // For now, we assert the final result
-        // TODO: The missing step is proving that the limit of an increasing sequence
-        // is >= any of its terms
+        // This gives us eventual_lb(partial(exp_term(x)), 1 + x) with witness n = 2
+        // We need to show: forall j >= 2, 1 + x <= partial(exp_term(x))(j)
+        // For any j >= 2, write j = 2 + (j - 2), let i = j - 2
+        // Then we have: 1 + x <= partial(exp_term(x))(2 + i) by the above
+        forall(j: Nat) {
+            if Nat.0.suc.suc <= j {
+                // j >= 2, so j = 2 + (j - 2)
+                // By the forall above with i = j - 2:
+                Real.1 + x <= partial(exp_term(x))(j)
+            }
+        }
+        eventual_lb(partial(exp_term(x)), Real.1 + x)
+
+        // By lb_lte_limit: if the sequence converges and is eventually >= 1+x, then limit >= 1+x
+        lb_lte_limit(partial(exp_term(x)), Real.1 + x)
+        Real.1 + x <= limit(partial(exp_term(x)))
+        Real.1 + x <= exp(x)
+
+        // Since x > 0, we have 1 + x > 1
         Real.1 + x > Real.1
+
+        // Therefore exp(x) > 1
         exp(x) > Real.1
     }
 }
