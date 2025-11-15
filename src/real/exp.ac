@@ -3,16 +3,16 @@ from int import Int
 from rat import Rat
 from real.real_field import Real
 from real.real_ring import converges, limit, mul_abs, from_nat_is_from_rat
-from real.real_seq import converges_to
-from real.real_base import abs_from_rat
+from real.real_seq import converges_to, eventual_lb, lb_lte_limit
+from real.real_base import abs_from_rat, real_is_transitive
 from real.abs_conv import absolutely_converges, abs_fn, absolutely_converges_comparison
-from real.real_series import seq_lte, abs_pow, tail, partial_tail_conv_imp_partial_conv, comparison_test, const_converges, mul_seq, is_lower_bound, geom_converges
+from real.real_series import seq_lte, abs_pow, tail, partial_tail_conv_imp_partial_conv, comparison_test, const_converges, mul_seq, is_lower_bound, geom_converges, partial_monotone
 from real.cauchy import cauchy_product, cauchy_seq, cauchy_product_converges, cauchy_coefficient
 from list import partial, sum, map
 from list.list_sum import partial_scalar_mul
 from semigroup import mul_fn
 from add_semigroup import add_fn
-from util import constant, compose
+from util import constant, compose, is_transitive
 from nat.nat_combo import choose
 from semiring.from_nat import from_nat
 from comm_ring.binomial import binomial_term, binomial
@@ -1314,4 +1314,195 @@ theorem exp_zero {
     // By definition of exp
     exp(Real.0) = limit(partial(exp_term(Real.0)))
     exp(Real.0) = Real.1
+}
+
+/// The zeroth term in the exponential series is always 1.
+theorem exp_term_zero_index(x: Real) {
+    exp_term(x, Nat.0) = Real.1
+} by {
+    exp_term(x, Nat.0) = x.pow(Nat.0) / Real.from_rat(Rat.from_nat(Nat.0.factorial))
+    x.pow(Nat.0) = Real.1
+    Nat.0.factorial = Nat.1
+    Rat.from_nat(Nat.1) = Rat.1
+    Real.from_rat(Rat.1) = Real.1
+    Real.1 / Real.1 = Real.1
+}
+
+/// The first term in the exponential series is x.
+theorem exp_term_one_index(x: Real) {
+    exp_term(x, Nat.1) = x
+} by {
+    exp_term(x, Nat.1) = x.pow(Nat.1) / Real.from_rat(Rat.from_nat(Nat.1.factorial))
+    x.pow(Nat.1) = x
+    Nat.1.factorial = Nat.1
+    Rat.from_nat(Nat.1) = Rat.1
+    Real.from_rat(Rat.1) = Real.1
+    x / Real.1 = x
+}
+
+/// For positive x, x^n is positive.
+theorem pow_pos(x: Real, n: Nat) {
+    x > Real.0 implies x.pow(n) > Real.0
+} by {
+    define p(k: Nat) -> Bool {
+        x > Real.0 implies x.pow(k) > Real.0
+    }
+
+    // Base case: x^0 = 1 > 0
+    if x > Real.0 {
+        x.pow(Nat.0) = Real.1
+        Real.1 > Real.0
+    }
+    p(Nat.0)
+
+    // Inductive step: if x^k > 0, then x^(k+1) = x * x^k > 0
+    forall(k: Nat) {
+        if p(k) {
+            if x > Real.0 {
+                x.pow(k) > Real.0
+                x.pow(k.suc) = x * x.pow(k)
+                // Product of positive reals is positive
+                x * x.pow(k) > Real.0
+                x.pow(k.suc) > Real.0
+            }
+            p(k.suc)
+        }
+    }
+
+    p(n)
+}
+
+/// For positive x, all exponential terms are positive.
+theorem exp_term_pos(x: Real, n: Nat) {
+    x > Real.0 implies exp_term(x, n) > Real.0
+} by {
+    if x > Real.0 {
+        // x^n > 0 when x > 0
+        pow_pos(x, n)
+        x.pow(n) > Real.0
+        x.pow(n).is_positive
+
+        // n! > 0 always
+        Real.from_rat(Rat.from_nat(n.factorial)) > Real.0
+        Real.from_rat(Rat.from_nat(n.factorial)).is_positive
+        Real.from_rat(Rat.from_nat(n.factorial)) != Real.0
+
+        // Quotient of positive reals is positive: a/b = a * b^(-1), and b^(-1) > 0 when b > 0
+        Real.from_rat(Rat.from_nat(n.factorial)).reciprocal.is_positive
+
+        // Product of positive reals is positive
+        x.pow(n) * Real.from_rat(Rat.from_nat(n.factorial)).reciprocal > Real.0
+
+        exp_term(x, n) = x.pow(n) / Real.from_rat(Rat.from_nat(n.factorial))
+        x.pow(n) / Real.from_rat(Rat.from_nat(n.factorial)) = x.pow(n) * Real.from_rat(Rat.from_nat(n.factorial)).reciprocal
+        exp_term(x, n) > Real.0
+    }
+}
+
+/// Helper lemma: partial sums with offset are >= base partial sum.
+/// If all terms are nonnegative, then partial(f, n + i) >= partial(f, n).
+theorem partial_offset_ge(f: Nat -> Real, n: Nat, i: Nat) {
+    is_lower_bound(f, Real.0) implies partial(f, n + i) >= partial(f, n)
+} by {
+    if is_lower_bound(f, Real.0) {
+        define p(j: Nat) -> Bool {
+            partial(f, n + j) >= partial(f, n)
+        }
+
+        // Base case: j = 0
+        p(Nat.0)
+
+        // Inductive step
+        forall(j: Nat) {
+            if p(j) {
+                // IH: partial(f, n + j) >= partial(f, n)
+                partial(f, n + j) >= partial(f, n)
+
+                // By partial_monotone: partial(f, n + j) <= partial(f, n + j.suc)
+                partial_monotone(f, n + j)
+                partial(f, n + j) <= partial(f, (n + j).suc)
+                (n + j).suc = n + j.suc
+                partial(f, n + j) <= partial(f, n + j.suc)
+
+                // Need to show: partial(f, n + j.suc) >= partial(f, n)
+                // We have: partial(f, n) <= partial(f, n + j) <= partial(f, n + j.suc)
+                // By transitivity:
+                partial(f, n) <= partial(f, n + j.suc)
+                partial(f, n + j.suc) >= partial(f, n)
+
+                p(j.suc)
+            }
+        }
+
+        p(i)
+        partial(f, n + i) >= partial(f, n)
+    }
+}
+
+/// For positive x, exp(x) > 1.
+/// This follows from the fact that exp(x) is the limit of partial sums,
+/// and each partial sum (for n ≥ 2) is at least 1 + x.
+theorem exp_pos_gt_one(x: Real) {
+    x > Real.0 implies exp(x) > Real.1
+} by {
+    if x > Real.0 {
+        // exp(x) = limit(partial(exp_term(x)))
+        exp(x) = limit(partial(exp_term(x)))
+
+        // The partial sums converge
+        exp_term_partial_converges(x)
+        converges(partial(exp_term(x)))
+
+        // exp_term(x, 0) = 1 and exp_term(x, 1) = x
+        exp_term_zero_index(x)
+        exp_term_one_index(x)
+        exp_term(x, Nat.0) = Real.1
+        exp_term(x, Nat.1) = x
+
+        // partial(exp_term(x), 2) = exp_term(x, 0) + exp_term(x, 1) = 1 + x
+        partial(exp_term(x), Nat.0.suc.suc) = partial(exp_term(x), Nat.1) + exp_term(x, Nat.1)
+        partial(exp_term(x), Nat.1) = partial(exp_term(x), Nat.0) + exp_term(x, Nat.0)
+        partial(exp_term(x), Nat.0) = Real.0
+        partial(exp_term(x), Nat.0.suc.suc) = Real.1 + x
+
+        // All exp_term(x, n) are positive, hence nonnegative
+        forall(k: Nat) {
+            exp_term_pos(x, k)
+            exp_term(x, k) >= Real.0
+            Real.0 <= exp_term(x, k)
+        }
+        is_lower_bound(exp_term(x), Real.0)
+
+        // Use partial_offset_ge to show partial sums stay >= 1 + x for all n >= 2
+        forall(i: Nat) {
+            partial_offset_ge(exp_term(x), Nat.0.suc.suc, i)
+            partial(exp_term(x), Nat.0.suc.suc + i) >= partial(exp_term(x), Nat.0.suc.suc)
+            partial(exp_term(x), Nat.0.suc.suc + i) >= Real.1 + x
+            Real.1 + x <= partial(exp_term(x))(Nat.0.suc.suc + i)
+        }
+
+        // This gives us eventual_lb(partial(exp_term(x)), 1 + x) with witness n = 2
+        // We need to show: forall j >= 2, 1 + x <= partial(exp_term(x))(j)
+        // For any j >= 2, write j = 2 + (j - 2), let i = j - 2
+        // Then we have: 1 + x <= partial(exp_term(x))(2 + i) by the above
+        forall(j: Nat) {
+            if Nat.0.suc.suc <= j {
+                // j >= 2, so j = 2 + (j - 2)
+                // By the forall above with i = j - 2:
+                Real.1 + x <= partial(exp_term(x))(j)
+            }
+        }
+        eventual_lb(partial(exp_term(x)), Real.1 + x)
+
+        // By lb_lte_limit: if the sequence converges and is eventually >= 1+x, then limit >= 1+x
+        lb_lte_limit(partial(exp_term(x)), Real.1 + x)
+        Real.1 + x <= limit(partial(exp_term(x)))
+        Real.1 + x <= exp(x)
+
+        // Since x > 0, we have 1 + x > 1
+        Real.1 + x > Real.1
+
+        // Therefore exp(x) > 1
+        exp(x) > Real.1
+    }
 }
