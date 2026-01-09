@@ -58,4 +58,4 @@ If this doesn't verify, something went wrong. Try fixing it so that it verifies.
 
 # Finishing
 
-When you are done explicating a module, run a reprove on that module. Ideally, it should succeed. If it doesn't, try explicating again. If that still doesn't work, we're stuck. Stop and ask the user what to do.
+When you are done explicating a module, run a reprove on that module. Ideally, it should succeed. If it doesn't, try explicating again.
