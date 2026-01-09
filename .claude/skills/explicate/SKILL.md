@@ -25,7 +25,7 @@ The next step is to figure out which lines we need to explicate. Run a reprove. 
 acorn reprove [MODULENAME] [--line LINENUMBER]
 ```
 
-If there's a crash, that's a bug. We should stop explicating and fix that bug.
+If there's a crash, that's a bug in Acorn. We should stop explicating, it's hopeless to continue.
 
 # Explicating One Line
 
@@ -37,7 +37,16 @@ Select the proof to see its detail.
 acorn select MODULENAME LINENUMBER
 ```
 
-This will show a list of statements and reasons. Statements that come from definitions, theorems, or boolean reduction can be used for explication. Insert these statements in the .ac file in front of the line we are explicating. Then run a verify of the whole module to ensure they can be proven.
+This will show a list of statements and reasons. Statements that come from:
+
+- definitions
+- theorems
+- boolean reduction
+- simplification
+
+can be used for explication. Insert these statements in the .ac file in front of the line we are explicating.
+
+After modifying the file, run a verify of the _whole module_ to ensure the new lines can all be proven, and update the certs.
 
 ```bash
 acorn verify MODULENAME
@@ -45,7 +54,7 @@ acorn verify MODULENAME
 
 If this verifies, we have made progress. You can now move on to explicating the next line.
 
-If this doesn't verify, something went wrong. Stop and ask the user what to do.
+If this doesn't verify, something went wrong. Try fixing it so that it verifies.
 
 # Finishing
 
