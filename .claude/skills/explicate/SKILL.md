@@ -13,6 +13,8 @@ We can only explicate when we have a valid proof. We can explicate either the wh
 acorn reverify [MODULENAME] [--line LINENUMBER]
 ```
 
+Note that module names can be single words like "add_ordered_group" or dot-separated like "comm_ring.binomial".
+
 If the reverify fails, we won't be able to explicate.
 
 # Figuring Out What Needs Explication
