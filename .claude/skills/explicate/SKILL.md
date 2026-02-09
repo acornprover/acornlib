@@ -27,6 +27,10 @@ acorn reprove MODULENAME --fail-fast
 
 If there's a crash or an internal error, that's a bug in Acorn. We should stop explicating and tell the user there's an Acorn bug.
 
+If this command works, we're done with this module.
+
+If we find a line what can't be reproved, make note of the line number and go to the next step.
+
 # Explicating One Line
 
 Once we know a line that cannot be reproved, select the proof to see its detail.
