@@ -10,12 +10,12 @@ Sometimes, we have a valid proof, in the sense that its certificate can be verif
 We can only explicate when we have a valid proof. So, the first step is to check that we have valid proofs in the module that we want to explicate.
 
 ```bash
-acorn reverify MODULENAME
+acorn check MODULENAME
 ```
 
 Note that module names can be single words like "add_ordered_group" or dot-separated like "comm_ring.binomial".
 
-If the reverify fails, we won't be able to explicate.
+If the check fails, we won't be able to explicate.
 
 # Explicating One Module
 
