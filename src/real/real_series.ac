@@ -2,12 +2,13 @@ from util import compose
 from nat import Nat
 from rat import Rat
 from list import partial, sum, map, List
-from list.list_sum import map_add, sum_add, partial_scalar_mul
+from list.list_sum import map_add, sum_add, partial_scalar_mul, partial_add, partial_pointwise_eq
+from add_semigroup import add_fn
 from semigroup import mul_fn
 from real.real_set import Real
-from real.real_seq import cauchy_bound, tail_bound, add_seq, neg_rat_seq, converges_imp_converges_to, eventual_ub, eventual_lb, lt_converges_to_imp_lb, gt_converges_to_imp_ub, eventual_eq, eq_converges
-from real.real_ring import converges, converges_to, limit, lift_seq
-from real.real_base import lte_add_right
+from real.real_seq import cauchy_bound, tail_bound, add_seq, neg_rat_seq, converges_imp_converges_to, eventual_ub, eventual_lb, lt_converges_to_imp_lb, gt_converges_to_imp_ub, eventual_eq, eq_converges, eq_imp_limit
+from real.real_ring import converges, converges_to, limit, lift_seq, mul_nonneg, mul_abs
+from real.real_base import lte_add_right, close_imp_bounds
 
 numerals Real
 
@@ -69,49 +70,51 @@ define is_increasing(a: Nat -> Real) -> Bool {
 theorem distant_increasing(a: Nat -> Real, m: Nat, n: Nat) {
     is_increasing(a) and m <= n implies a(m) <= a(n)
 } by {
-    // Define a predicate for our induction
-    define p(k: Nat) -> Bool {
-        forall(j: Nat) {
-            j + k <= n implies a(j) <= a(j + k)
-        }
-    }
-
-    // Base case: k = 0
-    p(Nat.0)
-
-    // Inductive step: if p(k) holds, prove p(k.suc)
-    forall(k: Nat) {
-        if p(k) {
+    if is_increasing(a) and m <= n {
+        define p(k: Nat) -> Bool {
             forall(j: Nat) {
-                if j + k.suc <= n {
-                    // This means j+k+1 <= n, which means j+k <= n-1 < n
-
-                    // Apply p(k) to get a(j) <= a(j+k)
-                    j + k.suc = (j + k).suc
-                    j + k <= n or n < j + k
-                    not n < j + k or n < (j + k).suc
-                    not j + k.suc <= n or not n < j + k.suc
-                    j + k <= n
-                    a(j) <= a(j + k)
-
-                    // Apply the definition of is_increasing to the point j+k
-
-                    // Combine the inequalities
-                    a(j) <= a(j + k.suc)
-                }
+                j + k <= n implies a(j) <= a(j + k)
             }
-            p(k.suc)
         }
-    }
+        Nat.induction(p)
 
-    // By induction, p holds for all k
-    forall(k: Nat) {
+        forall(j: Nat) {
+            if j + Nat.0 <= n {
+                j + Nat.0 = j
+                a(j) <= a(j)
+            }
+        }
+        forall(j: Nat) {
+            j + Nat.0 <= n implies a(j) <= a(j + Nat.0)
+        }
+        p(Nat.0)
+
+        forall(k: Nat) {
+            if p(k) {
+                forall(j: Nat) {
+                    if j + k.suc <= n {
+                        j + k.suc = (j + k).suc
+                        j + k <= n or n < j + k
+                        not n < j + k or n < (j + k).suc
+                        not j + k.suc <= n or not n < j + k.suc
+                        j + k <= n
+                        a(j) <= a(j + k)
+                        a(j + k) <= a((j + k).suc)
+                        (j + k).suc = j + k.suc
+                        a(j) <= a(j + k.suc)
+                    }
+                }
+                p(k.suc)
+            }
+        }
+
+        let k: Nat satisfy {
+            m + k = n
+        }
         p(k)
-    }
-
-    // Apply the predicate with j=m, k=n-m
-    if m <= n {
-        let k: Nat satisfy { m + k = n }
+        a(m) <= a(m + k)
+        a(m + k) = a(n)
+        a(m) <= a(n)
     }
 }
 
@@ -152,13 +155,16 @@ theorem increasing_convergent_bounded_by_limit(a: Nat -> Real) {
             // Since the sequence converges to limit(a), there must be a point
             // after which all sequence values are < ub
             let eps = ub - limit(a)
+            eps.is_positive
 
             // By the definition of convergence, find a point where the sequence
             // is within eps of the limit for all indices beyond that point
+            converges_imp_converges_to(a)
+            exists(big_n: Nat) {
+                tail_bound(a, limit(a), big_n, eps)
+            }
             let (big_n: Nat) satisfy {
-                forall(i: Nat) {
-                    big_n <= i implies a(i).is_close(limit(a), eps)
-                }
+                tail_bound(a, limit(a), big_n, eps)
             }
 
             // Since a(n) > ub, we know n can't be >= big_n (or a(n) would be within eps of limit(a))
@@ -172,6 +178,10 @@ theorem increasing_convergent_bounded_by_limit(a: Nat -> Real) {
                 // For real numbers, if they're close and one is less than another plus epsilon
                 // then the first is less than the second plus epsilon
                 // And since eps = ub - limit(a), we have limit(a) + eps = ub
+                big_n <= big_n
+                a(big_n).is_close(limit(a), eps)
+                close_imp_bounds(a(big_n), limit(a), eps)
+                a(big_n) < limit(a) + eps
                 limit(a) + eps = ub
                 a(big_n) < ub
 
@@ -188,6 +198,11 @@ theorem increasing_convergent_bounded_by_limit(a: Nat -> Real) {
                 // For real numbers, if they're close and one is less than another plus epsilon
                 // then the first is less than the second plus epsilon
                 // And since eps = ub - limit(a), we have limit(a) + eps = ub
+                n < big_n or big_n <= n
+                big_n <= n
+                a(n).is_close(limit(a), eps)
+                close_imp_bounds(a(n), limit(a), eps)
+                a(n) < limit(a) + eps
                 limit(a) + eps = ub
                 a(n) < ub
 
@@ -211,6 +226,18 @@ define image(a: Nat -> Real, x: Real) -> Bool {
 theorem ub_imp_image_ub(a: Nat -> Real, b: Real) {
     is_upper_bound(a, b)
     implies b.is_set_upper_bound(image(a))
+} by {
+    if is_upper_bound(a, b) {
+        forall(x: Real) {
+            if image(a, x) {
+                let n: Nat satisfy {
+                    a(n) = x
+                }
+                a(n) <= b
+                x <= b
+            }
+        }
+    }
 }
 
 // If there's an upper bound, there's a least upper bound.
@@ -409,6 +436,28 @@ theorem seq_lte_preserves_limit(a: Nat -> Real, b: Nat -> Real) {
             }
 
             // Eventually a(n) is within eps_a_half of limit(a)
+            converges_to(a, limit(a))
+            exists(big_n3: Nat) {
+                tail_bound(a, limit(a), big_n3, eps_a_half)
+            }
+            let big_n5: Nat satisfy {
+                tail_bound(a, limit(a), big_n5, eps_a_half)
+            }
+            forall(i: Nat) {
+                if big_n5 <= i {
+                    a(i).is_close(limit(a), eps_a_half)
+                }
+            }
+            exists(big_n6: Nat) {
+                forall(i: Nat) {
+                    big_n6 <= i implies a(i).is_close(limit(a), eps_a_half)
+                }
+            }
+            exists(big_n4: Nat) {
+                forall(i: Nat) {
+                    big_n4 <= i implies a(i).is_close(limit(a), eps_a_half)
+                }
+            }
             let n3: Nat satisfy {
                 forall(i: Nat) {
                     n3 <= i implies a(i).is_close(limit(a), eps_a_half)
@@ -510,10 +559,20 @@ theorem const_converges(a: Real) {
 
 theorem const_limit(a: Real) {
     limit(constant[Nat, Real](a)) = a
+} by {
+    forall(n: Nat) {
+        constant(a, n) = a
+    }
+    eventual_eq(constant[Nat, Real](a), a)
+    eq_imp_limit(constant[Nat, Real](a), a)
 }
 
 theorem const_converges_to(a: Real) {
     converges_to(constant[Nat, Real](a), a)
+} by {
+    const_converges(a)
+    converges_imp_converges_to(constant[Nat, Real](a))
+    const_limit(a)
 }
 
 theorem mul_seq_zero(a: Nat -> Real) {
@@ -599,14 +658,25 @@ theorem partial_all_zeros(g: Nat -> Real, m: Nat) {
         implies
         partial(g, k) = Real.0
     }
+    Nat.induction(p)
 
     // Base case
+    if forall(j: Nat) { j < Nat.0 implies g(j) = Real.0 } {
+        partial_zero(g)
+    }
+    p(Nat.0)
 
     // Inductive step
     forall(k: Nat) {
         if p(k) {
             if forall(j: Nat) { j < k.suc implies g(j) = Real.0 } {
                 // g(j) = 0 for all j < k
+                forall(j: Nat) {
+                    if j < k {
+                        j < k.suc
+                        g(j) = Real.0
+                    }
+                }
                 k < k.suc
                 g(k) = Real.0
 
@@ -617,7 +687,24 @@ theorem partial_all_zeros(g: Nat -> Real, m: Nat) {
                 partial(g, k) + g(k) = partial(g, k.suc)
                 partial(g, k) + Real.0 = partial(g, k)
                 partial(g, k.suc) = Real.0
+                p(k.suc)
             }
+            if forall(j: Nat) { j < k.suc implies g(j) = Real.0 } {
+                forall(j: Nat) {
+                    if j < k {
+                        j < k.suc
+                        g(j) = Real.0
+                    }
+                }
+                partial(g, k) = Real.0
+                k < k.suc
+                g(k) = Real.0
+                partial(g, k) + g(k) = partial(g, k.suc)
+                partial(g, k) + Real.0 = partial(g, k)
+                partial(g, k.suc) = Real.0
+            }
+            (forall(j: Nat) { j < k.suc implies g(j) = Real.0 }) implies partial(g, k.suc) = Real.0
+            not (forall(j: Nat) { j < k.suc implies g(j) = Real.0 }) or partial(g, k.suc) = Real.0
             p(k.suc)
         }
     }
@@ -628,6 +715,19 @@ theorem partial_all_zeros(g: Nat -> Real, m: Nat) {
 theorem partial_add_seq_comm(a: Nat -> Real, b: Nat -> Real) {
     partial(add_seq(a, b)) = add_seq(partial(a), partial(b))
 } by {
+    forall(n: Nat) {
+        add_seq(a, b, n) = a(n) + b(n)
+        add_fn(a, b, n) = a(n) + b(n)
+        add_seq(a, b)(n) = add_fn(a, b)(n)
+    }
+    add_seq(a, b) = add_fn(a, b)
+    forall(n: Nat) {
+        partial(a, n) + partial(b, n) = partial(add_fn(a, b), n)
+        add_seq(partial(a), partial(b), n) = partial(a, n) + partial(b, n)
+        partial(add_seq(a, b), n) = partial(add_fn(a, b), n)
+        partial(add_seq(a, b), n) = add_seq(partial(a), partial(b), n)
+    }
+
     // Define a predicate for induction on n
     define p(n: Nat) -> Bool {
         partial(add_seq(a, b), n) = add_seq(partial(a), partial(b))(n)
@@ -698,8 +798,12 @@ theorem partial_tail(a: Nat -> Real, m: Nat, n: Nat) {
     define p(k: Nat) -> Bool {
         partial(a, m + k) = partial(a, m) + partial(tail(a, m), k)
     }
+    Nat.induction(p)
 
     // Base case: n = 0
+    m + Nat.0 = m
+    partial_zero(tail(a, m))
+    partial(a, m) + partial(tail(a, m), Nat.0) = partial(a, m)
     p(Nat.0)
 
     // Inductive step
@@ -709,17 +813,28 @@ theorem partial_tail(a: Nat -> Real, m: Nat, n: Nat) {
 
             // Now prove for k.suc
             // First, simplify the left side
+            m + k.suc = (m + k).suc
+            partial_suc(a, m + k)
+            partial(a, m + k.suc) = partial(a, m + k) + a(m + k)
 
             // Substitute using induction hypothesis
+            partial(a, m + k) = partial(a, m) + partial(tail(a, m), k)
+            partial(a, m + k.suc) = partial(a, m) + partial(tail(a, m), k) + a(m + k)
 
             // For the right side
+            partial_suc(tail(a, m), k)
+            partial(tail(a, m), k.suc) = partial(tail(a, m), k) + tail(a, m, k)
+            tail(a, m, k) = a(m + k)
+            partial(tail(a, m), k.suc) = partial(tail(a, m), k) + a(m + k)
 
             // Combine with partial(a, m)
+            partial(a, m) + partial(tail(a, m), k.suc) = partial(a, m) + (partial(tail(a, m), k) + a(m + k))
 
             // By associativity
 
             // Therefore
             partial(a, m + k.suc) = partial(a, m) + partial(tail(a, m), k.suc)
+            p(k.suc)
         }
     }
 }
@@ -793,7 +908,10 @@ theorem tail_imp_converges_to(a: Nat -> Real, n: Nat) {
                     let d: Nat satisfy {
                         n + n1 + d = i
                     }
+                    n1 <= n1 + d
                     tail(a, n)(n1 + d).is_close(limit(tail(a, n)), eps)
+                    n + (n1 + d) = i
+                    tail(a, n)(n1 + d) = a(i)
                     a(i).is_close(limit(tail(a, n)), eps)
                 }
             }
@@ -1046,6 +1164,7 @@ theorem pow_nonneg(r: Real, n: Nat) {
     define p(k: Nat) -> Bool {
         0 <= r.pow(k)
     }
+    Nat.induction(p)
     r.pow(Nat.0) = Real.1
     Real.1 * Real.1 = Real.1
     Real.1 * Real.1 >= Real.0
@@ -1056,10 +1175,13 @@ theorem pow_nonneg(r: Real, n: Nat) {
             Real.0 <= r.pow(k)
             not r.is_negative
             not r.pow(k).is_negative
+            mul_nonneg(r, r.pow(k))
             r * r.pow(k) = r.pow(k.suc)
             0 <= r.pow(k.suc)
+            p(k.suc)
         }
     }
+    p(n)
 }
 
 theorem pos_geom_indirect_upper_bound(r: Real, n: Nat) {
@@ -1183,6 +1305,14 @@ theorem pos_geom_has_upper_bound(r: Real) {
 } by {
     (1 - r).is_positive
     1.is_positive
+    exists_large_mul(1, 1 - r)
+    let ub0: Real satisfy {
+        1 < (1 - r) * ub0
+    }
+    (1 - r) * ub0 = ub0 * (1 - r)
+    exists(ub: Real) {
+        1 < ub * (1 - r)
+    }
     let ub: Real satisfy {
         1 < ub * (1 - r)
     }
@@ -1192,6 +1322,10 @@ theorem pos_geom_has_upper_bound(r: Real) {
         nonneg_seq(partial(r.pow))
         partial(r.pow, n) * 1 <= partial(r.pow, n) * ((1 - r) * ub)
         partial(r.pow, n) <= ub
+    }
+    is_upper_bound(partial(r.pow), ub)
+    exists(ub2: Real) {
+        is_upper_bound(partial(r.pow), ub2)
     }
 }
 
@@ -1206,6 +1340,7 @@ theorem abs_pow(r: Real, n: Nat) {
     define p(k: Nat) -> Bool {
         r.abs.pow(k) = r.pow(k).abs
     }
+    Nat.induction(p)
 
     // Base case: n = 0
     r.abs.pow(Nat.0) = Real.1
@@ -1213,6 +1348,7 @@ theorem abs_pow(r: Real, n: Nat) {
     Real.1.is_positive
     Real.1.abs = Real.1
     r.abs.pow(Nat.0) = r.pow(Nat.0).abs
+    p(Nat.0)
 
     // Inductive step
     forall(k: Nat) {
@@ -1220,7 +1356,13 @@ theorem abs_pow(r: Real, n: Nat) {
             // Induction hypothesis: r.abs.pow(k) = r.pow(k).abs
 
             // Need to prove: r.abs.pow(k.suc) = r.pow(k.suc).abs
+            r.abs.pow(k.suc) = r.abs * r.abs.pow(k)
+            r.pow(k.suc) = r * r.pow(k)
+            r.abs * r.abs.pow(k) = r.abs * r.pow(k).abs
+            mul_abs(r, r.pow(k))
+            r.abs * r.pow(k).abs = (r * r.pow(k)).abs
             r.abs.pow(k.suc) = r.pow(k.suc).abs
+            p(k.suc)
         }
     }
 
@@ -1230,11 +1372,49 @@ theorem abs_pow(r: Real, n: Nat) {
 
 theorem abs_geom_comm(r: Real) {
     compose(Real.abs, r.pow) = r.abs.pow
+} by {
+    forall(n: Nat) {
+        compose(Real.abs, r.pow, n) = r.pow(n).abs
+        abs_pow(r, n)
+        r.pow(n).abs = r.abs.pow(n)
+    }
 }
 
 theorem geom_converges(r: Real) {
     r.abs < 1 implies converges(partial(r.pow))
 } by {
+    if r.abs < 1 {
+        Real.0 <= r.abs
+        pos_geom_converges(r.abs)
+        forall(n: Nat) {
+            forall(k: Nat) {
+                if k < n {
+                    abs_pow(r, k)
+                    compose(Real.abs, r.pow, k) = r.pow(k).abs
+                    r.abs.pow(k) = r.pow(k).abs
+                    r.abs.pow(k) = compose(Real.abs, r.pow, k)
+                }
+            }
+            partial_pointwise_eq(r.abs.pow, compose(Real.abs, r.pow), n)
+            partial(r.abs.pow, n) = partial(compose(Real.abs, r.pow), n)
+        }
+        partial(r.abs.pow) = partial(compose(Real.abs, r.pow))
+        converges(partial(compose(Real.abs, r.pow)))
+        abs_conv_imp_conv(r.pow)
+        converges(partial(r.pow))
+    }
+    forall(n: Nat) {
+        forall(k: Nat) {
+            if k < n {
+                abs_pow(r, k)
+                compose(Real.abs, r.pow, k) = r.pow(k).abs
+                r.abs.pow(k) = r.pow(k).abs
+                r.abs.pow(k) = compose(Real.abs, r.pow, k)
+            }
+        }
+        partial_pointwise_eq(r.abs.pow, compose(Real.abs, r.pow), n)
+        partial(r.abs.pow, n) = partial(compose(Real.abs, r.pow), n)
+    }
     partial(r.abs.pow) = partial(compose(Real.abs, r.pow))
 }
 
@@ -1250,6 +1430,14 @@ theorem partial_tail_decomp(a: Nat -> Real, m: Nat) {
 
 theorem pow_tail(r: Real) {
     tail(r.pow, Nat.1) = mul_seq(r, r.pow)
+} by {
+    forall(n: Nat) {
+        tail(r.pow, Nat.1, n) = r.pow(Nat.1 + n)
+        Nat.1 + n = n.suc
+        r.pow(n.suc) = r * r.pow(n)
+        mul_seq(r, r.pow, n) = r * r.pow(n)
+        tail(r.pow, Nat.1, n) = mul_seq(r, r.pow, n)
+    }
 }
 
 theorem partial_one(a: Nat -> Real) {
@@ -1262,6 +1450,19 @@ theorem geom_series_no_div(r: Real) {
 } by {
     partial(r.pow, Nat.1) = Real.1
     let t = tail(r.pow, Nat.1)
+    forall(n: Nat) {
+        forall(k: Nat) {
+            if k < n {
+                tail(r.pow, Nat.1, k) = r.pow(Nat.1 + k)
+                Nat.1 + k = k.suc
+                r.pow(k.suc) = r * r.pow(k)
+                mul_seq(r, r.pow, k) = r * r.pow(k)
+                tail(r.pow, Nat.1, k) = mul_seq(r, r.pow, k)
+            }
+        }
+        partial_pointwise_eq(tail(r.pow, Nat.1), mul_seq(r, r.pow), n)
+        partial(tail(r.pow, Nat.1), n) = partial(mul_seq(r, r.pow), n)
+    }
     partial(tail(r.pow, Nat.1)) = partial(mul_seq(r, r.pow))
     partial(mul_seq(r, r.pow)) = mul_seq(r, partial(r.pow))
     converges(partial(r.pow))
@@ -1385,6 +1586,10 @@ theorem partial_delta_at_or_after(v: Real, a: Nat, n: Nat) {
             delta(v, a, a.suc + j) = Real.0
             tail(delta_seq(v, a), a.suc)(j) = Real.0
         }
+        forall(j: Nat) {
+            j < k implies tail(delta_seq(v, a), a.suc)(j) = Real.0
+        }
+        partial_all_zeros(tail(delta_seq(v, a), a.suc), k)
 
         // So partial(tail(delta_seq(v, a), a.suc), k) = 0
         partial(tail(delta_seq(v, a), a.suc), k) = Real.0

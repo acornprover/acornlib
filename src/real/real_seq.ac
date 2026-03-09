@@ -1,8 +1,10 @@
 /// This file defines Cauchy sequences and proves various things about them.
 from nat import Nat
 from rat import Rat, iop
+from rat.default import finite_seq_abs_bounded, rat_total
+from rat.rat_base import no_greatest
 from util import compose
-from real.real_base import Real, is_cut, is_lower, is_greatest, has_greatest, is_dedekind_cut
+from real.real_base import Real, is_cut, is_lower, is_greatest, has_greatest, is_dedekind_cut, add_rat_eps_between, close_imp_bounds, close_comm, pos_gt_zero, gt_zero_imp_pos, rat_between_reals_gt, rat_intersect, lt_some_rat, from_rat_maintains_lte
 
 attributes Real {
 }
@@ -33,10 +35,47 @@ define eventual_lb(q: Nat -> Real, lb: Real) -> Bool {
     }
 }
 
+theorem eventual_lb_gte(q: Nat -> Real, lb: Real) {
+    eventual_lb(q, lb) implies exists(n: Nat) {
+        forall(i: Nat) {
+            n <= i implies q(i) >= lb
+        }
+    }
+} by {
+    let n: Nat satisfy {
+        forall(i: Nat) {
+            n <= i implies lb <= q(i)
+        }
+    }
+    forall(i: Nat) {
+        if n <= i {
+            lb <= q(i)
+            q(i) >= lb
+        }
+    }
+}
+
 /// For demonstrating the equivalent of Cauchy sequences and Dedekind cuts.
 define cauchy_gt_rat(q: Nat -> Real, r: Rat) -> Bool {
     exists(lb: Real) {
         lb > Real.from_rat(r) and eventual_lb(q, lb)
+    }
+}
+
+theorem cauchy_gt_exists_lb(q: Nat -> Real, r: Rat) {
+    cauchy_gt_rat(q, r) implies exists(lb: Real) {
+        Real.from_rat(r) < lb and eventual_lb(q, lb)
+    }
+} by {
+    if cauchy_gt_rat(q, r) {
+        let lb: Real satisfy {
+            lb > Real.from_rat(r) and eventual_lb(q, lb)
+        }
+        lb > Real.from_rat(r)
+        Real.from_rat(r) < lb
+        exists(lb2: Real) {
+            Real.from_rat(r) < lb2 and eventual_lb(q, lb2)
+        }
     }
 }
 
@@ -84,6 +123,11 @@ theorem cauchy_gt_not_everything(q: Nat -> Real) {
         let lb: Real satisfy {
             lb > Real.from_rat(r) and eventual_lb(q, lb)
         }
+        exists(n2: Nat) {
+            forall(i: Nat) {
+                n2 <= i implies q(i) >= lb
+            }
+        }
         let n2: Nat satisfy {
             forall(i: Nat) {
                 n2 <= i implies q(i) >= lb
@@ -111,18 +155,45 @@ theorem cauchy_gt_is_cut(q: Nat -> Real) {
     converges(q) implies is_cut(cauchy_gt_rat(q))
 }
 
+theorem cauchy_gt_lower_step(q: Nat -> Real, r1: Rat, r2: Rat) {
+    r1 < r2 and cauchy_gt_rat(q, r2) implies cauchy_gt_rat(q, r1)
+} by {
+    let lb: Real satisfy {
+        lb > Real.from_rat(r2) and eventual_lb(q, lb)
+    }
+    lb.gt_rat(r2)
+    lb.gt_rat(r1)
+    lb > Real.from_rat(r1)
+    lb > Real.from_rat(r1) and eventual_lb(q, lb)
+    exists(lb2: Real) {
+        lb2 > Real.from_rat(r1) and eventual_lb(q, lb2)
+    }
+    cauchy_gt_rat(q, r1)
+}
+
+theorem cauchy_gt_lower_step_ordered(q: Nat -> Real, r1: Rat, r2: Rat) {
+    cauchy_gt_rat(q, r2) and r1 < r2 implies cauchy_gt_rat(q, r1)
+} by {
+    if cauchy_gt_rat(q, r2) and r1 < r2 {
+        cauchy_gt_lower_step(q, r1, r2)
+    }
+}
+
 theorem cauchy_gt_is_lower(q: Nat -> Real) {
     converges(q) implies is_lower(cauchy_gt_rat(q))
 } by {
     if converges(q) {
         forall(r1: Rat, r2: Rat) {
-            if r1 < r2 and cauchy_gt_rat(q, r2) {
+            if cauchy_gt_rat(q, r2) and r1 < r2 {
                 let lb: Real satisfy {
                     lb > Real.from_rat(r2) and eventual_lb(q, lb)
                 }
                 lb.gt_rat(r2)
                 lb.gt_rat(r1)
                 lb > Real.from_rat(r1)
+                exists(lb2: Real) {
+                    lb2 > Real.from_rat(r1) and eventual_lb(q, lb2)
+                }
                 cauchy_gt_rat(q, r1)
             }
         }
@@ -135,6 +206,10 @@ theorem cauchy_gt_has_no_greatest(q: Nat -> Real) {
     if has_greatest(cauchy_gt_rat(q)) {
         let r: Rat satisfy {
             is_greatest(cauchy_gt_rat(q), r)
+        }
+        cauchy_gt_rat(q, r)
+        exists(lb: Real) {
+            Real.from_rat(r) < lb and eventual_lb(q, lb)
         }
         let lb: Real satisfy {
             Real.from_rat(r) < lb and eventual_lb(q, lb)
@@ -153,6 +228,47 @@ theorem cauchy_gt_has_no_greatest(q: Nat -> Real) {
 
 theorem cauchy_gt_is_dedekind_cut(q: Nat -> Real) {
     converges(q) implies is_dedekind_cut(cauchy_gt_rat(q))
+} by {
+    if converges(q) {
+        cauchy_gt_is_cut(q)
+        cauchy_gt_is_lower(q)
+        cauchy_gt_has_no_greatest(q)
+        is_dedekind_cut(cauchy_gt_rat(q))
+    }
+}
+
+theorem limit_exists(q: Nat -> Real) {
+    exists(lim: Real) {
+        if converges(q) {
+            Real.new_option(cauchy_gt_rat(q)) = Option.some(lim)
+        } else {
+            lim = Real.0
+        }
+    }
+} by {
+    if converges(q) {
+        cauchy_gt_is_dedekind_cut(q)
+        is_dedekind_cut(cauchy_gt_rat(q))
+        Real.constraint(cauchy_gt_rat(q))
+        let lim: Real satisfy {
+            Real.new_option(cauchy_gt_rat(q)) = Option.some(lim)
+        }
+        exists(lim2: Real) {
+            if converges(q) {
+                Real.new_option(cauchy_gt_rat(q)) = Option.some(lim2)
+            } else {
+                lim2 = Real.0
+            }
+        }
+    } else {
+        exists(lim: Real) {
+            if converges(q) {
+                Real.new_option(cauchy_gt_rat(q)) = Option.some(lim)
+            } else {
+                lim = Real.0
+            }
+        }
+    }
 }
 
 /// limit is defined with a "default" so that it's zero for things that don't converge.
@@ -186,14 +302,48 @@ theorem eventual_lb_extends(q: Nat -> Real, lb1: Real, lb2: Real) {
 theorem lt_limit_imp_lb(q: Nat -> Real, lb: Real) {
     converges(q) and lb < limit(q) implies eventual_lb(q, lb)
 } by {
-    let r: Rat satisfy {
-        lb < Real.from_rat(r) and Real.from_rat(r) < limit(q)
+    if converges(q) and lb < limit(q) {
+        let r: Rat satisfy {
+            lb < Real.from_rat(r) and Real.from_rat(r) < limit(q)
+        }
+        lb < Real.from_rat(r)
+        Real.from_rat(r) < limit(q)
+        cauchy_gt_rat(q, r)
+        exists(lb2: Real) {
+            Real.from_rat(r) < lb2 and eventual_lb(q, lb2)
+        }
+        let lb2: Real satisfy {
+            Real.from_rat(r) < lb2 and eventual_lb(q, lb2)
+        }
+        Real.from_rat(r) < lb2
+        lb < lb2
+        eventual_lb(q, lb2)
+        eventual_lb_extends(q, lb2, lb)
+        eventual_lb(q, lb2) and lb < lb2 implies eventual_lb(q, lb)
+        eventual_lb(q, lb)
     }
-    cauchy_gt_rat(q, r)
 }
 
 theorem lb_lte_limit(q: Nat -> Real, lb: Real) {
     converges(q) and eventual_lb(q, lb) implies lb <= limit(q)
+} by {
+    if converges(q) and eventual_lb(q, lb) {
+        if not lb <= limit(q) {
+            let r: Rat satisfy {
+                lb.gt_rat(r) and not limit(q).gt_rat(r)
+            }
+            lb.gt_rat(r)
+            lb > Real.from_rat(r)
+            exists(lb2: Real) {
+                lb2 > Real.from_rat(r) and eventual_lb(q, lb2)
+            }
+            cauchy_gt_rat(q, r)
+            Option.some(limit(q)) = Real.new_option(cauchy_gt_rat(q))
+            limit(q).gt_rat(r) = cauchy_gt_rat(q, r)
+            limit(q).gt_rat(r)
+            false
+        }
+    }
 }
 
 // The other direction of the lower bound.
@@ -235,10 +385,34 @@ define eventual_eq(q: Nat -> Real, a: Real) -> Bool {
 
 theorem eventual_eq_imp_ub(q: Nat -> Real, a: Real) {
     eventual_eq(q, a) implies eventual_lb(q, a)
+} by {
+    let n: Nat satisfy {
+        forall(i: Nat) {
+            n <= i implies q(i) = a
+        }
+    }
+    forall(i: Nat) {
+        if n <= i {
+            q(i) = a
+            a <= q(i)
+        }
+    }
 }
 
 theorem eventual_eq_imp_lb(q: Nat -> Real, a: Real) {
     eventual_eq(q, a) implies eventual_ub(q, a)
+} by {
+    let n: Nat satisfy {
+        forall(i: Nat) {
+            n <= i implies q(i) = a
+        }
+    }
+    forall(i: Nat) {
+        if n <= i {
+            q(i) = a
+            q(i) <= a
+        }
+    }
 }
 
 theorem eq_converges(q: Nat -> Real, a: Real) {
@@ -312,9 +486,20 @@ theorem lb_lte_ub(q: Nat -> Real, lb: Real, ub: Real) {
 theorem ub_imp_limit_lte(q: Nat -> Real, ub: Real) {
     converges(q) and eventual_ub(q, ub) implies limit(q) <= ub
 } by {
-    if limit(q) > ub {
-        let r: Rat satisfy {
-            limit(q) > Real.from_rat(r) and Real.from_rat(r) > ub
+    if converges(q) and eventual_ub(q, ub) {
+        if limit(q) > ub {
+            let r: Rat satisfy {
+                limit(q) > Real.from_rat(r) and Real.from_rat(r) > ub
+            }
+            Real.from_rat(r) < limit(q)
+            converges(q) and Real.from_rat(r) < limit(q)
+            lt_limit_imp_lb(q, Real.from_rat(r))
+            eventual_lb(q, Real.from_rat(r))
+            eventual_lb(q, Real.from_rat(r)) and eventual_ub(q, ub)
+            lb_lte_ub(q, Real.from_rat(r), ub)
+            Real.from_rat(r) <= ub
+            not Real.from_rat(r) <= ub
+            false
         }
     }
 }
@@ -367,6 +552,7 @@ theorem limit_lt_imp_ub(q: Nat -> Real, ub: Real) {
     converges(q) and limit(q) < ub implies eventual_ub(q, ub)
 } by {
     Real.0 < ub - limit(q)
+    add_rat_eps_between(Real.0, ub - limit(q))
     let eps2: Rat satisfy {
         eps2.is_positive and Real.from_rat(eps2) < (ub - limit(q))
     }
@@ -434,36 +620,52 @@ define converges_to(q: Nat -> Real, a: Real) -> Bool {
 theorem lt_converges_to_imp_lb(q: Nat -> Real, a: Real, b: Real) {
     converges_to(q, b) and a < b implies eventual_lb(q, a)
 } by {
-    let eps = b - a
-    a + eps = b
-    a = b - eps
-    let n: Nat satisfy {
+    if converges_to(q, b) and a < b {
+        let eps = b - a
+        a + eps = b
+        a = b - eps
+        eps.is_positive
+        exists(n: Nat) {
+            tail_bound(q, b, n, eps)
+        }
+        let n: Nat satisfy {
+            tail_bound(q, b, n, eps)
+        }
         forall(i: Nat) {
-            n <= i implies q(i).is_close(b, eps)
+            if n <= i {
+                q(i).is_close(b, eps)
+                close_imp_bounds(q(i), b, eps)
+                q(i) > b - eps
+                q(i) > a
+                q(i) >= a
+                a <= q(i)
+            }
         }
+        eventual_lb(q, a)
     }
-    forall(i: Nat) {
-        if n <= i {
-            q(i) >= a
-            a <= q(i)
-        }
-    }
-    eventual_lb(q, a)
 }
 
 theorem gt_converges_to_imp_ub(q: Nat -> Real, a: Real, b: Real) {
     converges_to(q, b) and a > b implies eventual_ub(q, a)
 } by {
-    let eps = a - b
-    a = b + eps
-    let n: Nat satisfy {
-        forall(i: Nat) {
-            n <= i implies q(i).is_close(b, eps)
+    if converges_to(q, b) and a > b {
+        let eps = a - b
+        a = b + eps
+        eps.is_positive
+        exists(n: Nat) {
+            tail_bound(q, b, n, eps)
         }
-    }
-    forall(i: Nat) {
-        if n <= i {
-            q(i) <= a
+        let n: Nat satisfy {
+            tail_bound(q, b, n, eps)
+        }
+        forall(i: Nat) {
+            if n <= i {
+                q(i).is_close(b, eps)
+                close_imp_bounds(q(i), b, eps)
+                q(i) < b + eps
+                q(i) < a
+                q(i) <= a
+            }
         }
     }
 }
@@ -517,23 +719,30 @@ theorem is_close_triangle(a: Real, b: Real, c: Real, ace: Real, bce: Real) {
 theorem converges_to_imp_converges(q: Nat -> Real, a: Real) {
     converges_to(q, a) implies converges(q)
 } by {
-    forall(eps: Real) {
-        if eps.is_positive {
-            let eps2: Real satisfy {
-                eps2.is_positive and eps2 + eps2 < eps
-            }
-            let n: Nat satisfy {
-                forall(i: Nat) {
-                    n <= i implies q(i).is_close(a, eps2)
+    if converges_to(q, a) {
+        forall(eps: Real) {
+            if eps.is_positive {
+                let eps2: Real satisfy {
+                    eps2.is_positive and eps2 + eps2 < eps
                 }
-            }
-            forall(i: Nat, j: Nat) {
-                if n <= i and n <= j {
-                    q(i).is_close(q(j), eps2 + eps2)
-                    q(i).is_close(q(j), eps)
+                eps2.is_positive
+                exists(n: Nat) {
+                    tail_bound(q, a, n, eps2)
                 }
+                let n: Nat satisfy {
+                    tail_bound(q, a, n, eps2)
+                }
+                forall(i: Nat, j: Nat) {
+                    if n <= i and n <= j {
+                        q(i).is_close(a, eps2)
+                        q(j).is_close(a, eps2)
+                        is_close_triangle(q(i), q(j), a, eps2, eps2)
+                        q(i).is_close(q(j), eps2 + eps2)
+                        q(i).is_close(q(j), eps)
+                    }
+                }
+                cauchy_bound(q, n, eps)
             }
-            cauchy_bound(q, n, eps)
         }
     }
 }
@@ -553,6 +762,21 @@ theorem sub_lt_is_gt(a: Real, b: Real, c: Real) {
 theorem smaller_pos(a: Real) {
     a.is_positive implies exists(b: Real) {
         b.is_positive and b < a
+    }
+} by {
+    if a.is_positive {
+        a > Real.0
+        exists(r: Rat) {
+            a > Real.from_rat(r) and Real.from_rat(r) > Real.0
+        }
+        let r: Rat satisfy {
+            a > Real.from_rat(r) and Real.from_rat(r) > Real.0
+        }
+        Real.from_rat(r) > Real.0
+        Real.from_rat(r).is_positive
+        exists(b: Real) {
+            b.is_positive and b < a
+        }
     }
 }
 
@@ -666,6 +890,7 @@ theorem iop_limit {
     forall(eps: Real) {
         if eps.is_positive {
             Real.0 < eps
+            add_rat_eps_between(Real.0, eps)
             let reps: Rat satisfy {
                 reps.is_positive and Real.from_rat(reps) < eps
             }
@@ -730,16 +955,20 @@ theorem limit_add_seq(a: Nat -> Real, b: Nat -> Real) {
                 eps2.is_positive and eps2 + eps2 < eps
             }
 
+            converges_imp_converges_to(a)
+            exists(n1: Nat) {
+                tail_bound(a, limit(a), n1, eps2)
+            }
             let n1: Nat satisfy {
-                forall(i: Nat) {
-                    n1 <= i implies a(i).is_close(limit(a), eps2)
-                }
+                tail_bound(a, limit(a), n1, eps2)
             }
 
+            converges_imp_converges_to(b)
+            exists(n2: Nat) {
+                tail_bound(b, limit(b), n2, eps2)
+            }
             let n2: Nat satisfy {
-                forall(i: Nat) {
-                    n2 <= i implies b(i).is_close(limit(b), eps2)
-                }
+                tail_bound(b, limit(b), n2, eps2)
             }
 
             let n: Nat satisfy {
@@ -748,6 +977,7 @@ theorem limit_add_seq(a: Nat -> Real, b: Nat -> Real) {
 
             forall(i: Nat) {
                 if n <= i {
+                    a(i).is_close(limit(a), eps2)
                     b(i).is_close(limit(b), eps2)
                     (a(i) + b(i)).is_close(limit(a) + limit(b), eps2 + eps2)
                     q(i).is_close(ql, eps)
@@ -769,6 +999,7 @@ theorem rat_seq_converges_to(x: Real) {
     forall(eps: Real) {
         if eps.is_positive {
             Real.0 < eps
+            add_rat_eps_between(Real.0, eps)
             let reps: Rat satisfy {
                 Real.from_rat(reps) < eps and reps.is_positive
             }
@@ -815,6 +1046,7 @@ theorem rat_close(x: Real, y: Real, eps: Real) {
     }
 } by {
     if x < y {
+        rat_close_to_both_lt(x, y, eps)
         exists(r: Rat) {
             x.is_close(Real.from_rat(r), eps)
             and
@@ -823,15 +1055,31 @@ theorem rat_close(x: Real, y: Real, eps: Real) {
     } else {
         if y < x {
             y.is_close(x, eps)
-            exists(r: Rat) {
-                x.is_close(Real.from_rat(r), eps)
-                and
+            rat_close_to_both_lt(y, x, eps)
+            let r: Rat satisfy {
                 y.is_close(Real.from_rat(r), eps)
+                and
+                x.is_close(Real.from_rat(r), eps)
+            }
+            exists(r2: Rat) {
+                x.is_close(Real.from_rat(r2), eps)
+                and
+                y.is_close(Real.from_rat(r2), eps)
             }
         } else {
-            let r1: Rat satisfy {
-                x.is_close(Real.from_rat(r1), eps)
+            x = y
+            x.is_close(x, eps)
+            rat_intersect(x, x, eps, y, eps)
+            exists(r1: Rat) {
+                Real.from_rat(r1).is_close(x, eps) and Real.from_rat(r1).is_close(y, eps)
             }
+            let r1: Rat satisfy {
+                Real.from_rat(r1).is_close(x, eps) and Real.from_rat(r1).is_close(y, eps)
+            }
+            close_comm(Real.from_rat(r1), x, eps)
+            close_comm(Real.from_rat(r1), y, eps)
+            x.is_close(Real.from_rat(r1), eps)
+            y.is_close(Real.from_rat(r1), eps)
             exists(r2: Rat) {
                 x.is_close(Real.from_rat(r2), eps)
                 and
@@ -862,15 +1110,19 @@ theorem convergent_seqs_get_close(a: Nat -> Real, b: Nat -> Real, eps: Real) {
     let eps2: Real satisfy {
         eps2.is_positive and eps2 + eps2 < eps
     }
+    converges_imp_converges_to(a)
+    exists(n1: Nat) {
+        tail_bound(a, limit(a), n1, eps2)
+    }
     let n1: Nat satisfy {
-        forall(i: Nat) {
-            n1 <= i implies a(i).is_close(limit(a), eps2)
-        }
+        tail_bound(a, limit(a), n1, eps2)
+    }
+    converges_imp_converges_to(b)
+    exists(n2: Nat) {
+        tail_bound(b, limit(b), n2, eps2)
     }
     let n2: Nat satisfy {
-        forall(i: Nat) {
-            n2 <= i implies b(i).is_close(limit(b), eps2)
-        }
+        tail_bound(b, limit(b), n2, eps2)
     }
     let n: Nat satisfy {
         n1 <= n and n2 <= n
@@ -909,21 +1161,39 @@ theorem close_limit_imp_seqs_get_close(a: Nat -> Real, b: Nat -> Real, eps: Real
         let eps2: Real satisfy {
             diff < eps2 and eps2 < eps
         }
+        add_rat_eps_between(eps2, eps)
+        exists(reps: Rat) {
+            reps.is_positive and eps2 + Real.from_rat(reps) < eps
+        }
+        let reps: Rat satisfy {
+            reps.is_positive and eps2 + Real.from_rat(reps) < eps
+        }
+        exists(eps3: Real) {
+            eps3.is_positive and eps2 + eps3 < eps
+        }
         let eps3: Real satisfy {
             eps3.is_positive and eps2 + eps3 < eps
+        }
+        eps_lt_half(eps3)
+        exists(eps4: Real) {
+            eps4.is_positive and eps4 + eps4 < eps3
         }
         let eps4: Real satisfy {
             eps4.is_positive and eps4 + eps4 < eps3
         }
+        converges_imp_converges_to(a)
+        exists(n1: Nat) {
+            tail_bound(a, limit(a), n1, eps4)
+        }
         let n1: Nat satisfy {
-            forall(i: Nat) {
-                n1 <= i implies a(i).is_close(limit(a), eps4)
-            }
+            tail_bound(a, limit(a), n1, eps4)
+        }
+        converges_imp_converges_to(b)
+        exists(n2: Nat) {
+            tail_bound(b, limit(b), n2, eps4)
         }
         let n2: Nat satisfy {
-            forall(i: Nat) {
-                n2 <= i implies b(i).is_close(limit(b), eps4)
-            }
+            tail_bound(b, limit(b), n2, eps4)
         }
         let n: Nat satisfy {
             n1 <= n and n2 <= n
@@ -931,7 +1201,11 @@ theorem close_limit_imp_seqs_get_close(a: Nat -> Real, b: Nat -> Real, eps: Real
         forall(i: Nat) {
             if n <= i {
                 a(i).is_close(limit(a), eps4)
+                limit(a).is_close(limit(b), eps2)
+                is_close_triangle(a(i), limit(b), limit(a), eps4, eps2)
                 a(i).is_close(limit(b), eps4 + eps2)
+                b(i).is_close(limit(b), eps4)
+                is_close_triangle(a(i), b(i), limit(b), eps4 + eps2, eps4)
                 a(i).is_close(b(i), eps4 + eps2 + eps4)
                 a(i).is_close(b(i), eps4 + eps4 + eps2)
                 eps4 + eps4 + eps2 < eps3 + eps2
@@ -955,6 +1229,7 @@ theorem find_less_than_a_third(x: Real) {
     }
 } by {
     Real.0 < x
+    add_rat_eps_between(Real.0, x)
     let r: Rat satisfy {
         r.is_positive and Real.from_rat(r) < x
     }
@@ -1119,9 +1394,36 @@ theorem converges_imp_bounded(a: Nat -> Rat) {
             n <= i implies lift_seq(a)(i) <= eventual
         }
     }
+    finite_seq_abs_bounded(a, n)
+    exists(finite: Rat) {
+        forall(i: Nat) {
+            i <= n implies a(i) < finite
+        }
+    }
     let finite: Rat satisfy {
         forall(i: Nat) {
             i <= n implies a(i) < finite
+        }
+    }
+    lt_some_rat(eventual)
+    let eventual_bound: Rat satisfy {
+        eventual < Real.from_rat(eventual_bound)
+    }
+    no_greatest(finite)
+    let finite_bound: Rat satisfy {
+        finite < finite_bound
+    }
+    rat_total(eventual_bound, finite_bound)
+    if eventual_bound <= finite_bound {
+        Real.from_rat(eventual_bound) <= Real.from_rat(finite_bound)
+        eventual < Real.from_rat(finite_bound)
+        exists(bound: Rat) {
+            eventual < Real.from_rat(bound) and finite < bound
+        }
+    } else {
+        finite < eventual_bound
+        exists(bound: Rat) {
+            eventual < Real.from_rat(bound) and finite < bound
         }
     }
     let bound: Rat satisfy {
@@ -1192,6 +1494,7 @@ theorem smaller_rat_eps(eps: Real) {
     }
 } by {
     Real.0 < eps
+    add_rat_eps_between(Real.0, eps)
 }
 
 // Prove that multiplying convergent sequences gives you a convergent sequence.
@@ -1224,13 +1527,16 @@ theorem mul_rat_seq_converges(a: Nat -> Rat, b: Nat -> Rat) {
             reps2.is_positive
             let eps2 = Real.from_rat(reps2)
             eps2.is_positive
+            exists(n_a: Nat) {
+                cauchy_bound(lift_seq(a), n_a, eps2)
+            }
             let n_a: Nat satisfy {
-                forall(i: Nat, j: Nat) {
-                    n_a <= i and n_a <= j implies
-                    lift_seq(a)(i).is_close(lift_seq(a)(j), eps2)
-                }
+                cauchy_bound(lift_seq(a), n_a, eps2)
             }
             let lsb = lift_seq(b)
+            exists(n_b: Nat) {
+                cauchy_bound(lsb, n_b, eps2)
+            }
             let n_b: Nat satisfy {
                 cauchy_bound(lsb, n_b, eps2)
             }
@@ -1292,6 +1598,7 @@ theorem const_rat_converges_to_rat(a: Rat) {
             tail_bound(lsa, Real.from_rat(a), Nat.0, eps)
         }
     }
+    converges_to(lsa, Real.from_rat(a))
 }
 
 let zero_rat_seq = const_rat_seq(Rat.0)
@@ -1520,10 +1827,11 @@ theorem mul_zero_rat_seq(a: Nat -> Rat, z: Nat -> Rat) {
             let eps2 = Real.from_rat(reps2)
             eps2.is_positive
             converges_to(lift_seq(z), Real.0)
+            exists(n: Nat) {
+                tail_bound(lift_seq(z), Real.0, n, eps2)
+            }
             let n: Nat satisfy {
-                forall(i: Nat) {
-                    n <= i implies lift_seq(z)(i).is_close(Real.0, eps2)
-                }
+                tail_bound(lift_seq(z), Real.0, n, eps2)
             }
             forall(i: Nat) {
                 if n <= i {
