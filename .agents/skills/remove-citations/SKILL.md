@@ -1,13 +1,13 @@
 ---
 name: remove-citations
-description: Remove explicit theorem citations from Acorn proofs by replacing each citation with local proof steps while keeping `acorn verify` passing after every attempted change. Use when the user asks to inline cited theorems, reduce `acorn citations` output, or improve proof style without changing the theorem being proved.
+description: Remove explicit theorem citations from Acorn proofs by replacing each citation with local proof steps while keeping `acorn verify` passing after every attempted change. By default, make a full pass over the current `acorn citations` list unless the user explicitly narrows the scope. Use when the user asks to inline cited theorems, reduce `acorn citations` output, or improve proof style without changing the theorem being proved.
 ---
 
 # Remove Citations
 
 ## Overview
 
-Use this skill when an Acorn proof contains explicit theorem citations such as `foo(a)` and the goal is to replace them with ordinary proof lines. Work one citation at a time, keep the repository verifying after every attempted edit, and skip any citation whose obvious expansion does not verify cleanly.
+Use this skill when an Acorn proof contains explicit theorem citations such as `foo(a)` and the goal is to replace them with ordinary proof lines. Unless the user explicitly names a smaller target, run a full pass over the current `acorn citations` list and check each citation for possible removal. Work one citation at a time, keep the repository verifying after every attempted edit, and skip any citation whose obvious expansion does not verify cleanly.
 
 ## Workflow
 
@@ -19,7 +19,7 @@ acorn citations
 
 This prints entries of the form `path:line: theorem(args)`.
 
-2. Pick one citation. Read:
+2. Take the citations in order and work through the full list unless the user narrowed the scope. For each citation, read:
 - the local proof around that line
 - the cited theorem statement
 
@@ -69,7 +69,7 @@ acorn verify
 
 6. Never leave the repository in a non-verifying state. The fallback is always "restore the last working version, then move on", not "repair the proof in some fancier way".
 
-7. Repeat until you have replaced as many citations as you can. Run `acorn citations` again at the end to see what remains.
+7. Repeat for every citation in scope. The default scope is the entire current `acorn citations` list. Run `acorn citations` again at the end to see what remains.
 
 ## Heuristics
 
@@ -84,6 +84,7 @@ acorn verify
 
 The task is complete when:
 - `acorn verify` passes
+- every citation in scope has been checked for an obvious local replacement
 - the number of `acorn citations` entries has been reduced as much as practical
 - every failed attempt has been reverted cleanly
 
