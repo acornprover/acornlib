@@ -56,11 +56,21 @@ Keep project roadmaps terse and structured.
 
 Track blockers in `projects/<project>/todo.md`, not only in the blocked leaf file.
 
-A blocker is anything preventing progress on part of the project:
+A blocker is a dependency that requires work outside `acornlib` before the project branch can continue. Blockers are rare; they are not a label for difficult, broad, or unfinished library work.
 
-- `design-question`: a non-obvious definition, interface, statement, or modeling choice needs human feedback.
-- `proof-blocker`: the intended statement looks true, but the proof could not be found after serious effort.
-- `acorn-bug`: Acorn appears to reject valid code, accepts invalid code, crashes, or has a prover/language limitation that blocks the work.
+Counts as a blocker:
+
+- `acorn-bug`: Acorn appears to reject valid code, accepts invalid code, or crashes.
+- `prover-limitation`: the intended Acorn library statement appears true, but continuing requires improving Acorn's language, verifier, or prover rather than adding more library support.
+
+Does not count as a blocker:
+
+- Missing definitions, lemmas, instances, theorem statements, or APIs in `acornlib`.
+- A proof that needs helper lemmas, decomposition, imports, or nearby support theorems in `acornlib`.
+- A topic that is too broad and needs to be split into narrower todo files.
+- A definition or interface question that can be resolved by choosing and implementing an `acornlib` API.
+
+Track these non-blocking cases as ordinary todo items, possibly by splitting them into smaller project branches. Only use the root `## Blockers` section when the next required work is outside this repository.
 
 Use this root roadmap format:
 
@@ -118,7 +128,7 @@ Default scope:
 6. Before implementing, check whether the next step is really a code task or whether it hides a definition/design question.
 7. If the active branch becomes blocked, apply the Blockers rules, stop work on that branch, and continue with unrelated project work when possible.
 8. Only after design questions are settled should you switch fully from planning to implementation: read the relevant code, write Acorn code, and verify the change.
-9. Prefer actually finishing the todo item over discussing it abstractly, except when the key blocker is a definition choice.
+9. Prefer actually finishing the todo item over discussing it abstractly, except when the next step is a definition choice that needs user input.
 10. After the code verifies, update the project roadmap immediately.
 
 ## Design Questions
@@ -128,7 +138,7 @@ When working on a project, definition questions deserve special handling.
 - If the next task is "how should this be defined?", pause and discuss with the user instead of guessing.
 - This matters most for foundational definitions that later theorems and APIs will depend on.
 - Treat proof strategy as replaceable, but treat definitions as sticky: a messy proof can be cleaned up later, while a bad definition will create downstream trouble.
-- If a design question appears, record the concrete options and open questions in the project roadmap, add a `design-question` blocker, and move to unrelated work when possible.
+- If a design question appears, record the concrete options and open questions in the project roadmap as todo work, then ask the user only when the choice would commit the project to a bad API. Do not add a blocker unless the next required work is outside `acornlib`.
 
 ## Updating Project Roadmap After Work
 
@@ -163,8 +173,9 @@ In execution mode, the project roadmap is not enough by itself. Always try to ve
 - For Acorn library work, run `acorn` while iterating, and before finishing run `acorn check`.
 - If `acorn` verification succeeds but `acorn check` fails, treat that as an `acorn-bug` blocker.
 - Use the narrowest additional verifying command only when it still justifies the roadmap update.
-- If verification fails because the proof is incomplete but the statement still appears true, keep or narrow the todo item; if serious effort does not resolve it, add a `proof-blocker`.
-- If the failure appears to come from Acorn itself rather than the library code, report it clearly and add an `acorn-bug` blocker.
+- If verification fails because the proof is incomplete but the statement still appears true, keep or narrow the todo item and add helper-lemma or support-theorem tasks as needed.
+- If verification fails because `acornlib` is missing supporting definitions, lemmas, instances, or APIs, track that as ordinary todo work.
+- If the failure appears to come from Acorn itself rather than the library code, report it clearly and add an `acorn-bug` or `prover-limitation` blocker.
 
 ## Naming Conventions
 
