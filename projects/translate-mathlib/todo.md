@@ -5,7 +5,6 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 ## Blockers
 
 - [ ] design-question: foundations/quotients/todo.md - choose the canonical quotient representation for Acornlib before defining quotient objects, elimination, equality, and algebraic transport; get human feedback on the representation strategy.
-- [ ] proof-blocker: foundations/finite-and-infinite-sets/todo.md / src/set.ac - preimage-under-injective-map finiteness needs a way to construct a finite list of selected preimages from a finite codomain list; next action is to develop the witness-selection API or choose a finite-preimage representation that carries the witnesses.
 
 ## Foundational And Core Infrastructure
 
