@@ -2,10 +2,9 @@
 
 Goal: make finiteness a reusable notion across sets, algebra, and combinatorics.
 
-- [ ] Add a definition and API for infinite sets
-- [ ] Add image-of-finite and preimage-under-injective-map lemmas
-- [ ] Add cardinality-at-most and cardinality-exact APIs for finite sets
-- [ ] Connect finite sets to lists more systematically
+- [ ] Add preimage-under-injective-map lemmas after finite witness selection is available
+- [ ] Add exact-cardinality transfer lemmas for injective images and finite-set operations
+- [ ] Expand list-to-finite-set APIs with subset/filter extraction lemmas
 - [ ] Add finite subset extraction lemmas from existential definitions
 - [ ] Add a reusable pigeonhole-style interface for finite sets and lists
 - [ ] Add finiteness transfer lemmas for substructures such as subgroups
