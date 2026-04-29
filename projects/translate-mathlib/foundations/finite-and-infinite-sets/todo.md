@@ -2,11 +2,9 @@
 
 Goal: make finiteness a reusable notion across sets, algebra, and combinatorics.
 
-Summary: list-backed finite sets, finite images, basic cardinality-at-most transfer, and the infinite-set predicate API are now available. The remaining preimage-under-injective-map lemmas are ordinary follow-up work: first add finite witness-selection APIs, then use them to choose preimages from a finite codomain list.
+Summary: list-backed finite sets, finite images, basic cardinality-at-most transfer, exact-cardinality transfer for injective images, the infinite-set predicate API, and injective preimage lemmas for list-finite codomains are now available.
 
-- [ ] Add finite witness-selection APIs for choosing preimages from finite codomain lists
-- [ ] Add preimage-under-injective-map lemmas using finite witness selection
-- [ ] Add exact-cardinality transfer lemmas for injective images and finite-set operations
+- [ ] Add exact-cardinality lemmas for finite-set insert, remove, union, intersection, and difference operations
 - [ ] Expand list-to-finite-set APIs with subset/filter extraction lemmas
 - [ ] Add finite subset extraction lemmas from existential definitions
 - [ ] Add a reusable pigeonhole-style interface for finite sets and lists
