@@ -2,9 +2,6 @@
 
 Goal: make existential witnesses easier to package, unpack, and reuse across the library.
 
-- [ ] Add standard helper lemmas for unique existence
-- [ ] Add APIs for converting `exists unique` statements into definable objects
-- [ ] Add packaged witness-selection patterns for `let x satisfy { ... }`
 - [ ] Add helper lemmas for transporting chosen witnesses across equality
 - [ ] Add reusable patterns for default-valued definitions from partial data
 - [ ] Add choice-style lemmas for finite witness extraction
