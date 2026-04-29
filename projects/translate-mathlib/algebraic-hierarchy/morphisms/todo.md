@@ -4,7 +4,6 @@ Goal: make structure-preserving maps a first-class part of the algebraic hierarc
 
 - [ ] Standardize the existing group homomorphism structure and naming
 - [ ] Add extensionality lemmas for bundled homomorphisms
-- [ ] Add identity and composition operations for homomorphisms
 - [ ] Add bundled monoid homomorphisms
 - [ ] Add bundled ring homomorphisms
 - [ ] Add additive variants such as additive homomorphisms
