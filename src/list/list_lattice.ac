@@ -3,7 +3,7 @@
 from list.list_base import List
 from lattice import MeetSemilattice, JoinSemilattice, meet_lte_left, meet_lte_right,
     lte_meet_of_bounds, lte_join_left, lte_join_right, join_lte_of_bounds
-from order import lte_refl, lte_trans
+from order import PartialOrder, lte_refl, lte_trans
 
 /// The meet of a non-empty list.
 define list_meet[S: MeetSemilattice](head: S, tail: List[S]) -> S {
@@ -26,6 +26,82 @@ define list_join[S: JoinSemilattice](head: S, tail: List[S]) -> S {
         List.cons(next, rest) {
             head.join(list_join(next, rest))
         }
+    }
+}
+
+/// True if a point is below every element of a list.
+define list_lower_bound[S: PartialOrder](items: List[S], lower: S) -> Bool {
+    forall(x: S) {
+        items.contains(x) implies lower <= x
+    }
+}
+
+/// True if a point is above every element of a list.
+define list_upper_bound[S: PartialOrder](items: List[S], upper: S) -> Bool {
+    forall(x: S) {
+        items.contains(x) implies x <= upper
+    }
+}
+
+/// A lower bound for a cons list is below the head.
+theorem list_lower_bound_head[S: PartialOrder](head: S, tail: List[S], lower: S) {
+    list_lower_bound(List.cons(head, tail), lower) implies lower <= head
+} by {
+    if list_lower_bound(List.cons(head, tail), lower) {
+        list_lower_bound(List.cons(head, tail), lower) = forall(x: S) {
+            List.cons(head, tail).contains(x) implies lower <= x
+        }
+        List.cons(head, tail).contains(head)
+        lower <= head
+    }
+}
+
+/// A lower bound for a cons list is a lower bound for the tail.
+theorem list_lower_bound_tail[S: PartialOrder](head: S, tail: List[S], lower: S) {
+    list_lower_bound(List.cons(head, tail), lower) implies list_lower_bound(tail, lower)
+} by {
+    if list_lower_bound(List.cons(head, tail), lower) {
+        list_lower_bound(List.cons(head, tail), lower) = forall(x: S) {
+            List.cons(head, tail).contains(x) implies lower <= x
+        }
+        forall(x: S) {
+            if tail.contains(x) {
+                List.cons(head, tail).contains(x)
+                lower <= x
+            }
+        }
+        list_lower_bound(tail, lower)
+    }
+}
+
+/// An upper bound for a cons list is above the head.
+theorem list_upper_bound_head[S: PartialOrder](head: S, tail: List[S], upper: S) {
+    list_upper_bound(List.cons(head, tail), upper) implies head <= upper
+} by {
+    if list_upper_bound(List.cons(head, tail), upper) {
+        list_upper_bound(List.cons(head, tail), upper) = forall(x: S) {
+            List.cons(head, tail).contains(x) implies x <= upper
+        }
+        List.cons(head, tail).contains(head)
+        head <= upper
+    }
+}
+
+/// An upper bound for a cons list is an upper bound for the tail.
+theorem list_upper_bound_tail[S: PartialOrder](head: S, tail: List[S], upper: S) {
+    list_upper_bound(List.cons(head, tail), upper) implies list_upper_bound(tail, upper)
+} by {
+    if list_upper_bound(List.cons(head, tail), upper) {
+        list_upper_bound(List.cons(head, tail), upper) = forall(x: S) {
+            List.cons(head, tail).contains(x) implies x <= upper
+        }
+        forall(x: S) {
+            if tail.contains(x) {
+                List.cons(head, tail).contains(x)
+                x <= upper
+            }
+        }
+        list_upper_bound(tail, upper)
     }
 }
 
@@ -173,4 +249,136 @@ theorem contains_lte_list_join[S: JoinSemilattice](head: S, tail: List[S], x: S)
         }
     }
     p(tail)
+}
+
+/// Any lower bound for every element of a non-empty list is below its meet.
+theorem lte_list_meet_of_contains_bounds[S: MeetSemilattice](c: S, head: S, tail: List[S]) {
+    list_lower_bound(List.cons(head, tail), c) implies
+    c <= list_meet(head, tail)
+} by {
+    define p(t: List[S]) -> Bool {
+        forall(h: S, lower: S) {
+            list_lower_bound(List.cons(h, t), lower) implies
+            lower <= list_meet(h, t)
+        }
+    }
+    forall(h: S, lower: S) {
+        if list_lower_bound(List.cons(h, List.nil[S]), lower) {
+            list_lower_bound_head(h, List.nil[S], lower)
+            lower <= h
+            list_meet(h, List.nil[S]) = h
+            lower <= list_meet(h, List.nil[S])
+        }
+    }
+    p(List.nil[S])
+    forall(next: S, rest: List[S]) {
+        if p(rest) {
+            forall(h: S, lower: S) {
+                if list_lower_bound(List.cons(h, List.cons(next, rest)), lower) {
+                    list_lower_bound_head(h, List.cons(next, rest), lower)
+                    lower <= h
+                    list_lower_bound_tail(h, List.cons(next, rest), lower)
+                    list_lower_bound(List.cons(next, rest), lower)
+                    p(rest) = forall(base: S, bound: S) {
+                        list_lower_bound(List.cons(base, rest), bound) implies
+                        bound <= list_meet(base, rest)
+                    }
+                    lower <= list_meet(next, rest)
+                    lte_meet_of_bounds(lower, h, list_meet(next, rest))
+                    list_meet(h, List.cons(next, rest)) = h.meet(list_meet(next, rest))
+                    lower <= list_meet(h, List.cons(next, rest))
+                }
+            }
+            p(List.cons(next, rest))
+        }
+    }
+    p(tail)
+}
+
+/// The meet of a non-empty list is the greatest lower bound of its elements.
+theorem lte_list_meet_iff_contains_bounds[S: MeetSemilattice](c: S, head: S, tail: List[S]) {
+    c <= list_meet(head, tail) = list_lower_bound(List.cons(head, tail), c)
+} by {
+    if c <= list_meet(head, tail) {
+        forall(x: S) {
+            if List.cons(head, tail).contains(x) {
+                list_meet_lte_contains(head, tail, x)
+                list_meet(head, tail) <= x
+                lte_trans(c, list_meet(head, tail), x)
+                c <= x
+            }
+        }
+        list_lower_bound(List.cons(head, tail), c)
+    }
+    if list_lower_bound(List.cons(head, tail), c) {
+        lte_list_meet_of_contains_bounds(c, head, tail)
+        c <= list_meet(head, tail)
+    }
+    c <= list_meet(head, tail) = list_lower_bound(List.cons(head, tail), c)
+}
+
+/// Any upper bound for every element of a non-empty list is above its join.
+theorem list_join_lte_of_contains_bounds[S: JoinSemilattice](head: S, tail: List[S], c: S) {
+    list_upper_bound(List.cons(head, tail), c) implies
+    list_join(head, tail) <= c
+} by {
+    define p(t: List[S]) -> Bool {
+        forall(h: S, upper: S) {
+            list_upper_bound(List.cons(h, t), upper) implies
+            list_join(h, t) <= upper
+        }
+    }
+    forall(h: S, upper: S) {
+        if list_upper_bound(List.cons(h, List.nil[S]), upper) {
+            list_upper_bound_head(h, List.nil[S], upper)
+            h <= upper
+            list_join(h, List.nil[S]) = h
+            list_join(h, List.nil[S]) <= upper
+        }
+    }
+    p(List.nil[S])
+    forall(next: S, rest: List[S]) {
+        if p(rest) {
+            forall(h: S, upper: S) {
+                if list_upper_bound(List.cons(h, List.cons(next, rest)), upper) {
+                    list_upper_bound_head(h, List.cons(next, rest), upper)
+                    h <= upper
+                    list_upper_bound_tail(h, List.cons(next, rest), upper)
+                    list_upper_bound(List.cons(next, rest), upper)
+                    p(rest) = forall(base: S, bound: S) {
+                        list_upper_bound(List.cons(base, rest), bound) implies
+                        list_join(base, rest) <= bound
+                    }
+                    list_join(next, rest) <= upper
+                    join_lte_of_bounds(h, list_join(next, rest), upper)
+                    list_join(h, List.cons(next, rest)) = h.join(list_join(next, rest))
+                    list_join(h, List.cons(next, rest)) <= upper
+                }
+            }
+            p(List.cons(next, rest))
+        }
+    }
+    p(tail)
+}
+
+/// The join of a non-empty list is the least upper bound of its elements.
+theorem list_join_lte_iff_contains_bounds[S: JoinSemilattice](head: S, tail: List[S], c: S) {
+    list_join(head, tail) <= c = list_upper_bound(List.cons(head, tail), c)
+} by {
+    if list_join(head, tail) <= c {
+        forall(x: S) {
+            if List.cons(head, tail).contains(x) {
+                contains_lte_list_join(head, tail, x)
+                x <= list_join(head, tail)
+                lte_trans(x, list_join(head, tail), c)
+                x <= c
+            }
+        }
+        list_upper_bound(List.cons(head, tail), c)
+    }
+    if list_upper_bound(List.cons(head, tail), c) {
+        list_join_lte_of_contains_bounds(head, tail, c)
+        list_join(head, tail) <= c
+    }
+    list_join(head, tail) <= c = list_upper_bound(List.cons(head, tail), c)
 }
