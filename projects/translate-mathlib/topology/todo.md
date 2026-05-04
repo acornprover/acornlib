@@ -2,8 +2,9 @@
 
 Goal: provide the general topological language that analysis, geometry, and probability need.
 
-- [ ] Define density, separability, and the closure-via-limit-point characterization
 - [ ] Support product, sum, subspace, and quotient topologies
+- [ ] Define separability (existence of a countable dense subset) — needs a countability predicate
+- [ ] Add the dense-iff-every-nonempty-open-meets characterization: the obvious proof shape (witness an open's point and apply closure_iff_every_neighborhood_meets) caused a "shallow explosion" timeout in the prover. Needs a structurally different proof or stronger prover hints
 - [ ] Develop compactness and local compactness
 - [ ] Add connectedness and path connectedness
 - [ ] Support the standard separation axioms
