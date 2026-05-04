@@ -2,8 +2,8 @@
 
 Goal: provide the general topological language that analysis, geometry, and probability need.
 
-- [ ] Support the product topology on a binary product type
 - [ ] Add the big-union axiom for the subspace topology: introduce the `lifted_open(a, d)` ambient family and prove `is_open_in_subspace(a, big_union(d))` whenever every `d(u)` is subspace-open. The two-direction trace identity proof timed out; needs further factoring
+- [ ] Add the binary-intersection and big-union axioms for `is_open_in_product`: the proofs unfold to `generated_open_inter`/`generated_open_big_union` applied to `is_box[X, Y]` (which has been shown to be a topological basis), but the conclusion-matching step timed out the prover
 - [ ] Support the sum topology on a binary sum type
 - [ ] Support the quotient topology relative to an equivalence relation
 - [ ] Define separability (existence of a countable dense subset) — needs a countability predicate
