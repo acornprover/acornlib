@@ -2,9 +2,8 @@
 
 Goal: provide the general topological language that analysis, geometry, and probability need.
 
-- [ ] Generate a topology from a subbasis (finite intersections of subbasis members form a basis)
 - [ ] Characterise generated-open sets as unions of basis members
-- [ ] Define neighborhoods of a point and the neighborhood filter
+- [ ] Define a neighborhood filter as a `Set[T] -> Bool` value (currently `is_neighborhood` is a predicate; the filter view collects the neighborhoods of a point as a family)
 - [ ] Define density, separability, and the closure-via-limit-point characterization
 - [ ] Support product, sum, subspace, and quotient topologies
 - [ ] Develop compactness and local compactness
@@ -15,6 +14,7 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Add topological groups, rings, and modules
 - [ ] Prove foundational results such as Baire-category style theorems
 - [ ] Add an indiscrete-topology instance: the `big_union` axiom on `s = empty or s = universal` opens currently times out the prover; needs helper lemmas about `big_union` of an everywhere-empty family
+- [ ] Generate a topology from a subbasis: finite intersections of subbasis members form a basis. Attempted with `List[Set[T]]`-based `list_inter`; the auto-induction over `List[Set[T]]` could produce the inductive step but the prover timed out on `all_in_subbasis_concat` and `list_inter_concat`. Needs a different inductive structure or stronger prover hints
 
 Note: a workaround is in place to avoid `Set[Set[T]]` in typeclass axioms because
 `acorn check` fails to certify code that constructs the empty `Set[Set[T]]` or
