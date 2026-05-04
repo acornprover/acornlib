@@ -13,7 +13,9 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Add path connectedness (needs the unit interval and continuous paths)
 - [ ] Build continuity in terms of closed-set preimages, neighborhoods, and filters
 - [ ] Prove the standard implications between separation axioms (Hausdorff ⇒ T1 ⇒ T0). Witness-extraction proofs timed out the prover; needs further factoring or a different proof shape
-- [ ] Define embeddings and homeomorphisms
+- [ ] Prove `homeomorphism_inverse` (swapping the maps of a homeomorphism gives another); the proof is logically trivial but the prover timed out matching the conjunction order across the X→Y vs Y→X orientations
+- [ ] Prove that the composition of two homeomorphisms is a homeomorphism
+- [ ] Define embeddings (an injective continuous map that is a homeomorphism onto its image; needs the subspace topology big-union axiom)
 - [ ] Add topological groups, rings, and modules
 - [ ] Prove foundational results such as Baire-category style theorems
 - [ ] Add an indiscrete-topology instance: the `big_union` axiom on `s = empty or s = universal` opens currently times out the prover; needs helper lemmas about `big_union` of an everywhere-empty family
