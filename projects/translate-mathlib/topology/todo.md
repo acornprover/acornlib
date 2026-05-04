@@ -2,8 +2,9 @@
 
 Goal: provide the general topological language that analysis, geometry, and probability need.
 
-- [ ] Generate topologies from a basis or a subbasis
 - [ ] Add the discrete and indiscrete topology instances on common types
+- [ ] Generate a topology from a subbasis (finite intersections of subbasis members form a basis)
+- [ ] Characterise generated-open sets as unions of basis members
 - [ ] Define neighborhoods of a point and the neighborhood filter
 - [ ] Define density, separability, and the closure-via-limit-point characterization
 - [ ] Support product, sum, subspace, and quotient topologies
