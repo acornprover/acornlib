@@ -2,7 +2,6 @@
 
 Goal: provide the general topological language that analysis, geometry, and probability need.
 
-- [ ] Characterise generated-open sets as unions of basis members
 - [ ] Define a neighborhood filter as a `Set[T] -> Bool` value (currently `is_neighborhood` is a predicate; the filter view collects the neighborhoods of a point as a family)
 - [ ] Define density, separability, and the closure-via-limit-point characterization
 - [ ] Support product, sum, subspace, and quotient topologies
