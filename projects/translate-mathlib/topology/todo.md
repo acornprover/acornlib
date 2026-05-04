@@ -4,7 +4,6 @@ Goal: provide the general topological language that analysis, geometry, and prob
 
 - [ ] Generate topologies from a basis or a subbasis
 - [ ] Add the discrete and indiscrete topology instances on common types
-- [ ] Build a stronger API around interior, closure, and frontier (idempotence, monotonicity, distribution over unions/intersections)
 - [ ] Define neighborhoods of a point and the neighborhood filter
 - [ ] Define density, separability, and the closure-via-limit-point characterization
 - [ ] Support product, sum, subspace, and quotient topologies
