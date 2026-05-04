@@ -2,7 +2,6 @@
 
 Goal: provide the general topological language that analysis, geometry, and probability need.
 
-- [ ] Add the discrete and indiscrete topology instances on common types
 - [ ] Generate a topology from a subbasis (finite intersections of subbasis members form a basis)
 - [ ] Characterise generated-open sets as unions of basis members
 - [ ] Define neighborhoods of a point and the neighborhood filter
@@ -15,6 +14,7 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Define embeddings and homeomorphisms
 - [ ] Add topological groups, rings, and modules
 - [ ] Prove foundational results such as Baire-category style theorems
+- [ ] Add an indiscrete-topology instance: the `big_union` axiom on `s = empty or s = universal` opens currently times out the prover; needs helper lemmas about `big_union` of an everywhere-empty family
 
 Note: a workaround is in place to avoid `Set[Set[T]]` in typeclass axioms because
 `acorn check` fails to certify code that constructs the empty `Set[Set[T]]` or
