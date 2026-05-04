@@ -9,7 +9,8 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Define separability (existence of a countable dense subset) — needs a countability predicate
 - [ ] Add the dense-iff-every-nonempty-open-meets characterization: the obvious proof shape (witness an open's point and apply closure_iff_every_neighborhood_meets) caused a "shallow explosion" timeout in the prover. Needs a structurally different proof or stronger prover hints
 - [ ] Develop compactness and local compactness
-- [ ] Add connectedness and path connectedness
+- [ ] Prove equivalence of `is_connected` and `is_connected_via_clopen`
+- [ ] Add path connectedness (needs the unit interval and continuous paths)
 - [ ] Build continuity in terms of closed-set preimages, neighborhoods, and filters
 - [ ] Prove the standard implications between separation axioms (Hausdorff ⇒ T1 ⇒ T0). Witness-extraction proofs timed out the prover; needs further factoring or a different proof shape
 - [ ] Define embeddings and homeomorphisms
