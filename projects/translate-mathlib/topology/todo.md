@@ -10,8 +10,8 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Add the dense-iff-every-nonempty-open-meets characterization: the obvious proof shape (witness an open's point and apply closure_iff_every_neighborhood_meets) caused a "shallow explosion" timeout in the prover. Needs a structurally different proof or stronger prover hints
 - [ ] Develop compactness and local compactness
 - [ ] Add connectedness and path connectedness
-- [ ] Support the standard separation axioms
 - [ ] Build continuity in terms of closed-set preimages, neighborhoods, and filters
+- [ ] Prove the standard implications between separation axioms (Hausdorff ⇒ T1 ⇒ T0). Witness-extraction proofs timed out the prover; needs further factoring or a different proof shape
 - [ ] Define embeddings and homeomorphisms
 - [ ] Add topological groups, rings, and modules
 - [ ] Prove foundational results such as Baire-category style theorems
