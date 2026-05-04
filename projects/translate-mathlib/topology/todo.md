@@ -9,7 +9,6 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Define separability (existence of a countable dense subset) — needs a countability predicate
 - [ ] Add the dense-iff-every-nonempty-open-meets characterization: the obvious proof shape (witness an open's point and apply closure_iff_every_neighborhood_meets) caused a "shallow explosion" timeout in the prover. Needs a structurally different proof or stronger prover hints
 - [ ] Develop the compactness API (universal-set is compact, finite-union of compacts is compact, image of compact under continuous is compact, closed subset of compact is compact)
-- [ ] Define local compactness
 - [ ] Prove equivalence of `is_connected` and `is_connected_via_clopen`
 - [ ] Add path connectedness (needs the unit interval and continuous paths)
 - [ ] Build continuity in terms of closed-set preimages and filter convergence (the pointwise neighborhood-based variant `is_continuous_at` and the global ⇒ pointwise direction are in place; the converse direction and the closed-preimage and filter-convergence equivalences remain)
