@@ -8,7 +8,7 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Add the binary-intersection and big-union axioms for `is_open_in_sum`: the preimage commutation lemmas verify, but stitching them together via the `is_open_in_sum_iff` definition timed out the prover
 - [ ] Define separability (existence of a countable dense subset) — needs a countability predicate
 - [ ] Add the dense-iff-every-nonempty-open-meets characterization: the obvious proof shape (witness an open's point and apply closure_iff_every_neighborhood_meets) caused a "shallow explosion" timeout in the prover. Needs a structurally different proof or stronger prover hints
-- [ ] Develop the compactness API (universal-set is compact, finite-union of compacts is compact, image of compact under continuous is compact, closed subset of compact is compact)
+- [ ] Develop the compactness API (universal-set is compact, finite-union of compacts is compact, image of compact under continuous is compact, closed subset of compact is compact). The per-cover lemma `singleton_open_cover_imp_finite_subcover` is in place; the obvious wrapper `singleton_is_compact` (a `forall c. ...` matching the unfolded `is_compact`) timed out the prover
 - [ ] Prove equivalence of `is_connected` and `is_connected_via_clopen`
 - [ ] Add path connectedness (needs the unit interval and continuous paths)
 - [ ] Build continuity in terms of closed-set preimages and filter convergence (the pointwise neighborhood-based variant `is_continuous_at` and the global ⇒ pointwise direction are in place; the converse direction and the closed-preimage and filter-convergence equivalences remain)
