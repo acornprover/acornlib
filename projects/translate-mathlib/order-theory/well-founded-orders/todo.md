@@ -4,7 +4,6 @@ Goal: give order theory access to induction and recursion principles beyond the 
 
 - [ ] Add recursion principles on well-founded relations
 - [ ] Connect well-foundedness with `Nat`-based structural recursion
-- [ ] Strengthen descending-chain formulations of well-foundedness, including useful converses where available
 - [ ] Add lexicographic and product well-founded constructions
 - [ ] Add well-foundedness transfer lemmas across embeddings and order-like maps
 - [ ] Support Noetherian-style arguments via well-foundedness
@@ -14,3 +13,4 @@ Goal: give order theory access to induction and recursion principles beyond the 
 Status:
 
 - `src/well_founded.ac` defines `is_well_founded` via the minimal-element formulation, proves that well-founded relations are irreflexive, proves that pullback along any function preserves well-foundedness, and now includes subset/intersection preservation, well-founded induction, induction-at, and a `Nat`-indexed descending-chain exclusion theorem.
+- The descending-chain API now has existence and nonexistence predicates, well-foundedness contradiction lemmas, subrelation transfer, and pullback-chain mapping lemmas.
