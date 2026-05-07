@@ -7,7 +7,8 @@ Goal: support standard derived algebraic constructions that recur throughout Mat
 - [ ] Package the group of units as a `Group` instance once generic bundled instances are reliable
 - [ ] Add bundled homomorphism transport lemmas for product structures once bundled products are available
 - [ ] Support finite-support product constructions where useful
-- [ ] Add compact boolean `iff` wrappers for product and pointwise unit predicates once the directional lemmas are enough for reliable proof search
+- [ ] Add compact boolean `iff` wrappers for product, function-product, and pointwise unit predicates once the directional lemmas are enough for reliable proof search
+- [ ] Add the function-pair unit multiplication-closure wrapper after the componentwise proof-search tail is reduced
 - [ ] Refactor representative proofs to use product and unit APIs directly
 
 Progress: `src/product_algebra.ac` now provides unbundled componentwise operations on binary products (`pair_add`, `pair_mul`, `pair_zero`, `pair_one`, `pair_neg`, `pair_inverse`) with coordinate projection lemmas and associativity, commutativity, identity, inverse, semiring distributivity, zero-absorption, map-zero/map-one, swap-transport, and inverse-transport laws for the corresponding algebraic hypotheses.
@@ -25,3 +26,5 @@ Progress: `src/function_product_algebra.ac` now specializes the shared function-
 Progress: `src/product_units.ac` now connects bundled monoid units with unbundled componentwise product units, including value/inverse pairs, coordinate unit reflection, construction from component units, identity, inverse-witness, multiplication-closure lemmas, group-pair unit construction, inverse-pair unit construction, and coordinate zero-kernel/cancellation lemmas for multiplication by pair units over rings. `src/units.ac` also exposes unbundled `is_monoid_unit` zero-kernel, nonzero, and cancellation lemmas. Compact boolean `iff` wrappers and whole-pair cancellation wrappers remain deferred after verifier timeout reports; the verified directional and coordinate lemmas remain available.
 
 Progress: `src/function_units.ac` now provides unbundled pointwise-unit support for functions, including value/inverse functions from unit-valued functions, two-sided pointwise inverse laws, pointwise-unit construction, inverse-witness transport, pointwise reflection to ordinary monoid units, identity pointwise-unit, group pointwise-unit, and closure of pointwise units under pointwise multiplication.
+
+Progress: `src/function_product_units.ac` now connects binary products of function spaces with pointwise-unit predicates, including the unbundled `is_function_pair_unit` predicate, coordinate reflection to pointwise units, construction from pointwise-unit coordinates, identity, inverse-witness, group-valued, and inverse-pair unit lemmas. The multiplication-closure wrapper is deferred after the componentwise proof-search version timed out, although the verified coordinate lemmas and pointwise multiplication closure are available.
