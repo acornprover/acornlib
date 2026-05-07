@@ -21,6 +21,10 @@ assembling `is_ideal` from its sub-constraints.
 
 - [ ] Add quotient rings and their universal properties (see [quotient-rings/todo.md](quotient-rings/todo.md))
 - [ ] Support prime ideals, maximal ideals, and local rings
+      (predicate-form `is_prime_ideal`, `is_maximal_ideal` and basic
+      extraction lemmas added in `src/ideal.ac`; still needed: bundled
+      `PrimeIdeal[R]`/`MaximalIdeal[R]`, integral-domain ↔ zero-prime,
+      field ↔ zero-maximal, maximal-implies-prime, local-ring API)
 - [ ] Add localization at submonoids and prime ideals
 - [ ] Develop Noetherian rings and modules
 - [ ] Support integral elements and integral extensions
