@@ -99,6 +99,10 @@ general `inverse_imp_coprime` (`a * b ≡ 1 (mod n) ⟹ b.coprime(n)`).
 - `dsa_pow_mod_q`: if `g.pow(q).mod(p) = 1` then
   `g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)` — exponent only matters
   modulo `q`.
+- `dsa_y_pow_congr`: if `y = g.pow(x).mod(p)` then
+  `y.pow(b).congr_mod(g.pow(x * b), p)`.
+- `dsa_combine_pow`: if `y = g.pow(x).mod(p)` then
+  `(g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)`.
 
 - [ ] Prove the DSA verification identity: for `s = kinv * (h + x*r) mod q`
       and `w = sinv mod q`, `(g^{h*w} * y^{r*w}) mod p mod q = r`.
