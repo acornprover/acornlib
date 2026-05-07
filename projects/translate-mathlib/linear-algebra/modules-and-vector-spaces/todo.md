@@ -40,7 +40,7 @@ work (linear maps, bases, matrices, etc.) can build on.
       representative-level kernel characterisation
       (`submodule_quotient_mk_eq_zero_iff_in_submodule`) is in place.
 - [ ] Extend packaged kernel/image submodule APIs only when downstream formalizations need additional lemmas.
-- [ ] Package the linear-map preimage as a `Submodule[R, M]` (mirroring `linear_map_kernel_submodule`) once a downstream use appears; predicate-level preimage and the four constraint lemmas are in place.
+- [ ] Extend the packaged `linear_map_preimage_submodule` API only when downstream formalizations need additional lemmas (e.g. monotonicity in the target submodule, agreement with `linear_map_kernel_submodule` on the zero submodule, or full-target characterisation).
 
 Status:
 
@@ -54,3 +54,4 @@ Status:
 - The four module axioms hold for the submodule quotient at the representative level: `submodule_quotient_smul_add_left`, `submodule_quotient_smul_add_right`, `submodule_quotient_smul_assoc`, `submodule_quotient_smul_one`.
 - The canonical projection function `submodule_quotient_mk` is defined, with `submodule_quotient_mk_eq_iff_in_submodule`, `submodule_quotient_mk_eq_zero_iff_in_submodule`, `submodule_quotient_mk_zero`, `submodule_quotient_mk_add`, `submodule_quotient_mk_neg`, and `submodule_quotient_mk_smul` providing the kernel characterisation and representative-level linearity.
 - `linear_map_preimage` provides predicate-level preimage of a `Submodule[R, N]` under a function `M -> N`, with the four constraint lemmas (`linear_map_preimage_zero/add/neg/smul_constraint`) holding for any `is_linear_map(src, t.carrier, f)`. Bridge lemmas `linear_map_preimage_zero_submodule_eq_kernel` and `linear_map_preimage_full_submodule` connect preimage with the kernel and full submodule.
+- `linear_map_preimage_submodule` packages the predicate-level preimage as a `Submodule[R, M]` (mirroring `linear_map_kernel_submodule`), defaulting to the full submodule when the map is not linear. The carrier is the source module and `linear_map_preimage_submodule_contains_eq` characterises membership as `t.contains(f(x))` whenever the map is linear, with introduction/elimination lemmas (`..._contains_of_image_in`, `..._image_in_of_contains`).
