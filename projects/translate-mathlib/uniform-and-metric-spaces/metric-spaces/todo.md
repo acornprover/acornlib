@@ -2,8 +2,8 @@
 
 Build out the `MetricSpace` typeclass in `src/metric_space.ac` with definitions and APIs analogous to Mathlib's `MetricSpace`.
 
-- [ ] Add `is_bounded` for sets in a metric space and basic closure properties
 - [ ] Add `diameter` of a bounded set
+- [ ] Prove union of two bounded sets is bounded
 - [ ] Define convergence of sequences in a metric space (`tendsto_metric`)
 - [ ] Define Cauchy sequences in a metric space and prove convergent implies Cauchy
 - [ ] Define completeness and prove `Real: CompleteMetricSpace`
@@ -11,6 +11,5 @@ Build out the `MetricSpace` typeclass in `src/metric_space.ac` with definitions 
 - [ ] Define Lipschitz maps and prove composition is Lipschitz
 - [ ] Define product metric on `Pair[M, N]` and prove triangle inequality
 - [ ] Define pseudometric typeclass and relate to `MetricSpace`
-- [ ] Add open ball / closed ball symmetry lemmas (`y in open_ball(x, r) iff x in open_ball(y, r)`)
 - [ ] Define `is_open_metric` and `is_closed_metric` via balls
 - [ ] Prove union/intersection properties of open/closed sets in a metric space
