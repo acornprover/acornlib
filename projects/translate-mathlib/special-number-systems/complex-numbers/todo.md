@@ -6,6 +6,5 @@ Goal: round out the basic algebraic API of `Complex` so downstream analysis file
 - [ ] Prove the triangle inequality `abs(a+b) <= abs(a) + abs(b)` (needs Cauchy-Schwarz or expansion via `abs_squared`)
 - [ ] Add `Complex` as an `R`-module / `Real`-vector-space style structure (scalar multiplication by `Real`)
 - [ ] Add `conj` as a ring/field automorphism (involution + multiplicative + additive packaged)
-- [ ] Add `abs_squared_mul`: `abs_squared(a*b) = abs_squared(a) * abs_squared(b)` (component-expansion proof times out; likely needs a `comm_ring` polynomial-rearrangement helper or a route via `(a*b)*(a*b).conj = (a*a.conj) * (b*b.conj)`)
 - [ ] Complete the `is_real` characterization: prove the converse `a.conj = a implies a.is_real` (needs a real-field lemma `x = -x implies x = Real.0`)
 - [ ] Add `re`/`im` as additive group homomorphisms (with `Real`-linearity once a scalar action exists)
