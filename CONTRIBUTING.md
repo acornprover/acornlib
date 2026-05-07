@@ -61,7 +61,7 @@ The triage process uses assignment status to indicate the stage of triage. If th
 
 For convenience, the `scripts/pr-status.sh` script shows the status of each pending pull request.
 
-If a PR doesn't pass CI, or if there is a merge conflict, the AcornLibrarian bot will try to fix it up. If it can't be fixed, or if the bot doesn't have access to modify the pull request, the bot will assign the PR back to the original creator.
+If a PR doesn't pass CI, or if there is a merge conflict, the AcornLibrarian bot will try to fix it up. If it can't be fixed, or if the bot doesn't have access to modify the pull request, the bot will request changes and assign the PR back to the original creator.
 
 Merge queue removals should be checked against the merge-group run before being treated as proof or CI failures. A removal with reason `checks_timed_out` means GitHub's merge queue timed out before the required `verify` check completed; in this repository, `verify` is the GitHub Actions job that runs `acorn check --strict`. The run may still finish successfully after the PR has already been removed. If the same PR is removed from the merge queue three times without an actual failing `verify` log, stop re-adding it automatically and assign it to a human maintainer with the relevant merge-group run URLs and timing notes. If the merge-group `verify` run really fails three times for the same PR, assign it to a human maintainer for debugging instead of retrying indefinitely.
 
