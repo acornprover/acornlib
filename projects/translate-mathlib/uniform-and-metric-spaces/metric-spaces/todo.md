@@ -2,8 +2,8 @@
 
 Build out the `MetricSpace` typeclass in `src/metric_space.ac` with definitions and APIs analogous to Mathlib's `MetricSpace`.
 
-- [ ] Add `diameter` of a bounded set
 - [ ] Define completeness and prove `Real: CompleteMetricSpace`
+- [ ] Promote `is_diameter` predicate to a function-form `diameter(s)` (with 0 fallback for empty/unbounded)
 - [ ] Define isometry between metric spaces and basic properties
 - [ ] Define Lipschitz maps and prove composition is Lipschitz
 - [ ] Define product metric on `Pair[M, N]` and prove triangle inequality
