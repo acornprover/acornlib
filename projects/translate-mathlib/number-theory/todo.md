@@ -2,7 +2,8 @@
 
 Goal: push beyond the current arithmetic core into the standard theories that Mathlib treats as number theory.
 
-- [ ] Support arithmetic and multiplicative functions
+- [ ] Extend arithmetic functions with Dirichlet convolution and divisor-sum examples
+- [ ] Prove multiplicativity for standard number-theoretic functions such as totient where supporting lemmas are available
 - [ ] Add continued fractions and their approximation theory
 - [ ] Develop quadratic residues and quadratic reciprocity
 - [ ] Add Pell equations and related Diophantine techniques
@@ -15,3 +16,4 @@ Status:
 - The primes and unique factorisation branch is complete: `src/nat/nat_factorisation.ac` covers prime predicates, the `prime_factorisation` list-of-primes representation, the fundamental theorem of arithmetic (`prime_factorisation_unique`), the `count_prime_factor` view with multiplicativity and the divisibility characterisation `divides_iff_count_prime_factor_le`, and the point-wise GCD/LCM characterisations `count_prime_factor_gcd` / `count_prime_factor_lcm` (with prime-power divisibility helpers `prime_pow_divides_iff`).
 - The divisibility/gcd/lcm branch is complete. `Nat.gcd`, `Nat.lcm`, `Nat.coprime`, Bezout on `Nat`, and the matching `Int.divides`/`Int.gcd`/`Int.lcm`/`Int.coprime` APIs all live under `src/nat/` and `src/int/` (`nat_gcd.ac`, `nat_coprime.ac`, `nat_lcm.ac`, `nat_bezout.ac`, `int_divisibility.ac`, `int_lcm.ac`, `int_gcd_extra.ac`). `Nat.lcm` is defined via the equation `gcd * lcm = a * b` so a future `GCDMonoid`-style typeclass can lift the same characterisation.
 - The modular-arithmetic and congruences branch is complete. The lightweight `Nat.congr_mod` / `Int.congr_mod` predicates with full equivalence/addition/multiplication/power preservation live in `src/nat/nat_congruence.ac` and `src/int/int_congruence.ac`. Bridges to the existing `Zmod[n]` infrastructure (`int_mod_rel` from `src/zmod.ac`) are in `src/nat/nat_congr_int.ac`. Modular inverse (`int_modular_inverse_exists`, `nat_modular_inverse_exists`) lives in `src/nat/nat_modular_inverse.ac`. Two-modulus, three-modulus, and `List`-indexed CRT (`nat_crt_two_moduli`, `nat_crt_three_moduli`, `nat_crt_list`) plus uniqueness are in `src/nat/nat_crt.ac` and `src/nat/nat_crt_list.ac`. The Int-to-Nat residue extraction `int_has_nat_residue` lives in `src/int/int_residue.ac`. `Nat` is now a `CommSemigroup`/`CommMonoid` instance and a generic `list_product` helper is added in `src/list/list_product.ac`.
+- The arithmetic-functions scaffold is started in `src/nat/nat_arithmetic_functions.ac`. It defines the constant-one, identity, natural-power, and pointwise-product arithmetic functions; the predicates `is_multiplicative_nat_fn` and `is_completely_multiplicative_nat_fn`; application lemmas; complete-multiplicativity of the standard examples `1`, `id`, and `n ↦ n^k`; and preservation of multiplicativity under pointwise product.
