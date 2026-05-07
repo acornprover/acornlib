@@ -30,8 +30,15 @@ work (linear maps, bases, matrices, etc.) can build on.
       four module axioms are already verified at the representative level
       (`submodule_quotient_smul_add_left/right`, `submodule_quotient_smul_assoc`,
       `submodule_quotient_smul_one`).
-- [ ] Add the canonical projection `M -> QuotientOver[M]` and prove it is a linear map.
-- [ ] Show the kernel of the canonical projection is the originating submodule.
+- [ ] Promote the canonical projection `submodule_quotient_mk` to a linear map via
+      `is_linear_map` once `Module[R, QuotientOver[M]]` is available; the
+      representative-level intertwining lemmas
+      (`submodule_quotient_mk_add`, `submodule_quotient_mk_neg`,
+      `submodule_quotient_mk_smul`, `submodule_quotient_mk_zero`) are in place.
+- [ ] Promote the kernel-of-canonical-projection-equals-submodule statement to the
+      bundled-submodule level once `Module[R, QuotientOver[M]]` is available; the
+      representative-level kernel characterisation
+      (`submodule_quotient_mk_eq_zero_iff_in_submodule`) is in place.
 - [ ] Extend packaged kernel/image submodule APIs only when downstream formalizations need additional lemmas.
 
 Status:
@@ -43,3 +50,4 @@ Status:
 - Packaged kernel/image submodules have verified carrier lemmas, linear-map membership lemmas, kernel introduction/elimination lemmas, image value/elimination lemmas, subset-style universal properties, the trivial-kernel-to-zero-submodule inclusion, and surjectivity/full-image bridges.
 - `submodule_rel`, `submodule_quotient_relation`, `submodule_quotient_add/neg/zero`, and `submodule_quotient_smul_by` (left scalar multiplication for a fixed scalar, with projection and representative-compatibility lemmas) provide a representative-level quotient-by-submodule API, delegating additive structure to `submodule_to_add_subgroup` and the existing `add_subgroup` quotient.
 - The four module axioms hold for the submodule quotient at the representative level: `submodule_quotient_smul_add_left`, `submodule_quotient_smul_add_right`, `submodule_quotient_smul_assoc`, `submodule_quotient_smul_one`.
+- The canonical projection function `submodule_quotient_mk` is defined, with `submodule_quotient_mk_eq_iff_in_submodule`, `submodule_quotient_mk_eq_zero_iff_in_submodule`, `submodule_quotient_mk_zero`, `submodule_quotient_mk_add`, `submodule_quotient_mk_neg`, and `submodule_quotient_mk_smul` providing the kernel characterisation and representative-level linearity.
