@@ -19,10 +19,10 @@ first.
 
 ## Roadmap
 
-- [ ] Define prime spectra `Spec(R)` as the set of prime ideals
-      (needs: prime ideals — predicate-form `is_prime_ideal` now in
-      `src/ideal.ac`; still need bundled `PrimeIdeal[R]` or a chosen
-      Spec representation)
+- [ ] Expand `Spec(R)` API: build `V(I)` (vanishing sets), prove inclusion-reversing
+      properties, and connect points to maximal ideals (needs: prime ideals,
+      ideal lattice). The bundled `Spec[R]` wrapper around `PrimeIdeal[R]`
+      with extensionality and `of_prime` is now in `src/spec.ac`.
 - [ ] Define the Zariski topology via vanishing sets `V(I)` and prove the
       topology axioms (needs: prime ideals, topological spaces)
 - [ ] Add basic open sets `D(f)` and the distinguished base for the Zariski
