@@ -19,6 +19,8 @@ Try to be stylistically consistent with the rest of the codebase.
 
 Try to keep pull requests to below 2000 lines of Acorn code.
 
+Avoid adding fixed-arity APIs such as 6-ary, 7-ary, etc. wrappers unless there is a specific downstream reason; prefer indexed families or a named abstraction.
+
 Most pull requests will be AI-reviewed. Some areas will be escalated to human review:
 
 * Adding a new project
@@ -61,9 +63,11 @@ For convenience, the `scripts/pr-status.sh` script shows the status of each pend
 
 If a PR doesn't pass CI, or if there is a merge conflict, the AcornLibrarian bot will try to fix it up. If it can't be fixed, or if the bot doesn't have access to modify the pull request, the bot will assign the PR back to the original creator.
 
+Merge queue removals should be checked against the merge-group run before being treated as proof or CI failures. A removal with reason `checks_timed_out` means GitHub's merge queue timed out before the required `verify` check completed; in this repository, `verify` is the GitHub Actions job that runs `acorn check --strict`. The run may still finish successfully after the PR has already been removed. If the same PR is removed from the merge queue three times without an actual failing `verify` log, stop re-adding it automatically and assign it to a human maintainer with the relevant merge-group run URLs and timing notes. If the merge-group `verify` run really fails three times for the same PR, assign it to a human maintainer for debugging instead of retrying indefinitely.
+
 Once it passes CI, the bot will use its own judgment as to whether the pull request "looks good". The bot can either add the PR to the merge queue, or assign to a human maintainer if there is something that needs to be escalated to human review. If the PR is stacked, ie if it's merging into a branch that is not master, the bot will approve it but not merge it until the PR it's stacked on top of is merged.
 
-When escalating to a human, the bot should summarize the new definitions that were added. Type definitions and function definitions. Write as inline code with triple-```.
+When escalating to a human, the bot should summarize the new definitions that were added. Type definitions, function definitions, constant definitions. Write the summary as inline code with triple-```. Be sure to include the "constraint" block on structure types, and be sure to include the actual definitions for "let" and "define" statements, not just the name and type of the thing we are defining. Theorems do not count as "new definitions" and do not need to be summarized.
 
 Once a human maintainer approves, the human may or may not add to the merge queue. The bot will take care of fixing any merge conflicts that subsequently arise, and getting the PR added to the merge queue.
 

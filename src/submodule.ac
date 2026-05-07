@@ -3,11 +3,22 @@ from add_comm_group import AddCommGroup
 from add_comm_group import AddCommGroupHom, is_add_comm_group_hom,
     add_comm_group_hom_zero, add_comm_group_hom_neg
 from add_subgroup import AddSubgroup, add_zero_constraint, add_closure_constraint,
-    neg_constraint, add_subgroup_constraint
+    neg_constraint, add_subgroup_constraint, add_subgroup_rel, add_subgroup_quotient_relation,
+    add_subgroup_quotient_relation_rel, add_subgroup_rel_is_equivalence,
+    add_subgroup_quotient_relation_respects_add, add_subgroup_quotient_relation_respects_neg,
+    add_subgroup_quotient_add, add_subgroup_quotient_neg, add_subgroup_quotient_zero,
+    add_subgroup_quotient_add_projection, add_subgroup_quotient_neg_projection
 from add_submonoid import AddSubmonoid, add_submonoid_zero_constraint,
     add_submonoid_closure_constraint, add_submonoid_constraint
-from module import Module, module_smul_zero_right
-from module_hom import is_linear_map, preserves_add, preserves_smul
+from module import Module, module_smul_zero_right, module_smul_add_right, module_smul_neg_right,
+    module_smul_add_left, module_smul_assoc, module_smul_one
+from module_hom import is_linear_map, preserves_add, preserves_smul, linear_map_add, linear_map_smul
+from equivalence import QuotientRelation, QuotientOver, quotient_over_mk,
+    quotient_over_unary_op, quotient_over_unary_op_projection,
+    quotient_over_unary_op_projection_compatible, quotient_unary_respects,
+    quotient_unary_respects_eq_respects_unary_op, quotient_relation_new_round_trip,
+    quotient_over_mk_eq_iff_rel, quotient_over_mk_eq_of_rel, rel_of_quotient_over_mk_eq
+from relation_transport import respects_unary_op
 from set import Set, singleton_contains_eq, singleton_set_is_finite, empty_set_is_finite,
     union_contains_eq, union_contains_left, union_contains_right,
     is_subset_monotone_map, is_set_extensive_map, is_set_idempotent_map,
@@ -3210,4 +3221,460 @@ theorem linear_map_image_of_image_submodule_eq_full[R: Ring, M: AddCommGroup, N:
         linear_map_image_of_submodule_contains(src, dst, f, y)
         linear_map_image[M, N](f, y)
     }
+}
+
+
+/// The equivalence relation on a module defined by a submodule: two elements are
+/// related when their difference lies in the submodule.
+define submodule_rel[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M, b: M) -> Bool {
+    s.contains(a - b)
+}
+
+/// The submodule quotient relation agrees with the additive-subgroup quotient relation pointwise.
+theorem submodule_rel_eq_add_subgroup_rel[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M, b: M) {
+    submodule_rel(s, a, b) = add_subgroup_rel(submodule_to_add_subgroup(s), a, b)
+} by {
+    submodule_to_add_subgroup_contains_eq(s, a - b)
+}
+
+/// The submodule relation as a function equals the additive-subgroup relation as a function.
+theorem submodule_rel_eq_add_subgroup_rel_fn[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
+    submodule_rel(s) = add_subgroup_rel(submodule_to_add_subgroup(s))
+} by {
+    forall(a: M) {
+        forall(b: M) {
+            submodule_rel_eq_add_subgroup_rel(s, a, b)
+        }
+        submodule_rel(s, a) = add_subgroup_rel(submodule_to_add_subgroup(s), a)
+    }
+}
+
+/// The quotient relation associated with a submodule.
+let submodule_quotient_relation[R: Ring, M: AddCommGroup](s: Submodule[R, M]) -> result: QuotientRelation[M] satisfy {
+    result = add_subgroup_quotient_relation(submodule_to_add_subgroup(s))
+}
+
+/// The submodule quotient relation has the expected underlying relation.
+theorem submodule_quotient_relation_rel[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
+    submodule_quotient_relation(s).rel = submodule_rel(s)
+} by {
+    submodule_quotient_relation(s) = add_subgroup_quotient_relation(submodule_to_add_subgroup(s))
+    add_subgroup_quotient_relation_rel(submodule_to_add_subgroup(s))
+    submodule_rel_eq_add_subgroup_rel_fn(s)
+}
+
+/// In a module, scalar multiplication distributes over subtraction.
+theorem module_smul_sub[R: Ring, M: AddCommGroup](m: Module[R, M], r: R, x: M, y: M) {
+    m.smul(r, x - y) = m.smul(r, x) - m.smul(r, y)
+} by {
+    x - y = x + -y
+    module_smul_add_right(m, r, x, -y)
+    m.smul(r, x + -y) = m.smul(r, x) + m.smul(r, -y)
+    module_smul_neg_right(m, r, y)
+    m.smul(r, -y) = -m.smul(r, y)
+    m.smul(r, x) + m.smul(r, -y) = m.smul(r, x) + -m.smul(r, y)
+    m.smul(r, x) + -m.smul(r, y) = m.smul(r, x) - m.smul(r, y)
+}
+
+/// The submodule relation is preserved by left scalar multiplication on related elements.
+theorem submodule_rel_smul_step[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, a: M, b: M) {
+    submodule_rel(s, a, b) implies submodule_rel(s, s.carrier.smul(r, a), s.carrier.smul(r, b))
+} by {
+    if submodule_rel(s, a, b) {
+        s.contains(a - b)
+        submodule_contains_smul(s, r, a - b)
+        s.contains(s.carrier.smul(r, a - b))
+        module_smul_sub(s.carrier, r, a, b)
+        s.carrier.smul(r, a - b) = s.carrier.smul(r, a) - s.carrier.smul(r, b)
+        s.contains(s.carrier.smul(r, a) - s.carrier.smul(r, b))
+    }
+}
+
+/// Left scalar multiplication by a fixed scalar, viewed as a unary operation on the module.
+define submodule_smul_by[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R) -> M -> M {
+    function(x: M) {
+        s.carrier.smul(r, x)
+    }
+}
+
+/// The submodule relation is compatible with left scalar multiplication by a fixed scalar.
+theorem submodule_rel_respects_smul_by[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R) {
+    respects_unary_op(submodule_rel(s), submodule_smul_by(s, r))
+} by {
+    forall(a: M, b: M) {
+        if submodule_rel(s, a, b) {
+            submodule_rel_smul_step(s, r, a, b)
+            submodule_rel(s, s.carrier.smul(r, a), s.carrier.smul(r, b))
+            submodule_smul_by(s, r, a) = s.carrier.smul(r, a)
+            submodule_smul_by(s, r, b) = s.carrier.smul(r, b)
+            submodule_rel(s, submodule_smul_by(s, r, a), submodule_smul_by(s, r, b))
+        }
+    }
+}
+
+/// The submodule quotient relation respects left scalar multiplication by a fixed scalar.
+theorem submodule_quotient_relation_respects_smul_by[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R) {
+    quotient_unary_respects(submodule_quotient_relation(s), submodule_smul_by(s, r))
+} by {
+    submodule_rel_respects_smul_by(s, r)
+    submodule_quotient_relation_rel(s)
+    quotient_unary_respects_eq_respects_unary_op(submodule_quotient_relation(s), submodule_smul_by(s, r))
+}
+
+/// Left scalar multiplication by a fixed scalar on the submodule quotient.
+define submodule_quotient_smul_by[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R) ->
+    QuotientOver[M] -> QuotientOver[M] {
+    quotient_over_unary_op(submodule_quotient_relation(s), submodule_smul_by(s, r))
+}
+
+/// Left scalar multiplication on the submodule quotient agrees with scalar multiplication of representatives.
+theorem submodule_quotient_smul_by_projection[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, a: M) {
+    submodule_quotient_smul_by(s, r,
+        quotient_over_mk(submodule_quotient_relation(s), a)
+    ) = quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(r, a))
+} by {
+    quotient_over_unary_op_projection(submodule_quotient_relation(s), submodule_smul_by(s, r), a)
+    submodule_smul_by(s, r, a) = s.carrier.smul(r, a)
+}
+
+/// Left scalar multiplication on the submodule quotient is independent of representative.
+theorem submodule_quotient_smul_by_projection_compatible[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, a: M, b: M) {
+    submodule_rel(s, a, b) implies
+    submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), a)) =
+        submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), b))
+} by {
+    if submodule_rel(s, a, b) {
+        submodule_quotient_smul_by_projection(s, r, a)
+        submodule_quotient_smul_by_projection(s, r, b)
+        submodule_rel_smul_step(s, r, a, b)
+    }
+}
+
+/// Addition on the submodule quotient.
+define submodule_quotient_add[R: Ring, M: AddCommGroup](s: Submodule[R, M]) ->
+    (QuotientOver[M], QuotientOver[M]) -> QuotientOver[M] {
+    add_subgroup_quotient_add(submodule_to_add_subgroup(s))
+}
+
+/// Negation on the submodule quotient.
+define submodule_quotient_neg[R: Ring, M: AddCommGroup](s: Submodule[R, M]) ->
+    QuotientOver[M] -> QuotientOver[M] {
+    add_subgroup_quotient_neg(submodule_to_add_subgroup(s))
+}
+
+/// The zero element of the submodule quotient.
+define submodule_quotient_zero[R: Ring, M: AddCommGroup](s: Submodule[R, M]) -> QuotientOver[M] {
+    add_subgroup_quotient_zero(submodule_to_add_subgroup(s))
+}
+
+/// Addition in the submodule quotient agrees with addition of representatives.
+theorem submodule_quotient_add_projection[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M, b: M) {
+    submodule_quotient_add(s,
+        quotient_over_mk(submodule_quotient_relation(s), a),
+        quotient_over_mk(submodule_quotient_relation(s), b)
+    ) = quotient_over_mk(submodule_quotient_relation(s), a + b)
+} by {
+    submodule_quotient_relation(s) = add_subgroup_quotient_relation(submodule_to_add_subgroup(s))
+    add_subgroup_quotient_add_projection(submodule_to_add_subgroup(s), a, b)
+}
+
+/// Negation in the submodule quotient agrees with negation of a representative.
+theorem submodule_quotient_neg_projection[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M) {
+    submodule_quotient_neg(s,
+        quotient_over_mk(submodule_quotient_relation(s), a)
+    ) = quotient_over_mk(submodule_quotient_relation(s), -a)
+} by {
+    submodule_quotient_relation(s) = add_subgroup_quotient_relation(submodule_to_add_subgroup(s))
+    add_subgroup_quotient_neg_projection(submodule_to_add_subgroup(s), a)
+}
+
+/// Scalar multiplication on the submodule quotient distributes over scalar addition.
+theorem submodule_quotient_smul_add_left[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, t: R, a: M) {
+    submodule_quotient_smul_by(s, r + t,
+        quotient_over_mk(submodule_quotient_relation(s), a)) =
+    submodule_quotient_add(s,
+        submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), a)),
+        submodule_quotient_smul_by(s, t, quotient_over_mk(submodule_quotient_relation(s), a)))
+} by {
+    submodule_quotient_smul_by_projection(s, r + t, a)
+    submodule_quotient_smul_by_projection(s, r, a)
+    submodule_quotient_smul_by_projection(s, t, a)
+    module_smul_add_left(s.carrier, r, t, a)
+    s.carrier.smul(r + t, a) = s.carrier.smul(r, a) + s.carrier.smul(t, a)
+    quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(r + t, a)) =
+        quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(r, a) + s.carrier.smul(t, a))
+    submodule_quotient_add_projection(s, s.carrier.smul(r, a), s.carrier.smul(t, a))
+}
+
+/// Scalar multiplication on the submodule quotient distributes over quotient addition.
+theorem submodule_quotient_smul_add_right[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, a: M, b: M) {
+    submodule_quotient_smul_by(s, r,
+        submodule_quotient_add(s,
+            quotient_over_mk(submodule_quotient_relation(s), a),
+            quotient_over_mk(submodule_quotient_relation(s), b))) =
+    submodule_quotient_add(s,
+        submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), a)),
+        submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), b)))
+} by {
+    submodule_quotient_add_projection(s, a, b)
+    submodule_quotient_smul_by_projection(s, r, a + b)
+    submodule_quotient_smul_by_projection(s, r, a)
+    submodule_quotient_smul_by_projection(s, r, b)
+    module_smul_add_right(s.carrier, r, a, b)
+    s.carrier.smul(r, a + b) = s.carrier.smul(r, a) + s.carrier.smul(r, b)
+    quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(r, a + b)) =
+        quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(r, a) + s.carrier.smul(r, b))
+    submodule_quotient_add_projection(s, s.carrier.smul(r, a), s.carrier.smul(r, b))
+}
+
+/// Scalar multiplication on the submodule quotient is compatible with ring multiplication.
+theorem submodule_quotient_smul_assoc[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, t: R, a: M) {
+    submodule_quotient_smul_by(s, r * t,
+        quotient_over_mk(submodule_quotient_relation(s), a)) =
+    submodule_quotient_smul_by(s, r,
+        submodule_quotient_smul_by(s, t, quotient_over_mk(submodule_quotient_relation(s), a)))
+} by {
+    submodule_quotient_smul_by_projection(s, r * t, a)
+    submodule_quotient_smul_by_projection(s, t, a)
+    submodule_quotient_smul_by_projection(s, r, s.carrier.smul(t, a))
+    module_smul_assoc(s.carrier, r, t, a)
+    s.carrier.smul(r * t, a) = s.carrier.smul(r, s.carrier.smul(t, a))
+    quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(r * t, a)) =
+        quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(r, s.carrier.smul(t, a)))
+}
+
+/// The ring identity acts as the identity scalar on the submodule quotient.
+theorem submodule_quotient_smul_one[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M) {
+    submodule_quotient_smul_by(s, R.1,
+        quotient_over_mk(submodule_quotient_relation(s), a)) =
+        quotient_over_mk(submodule_quotient_relation(s), a)
+} by {
+    submodule_quotient_smul_by_projection(s, R.1, a)
+    module_smul_one(s.carrier, a)
+    s.carrier.smul(R.1, a) = a
+    quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(R.1, a)) =
+        quotient_over_mk(submodule_quotient_relation(s), a)
+}
+
+/// The canonical projection from a module to its submodule quotient.
+define submodule_quotient_mk[R: Ring, M: AddCommGroup](s: Submodule[R, M]) -> M -> QuotientOver[M] {
+    function(a: M) {
+        quotient_over_mk(submodule_quotient_relation(s), a)
+    }
+}
+
+/// The canonical projection unfolds to the quotient maker.
+theorem submodule_quotient_mk_def[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M) {
+    submodule_quotient_mk(s)(a) = quotient_over_mk(submodule_quotient_relation(s), a)
+}
+
+/// Two elements have equal images under the canonical projection if and only if their
+/// difference lies in the submodule.
+theorem submodule_quotient_mk_eq_iff_in_submodule[R: Ring, M: AddCommGroup](
+    s: Submodule[R, M], a: M, b: M
+) {
+    (submodule_quotient_mk(s)(a) = submodule_quotient_mk(s)(b)) = s.contains(a - b)
+} by {
+    submodule_quotient_mk_def(s, a)
+    submodule_quotient_mk_def(s, b)
+    quotient_over_mk_eq_iff_rel(submodule_quotient_relation(s), a, b)
+    submodule_quotient_relation_rel(s)
+    submodule_quotient_relation(s).rel(a, b) = submodule_rel(s, a, b)
+    submodule_rel(s, a, b) = s.contains(a - b)
+}
+
+/// The image of zero under the canonical projection is the quotient zero.
+theorem submodule_quotient_mk_zero[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
+    submodule_quotient_mk(s)(M.0) = submodule_quotient_zero(s)
+} by {
+    submodule_quotient_mk_def(s, M.0)
+    submodule_quotient_zero(s) = add_subgroup_quotient_zero(submodule_to_add_subgroup(s))
+    add_subgroup_quotient_zero(submodule_to_add_subgroup(s)) =
+        quotient_over_mk(add_subgroup_quotient_relation(submodule_to_add_subgroup(s)), M.0)
+    submodule_quotient_relation(s) = add_subgroup_quotient_relation(submodule_to_add_subgroup(s))
+}
+
+/// An element maps to the quotient zero under the canonical projection if and only if
+/// it lies in the submodule. This identifies the kernel of the canonical projection
+/// (at the representative level) with the originating submodule.
+theorem submodule_quotient_mk_eq_zero_iff_in_submodule[R: Ring, M: AddCommGroup](
+    s: Submodule[R, M], a: M
+) {
+    (submodule_quotient_mk(s)(a) = submodule_quotient_zero(s)) = s.contains(a)
+} by {
+    submodule_quotient_mk_zero(s)
+    submodule_quotient_mk_eq_iff_in_submodule(s, a, M.0)
+    a - M.0 = a
+}
+
+/// The canonical projection sends a sum to the quotient sum of images.
+theorem submodule_quotient_mk_add[R: Ring, M: AddCommGroup](
+    s: Submodule[R, M], a: M, b: M
+) {
+    submodule_quotient_mk(s)(a + b) =
+        submodule_quotient_add(s, submodule_quotient_mk(s)(a), submodule_quotient_mk(s)(b))
+} by {
+    submodule_quotient_mk_def(s, a)
+    submodule_quotient_mk_def(s, b)
+    submodule_quotient_mk_def(s, a + b)
+    submodule_quotient_add_projection(s, a, b)
+}
+
+/// The canonical projection sends a negation to the quotient negation of the image.
+theorem submodule_quotient_mk_neg[R: Ring, M: AddCommGroup](
+    s: Submodule[R, M], a: M
+) {
+    submodule_quotient_mk(s)(-a) = submodule_quotient_neg(s, submodule_quotient_mk(s)(a))
+} by {
+    submodule_quotient_mk_def(s, a)
+    submodule_quotient_mk_def(s, -a)
+    submodule_quotient_neg_projection(s, a)
+}
+
+/// The canonical projection intertwines scalar multiplication on the module and the
+/// induced scalar action on the quotient.
+theorem submodule_quotient_mk_smul[R: Ring, M: AddCommGroup](
+    s: Submodule[R, M], r: R, a: M
+) {
+    submodule_quotient_mk(s)(s.carrier.smul(r, a)) =
+        submodule_quotient_smul_by(s, r, submodule_quotient_mk(s)(a))
+} by {
+    submodule_quotient_mk_def(s, a)
+    submodule_quotient_mk_def(s, s.carrier.smul(r, a))
+    submodule_quotient_smul_by_projection(s, r, a)
+}
+
+/// Two elements of a submodule lie in the same coset if and only if their difference
+/// is in the submodule.
+theorem submodule_quotient_mk_eq_of_diff_in_submodule[R: Ring, M: AddCommGroup](
+    s: Submodule[R, M], a: M, b: M
+) {
+    s.contains(a - b) implies submodule_quotient_mk(s)(a) = submodule_quotient_mk(s)(b)
+} by {
+    submodule_quotient_mk_eq_iff_in_submodule(s, a, b)
+}
+
+/// If two elements have the same image under the canonical projection, their difference
+/// lies in the submodule.
+theorem submodule_diff_in_submodule_of_quotient_mk_eq[R: Ring, M: AddCommGroup](
+    s: Submodule[R, M], a: M, b: M
+) {
+    submodule_quotient_mk(s)(a) = submodule_quotient_mk(s)(b) implies s.contains(a - b)
+} by {
+    submodule_quotient_mk_eq_iff_in_submodule(s, a, b)
+}
+
+/// Membership in the preimage of a submodule under a function.
+define linear_map_preimage[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    t: Submodule[R, N], f: M -> N, x: M
+) -> Bool {
+    t.contains(f(x))
+}
+
+/// The preimage of a submodule under a linear map contains the additive identity.
+theorem linear_map_preimage_zero_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    src: Module[R, M], t: Submodule[R, N], f: M -> N
+) {
+    is_linear_map(src, t.carrier, f) implies
+        submodule_zero_constraint(src, linear_map_preimage[R, M, N](t, f))
+} by {
+    if is_linear_map(src, t.carrier, f) {
+        linear_map_zero(src, t.carrier, f)
+        f(M.0) = N.0
+        submodule_contains_zero(t)
+        t.contains(N.0)
+        t.contains(f(M.0))
+        linear_map_preimage[R, M, N](t, f, M.0)
+    }
+}
+
+/// The preimage of a submodule under a linear map is closed under addition.
+theorem linear_map_preimage_add_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    src: Module[R, M], t: Submodule[R, N], f: M -> N
+) {
+    is_linear_map(src, t.carrier, f) implies
+        submodule_add_constraint(src, linear_map_preimage[R, M, N](t, f))
+} by {
+    if is_linear_map(src, t.carrier, f) {
+        forall(x: M, y: M) {
+            if linear_map_preimage[R, M, N](t, f, x) and linear_map_preimage[R, M, N](t, f, y) {
+                t.contains(f(x))
+                t.contains(f(y))
+                submodule_contains_add(t, f(x), f(y))
+                t.contains(f(x) + f(y))
+                linear_map_add(src, t.carrier, f, x, y)
+                f(x + y) = f(x) + f(y)
+                t.contains(f(x + y))
+                linear_map_preimage[R, M, N](t, f, x + y)
+            }
+        }
+    }
+}
+
+/// The preimage of a submodule under a linear map is closed under additive negation.
+theorem linear_map_preimage_neg_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    src: Module[R, M], t: Submodule[R, N], f: M -> N
+) {
+    is_linear_map(src, t.carrier, f) implies
+        submodule_neg_constraint(src, linear_map_preimage[R, M, N](t, f))
+} by {
+    if is_linear_map(src, t.carrier, f) {
+        forall(x: M) {
+            if linear_map_preimage[R, M, N](t, f, x) {
+                t.contains(f(x))
+                submodule_contains_neg(t, f(x))
+                t.contains(-f(x))
+                linear_map_neg(src, t.carrier, f, x)
+                f(-x) = -f(x)
+                t.contains(f(-x))
+                linear_map_preimage[R, M, N](t, f, -x)
+            }
+        }
+    }
+}
+
+/// The preimage of a submodule under a linear map is closed under scalar multiplication.
+theorem linear_map_preimage_smul_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    src: Module[R, M], t: Submodule[R, N], f: M -> N
+) {
+    is_linear_map(src, t.carrier, f) implies
+        submodule_smul_constraint(src, linear_map_preimage[R, M, N](t, f))
+} by {
+    if is_linear_map(src, t.carrier, f) {
+        forall(r: R, x: M) {
+            if linear_map_preimage[R, M, N](t, f, x) {
+                t.contains(f(x))
+                submodule_contains_smul(t, r, f(x))
+                t.carrier.smul(r, f(x)) = t.carrier.smul(r, f(x))
+                t.contains(t.carrier.smul(r, f(x)))
+                linear_map_smul(src, t.carrier, f, r, x)
+                f(src.smul(r, x)) = t.carrier.smul(r, f(x))
+                t.contains(f(src.smul(r, x)))
+                linear_map_preimage[R, M, N](t, f, src.smul(r, x))
+            }
+        }
+    }
+}
+
+/// Membership in the preimage of the zero submodule under a function is membership in the kernel.
+theorem linear_map_preimage_zero_submodule_eq_kernel[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    dst: Module[R, N], f: M -> N, x: M
+) {
+    linear_map_preimage[R, M, N](zero_submodule(dst), f, x) = linear_map_kernel[R, M, N](f, x)
+} by {
+    linear_map_preimage[R, M, N](zero_submodule(dst), f, x) = zero_submodule(dst).contains(f(x))
+    zero_submodule_contains_eq(dst, f(x))
+    zero_submodule(dst).contains(f(x)) = (f(x) = N.0)
+    linear_map_kernel[R, M, N](f, x) = (f(x) = N.0)
+}
+
+/// Membership in the preimage of the full submodule under any function is universal.
+theorem linear_map_preimage_full_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    dst: Module[R, N], f: M -> N, x: M
+) {
+    linear_map_preimage[R, M, N](full_submodule(dst), f, x)
+} by {
+    full_submodule_contains_everything(dst, f(x))
+    full_submodule(dst).contains(f(x))
+    linear_map_preimage[R, M, N](full_submodule(dst), f, x)
 }

@@ -1,7 +1,9 @@
 from comm_ring import CommRing
 from functions import predicate_extensionality
 from set import Set, singleton_set_is_finite, is_subset_monotone_map, is_set_extensive_map,
-    is_set_idempotent_map, is_set_closure_operator
+    is_set_idempotent_map, is_set_closure_operator, indexed_intersection,
+    indexed_intersection_contains_eq, indexed_intersection_contains_of_forall,
+    indexed_intersection_contains_at, set_ext
 
 /// True if a subset of a commutative ring contains the additive identity.
 define ideal_zero_constraint[R: CommRing](contains: R -> Bool) -> Bool {
@@ -2477,3 +2479,698 @@ theorem unit_ideal_is_finitely_generated[R: CommRing] {
     ideal_is_finitely_generated(Ideal[R].principal(R.1))
     ideal_is_finitely_generated(Ideal[R].unit)
 }
+
+/// The membership predicate of the intersection of an indexed family of ideals.
+define ideal_indexed_inter_contains[R: CommRing, I](family: I -> Ideal[R], x: R) -> Bool {
+    forall(i: I) { family(i).contains(x) }
+}
+
+/// The indexed intersection contains zero.
+theorem ideal_indexed_inter_zero_constraint[R: CommRing, I](family: I -> Ideal[R]) {
+    ideal_zero_constraint(ideal_indexed_inter_contains(family))
+} by {
+    forall(i: I) {
+        ideal_contains_zero(family(i))
+        family(i).contains(R.0)
+    }
+    ideal_indexed_inter_contains(family, R.0)
+}
+
+/// The indexed intersection is closed under addition.
+theorem ideal_indexed_inter_add_constraint[R: CommRing, I](family: I -> Ideal[R]) {
+    ideal_add_constraint(ideal_indexed_inter_contains(family))
+} by {
+    forall(a: R, b: R) {
+        if ideal_indexed_inter_contains(family, a) and ideal_indexed_inter_contains(family, b) {
+            forall(i: I) {
+                family(i).contains(a)
+                family(i).contains(b)
+                ideal_contains_add(family(i), a, b)
+                family(i).contains(a + b)
+            }
+            ideal_indexed_inter_contains(family, a + b)
+        }
+    }
+}
+
+/// The indexed intersection absorbs multiplication by ring elements.
+theorem ideal_indexed_inter_absorb_constraint[R: CommRing, I](family: I -> Ideal[R]) {
+    ideal_absorb_constraint(ideal_indexed_inter_contains(family))
+} by {
+    forall(r: R, a: R) {
+        if ideal_indexed_inter_contains(family, a) {
+            forall(i: I) {
+                family(i).contains(a)
+                ideal_contains_mul_left(family(i), r, a)
+                family(i).contains(r * a)
+            }
+            ideal_indexed_inter_contains(family, r * a)
+        }
+    }
+}
+
+/// The intersection of an indexed family of ideals is an ideal.
+theorem ideal_indexed_inter_is_ideal[R: CommRing, I](family: I -> Ideal[R]) {
+    is_ideal(ideal_indexed_inter_contains(family))
+} by {
+    ideal_indexed_inter_zero_constraint(family)
+    ideal_indexed_inter_add_constraint(family)
+    ideal_indexed_inter_absorb_constraint(family)
+    is_ideal_from_constraints(ideal_indexed_inter_contains(family))
+}
+
+/// The bundled intersection of an indexed family of ideals.
+let ideal_indexed_inter[R: CommRing, I](family: I -> Ideal[R]) -> result: Ideal[R] satisfy {
+    Ideal.new(ideal_indexed_inter_contains(family)) = Option.some(result)
+} by {
+    ideal_indexed_inter_is_ideal(family)
+}
+
+/// Membership in the indexed intersection means membership in every member of the family.
+theorem ideal_indexed_inter_contains_eq[R: CommRing, I](family: I -> Ideal[R], x: R) {
+    ideal_indexed_inter(family).contains(x) = forall(i: I) { family(i).contains(x) }
+} by {
+    ideal_indexed_inter(family).contains(x) = ideal_indexed_inter_contains(family, x)
+}
+
+/// Membership in every member of the family gives membership in the indexed intersection.
+theorem ideal_indexed_inter_contains_of_forall[R: CommRing, I](family: I -> Ideal[R], x: R) {
+    (forall(i: I) { family(i).contains(x) }) implies ideal_indexed_inter(family).contains(x)
+} by {
+    if forall(i: I) { family(i).contains(x) } {
+        ideal_indexed_inter_contains_eq(family, x)
+        ideal_indexed_inter(family).contains(x)
+    }
+}
+
+/// Membership in the indexed intersection gives membership in each member of the family.
+theorem ideal_indexed_inter_contains_at[R: CommRing, I](family: I -> Ideal[R], i: I, x: R) {
+    ideal_indexed_inter(family).contains(x) implies family(i).contains(x)
+} by {
+    if ideal_indexed_inter(family).contains(x) {
+        ideal_indexed_inter_contains_eq(family, x)
+        family(i).contains(x)
+    }
+}
+
+/// The indexed intersection is contained in each member of the family.
+theorem ideal_indexed_inter_subset[R: CommRing, I](family: I -> Ideal[R], i: I) {
+    bundled_ideal_subset(ideal_indexed_inter(family), family(i))
+} by {
+    forall(x: R) {
+        if ideal_indexed_inter(family).contains(x) {
+            ideal_indexed_inter_contains_at(family, i, x)
+            family(i).contains(x)
+        }
+    }
+}
+
+/// Any ideal contained in every member of the family is contained in the indexed intersection.
+theorem ideal_subset_indexed_inter_of_forall[R: CommRing, I](
+    c: Ideal[R], family: I -> Ideal[R]
+) {
+    (forall(i: I) { bundled_ideal_subset(c, family(i)) })
+        implies bundled_ideal_subset(c, ideal_indexed_inter(family))
+} by {
+    if forall(i: I) { bundled_ideal_subset(c, family(i)) } {
+        forall(x: R) {
+            if c.contains(x) {
+                forall(i: I) {
+                    bundled_ideal_subset(c, family(i))
+                    family(i).contains(x)
+                }
+                ideal_indexed_inter_contains_of_forall(family, x)
+                ideal_indexed_inter(family).contains(x)
+            }
+        }
+    }
+}
+
+/// Containment in the indexed intersection is containment in every member of the family.
+theorem ideal_subset_indexed_inter_iff[R: CommRing, I](
+    c: Ideal[R], family: I -> Ideal[R]
+) {
+    bundled_ideal_subset(c, ideal_indexed_inter(family)) =
+        forall(i: I) { bundled_ideal_subset(c, family(i)) }
+} by {
+    if bundled_ideal_subset(c, ideal_indexed_inter(family)) {
+        forall(i: I) {
+            ideal_indexed_inter_subset(family, i)
+            bundled_ideal_subset_trans(c, ideal_indexed_inter(family), family(i))
+            bundled_ideal_subset(c, family(i))
+        }
+    }
+    if forall(i: I) { bundled_ideal_subset(c, family(i)) } {
+        ideal_subset_indexed_inter_of_forall(c, family)
+    }
+}
+
+/// Indexed intersection is monotone with respect to pointwise inclusion.
+theorem ideal_indexed_inter_monotone[R: CommRing, I](
+    family_a: I -> Ideal[R], family_b: I -> Ideal[R]
+) {
+    (forall(i: I) { bundled_ideal_subset(family_a(i), family_b(i)) })
+        implies bundled_ideal_subset(ideal_indexed_inter(family_a), ideal_indexed_inter(family_b))
+} by {
+    if forall(i: I) { bundled_ideal_subset(family_a(i), family_b(i)) } {
+        forall(x: R) {
+            if ideal_indexed_inter(family_a).contains(x) {
+                ideal_indexed_inter_contains_eq(family_a, x)
+                forall(i: I) {
+                    family_a(i).contains(x)
+                    bundled_ideal_subset(family_a(i), family_b(i))
+                    family_b(i).contains(x)
+                }
+                ideal_indexed_inter_contains_of_forall(family_b, x)
+                ideal_indexed_inter(family_b).contains(x)
+            }
+        }
+    }
+}
+
+/// Equal families have equal indexed intersections.
+theorem ideal_indexed_inter_eq_of_family_eq[R: CommRing, I](
+    family_a: I -> Ideal[R], family_b: I -> Ideal[R]
+) {
+    family_a = family_b implies ideal_indexed_inter(family_a) = ideal_indexed_inter(family_b)
+} by {
+    if family_a = family_b {
+        ideal_indexed_inter(family_a) = ideal_indexed_inter(family_b)
+    }
+}
+
+/// The underlying set of the i-th member of an indexed family of ideals.
+define ideal_family_as_set[R: CommRing, I](family: I -> Ideal[R], i: I) -> Set[R] {
+    family(i).as_set
+}
+
+/// The underlying set of the indexed intersection of ideals is the indexed intersection of the underlying sets.
+theorem ideal_indexed_inter_as_set[R: CommRing, I](family: I -> Ideal[R]) {
+    ideal_indexed_inter(family).as_set = indexed_intersection(ideal_family_as_set(family))
+} by {
+    forall(x: R) {
+        if ideal_indexed_inter(family).as_set.contains(x) {
+            ideal_as_set_contains_eq(ideal_indexed_inter(family), x)
+            ideal_indexed_inter(family).contains(x)
+            ideal_indexed_inter_contains_eq(family, x)
+            forall(i: I) {
+                family(i).contains(x)
+                ideal_contains_as_set_eq(family(i), x)
+                family(i).as_set.contains(x)
+                ideal_family_as_set(family, i) = family(i).as_set
+                ideal_family_as_set(family, i).contains(x)
+            }
+            indexed_intersection_contains_of_forall(ideal_family_as_set(family), x)
+            indexed_intersection(ideal_family_as_set(family)).contains(x)
+        }
+        if indexed_intersection(ideal_family_as_set(family)).contains(x) {
+            forall(i: I) {
+                indexed_intersection_contains_at(ideal_family_as_set(family), i, x)
+                ideal_family_as_set(family, i).contains(x)
+                ideal_family_as_set(family, i) = family(i).as_set
+                family(i).as_set.contains(x)
+                ideal_as_set_contains_eq(family(i), x)
+                family(i).contains(x)
+            }
+            ideal_indexed_inter_contains_of_forall(family, x)
+            ideal_indexed_inter(family).contains(x)
+            ideal_contains_as_set_eq(ideal_indexed_inter(family), x)
+            ideal_indexed_inter(family).as_set.contains(x)
+        }
+        ideal_indexed_inter(family).as_set.contains(x) =
+            indexed_intersection(ideal_family_as_set(family)).contains(x)
+    }
+    forall(x: R) {
+        ideal_indexed_inter(family).as_set.contains(x) =
+            indexed_intersection(ideal_family_as_set(family)).contains(x)
+    }
+    set_ext(ideal_indexed_inter(family).as_set, indexed_intersection(ideal_family_as_set(family)))
+}
+
+/// True if a subset of a commutative ring is a proper ideal: it does not contain the multiplicative identity.
+define ideal_proper_constraint[R: CommRing](contains: R -> Bool) -> Bool {
+    not contains(R.1)
+}
+
+/// True if a subset of a commutative ring satisfies the primality condition:
+/// whenever a product lies in the subset, at least one factor lies in the subset.
+define ideal_prime_constraint[R: CommRing](contains: R -> Bool) -> Bool {
+    forall(a: R, b: R) {
+        contains(a * b) implies contains(a) or contains(b)
+    }
+}
+
+/// True if a subset of a commutative ring is a prime ideal: an ideal that is
+/// proper and whose containment is preserved under reverse-multiplication.
+define is_prime_ideal[R: CommRing](contains: R -> Bool) -> Bool {
+    is_ideal(contains)
+    and ideal_proper_constraint(contains)
+    and ideal_prime_constraint(contains)
+}
+
+/// is_prime_ideal unfolds to the conjunction of is_ideal with the proper and prime sub-constraints.
+theorem is_prime_ideal_unfold[R: CommRing](contains: R -> Bool) {
+    is_prime_ideal(contains) = (is_ideal(contains) and ideal_proper_constraint(contains) and ideal_prime_constraint(contains))
+}
+
+/// is_ideal together with the proper and prime sub-constraints establishes is_prime_ideal.
+theorem is_prime_ideal_from_constraints[R: CommRing](contains: R -> Bool) {
+    is_ideal(contains) and ideal_proper_constraint(contains) and ideal_prime_constraint(contains)
+        implies is_prime_ideal(contains)
+} by {
+    is_prime_ideal_unfold(contains)
+}
+
+/// A prime ideal is an ideal.
+theorem is_prime_ideal_is_ideal[R: CommRing](contains: R -> Bool) {
+    is_prime_ideal(contains) implies is_ideal(contains)
+} by {
+    if is_prime_ideal(contains) {
+        is_prime_ideal_unfold(contains)
+    }
+}
+
+/// A prime ideal does not contain the multiplicative identity.
+theorem is_prime_ideal_proper[R: CommRing](contains: R -> Bool) {
+    is_prime_ideal(contains) implies not contains(R.1)
+} by {
+    if is_prime_ideal(contains) {
+        is_prime_ideal(contains) = (is_ideal(contains) and ideal_proper_constraint(contains) and ideal_prime_constraint(contains))
+        ideal_proper_constraint(contains)
+        ideal_proper_constraint(contains) = not contains(R.1)
+        not contains(R.1)
+    }
+}
+
+/// In a prime ideal, if a product lies in the ideal then at least one factor does.
+theorem is_prime_ideal_mem[R: CommRing](contains: R -> Bool, a: R, b: R) {
+    is_prime_ideal(contains) and contains(a * b) implies contains(a) or contains(b)
+} by {
+    if is_prime_ideal(contains) and contains(a * b) {
+        is_prime_ideal_unfold(contains)
+        ideal_prime_constraint(contains)
+        ideal_prime_constraint(contains) = forall(x: R, y: R) {
+            contains(x * y) implies contains(x) or contains(y)
+        }
+        contains(a * b) implies contains(a) or contains(b)
+    }
+}
+
+/// The unit ideal is not a prime ideal: it fails the proper constraint because it contains the multiplicative identity.
+theorem unit_ideal_not_prime[R: CommRing] {
+    not is_prime_ideal(unit_ideal[R])
+} by {
+    if is_prime_ideal(unit_ideal[R]) {
+        is_prime_ideal_proper(unit_ideal[R])
+        not unit_ideal[R](R.1)
+        unit_ideal[R](R.1)
+        false
+    }
+}
+
+/// True if a subset of a commutative ring is a maximal ideal: a proper ideal
+/// that is not strictly contained in any other proper ideal.
+define is_maximal_ideal[R: CommRing](contains: R -> Bool) -> Bool {
+    is_ideal(contains)
+    and ideal_proper_constraint(contains)
+    and forall(other: R -> Bool) {
+        is_ideal(other) and ideal_subset(contains, other) and ideal_proper_constraint(other)
+            implies ideal_subset(other, contains)
+    }
+}
+
+/// A maximal ideal is an ideal.
+theorem is_maximal_ideal_is_ideal[R: CommRing](contains: R -> Bool) {
+    is_maximal_ideal(contains) implies is_ideal(contains)
+} by {
+    if is_maximal_ideal(contains) {
+        is_maximal_ideal(contains) = (is_ideal(contains)
+            and ideal_proper_constraint(contains)
+            and forall(other: R -> Bool) {
+                is_ideal(other) and ideal_subset(contains, other) and ideal_proper_constraint(other)
+                    implies ideal_subset(other, contains)
+            })
+    }
+}
+
+/// A maximal ideal does not contain the multiplicative identity.
+theorem is_maximal_ideal_proper[R: CommRing](contains: R -> Bool) {
+    is_maximal_ideal(contains) implies not contains(R.1)
+} by {
+    if is_maximal_ideal(contains) {
+        is_maximal_ideal(contains) = (is_ideal(contains)
+            and ideal_proper_constraint(contains)
+            and forall(other: R -> Bool) {
+                is_ideal(other) and ideal_subset(contains, other) and ideal_proper_constraint(other)
+                    implies ideal_subset(other, contains)
+            })
+        ideal_proper_constraint(contains)
+        ideal_proper_constraint(contains) = not contains(R.1)
+        not contains(R.1)
+    }
+}
+
+/// is_maximal_ideal unfolds to the conjunction of is_ideal, the proper sub-constraint,
+/// and the maximality condition on proper ideals.
+theorem is_maximal_ideal_unfold[R: CommRing](contains: R -> Bool) {
+    is_maximal_ideal(contains) = (is_ideal(contains)
+        and ideal_proper_constraint(contains)
+        and forall(other: R -> Bool) {
+            is_ideal(other) and ideal_subset(contains, other) and ideal_proper_constraint(other)
+                implies ideal_subset(other, contains)
+        })
+}
+
+/// is_ideal together with the proper sub-constraint and the maximality condition
+/// establishes is_maximal_ideal.
+theorem is_maximal_ideal_from_constraints[R: CommRing](contains: R -> Bool) {
+    is_ideal(contains)
+        and ideal_proper_constraint(contains)
+        and forall(other: R -> Bool) {
+            is_ideal(other) and ideal_subset(contains, other) and ideal_proper_constraint(other)
+                implies ideal_subset(other, contains)
+        }
+        implies is_maximal_ideal(contains)
+} by {
+    is_maximal_ideal_unfold(contains)
+}
+
+/// The maximality witness: every proper ideal containing a maximal ideal is contained in it.
+theorem is_maximal_ideal_witness[R: CommRing](
+    contains: R -> Bool, other: R -> Bool
+) {
+    is_maximal_ideal(contains)
+        and is_ideal(other)
+        and ideal_subset(contains, other)
+        and ideal_proper_constraint(other)
+        implies ideal_subset(other, contains)
+} by {
+    if is_maximal_ideal(contains)
+        and is_ideal(other)
+        and ideal_subset(contains, other)
+        and ideal_proper_constraint(other) {
+        is_maximal_ideal_unfold(contains)
+        is_ideal(other) and ideal_subset(contains, other) and ideal_proper_constraint(other)
+        ideal_subset(other, contains)
+    }
+}
+
+/// The unit ideal is not a maximal ideal: it fails the proper constraint because it contains the multiplicative identity.
+theorem unit_ideal_not_maximal[R: CommRing] {
+    not is_maximal_ideal(unit_ideal[R])
+} by {
+    if is_maximal_ideal(unit_ideal[R]) {
+        is_maximal_ideal_proper(unit_ideal[R])
+        not unit_ideal[R](R.1)
+        unit_ideal[R](R.1)
+        false
+    }
+}
+
+/// The sum of an ideal with a principal ideal contains the principal generator.
+theorem ideal_sum_principal_contains_generator[R: CommRing](contains: R -> Bool, a: R) {
+    is_ideal(contains) implies ideal_sum[R](contains, principal_ideal[R](a), a)
+} by {
+    if is_ideal(contains) {
+        is_ideal_zero(contains)
+        contains(R.0)
+        principal_ideal_contains_generator(a)
+        principal_ideal(a, a)
+        a = R.0 + a
+        contains(R.0) and principal_ideal(a, a) and a = R.0 + a
+        exists(p: R, q: R) {
+            contains(p) and principal_ideal(a, q) and a = p + q
+        }
+        ideal_sum(contains, principal_ideal[R](a), a)
+    }
+}
+
+/// If a maximal ideal does not contain a, then the sum of the maximal ideal and the
+/// principal ideal generated by a contains the multiplicative identity.
+theorem maximal_ideal_sum_principal_contains_one[R: CommRing](contains: R -> Bool, a: R) {
+    is_maximal_ideal(contains) and not contains(a)
+        implies ideal_sum[R](contains, principal_ideal[R](a), R.1)
+} by {
+    if is_maximal_ideal(contains) and not contains(a) {
+        is_maximal_ideal_is_ideal(contains)
+        principal_ideal_is_ideal(a)
+        ideal_sum_is_ideal(contains, principal_ideal[R](a))
+        is_ideal(ideal_sum[R](contains, principal_ideal[R](a)))
+        ideal_sum_subset_left(contains, principal_ideal[R](a))
+        ideal_subset(contains, ideal_sum[R](contains, principal_ideal[R](a)))
+        ideal_sum_principal_contains_generator(contains, a)
+        ideal_sum(contains, principal_ideal[R](a), a)
+        if ideal_proper_constraint(ideal_sum[R](contains, principal_ideal[R](a))) {
+            is_maximal_ideal_witness(contains, ideal_sum[R](contains, principal_ideal[R](a)))
+            ideal_subset(ideal_sum[R](contains, principal_ideal[R](a)), contains)
+            ideal_subset(ideal_sum[R](contains, principal_ideal[R](a)), contains) =
+                forall(x: R) {
+                    ideal_sum[R](contains, principal_ideal[R](a), x) implies contains(x)
+                }
+            contains(a)
+            false
+        }
+        not ideal_proper_constraint(ideal_sum[R](contains, principal_ideal[R](a)))
+        ideal_proper_constraint(ideal_sum[R](contains, principal_ideal[R](a))) =
+            not ideal_sum[R](contains, principal_ideal[R](a), R.1)
+        ideal_sum[R](contains, principal_ideal[R](a), R.1)
+    }
+}
+
+/// If a is not in a maximal ideal but a*b is, then b is in the maximal ideal.
+theorem maximal_ideal_prime_step[R: CommRing](contains: R -> Bool, a: R, b: R) {
+    is_maximal_ideal(contains) and contains(a * b) and not contains(a) implies contains(b)
+} by {
+    if is_maximal_ideal(contains) and contains(a * b) and not contains(a) {
+        is_maximal_ideal_is_ideal(contains)
+        maximal_ideal_sum_principal_contains_one(contains, a)
+        ideal_sum[R](contains, principal_ideal[R](a), R.1)
+        let (i: R, p: R) satisfy {
+            contains(i) and principal_ideal(a, p) and R.1 = i + p
+        }
+        let r: R satisfy { p = r * a }
+        R.1 = i + r * a
+        b = b * R.1
+        b * R.1 = b * (i + r * a)
+        b * (i + r * a) = b * i + b * (r * a)
+        b * (r * a) = r * (a * b)
+        b * i + b * (r * a) = b * i + r * (a * b)
+        b = b * i + r * (a * b)
+        is_ideal_absorb(contains, b, i)
+        contains(b * i)
+        is_ideal_absorb(contains, r, a * b)
+        contains(r * (a * b))
+        is_ideal_add(contains, b * i, r * (a * b))
+        contains(b * i + r * (a * b))
+        contains(b)
+    }
+}
+
+/// In a maximal ideal, if a product lies in the ideal then at least one factor does.
+theorem maximal_ideal_prime_constraint[R: CommRing](contains: R -> Bool) {
+    is_maximal_ideal(contains) implies ideal_prime_constraint(contains)
+} by {
+    if is_maximal_ideal(contains) {
+        forall(a: R, b: R) {
+            if contains(a * b) {
+                if not contains(a) {
+                    maximal_ideal_prime_step(contains, a, b)
+                }
+                contains(a) or contains(b)
+            }
+        }
+        ideal_prime_constraint(contains) = forall(x: R, y: R) {
+            contains(x * y) implies contains(x) or contains(y)
+        }
+        ideal_prime_constraint(contains)
+    }
+}
+
+/// Every maximal ideal is a prime ideal.
+theorem is_maximal_ideal_implies_prime[R: CommRing](contains: R -> Bool) {
+    is_maximal_ideal(contains) implies is_prime_ideal(contains)
+} by {
+    if is_maximal_ideal(contains) {
+        is_maximal_ideal_is_ideal(contains)
+        is_ideal(contains)
+        is_maximal_ideal_proper(contains)
+        ideal_proper_constraint(contains) = not contains(R.1)
+        ideal_proper_constraint(contains)
+        maximal_ideal_prime_constraint(contains)
+        ideal_prime_constraint(contains)
+        is_ideal(contains) and ideal_proper_constraint(contains) and ideal_prime_constraint(contains)
+        is_prime_ideal_from_constraints(contains)
+        is_prime_ideal(contains)
+    }
+}
+
+/// In a maximal ideal, if a product lies in the ideal then at least one factor does.
+theorem is_maximal_ideal_mem[R: CommRing](contains: R -> Bool, a: R, b: R) {
+    is_maximal_ideal(contains) and contains(a * b) implies contains(a) or contains(b)
+} by {
+    if is_maximal_ideal(contains) and contains(a * b) {
+        is_maximal_ideal_implies_prime(contains)
+        is_prime_ideal_mem(contains, a, b)
+    }
+}
+
+/// A prime ideal of a commutative ring, bundled with its membership predicate.
+structure PrimeIdeal[R: CommRing] {
+    /// True if the given element is a member of this prime ideal.
+    contains: R -> Bool
+} constraint {
+    is_prime_ideal(contains)
+}
+
+/// A prime ideal is in particular an ideal.
+theorem prime_ideal_is_ideal[R: CommRing](p: PrimeIdeal[R]) {
+    is_ideal(p.contains)
+} by {
+    is_prime_ideal(p.contains)
+    is_prime_ideal_is_ideal(p.contains)
+}
+
+/// Prime ideal extensionality from pointwise equality of membership.
+theorem prime_ideal_ext[R: CommRing](a: PrimeIdeal[R], b: PrimeIdeal[R]) {
+    (forall(x: R) { a.contains(x) = b.contains(x) }) implies a = b
+} by {
+    if forall(x: R) { a.contains(x) = b.contains(x) } {
+        a.contains = b.contains
+    }
+}
+
+/// A prime ideal does not contain the multiplicative identity.
+theorem prime_ideal_not_contains_one[R: CommRing](p: PrimeIdeal[R]) {
+    not p.contains(R.1)
+} by {
+    is_prime_ideal(p.contains)
+    is_prime_ideal_proper(p.contains)
+}
+
+/// In a prime ideal, if a product lies in the ideal then at least one factor does.
+theorem prime_ideal_contains_mul[R: CommRing](p: PrimeIdeal[R], a: R, b: R) {
+    p.contains(a * b) implies p.contains(a) or p.contains(b)
+} by {
+    if p.contains(a * b) {
+        is_prime_ideal(p.contains)
+        is_prime_ideal_mem(p.contains, a, b)
+    }
+}
+
+/// The bundled ideal underlying a prime ideal.
+let prime_ideal_as_ideal[R: CommRing](p: PrimeIdeal[R]) -> result: Ideal[R] satisfy {
+    Ideal.new(p.contains) = Option.some(result)
+} by {
+    prime_ideal_is_ideal(p)
+}
+
+/// A maximal ideal of a commutative ring, bundled with its membership predicate.
+structure MaximalIdeal[R: CommRing] {
+    /// True if the given element is a member of this maximal ideal.
+    contains: R -> Bool
+} constraint {
+    is_maximal_ideal(contains)
+}
+
+/// A maximal ideal is in particular an ideal.
+theorem maximal_ideal_is_ideal[R: CommRing](m: MaximalIdeal[R]) {
+    is_ideal(m.contains)
+} by {
+    is_maximal_ideal(m.contains)
+    is_maximal_ideal_is_ideal(m.contains)
+}
+
+/// A maximal ideal is in particular a prime ideal.
+theorem maximal_ideal_is_prime[R: CommRing](m: MaximalIdeal[R]) {
+    is_prime_ideal(m.contains)
+} by {
+    is_maximal_ideal(m.contains)
+    is_maximal_ideal_implies_prime(m.contains)
+}
+
+/// Maximal ideal extensionality from pointwise equality of membership.
+theorem maximal_ideal_ext[R: CommRing](a: MaximalIdeal[R], b: MaximalIdeal[R]) {
+    (forall(x: R) { a.contains(x) = b.contains(x) }) implies a = b
+} by {
+    if forall(x: R) { a.contains(x) = b.contains(x) } {
+        a.contains = b.contains
+    }
+}
+
+/// A maximal ideal does not contain the multiplicative identity.
+theorem maximal_ideal_not_contains_one[R: CommRing](m: MaximalIdeal[R]) {
+    not m.contains(R.1)
+} by {
+    is_maximal_ideal(m.contains)
+    is_maximal_ideal_proper(m.contains)
+}
+
+/// In a maximal ideal, if a product lies in the ideal then at least one factor does.
+theorem maximal_ideal_contains_mul[R: CommRing](m: MaximalIdeal[R], a: R, b: R) {
+    m.contains(a * b) implies m.contains(a) or m.contains(b)
+} by {
+    if m.contains(a * b) {
+        is_maximal_ideal(m.contains)
+        is_maximal_ideal_mem(m.contains, a, b)
+    }
+}
+
+/// The maximality witness for a bundled maximal ideal: every proper ideal containing it equals it on its containment.
+theorem maximal_ideal_witness[R: CommRing](m: MaximalIdeal[R], other: R -> Bool) {
+    is_ideal(other) and ideal_subset(m.contains, other) and ideal_proper_constraint(other)
+        implies ideal_subset(other, m.contains)
+} by {
+    if is_ideal(other) and ideal_subset(m.contains, other) and ideal_proper_constraint(other) {
+        is_maximal_ideal(m.contains)
+        is_maximal_ideal_witness(m.contains, other)
+    }
+}
+
+/// The bundled ideal underlying a maximal ideal.
+let maximal_ideal_as_ideal[R: CommRing](m: MaximalIdeal[R]) -> result: Ideal[R] satisfy {
+    Ideal.new(m.contains) = Option.some(result)
+} by {
+    maximal_ideal_is_ideal(m)
+}
+
+/// The bundled prime ideal underlying a maximal ideal.
+let maximal_ideal_as_prime_ideal[R: CommRing](m: MaximalIdeal[R]) -> result: PrimeIdeal[R] satisfy {
+    PrimeIdeal.new(m.contains) = Option.some(result)
+} by {
+    maximal_ideal_is_prime(m)
+}
+
+attributes PrimeIdeal[R: CommRing] {
+    /// Prime ideal extensionality from pointwise equality of membership.
+    let ext = prime_ideal_ext[R]
+
+    /// The bundled ideal obtained by forgetting the prime structure.
+    let as_ideal: PrimeIdeal[R] -> Ideal[R] = prime_ideal_as_ideal[R]
+}
+
+attributes MaximalIdeal[R: CommRing] {
+    /// Maximal ideal extensionality from pointwise equality of membership.
+    let ext = maximal_ideal_ext[R]
+
+    /// The bundled ideal obtained by forgetting the maximal structure.
+    let as_ideal: MaximalIdeal[R] -> Ideal[R] = maximal_ideal_as_ideal[R]
+
+    /// The bundled prime ideal obtained from a maximal ideal.
+    let as_prime_ideal: MaximalIdeal[R] -> PrimeIdeal[R] = maximal_ideal_as_prime_ideal[R]
+}
+
+/// Membership in the underlying ideal of a prime ideal coincides with membership in the prime ideal.
+theorem prime_ideal_as_ideal_contains_eq[R: CommRing](p: PrimeIdeal[R], x: R) {
+    p.as_ideal.contains(x) = p.contains(x)
+}
+
+/// Membership in the underlying ideal of a maximal ideal coincides with membership in the maximal ideal.
+theorem maximal_ideal_as_ideal_contains_eq[R: CommRing](m: MaximalIdeal[R], x: R) {
+    m.as_ideal.contains(x) = m.contains(x)
+}
+
+/// Membership in the underlying prime ideal of a maximal ideal coincides with membership in the maximal ideal.
+theorem maximal_ideal_as_prime_ideal_contains_eq[R: CommRing](m: MaximalIdeal[R], x: R) {
+    m.as_prime_ideal.contains(x) = m.contains(x)
+}
+
