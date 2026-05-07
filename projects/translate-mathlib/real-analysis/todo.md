@@ -18,4 +18,4 @@ Status:
 - `src/real/limits.ac` now has a reusable subsequence API for monotone unbounded index maps, including preservation of convergence, same-limit lemmas, and standard tail/every-`k`th/even/successor subsequence aliases.
 - `src/real/bounded_seq.ac` introduces `is_bounded_seq`, a finite-prefix bound by induction, and proves convergent real sequences are bounded.
 - `src/real/cauchy_criterion.ac` exposes `is_cauchy_seq` with the explicit ε-N form and proves the Cauchy criterion: a real sequence is Cauchy exactly when it converges to a real limit.
-- `src/real/series_cauchy.ac` introduces `is_cauchy_series` (windowed ε-N form on finite blocks `a(k) + ... + a(m - 1)`) and proves the series Cauchy criterion: partial sums converge iff the series is Cauchy in the windowed sense.
+- `src/real/series_cauchy.ac` introduces `is_cauchy_series` (windowed ε-N form on finite blocks `a(k) + ... + a(m - 1)`) and proves the series Cauchy criterion: partial sums converge iff the series is Cauchy in the windowed sense; also proves the absolute form `is_cauchy_series(abs_fn(a)) implies is_cauchy_series(a)`.
