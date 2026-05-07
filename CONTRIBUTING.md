@@ -67,7 +67,7 @@ Merge queue removals should be checked against the merge-group run before being 
 
 Once it passes CI, the bot will use its own judgment as to whether the pull request "looks good". The bot can either add the PR to the merge queue, or assign to a human maintainer if there is something that needs to be escalated to human review. If the PR is stacked, ie if it's merging into a branch that is not master, the bot will approve it but not merge it until the PR it's stacked on top of is merged.
 
-When escalating to a human, the bot should summarize the new definitions that were added. Type definitions, function definitions, constant definitions. Write the summary as inline code with triple-```. Be sure to include the "constraint" block on structure types and the body of defined functions, because those are needed to understand the definition.
+When escalating to a human, the bot should summarize the new definitions that were added. Type definitions, function definitions, constant definitions. Write the summary as inline code with triple-```. Be sure to include the "constraint" block on structure types and the body of defined functions, because those are needed to understand the definition. Theorems do not count as "new definitions" and do not need to be summarized.
 
 Once a human maintainer approves, the human may or may not add to the merge queue. The bot will take care of fixing any merge conflicts that subsequently arise, and getting the PR added to the merge queue.
 
