@@ -2,8 +2,9 @@
 
 Goal: support iterative, topological, and measure-theoretic dynamics in a unified way.
 
-- [ ] Define iterated maps, orbits, and invariant sets
-- [ ] Add fixed points and periodic points
+- [ ] Add periodic points and prime period
+- [ ] Add backward orbits and full orbits for invertible maps
+- [ ] Conjugate invariance: orbit and fixed-point preservation under conjugacy
 - [ ] Support conjugacy and semiconjugacy
 - [ ] Develop omega-limit and alpha-limit sets
 - [ ] Add symbolic-dynamics basics
