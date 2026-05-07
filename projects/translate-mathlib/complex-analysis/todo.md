@@ -2,6 +2,7 @@
 
 Goal: build the standard holomorphic-function theory that rests on top of complex numbers and real analysis.
 
+- [ ] Expand complex algebra preliminaries (abs_squared multiplicativity, polar form, modulus via sqrt once available)
 - [ ] Define holomorphic and analytic functions
 - [ ] Add power series and radius-of-convergence results
 - [ ] Prove the Cauchy integral formula
