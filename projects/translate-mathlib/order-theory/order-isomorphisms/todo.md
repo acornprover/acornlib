@@ -17,9 +17,10 @@ Status:
 - `src/order_iso.ac` now has `OrderDualIso` image/preimage predicate wrappers plus reversed interval, bound, boundedness, and binary `min`/`max` transport lemmas.
 - `src/add_ordered_group.ac` now connects ordered additive groups with the order-isomorphism API: left and right translations are bundled `OrderIso` values, and negation is a bundled `OrderDualIso`.
 - `src/ordered_group.ac` now connects ordered multiplicative groups with the order-isomorphism API: left and right multiplication by a fixed element are bundled `OrderIso` values with inverse-map projection lemmas.
-- `src/ordered_field.ac` now has unbundled positive-scalar order-isomorphism support: left/right scalar multiplication reflect non-strict order under explicit inverse-nonnegativity, are order embeddings, have inverse laws, and form `is_order_iso_pair`s when the scalar and its inverse are positive.
+- `src/ordered_field.ac` now has unbundled positive-scalar order-isomorphism support: left/right scalar multiplication reflect non-strict order under explicit inverse-nonnegativity, are order embeddings, have inverse laws, form `is_order_iso_pair`s when the scalar and its inverse are positive, and expose direct strict and non-strict comparison-iff wrappers.
+- `src/ordered_field.ac` now also has unbundled negative-scalar order-dual-isomorphism support: left/right scalar multiplication and inverse multiplication form `is_order_dual_iso_pair`s under explicit inverse-negativity, with non-strict and strict comparison-reflection wrappers.
 
 - [ ] Decide the proof-carrying API for bundled positive-scalar `OrderIso`s in ordered fields
-- [ ] Continue ordered-algebra `OrderIso` coverage for concrete non-design targets
+- [ ] Continue ordered-algebra `OrderIso` coverage for bundled or transported scalar-map targets
 - [ ] Blocked: add bundled product order isomorphisms once generic `Pair[A, B]: PartialOrder` instances render correctly
 - [ ] Refactor representative transport-heavy proofs to use the new API
