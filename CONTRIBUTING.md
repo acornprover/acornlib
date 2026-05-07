@@ -19,7 +19,7 @@ Try to be stylistically consistent with the rest of the codebase.
 
 Try to keep pull requests to below 2000 lines of Acorn code.
 
-Avoid adding fixed-arity APIs such as 6-ary, 7-ary, etc. wrappers unless there is a specific downstream reason; prefer indexed families or a named abstraction.
+Avoid adding fixed-arity APIs above ternary, such as 4-ary, 5-ary, etc. wrappers. Prefer indexed families, finite-support constructions, or named abstractions. Exceptions should be narrow support for a named downstream theorem, and the pull request should explain why the indexed or named API was not enough.
 
 Most pull requests will be AI-reviewed. Some areas will be escalated to human review:
 
