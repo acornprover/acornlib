@@ -4,7 +4,7 @@ Goal: add the smooth geometric infrastructure behind Lie groups, manifolds, and 
 
 - [ ] Define charted spaces and manifolds
   - [x] Partial bijections (`LocalEquiv`) in `src/local_equiv.ac`
-  - [ ] Identity partial bijection theorem (search times out; needs helper)
+  - [x] Identity partial bijection theorem (`local_equiv_data_id`, `local_equiv_id_constructible`)
   - [ ] Composition of partial bijections
   - [ ] Restriction of a partial bijection to a subset
   - [ ] Define `Chart[M, E]` (partial bijection into a model space)
