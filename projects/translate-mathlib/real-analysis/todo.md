@@ -2,7 +2,7 @@
 
 Goal: extend the current real library into the standard theorem toolkit used across undergraduate and graduate analysis.
 
-- [ ] Add limsup/liminf and Cauchy-criterion APIs for sequences and series
+- [ ] Add limsup/liminf APIs for sequences and series
 - [ ] Add continuity theorems on intervals and subsets
 - [ ] Develop one-variable differentiation
 - [ ] Prove the mean value theorem and Taylor-style results
@@ -16,3 +16,7 @@ Goal: extend the current real library into the standard theorem toolkit used acr
 Status:
 
 - `src/real/limits.ac` now has a reusable subsequence API for monotone unbounded index maps, including preservation of convergence, same-limit lemmas, and standard tail/every-`k`th/even/successor subsequence aliases.
+- `src/real/bounded_seq.ac` introduces `is_bounded_seq`, a finite-prefix bound by induction, and proves convergent real sequences are bounded.
+- `src/real/cauchy_criterion.ac` exposes `is_cauchy_seq` with the explicit ε-N form and proves the Cauchy criterion: a real sequence is Cauchy exactly when it converges to a real limit.
+- `src/real/series_cauchy.ac` introduces `is_cauchy_series` (windowed ε-N form on finite blocks `a(k) + ... + a(m - 1)`) and proves the series Cauchy criterion: partial sums converge iff the series is Cauchy in the windowed sense; also proves the absolute form `is_cauchy_series(abs_fn(a)) implies is_cauchy_series(a)`.
+- `src/real/continuity_algebra.ac` introduces a `continuous_condition_imp_continuous_at` helper and proves that composition and pointwise sum preserve continuity at a point and globally (`compose_continuous_at`, `compose_continuous`, `add_fns_continuous_at`, `add_fns_continuous`).

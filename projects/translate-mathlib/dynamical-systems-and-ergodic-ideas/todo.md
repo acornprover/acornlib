@@ -2,10 +2,9 @@
 
 Goal: support iterative, topological, and measure-theoretic dynamics in a unified way.
 
-- [ ] Add periodic points and prime period
+- [ ] Finish prime-period existence: prover times out unfolding the local predicate inside `has_min`; needs a small helper lemma or a non-local predicate definition
 - [ ] Add backward orbits and full orbits for invertible maps
-- [ ] Conjugate invariance: orbit and fixed-point preservation under conjugacy
-- [ ] Support conjugacy and semiconjugacy
+- [ ] Tie `is_conjugacy` to a bijection-based API using `is_bijective` plus inverse witnesses
 - [ ] Develop omega-limit and alpha-limit sets
 - [ ] Add symbolic-dynamics basics
 - [ ] Support interval and circle dynamics
