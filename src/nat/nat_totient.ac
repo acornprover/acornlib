@@ -2597,3 +2597,127 @@ theorem product_map_cons(f: Nat -> Nat, head: Nat, tail: List[Nat]) {
     product[Nat](List.cons(f(head), map(tail, f))) =
         f(head) * product[Nat](map(tail, f))
 }
+
+/// Inductive predicate for `product_mul_mod_congr_scalar`: at each list `l`,
+/// the product of `map(l, mul_mod_fn(n, a))` is congruent modulo `n` to the
+/// product of `map(l, scalar_mul_fn(a))`.
+define pmmcs_pred(n: Nat, a: Nat) -> (List[Nat] -> Bool) {
+    function(l: List[Nat]) {
+        product[Nat](map(l, mul_mod_fn(n, a))).congr_mod(
+            product[Nat](map(l, scalar_mul_fn(a))), n)
+    }
+}
+
+/// Base case: empty list. Both products are `1`.
+theorem pmmcs_nil(n: Nat, a: Nat) {
+    pmmcs_pred(n, a)(List.nil[Nat])
+} by {
+    map(List.nil[Nat], mul_mod_fn(n, a)) = List.nil[Nat]
+    map(List.nil[Nat], scalar_mul_fn(a)) = List.nil[Nat]
+    product[Nat](List.nil[Nat]) = Nat.1
+    congr_mod_refl(Nat.1, n)
+}
+
+/// Inductive step.
+theorem pmmcs_cons(n: Nat, a: Nat, head: Nat, tail: List[Nat]) {
+    pmmcs_pred(n, a)(tail) implies pmmcs_pred(n, a)(List.cons(head, tail))
+} by {
+    if pmmcs_pred(n, a)(tail) {
+        product[Nat](map(tail, mul_mod_fn(n, a))).congr_mod(
+            product[Nat](map(tail, scalar_mul_fn(a))), n)
+        product_map_cons(mul_mod_fn(n, a), head, tail)
+        product[Nat](map(List.cons(head, tail), mul_mod_fn(n, a))) =
+            mul_mod_fn(n, a)(head) * product[Nat](map(tail, mul_mod_fn(n, a)))
+        product_map_cons(scalar_mul_fn(a), head, tail)
+        product[Nat](map(List.cons(head, tail), scalar_mul_fn(a))) =
+            scalar_mul_fn(a)(head) * product[Nat](map(tail, scalar_mul_fn(a)))
+        // Per-element congruence: (a * head).mod(n) ≡ a * head  (mod n).
+        mul_mod_fn(n, a)(head) = (a * head).mod(n)
+        scalar_mul_fn(a)(head) = a * head
+        mod_congr_mod_self(a * head, n)
+        (a * head).mod(n).congr_mod(a * head, n)
+        mul_mod_fn(n, a)(head).congr_mod(scalar_mul_fn(a)(head), n)
+        // Multiply the head congruence with the tail congruence.
+        congr_mod_mul(mul_mod_fn(n, a)(head),
+                      product[Nat](map(tail, mul_mod_fn(n, a))),
+                      scalar_mul_fn(a)(head),
+                      product[Nat](map(tail, scalar_mul_fn(a))), n)
+        (mul_mod_fn(n, a)(head) * product[Nat](map(tail, mul_mod_fn(n, a)))).congr_mod(
+            scalar_mul_fn(a)(head) * product[Nat](map(tail, scalar_mul_fn(a))), n)
+        product[Nat](map(List.cons(head, tail), mul_mod_fn(n, a))).congr_mod(
+            product[Nat](map(List.cons(head, tail), scalar_mul_fn(a))), n)
+    }
+}
+
+/// For any list of naturals, the product of its image under `mul_mod_fn(n, a)`
+/// is congruent mod `n` to the product of its image under `scalar_mul_fn(a)`.
+/// Bridges the modded multiplication used in `mul_mod_residues` with plain
+/// multiplication, for use in the Euler product argument.
+theorem product_mul_mod_congr_scalar(n: Nat, a: Nat, l: List[Nat]) {
+    product[Nat](map(l, mul_mod_fn(n, a))).congr_mod(
+        product[Nat](map(l, scalar_mul_fn(a))), n)
+} by {
+    define p(x: List[Nat]) -> Bool { pmmcs_pred(n, a)(x) }
+    pmmcs_nil(n, a)
+    p(List.nil[Nat])
+    forall(head: Nat, tail: List[Nat]) {
+        if p(tail) {
+            pmmcs_cons(n, a, head, tail)
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(function(z: List[Nat]) { p(z) })
+    forall(z: List[Nat]) { p(z) }
+    p(l)
+    pmmcs_pred(n, a)(l)
+}
+
+/// Euler's theorem: for `n > 0` and `a` coprime to `n`,
+///   `a.pow(n.totient) ≡ 1  (mod n)`.
+/// Generalises `fermat_euler` from prime moduli and `euler_pq` from `p * q`
+/// to arbitrary positive moduli, using the coprime-residues permutation
+/// argument.
+theorem fermat_euler_general(n: Nat, a: Nat) {
+    n != Nat.0 and a.coprime(n)
+        implies a.pow(n.totient).congr_mod(Nat.1, n)
+} by {
+    if n != Nat.0 and a.coprime(n) {
+        let r: List[Nat] = coprime_residues(n)
+        // Permutation step: product over `mul_mod_residues(n, a)` equals
+        // product over the units list.
+        mul_mod_residues_is_permutation(n, a)
+        is_permutation(mul_mod_residues(n, a), r)
+        permutation_preserves_product[Nat](mul_mod_residues(n, a), r)
+        product[Nat](mul_mod_residues(n, a)) = product[Nat](r)
+        mul_mod_residues(n, a) = map(r, mul_mod_fn(n, a))
+        product[Nat](map(r, mul_mod_fn(n, a))) = product[Nat](r)
+        // Element-wise congruence step: bridge to `scalar_mul_fn`.
+        product_mul_mod_congr_scalar(n, a, r)
+        product[Nat](map(r, mul_mod_fn(n, a))).congr_mod(
+            product[Nat](map(r, scalar_mul_fn(a))), n)
+        product[Nat](r).congr_mod(product[Nat](map(r, scalar_mul_fn(a))), n)
+        // Pull the scalar out.
+        product_map_scalar(a, r)
+        product[Nat](map(r, scalar_mul_fn(a))) = a.pow(r.length) * product[Nat](r)
+        coprime_residues_length(n)
+        r.length = n.totient
+        a.pow(r.length) = a.pow(n.totient)
+        a.pow(r.length) * product[Nat](r) = a.pow(n.totient) * product[Nat](r)
+        product[Nat](map(r, scalar_mul_fn(a))) = a.pow(n.totient) * product[Nat](r)
+        product[Nat](r).congr_mod(a.pow(n.totient) * product[Nat](r), n)
+        // Reorient and reshape into `P * a^φ ≡ P * 1`.
+        congr_mod_symm(
+            product[Nat](r), a.pow(n.totient) * product[Nat](r), n)
+        (a.pow(n.totient) * product[Nat](r)).congr_mod(product[Nat](r), n)
+        a.pow(n.totient) * product[Nat](r) =
+            product[Nat](r) * a.pow(n.totient)
+        product[Nat](r) * Nat.1 = product[Nat](r)
+        (product[Nat](r) * a.pow(n.totient)).congr_mod(
+            product[Nat](r) * Nat.1, n)
+        // Cancel the unit product.
+        product_coprime_residues_coprime(n)
+        product[Nat](r).coprime(n)
+        cancel_coprime(product[Nat](r), n, a.pow(n.totient), Nat.1)
+        a.pow(n.totient).congr_mod(Nat.1, n)
+    }
+}
