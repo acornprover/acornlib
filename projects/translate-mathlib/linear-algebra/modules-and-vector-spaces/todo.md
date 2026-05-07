@@ -40,6 +40,7 @@ work (linear maps, bases, matrices, etc.) can build on.
       representative-level kernel characterisation
       (`submodule_quotient_mk_eq_zero_iff_in_submodule`) is in place.
 - [ ] Extend packaged kernel/image submodule APIs only when downstream formalizations need additional lemmas.
+- [ ] Package the linear-map preimage as a `Submodule[R, M]` (mirroring `linear_map_kernel_submodule`) once a downstream use appears; predicate-level preimage and the four constraint lemmas are in place.
 
 Status:
 
@@ -52,3 +53,4 @@ Status:
 - `submodule_rel`, `submodule_quotient_relation`, `submodule_quotient_add/neg/zero`, and `submodule_quotient_smul_by` (left scalar multiplication for a fixed scalar, with projection and representative-compatibility lemmas) provide a representative-level quotient-by-submodule API, delegating additive structure to `submodule_to_add_subgroup` and the existing `add_subgroup` quotient.
 - The four module axioms hold for the submodule quotient at the representative level: `submodule_quotient_smul_add_left`, `submodule_quotient_smul_add_right`, `submodule_quotient_smul_assoc`, `submodule_quotient_smul_one`.
 - The canonical projection function `submodule_quotient_mk` is defined, with `submodule_quotient_mk_eq_iff_in_submodule`, `submodule_quotient_mk_eq_zero_iff_in_submodule`, `submodule_quotient_mk_zero`, `submodule_quotient_mk_add`, `submodule_quotient_mk_neg`, and `submodule_quotient_mk_smul` providing the kernel characterisation and representative-level linearity.
+- `linear_map_preimage` provides predicate-level preimage of a `Submodule[R, N]` under a function `M -> N`, with the four constraint lemmas (`linear_map_preimage_zero/add/neg/smul_constraint`) holding for any `is_linear_map(src, t.carrier, f)`. Bridge lemmas `linear_map_preimage_zero_submodule_eq_kernel` and `linear_map_preimage_full_submodule` connect preimage with the kernel and full submodule.
