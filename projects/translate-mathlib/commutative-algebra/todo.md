@@ -19,7 +19,7 @@ assembling `is_ideal` from its sub-constraints.
 
 ## Roadmap
 
-- [ ] Add quotient rings and their universal properties
+- [ ] Add quotient rings and their universal properties (see [quotient-rings/todo.md](quotient-rings/todo.md))
 - [ ] Support prime ideals, maximal ideals, and local rings
 - [ ] Add localization at submonoids and prime ideals
 - [ ] Develop Noetherian rings and modules
