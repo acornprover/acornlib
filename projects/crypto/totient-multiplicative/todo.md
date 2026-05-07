@@ -13,10 +13,12 @@ Coprimality split:
 Already in `src/nat/nat_totient.ac`:
 - `mod_add_mul_left(q, m, r)`: `(q * m + r).mod(m) = r.mod(m)`.
 - `coprime_add_mul_left(q, m, r)`: `(q * m + r).coprime(m) = r.coprime(m)`.
+- `mod_complement_exists(c, n)`, `congr_mod_add_cancel_right_pos`,
+  `congr_mod_add_cancel_right_zero`: additive cancellation for `congr_mod`.
+- `add_mul_mod_inj_below(m, n, r, x, y)`: injectivity of
+  `q -> (q * m + r).mod(n)` on `[0, n)` when `m.coprime(n)`.
 
 ## Building blocks
-
-- [ ] Prove `q -> (q * m + r).mod(n)` is injective on `[0, n)` when `m.coprime(n)`.
 - [ ] Prove the same map is surjective onto `[0, n)` when `m.coprime(n)`
       (preimage via `mod_inv(m, n) * (s - r)` with sign care, or argue from
       injectivity + finite cardinality).
