@@ -16,3 +16,4 @@ Goal: extend the current real library into the standard theorem toolkit used acr
 Status:
 
 - `src/real/limits.ac` now has a reusable subsequence API for monotone unbounded index maps, including preservation of convergence, same-limit lemmas, and standard tail/every-`k`th/even/successor subsequence aliases.
+- `src/real/bounded_seq.ac` introduces `is_bounded_seq`, a finite-prefix bound by induction, and proves convergent real sequences are bounded.

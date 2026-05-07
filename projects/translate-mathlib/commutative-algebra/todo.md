@@ -19,7 +19,6 @@ assembling `is_ideal` from its sub-constraints.
 
 ## Roadmap
 
-- [ ] Add `Ideal[R].indexed_intersection` attribute (or polymorphic helper) and connect `ideal_indexed_inter(family).as_set` to `Set.indexed_intersection`
 - [ ] Add quotient rings and their universal properties
 - [ ] Support prime ideals, maximal ideals, and local rings
 - [ ] Add localization at submonoids and prime ideals
