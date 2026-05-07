@@ -24,6 +24,14 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
 
 ## Roadmap
 
+- [ ] Field extension foundations (independent of polynomials)
+  - [x] `FieldHom[F, E]` structure with `is_field_hom`, ext lemmas, ring-hom coercion,
+        preservation of `0/1/+/*/neg/inverse`, nonzero preservation, and injectivity
+        (`src/field_hom.ac`).
+  - [ ] Identity field hom `F -> F` and composition of field homs
+  - [ ] Field-hom image as a subfield (once subfield API exists)
+  - [ ] `is_field_extension(phi: FieldHom[F, E])` and tower composition law
+
 - [ ] Algebraic elements and minimal polynomials
   - [ ] Define `is_algebraic[F: Field, E: Field, phi: F -> E](x: E)`
   - [ ] Define `is_integral_over[F, E](x)` predicate via monic-polynomial roots
