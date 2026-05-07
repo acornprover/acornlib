@@ -3,7 +3,7 @@
 Goal: provide the first layer of noncommutative linear algebra that Mathlib uses in higher algebra and geometry.
 
 - [ ] Define group representations as module actions
-- [ ] Add intertwining maps and representation equivalences
+- [ ] Add representation equivalences and isomorphism-style transport lemmas
 - [ ] Develop characters and basic character identities
 - [ ] Prove Maschke-style semisimplicity results for finite groups
 - [ ] Support restriction and induction constructions

@@ -2,6 +2,7 @@ from group import Group, GroupHom, group_hom_mul, group_hom_one, inverse_left
 from subgroup import Subgroup, subgroup_constraint, identity_constraint, closure_constraint,
     inverse_constraint
 from set import Set
+from functions import identity_fn, compose, is_injective_fn, injective_fn_eq
 from relation_basic import is_reflexive, is_symmetric
 
 /// True if the identity element acts trivially.
@@ -75,6 +76,144 @@ theorem mul_action_apply_inv_apply[G: Group, X](a: MulAction[G, X], g: G, x: X) 
     mul_action_one(a, x)
 }
 
+/// True if a map commutes with two actions of the same group.
+define is_equivariant_map[G: Group, X, Y](
+    a: MulAction[G, X],
+    b: MulAction[G, Y],
+    f: X -> Y
+) -> Bool {
+    forall(g: G, x: X) {
+        f(a.act(g, x)) = b.act(g, f(x))
+    }
+}
+
+/// An equivariant map between two actions of the same group.
+structure ActionHom[G: Group, X, Y] {
+    /// The source action.
+    src: MulAction[G, X]
+
+    /// The target action.
+    dst: MulAction[G, Y]
+
+    /// The underlying map.
+    map: X -> Y
+} constraint {
+    is_equivariant_map(src, dst, map)
+}
+
+/// An equivariant map commutes with the action of every group element.
+theorem equivariant_map_apply[G: Group, X, Y](
+    a: MulAction[G, X],
+    b: MulAction[G, Y],
+    f: X -> Y,
+    g: G,
+    x: X
+) {
+    is_equivariant_map(a, b, f) implies f(a.act(g, x)) = b.act(g, f(x))
+} by {
+    if is_equivariant_map(a, b, f) {
+        is_equivariant_map(a, b, f) = forall(h: G, y: X) {
+            f(a.act(h, y)) = b.act(h, f(y))
+        }
+    }
+}
+
+/// The underlying map of an action homomorphism is equivariant.
+theorem action_hom_is_equivariant[G: Group, X, Y](f: ActionHom[G, X, Y]) {
+    is_equivariant_map(f.src, f.dst, f.map)
+}
+
+/// An action homomorphism commutes with the action of every group element.
+theorem action_hom_apply[G: Group, X, Y](f: ActionHom[G, X, Y], g: G, x: X) {
+    f.map(f.src.act(g, x)) = f.dst.act(g, f.map(x))
+} by {
+    action_hom_is_equivariant(f)
+    equivariant_map_apply(f.src, f.dst, f.map, g, x)
+}
+
+/// Action homomorphism extensionality from equality of fields.
+theorem action_hom_ext[G: Group, X, Y](f: ActionHom[G, X, Y], h: ActionHom[G, X, Y]) {
+    f.src = h.src and f.dst = h.dst and f.map = h.map implies f = h
+}
+
+/// The extensionality attribute for action homomorphisms.
+attributes ActionHom[G: Group, X, Y] {
+    /// Action homomorphism extensionality from equality of fields.
+    let ext = action_hom_ext[G, X, Y]
+}
+
+/// Equal action homomorphisms have equal underlying maps.
+theorem action_hom_eq_map[G: Group, X, Y](f: ActionHom[G, X, Y], h: ActionHom[G, X, Y]) {
+    f = h implies f.map = h.map
+}
+
+/// Equal action homomorphisms have equal values at every point.
+theorem action_hom_eq_apply[G: Group, X, Y](f: ActionHom[G, X, Y], h: ActionHom[G, X, Y], x: X) {
+    f = h implies f.map(x) = h.map(x)
+} by {
+    if f = h {
+        f.map = h.map
+        f.map(x) = h.map(x)
+    }
+}
+
+/// The identity map is equivariant for any action.
+theorem identity_fn_is_equivariant[G: Group, X](a: MulAction[G, X]) {
+    is_equivariant_map(a, a, identity_fn[X])
+} by {
+    forall(g: G, x: X) {
+        identity_fn[X](a.act(g, x)) = a.act(g, x)
+        a.act(g, identity_fn[X](x)) = a.act(g, x)
+        identity_fn[X](a.act(g, x)) = a.act(g, identity_fn[X](x))
+    }
+}
+
+/// The identity action homomorphism.
+let identity_action_hom[G: Group, X](a: MulAction[G, X]) -> result: ActionHom[G, X, X] satisfy {
+    ActionHom[G, X, X].new(a, a, identity_fn[X]) = Option.some(result)
+} by {
+    identity_fn_is_equivariant(a)
+}
+
+/// The identity action homomorphism has the identity map.
+theorem identity_action_hom_map[G: Group, X](a: MulAction[G, X]) {
+    identity_action_hom(a).map = identity_fn[X]
+} by {
+    identity_action_hom(a).map = identity_fn[X]
+}
+
+/// The identity action homomorphism fixes every point.
+theorem identity_action_hom_apply[G: Group, X](a: MulAction[G, X], x: X) {
+    identity_action_hom(a).map(x) = x
+} by {
+    identity_action_hom_map(a)
+    identity_fn[X](x) = x
+}
+
+/// The composite of equivariant maps is equivariant.
+theorem compose_is_equivariant_map[G: Group, X, Y, Z](
+    a: MulAction[G, X],
+    b: MulAction[G, Y],
+    c: MulAction[G, Z],
+    f: Y -> Z,
+    h: X -> Y
+) {
+    is_equivariant_map(b, c, f) and is_equivariant_map(a, b, h) implies
+        is_equivariant_map(a, c, compose(f, h))
+} by {
+    if is_equivariant_map(b, c, f) and is_equivariant_map(a, b, h) {
+        forall(g: G, x: X) {
+            equivariant_map_apply(a, b, h, g, x)
+            h(a.act(g, x)) = b.act(g, h(x))
+            equivariant_map_apply(b, c, f, g, h(x))
+            f(b.act(g, h(x))) = c.act(g, f(h(x)))
+            compose(f, h, a.act(g, x)) = f(h(a.act(g, x)))
+            compose(f, h, x) = f(h(x))
+            compose(f, h, a.act(g, x)) = c.act(g, compose(f, h, x))
+        }
+    }
+}
+
 /// True if one point belongs to the orbit of another point.
 define orbit_contains[G: Group, X](a: MulAction[G, X], x: X, y: X) -> Bool {
     exists(g: G) {
@@ -119,6 +258,44 @@ theorem orbit_contains_witness[G: Group, X](a: MulAction[G, X], x: X, y: X) {
 } by {
     if orbit(a, x).contains(y) {
         orbit(a, x).contains(y) = orbit_contains(a, x, y)
+    }
+}
+
+/// An equivariant map sends orbit membership to orbit membership.
+theorem equivariant_map_maps_orbit_contains[G: Group, X, Y](
+    a: MulAction[G, X],
+    b: MulAction[G, Y],
+    f: X -> Y,
+    x: X,
+    y: X
+) {
+    is_equivariant_map(a, b, f) and orbit(a, x).contains(y) implies orbit(b, f(x)).contains(f(y))
+} by {
+    if is_equivariant_map(a, b, f) and orbit(a, x).contains(y) {
+        orbit_contains_witness(a, x, y)
+        let g: G satisfy {
+            y = a.act(g, x)
+        }
+        equivariant_map_apply(a, b, f, g, x)
+        f(a.act(g, x)) = b.act(g, f(x))
+        f(y) = b.act(g, f(x))
+        orbit_contains_action(b, f(x), g)
+        orbit(b, f(x)).contains(b.act(g, f(x)))
+        orbit(b, f(x)).contains(f(y))
+    }
+}
+
+/// An action homomorphism sends orbit membership to orbit membership.
+theorem action_hom_maps_orbit_contains[G: Group, X, Y](
+    f: ActionHom[G, X, Y],
+    x: X,
+    y: X
+) {
+    orbit(f.src, x).contains(y) implies orbit(f.dst, f.map(x)).contains(f.map(y))
+} by {
+    if orbit(f.src, x).contains(y) {
+        action_hom_is_equivariant(f)
+        equivariant_map_maps_orbit_contains(f.src, f.dst, f.map, x, y)
     }
 }
 
@@ -326,6 +503,116 @@ theorem stabilizer_contains_of_fixes[G: Group, X](a: MulAction[G, X], x: X, g: G
     if a.act(g, x) = x {
         stabilizer_contains_eq(a, x, g)
         stabilizer(a, x).contains(g)
+    }
+}
+
+/// An equivariant map sends stabilizer membership forward.
+theorem equivariant_map_maps_fixed_point_value[G: Group, X, Y](
+    a: MulAction[G, X],
+    b: MulAction[G, Y],
+    f: X -> Y,
+    x: X,
+    g: G
+) {
+    is_equivariant_map(a, b, f) and stabilizer(a, x).contains(g) implies
+        b.act(g, f(x)) = f(x)
+} by {
+    if is_equivariant_map(a, b, f) and stabilizer(a, x).contains(g) {
+        stabilizer_fixes(a, x, g)
+        a.act(g, x) = x
+        equivariant_map_apply(a, b, f, g, x)
+        f(a.act(g, x)) = b.act(g, f(x))
+        f(a.act(g, x)) = f(x)
+        b.act(g, f(x)) = f(x)
+    }
+}
+
+/// An equivariant map sends stabilizer membership forward.
+theorem equivariant_map_maps_stabilizer_contains[G: Group, X, Y](
+    a: MulAction[G, X],
+    b: MulAction[G, Y],
+    f: X -> Y,
+    x: X,
+    g: G
+) {
+    is_equivariant_map(a, b, f) and stabilizer(a, x).contains(g) implies
+        stabilizer(b, f(x)).contains(g)
+} by {
+    if is_equivariant_map(a, b, f) and stabilizer(a, x).contains(g) {
+        equivariant_map_maps_fixed_point_value(a, b, f, x, g)
+        b.act(g, f(x)) = f(x)
+        stabilizer_contains_of_fixes(b, f(x), g)
+        stabilizer(b, f(x)).contains(g)
+    }
+}
+
+/// An action homomorphism sends stabilizer membership forward.
+theorem action_hom_maps_stabilizer_contains[G: Group, X, Y](
+    f: ActionHom[G, X, Y],
+    x: X,
+    g: G
+) {
+    stabilizer(f.src, x).contains(g) implies stabilizer(f.dst, f.map(x)).contains(g)
+} by {
+    if stabilizer(f.src, x).contains(g) {
+        action_hom_is_equivariant(f)
+        equivariant_map_maps_stabilizer_contains(f.src, f.dst, f.map, x, g)
+    }
+}
+
+/// An injective equivariant map reflects stabilizer membership.
+theorem equivariant_map_reflects_fixed_point_value_of_injective[G: Group, X, Y](
+    a: MulAction[G, X],
+    b: MulAction[G, Y],
+    f: X -> Y,
+    x: X,
+    g: G
+) {
+    is_injective_fn(f) and is_equivariant_map(a, b, f) and stabilizer(b, f(x)).contains(g) implies
+        a.act(g, x) = x
+} by {
+    if is_injective_fn(f) and is_equivariant_map(a, b, f) and stabilizer(b, f(x)).contains(g) {
+        stabilizer_fixes(b, f(x), g)
+        b.act(g, f(x)) = f(x)
+        equivariant_map_apply(a, b, f, g, x)
+        f(a.act(g, x)) = b.act(g, f(x))
+        f(a.act(g, x)) = f(x)
+        injective_fn_eq(f, a.act(g, x), x)
+        a.act(g, x) = x
+    }
+}
+
+/// An injective equivariant map reflects stabilizer membership.
+theorem equivariant_map_reflects_stabilizer_contains_of_injective[G: Group, X, Y](
+    a: MulAction[G, X],
+    b: MulAction[G, Y],
+    f: X -> Y,
+    x: X,
+    g: G
+) {
+    is_injective_fn(f) and is_equivariant_map(a, b, f) and stabilizer(b, f(x)).contains(g) implies
+        stabilizer(a, x).contains(g)
+} by {
+    if is_injective_fn(f) and is_equivariant_map(a, b, f) and stabilizer(b, f(x)).contains(g) {
+        equivariant_map_reflects_fixed_point_value_of_injective(a, b, f, x, g)
+        a.act(g, x) = x
+        stabilizer_contains_of_fixes(a, x, g)
+        stabilizer(a, x).contains(g)
+    }
+}
+
+/// An injective action homomorphism reflects stabilizer membership.
+theorem action_hom_reflects_stabilizer_contains_of_injective[G: Group, X, Y](
+    f: ActionHom[G, X, Y],
+    x: X,
+    g: G
+) {
+    is_injective_fn(f.map) and stabilizer(f.dst, f.map(x)).contains(g) implies
+        stabilizer(f.src, x).contains(g)
+} by {
+    if is_injective_fn(f.map) and stabilizer(f.dst, f.map(x)).contains(g) {
+        action_hom_is_equivariant(f)
+        equivariant_map_reflects_stabilizer_contains_of_injective(f.src, f.dst, f.map, x, g)
     }
 }
 
