@@ -3,6 +3,14 @@
 Goal: add the smooth geometric infrastructure behind Lie groups, manifolds, and geometric analysis.
 
 - [ ] Define charted spaces and manifolds
+  - [x] Partial bijections (`LocalEquiv`) in `src/local_equiv.ac`
+  - [ ] Identity partial bijection theorem (search times out; needs helper)
+  - [ ] Composition of partial bijections
+  - [ ] Restriction of a partial bijection to a subset
+  - [ ] Define `Chart[M, E]` (partial bijection into a model space)
+  - [ ] Define `ChartedSpace[M, E]` typeclass via an atlas of charts
+  - [ ] Transition maps between overlapping charts
+  - [ ] Smoothness compatibility (needs differentiability infrastructure)
 - [ ] Support smooth maps and manifolds with boundary
 - [ ] Add tangent and cotangent bundles
 - [ ] Develop derivatives and chain rules on manifolds
