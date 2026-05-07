@@ -2,7 +2,8 @@
 
 Goal: support the geometric language used in linear algebra, optimization, and classical geometry.
 
-- [ ] Define affine spaces and affine subspaces
+- [ ] Define affine subspaces (sets closed under affine combinations / translation)
+- [ ] Add the canonical `AffineSpace[V, V]` instance and product instances
 - [ ] Add affine maps, barycentric coordinates, and affine combinations
 - [ ] Develop affine span, independence, and parallelism
 - [ ] Add Euclidean geometry of points, lines, and planes
