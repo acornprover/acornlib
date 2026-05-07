@@ -2,8 +2,8 @@
 
 Goal: add the standard discrete graph library used in combinatorics, linear algebra, and algorithms.
 
-- [ ] Add bundled graph embedding and graph isomorphism structures from the existing predicates
-- [ ] Add safe bundled composition for graph homomorphisms with explicit middle-graph equality
+- [ ] Add safe bundled composition for graph homomorphisms, embeddings, and isomorphisms with explicit middle-graph equality
+- [ ] Add identity and inverse constructors for `SimpleGraphIso` (`refl`, `symm`)
 - [ ] Add image, preimage, and induced-subgraph lemmas for graph homomorphisms
 - [ ] Add walks, paths, cycles, and connectedness
 - [ ] Develop trees, forests, and spanning-tree theory
