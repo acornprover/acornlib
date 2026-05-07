@@ -92,7 +92,29 @@ general `inverse_imp_coprime` (`a * b ≡ 1 (mod n) ⟹ b.coprime(n)`).
 ## DSA
 
 - [ ] Prove existence of an order-`q` element `g` in `(Z/p)*` when `q | p - 1`.
-- [ ] Prove `g.pow(k * q + r).mod(p) = g.pow(r).mod(p)` for an order-`q` `g`.
+
+`src/crypto/dsa.ac` contains:
+- `dsa_pow_order_reduce`: if `g.pow(q).mod(p) = 1` then
+  `g.pow(k * q + r).mod(p) = g.pow(r).mod(p)`.
+- `dsa_pow_mod_q`: if `g.pow(q).mod(p) = 1` then
+  `g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)` — exponent only matters
+  modulo `q`.
+- `dsa_y_pow_congr`: if `y = g.pow(x).mod(p)` then
+  `y.pow(b).congr_mod(g.pow(x * b), p)`.
+- `dsa_combine_pow`: if `y = g.pow(x).mod(p)` then
+  `(g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)`.
+- `dsa_exp_mod_q_factor`: pure-arithmetic mod-`q` identity
+  `((h*sinv).mod(q) + x*(r*sinv).mod(q)).mod(q) = ((h + x*r)*sinv).mod(q)`.
+- `dsa_k_times_s_congr`: from `s ≡ kinv*(h + x*r)` and
+  `(k*kinv) ≡ 1` (mod `q`), `(k*s) ≡ h + x*r (mod q)`.
+- `dsa_finish_congr`: from `(k*s) ≡ h + x*r` and `(s*sinv) ≡ 1`
+  (mod `q`), `((h + x*r)*sinv) ≡ k (mod q)`.
+- `dsa_k_times_s_from_mod`: lifted form of `dsa_k_times_s_congr`
+  taking the integer `(k*kinv).mod(q) = 1` and
+  `s = (kinv*(h+x*r)).mod(q)` hypotheses directly (assumes `1 < q`).
+- `dsa_congr_to_eq`: a congruence `lhs ≡ k (mod q)` with `k < q`
+  upgrades to `lhs.mod(q) = k`.
+
 - [ ] Prove the DSA verification identity: for `s = kinv * (h + x*r) mod q`
       and `w = sinv mod q`, `(g^{h*w} * y^{r*w}) mod p mod q = r`.
 - [ ] Uncomment and prove `dsa_correctness` in `src/crypto/dsa.ac`.
