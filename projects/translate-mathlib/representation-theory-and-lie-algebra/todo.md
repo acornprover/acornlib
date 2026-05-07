@@ -2,7 +2,7 @@
 
 Goal: provide the first layer of noncommutative linear algebra that Mathlib uses in higher algebra and geometry.
 
-- [ ] Extend `AddRepresentation` (in `src/add_representation.ac`) to R-linear representations on `Module[R, M]` via a predicate form, avoiding the 3-typeclass-parameter struct blocker
+- [ ] Add R-linear-representation lemmas: action on `c1 * x + c2 * y`, interaction with neg/zero, and a packaged form for ring-module compatibility
 - [ ] Add representation equivalences and isomorphism-style transport lemmas
 - [ ] Develop characters and basic character identities
 - [ ] Prove Maschke-style semisimplicity results for finite groups
