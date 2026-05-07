@@ -67,10 +67,7 @@ reviews = json.loads(os.environ["REVIEWS_JSON"])
 
 bot_display = "AcornLibrarian"
 human_reviewers = {"lacker"}
-
-def is_bot(login):
-    normalized = login.lower().replace("-", "").replace("[bot]", "")
-    return normalized == "acornlibrarian"
+actionable_review_states = {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}
 
 def is_human_reviewer(login):
     return login.lower() in human_reviewers
@@ -85,37 +82,28 @@ for review in reviews:
     state = review.get("state")
     if not login or not state:
         continue
+    if state not in actionable_review_states:
+        continue
     latest_reviews[login] = state
 
 changes_requested = [
     login for login, state in latest_reviews.items()
-    if state == "CHANGES_REQUESTED" and is_human_reviewer(login)
+    if state == "CHANGES_REQUESTED"
 ]
 approved_by = [
     login for login, state in latest_reviews.items()
-    if state == "APPROVED" and is_human_reviewer(login)
+    if state == "APPROVED"
 ]
 
 author = pr["user"]["login"]
 assignees = [assignee["login"] for assignee in pr.get("assignees", [])]
 human_assignees = [login for login in assignees if is_human_reviewer(login)]
-approved_reviewers = {login.lower() for login in approved_by}
-pending_human_assignees = [
-    login for login in human_assignees
-    if login.lower() not in approved_reviewers
-]
 default_branch = pr.get("base", {}).get("repo", {}).get("default_branch", "master")
 base_ref = pr.get("base", {}).get("ref", default_branch)
 
 if pr.get("draft"):
     status = "draft"
     next_step = f"{author} marks ready"
-elif author in assignees:
-    status = "assigned to author"
-    next_step = f"{author} updates"
-elif pending_human_assignees:
-    status = "human review"
-    next_step = f"{join_names(pending_human_assignees)} reviews"
 elif changes_requested:
     status = "changes requested"
     next_step = f"{author} updates"
@@ -125,6 +113,9 @@ elif approved_by:
         next_step = f"{bot_display} merges"
     else:
         next_step = f"{bot_display} waits for base branch"
+elif human_assignees:
+    status = "human review"
+    next_step = f"{join_names(human_assignees)} reviews"
 else:
     status = "needs triage"
     next_step = f"{bot_display} reviews"
