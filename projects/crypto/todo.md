@@ -71,10 +71,9 @@ general `inverse_imp_coprime` (`a * b ≡ 1 (mod n) ⟹ b.coprime(n)`).
 `src/nat/nat_coprime.ac` contains `coprime_mul_iff` and `coprime_mod_iff`
 (coprimality is invariant under modular reduction).
 
-- [ ] Prove totient is multiplicative on coprime arguments
-      (`nat_totient(m * n) = nat_totient(m) * nat_totient(n)` when
-      `m.coprime(n)`) — generalises `totient_pq` via the CRT-induced
-      bijection between `[0, mn)` and `[0, m) x [0, n)`.
+- [ ] [totient-multiplicative](totient-multiplicative/todo.md): prove
+      `nat_totient(m * n) = nat_totient(m) * nat_totient(n)` when
+      `m.coprime(n)`, generalising `totient_pq`.
 - `fermat_euler_general` (in `src/nat/nat_totient.ac`): for `n != 0` and
   `a.coprime(n)`, `a.pow(n.totient).congr_mod(1, n)`. Generalises both
   `fermat_euler` (prime moduli) and `euler_pq` (`p * q`) via the
