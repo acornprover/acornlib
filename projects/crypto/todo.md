@@ -92,7 +92,10 @@ general `inverse_imp_coprime` (`a * b ≡ 1 (mod n) ⟹ b.coprime(n)`).
 ## DSA
 
 - [ ] Prove existence of an order-`q` element `g` in `(Z/p)*` when `q | p - 1`.
-- [ ] Prove `g.pow(k * q + r).mod(p) = g.pow(r).mod(p)` for an order-`q` `g`.
+
+`src/crypto/dsa.ac` contains `dsa_pow_order_reduce`: if
+`g.pow(q).mod(p) = 1` then `g.pow(k * q + r).mod(p) = g.pow(r).mod(p)`.
+
 - [ ] Prove the DSA verification identity: for `s = kinv * (h + x*r) mod q`
       and `w = sinv mod q`, `(g^{h*w} * y^{r*w}) mod p mod q = r`.
 - [ ] Uncomment and prove `dsa_correctness` in `src/crypto/dsa.ac`.
