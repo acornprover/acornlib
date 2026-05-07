@@ -19,6 +19,8 @@ Try to be stylistically consistent with the rest of the codebase.
 
 Try to keep pull requests to below 2000 lines of Acorn code.
 
+Avoid adding fixed-arity APIs such as 6-ary, 7-ary, etc. wrappers unless there is a specific downstream reason; prefer indexed families or a named abstraction.
+
 Most pull requests will be AI-reviewed. Some areas will be escalated to human review:
 
 * Adding a new project
