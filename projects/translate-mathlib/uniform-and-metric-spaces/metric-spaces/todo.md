@@ -3,7 +3,6 @@
 Build out the `MetricSpace` typeclass in `src/metric_space.ac` with definitions and APIs analogous to Mathlib's `MetricSpace`.
 
 - [ ] Add `diameter` of a bounded set
-- [ ] Prove union of two bounded sets is bounded
 - [ ] Define convergence of sequences in a metric space (`tendsto_metric`)
 - [ ] Define Cauchy sequences in a metric space and prove convergent implies Cauchy
 - [ ] Define completeness and prove `Real: CompleteMetricSpace`
