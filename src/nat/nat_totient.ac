@@ -1,13 +1,13 @@
 from nat.nat_coprime import Nat, coprime_one_left, coprime_mul_iff, coprime_mul, coprime_comm, coprime_mod_imp
 from nat.nat_gcd import gcd_zero_left, gcd_of_prime, gcd_comm, divides_gcd
 from nat.nat_factorisation import prime_divisor_is_one_or_self, coprime_of_distinct_primes
-from nat.nat_base import divides_self, divides_zero, add_imp_sub, small_mod
+from nat.nat_base import divides_self, divides_zero, add_imp_sub, small_mod, mod_mod, add_mod, add_cancels_left, mod_by_zero
 from nat.nat_crt import nat_coprime_combine, nat_congr_combine_coprime
 from nat.nat_fermat import rsa_pow_congr
 from nat.nat_modular_inverse import cancel_coprime, mod_inv, mod_inv_coprime, mod_inv_mul_congr_one
 from nat.nat_monoid import exp_one, exp_add, exp_zero
-from nat.nat_coprime import coprime_one_right
-from nat.nat_congruence import congr_mod_refl, congr_mod_symm, congr_mod_trans, congr_mod_mul, mod_lt, mod_congr_mod_self
+from nat.nat_coprime import coprime_one_right, coprime_mod_iff
+from nat.nat_congruence import congr_mod_refl, congr_mod_symm, congr_mod_trans, congr_mod_mul, congr_mod_add, mod_lt, mod_congr_mod_self, mod_add_mul, mod_add_eq
 from list.list_base import List, list_contains_implies_count_geq_one, list_not_contains_impl_count_zero, unique_implies_no_duplicate
 from list.list_sum import map, map_length, map_contains, map_contains_of_contains
 from list.list_permutation import is_permutation, permutation_preserves_product
@@ -2598,6 +2598,130 @@ theorem product_map_cons(f: Nat -> Nat, head: Nat, tail: List[Nat]) {
         f(head) * product[Nat](map(tail, f))
 }
 
+/// Inductive predicate for `product_mul_mod_congr_scalar`: at each list `l`,
+/// the product of `map(l, mul_mod_fn(n, a))` is congruent modulo `n` to the
+/// product of `map(l, scalar_mul_fn(a))`.
+define pmmcs_pred(n: Nat, a: Nat) -> (List[Nat] -> Bool) {
+    function(l: List[Nat]) {
+        product[Nat](map(l, mul_mod_fn(n, a))).congr_mod(
+            product[Nat](map(l, scalar_mul_fn(a))), n)
+    }
+}
+
+/// Base case: empty list. Both products are `1`.
+theorem pmmcs_nil(n: Nat, a: Nat) {
+    pmmcs_pred(n, a)(List.nil[Nat])
+} by {
+    map(List.nil[Nat], mul_mod_fn(n, a)) = List.nil[Nat]
+    map(List.nil[Nat], scalar_mul_fn(a)) = List.nil[Nat]
+    product[Nat](List.nil[Nat]) = Nat.1
+    congr_mod_refl(Nat.1, n)
+}
+
+/// Inductive step.
+theorem pmmcs_cons(n: Nat, a: Nat, head: Nat, tail: List[Nat]) {
+    pmmcs_pred(n, a)(tail) implies pmmcs_pred(n, a)(List.cons(head, tail))
+} by {
+    if pmmcs_pred(n, a)(tail) {
+        product[Nat](map(tail, mul_mod_fn(n, a))).congr_mod(
+            product[Nat](map(tail, scalar_mul_fn(a))), n)
+        product_map_cons(mul_mod_fn(n, a), head, tail)
+        product[Nat](map(List.cons(head, tail), mul_mod_fn(n, a))) =
+            mul_mod_fn(n, a)(head) * product[Nat](map(tail, mul_mod_fn(n, a)))
+        product_map_cons(scalar_mul_fn(a), head, tail)
+        product[Nat](map(List.cons(head, tail), scalar_mul_fn(a))) =
+            scalar_mul_fn(a)(head) * product[Nat](map(tail, scalar_mul_fn(a)))
+        // Per-element congruence: (a * head).mod(n) ≡ a * head  (mod n).
+        mul_mod_fn(n, a)(head) = (a * head).mod(n)
+        scalar_mul_fn(a)(head) = a * head
+        mod_congr_mod_self(a * head, n)
+        (a * head).mod(n).congr_mod(a * head, n)
+        mul_mod_fn(n, a)(head).congr_mod(scalar_mul_fn(a)(head), n)
+        // Multiply the head congruence with the tail congruence.
+        congr_mod_mul(mul_mod_fn(n, a)(head),
+                      product[Nat](map(tail, mul_mod_fn(n, a))),
+                      scalar_mul_fn(a)(head),
+                      product[Nat](map(tail, scalar_mul_fn(a))), n)
+        (mul_mod_fn(n, a)(head) * product[Nat](map(tail, mul_mod_fn(n, a)))).congr_mod(
+            scalar_mul_fn(a)(head) * product[Nat](map(tail, scalar_mul_fn(a))), n)
+        product[Nat](map(List.cons(head, tail), mul_mod_fn(n, a))).congr_mod(
+            product[Nat](map(List.cons(head, tail), scalar_mul_fn(a))), n)
+    }
+}
+
+/// For any list of naturals, the product of its image under `mul_mod_fn(n, a)`
+/// is congruent mod `n` to the product of its image under `scalar_mul_fn(a)`.
+/// Bridges the modded multiplication used in `mul_mod_residues` with plain
+/// multiplication, for use in the Euler product argument.
+theorem product_mul_mod_congr_scalar(n: Nat, a: Nat, l: List[Nat]) {
+    product[Nat](map(l, mul_mod_fn(n, a))).congr_mod(
+        product[Nat](map(l, scalar_mul_fn(a))), n)
+} by {
+    define p(x: List[Nat]) -> Bool { pmmcs_pred(n, a)(x) }
+    pmmcs_nil(n, a)
+    p(List.nil[Nat])
+    forall(head: Nat, tail: List[Nat]) {
+        if p(tail) {
+            pmmcs_cons(n, a, head, tail)
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(function(z: List[Nat]) { p(z) })
+    forall(z: List[Nat]) { p(z) }
+    p(l)
+    pmmcs_pred(n, a)(l)
+}
+
+/// Euler's theorem: for `n > 0` and `a` coprime to `n`,
+///   `a.pow(n.totient) ≡ 1  (mod n)`.
+/// Generalises `fermat_euler` from prime moduli and `euler_pq` from `p * q`
+/// to arbitrary positive moduli, using the coprime-residues permutation
+/// argument.
+theorem fermat_euler_general(n: Nat, a: Nat) {
+    n != Nat.0 and a.coprime(n)
+        implies a.pow(n.totient).congr_mod(Nat.1, n)
+} by {
+    if n != Nat.0 and a.coprime(n) {
+        let r: List[Nat] = coprime_residues(n)
+        // Permutation step: product over `mul_mod_residues(n, a)` equals
+        // product over the units list.
+        mul_mod_residues_is_permutation(n, a)
+        is_permutation(mul_mod_residues(n, a), r)
+        permutation_preserves_product[Nat](mul_mod_residues(n, a), r)
+        product[Nat](mul_mod_residues(n, a)) = product[Nat](r)
+        mul_mod_residues(n, a) = map(r, mul_mod_fn(n, a))
+        product[Nat](map(r, mul_mod_fn(n, a))) = product[Nat](r)
+        // Element-wise congruence step: bridge to `scalar_mul_fn`.
+        product_mul_mod_congr_scalar(n, a, r)
+        product[Nat](map(r, mul_mod_fn(n, a))).congr_mod(
+            product[Nat](map(r, scalar_mul_fn(a))), n)
+        product[Nat](r).congr_mod(product[Nat](map(r, scalar_mul_fn(a))), n)
+        // Pull the scalar out.
+        product_map_scalar(a, r)
+        product[Nat](map(r, scalar_mul_fn(a))) = a.pow(r.length) * product[Nat](r)
+        coprime_residues_length(n)
+        r.length = n.totient
+        a.pow(r.length) = a.pow(n.totient)
+        a.pow(r.length) * product[Nat](r) = a.pow(n.totient) * product[Nat](r)
+        product[Nat](map(r, scalar_mul_fn(a))) = a.pow(n.totient) * product[Nat](r)
+        product[Nat](r).congr_mod(a.pow(n.totient) * product[Nat](r), n)
+        // Reorient and reshape into `P * a^φ ≡ P * 1`.
+        congr_mod_symm(
+            product[Nat](r), a.pow(n.totient) * product[Nat](r), n)
+        (a.pow(n.totient) * product[Nat](r)).congr_mod(product[Nat](r), n)
+        a.pow(n.totient) * product[Nat](r) =
+            product[Nat](r) * a.pow(n.totient)
+        product[Nat](r) * Nat.1 = product[Nat](r)
+        (product[Nat](r) * a.pow(n.totient)).congr_mod(
+            product[Nat](r) * Nat.1, n)
+        // Cancel the unit product.
+        product_coprime_residues_coprime(n)
+        product[Nat](r).coprime(n)
+        cancel_coprime(product[Nat](r), n, a.pow(n.totient), Nat.1)
+        a.pow(n.totient).congr_mod(Nat.1, n)
+    }
+}
+
 /// Inductive predicate for `product_map_mul_mod`: replacing each list entry
 /// `x` by `(a * x).mod(n)` only changes the list product by a power of `a`,
 /// modulo `n`.
@@ -2761,5 +2885,145 @@ theorem euler(n: Nat, a: Nat) {
         product[Nat](coprime_residues(n)).coprime(n)
         cancel_coprime(product[Nat](coprime_residues(n)), n, a.pow(n.totient), Nat.1)
         a.pow(n.totient).congr_mod(Nat.1, n)
+    }
+}
+
+/// `(q * m + r).mod(m) = r.mod(m)`. Adding any multiple of `m` to `r` does not
+/// change the residue mod `m`. Reorientation of `mod_add_mul` to the `q * m`
+/// form used in row-by-row counting on `[0, m * n)`.
+theorem mod_add_mul_left(q: Nat, m: Nat, r: Nat) {
+    (q * m + r).mod(m) = r.mod(m)
+} by {
+    mod_add_mul(q, m, r)
+}
+
+/// Coprimality on the `m`-side of the row decomposition `x = q * m + r`:
+/// `(q * m + r).coprime(m) = r.coprime(m)`.
+theorem coprime_add_mul_left(q: Nat, m: Nat, r: Nat) {
+    (q * m + r).coprime(m) = r.coprime(m)
+} by {
+    coprime_mod_iff(q * m + r, m)
+    (q * m + r).coprime(m) = (q * m + r).mod(m).coprime(m)
+    mod_add_mul_left(q, m, r)
+    (q * m + r).mod(m) = r.mod(m)
+    (q * m + r).mod(m).coprime(m) = r.mod(m).coprime(m)
+    coprime_mod_iff(r, m)
+    r.coprime(m) = r.mod(m).coprime(m)
+}
+
+
+/// For `n != 0`, every `c` admits a `d` with `(c + d).mod(n) = 0`. Concretely
+/// `d = n - c.mod(n)` so that `c + d` is the next multiple of `n`. Used to
+/// turn additive cancellation modulo `n` into the existing `congr_mod_add`.
+theorem mod_complement_exists(c: Nat, n: Nat) {
+    n != Nat.0 implies exists(d: Nat) { (c + d).mod(n) = Nat.0 }
+} by {
+    if n != Nat.0 {
+        mod_lt(c, n)
+        c.mod(n) < n
+        let d: Nat satisfy { d + c.mod(n) = n }
+        add_mod(c, n)
+        let q: Nat satisfy { q * n + c.mod(n) = c }
+        c + d = q * n + c.mod(n) + d
+        c.mod(n) + d = d + c.mod(n)
+        c.mod(n) + d = n
+        q * n + c.mod(n) + d = q * n + (c.mod(n) + d)
+        q * n + (c.mod(n) + d) = q * n + n
+        q * n + n = q * n + Nat.1 * n
+        q * n + Nat.1 * n = (q + Nat.1) * n
+        c + d = (q + Nat.1) * n
+        (q + Nat.1) * n = (q + Nat.1) * n + Nat.0
+        c + d = (q + Nat.1) * n + Nat.0
+        mod_add_mul(q + Nat.1, n, Nat.0)
+        ((q + Nat.1) * n + Nat.0).mod(n) = Nat.0.mod(n)
+        Nat.0.mod(n) = Nat.0
+        (c + d).mod(n) = Nat.0
+        exists(e: Nat) { (c + e).mod(n) = Nat.0 }
+    }
+}
+
+/// Helper: in a positive modulus, adding the same `c` to both sides cancels.
+theorem congr_mod_add_cancel_right_pos(a: Nat, b: Nat, c: Nat, n: Nat) {
+    n != Nat.0 and (a + c).congr_mod(b + c, n) implies a.congr_mod(b, n)
+} by {
+    if n != Nat.0 and (a + c).congr_mod(b + c, n) {
+        mod_complement_exists(c, n)
+        let d: Nat satisfy { (c + d).mod(n) = Nat.0 }
+        (c + d).mod(n) = Nat.0
+        // (a+c+d) ≡ (b+c+d) by adding d to both sides.
+        congr_mod_refl(d, n)
+        congr_mod_add(a + c, d, b + c, d, n)
+        ((a + c) + d).congr_mod((b + c) + d, n)
+        (a + c) + d = a + (c + d)
+        (b + c) + d = b + (c + d)
+        (a + (c + d)).congr_mod(b + (c + d), n)
+        // Reduce a + (c + d) ≡ a (mod n).
+        mod_add_eq(a, c + d, n)
+        (a + (c + d)).mod(n) = (a.mod(n) + (c + d).mod(n)).mod(n)
+        a.mod(n) + (c + d).mod(n) = a.mod(n) + Nat.0
+        a.mod(n) + Nat.0 = a.mod(n)
+        (a.mod(n) + (c + d).mod(n)).mod(n) = a.mod(n).mod(n)
+        mod_mod(a, n)
+        a.mod(n).mod(n) = a.mod(n)
+        (a + (c + d)).mod(n) = a.mod(n)
+        // Same for b.
+        mod_add_eq(b, c + d, n)
+        (b + (c + d)).mod(n) = (b.mod(n) + (c + d).mod(n)).mod(n)
+        b.mod(n) + (c + d).mod(n) = b.mod(n) + Nat.0
+        b.mod(n) + Nat.0 = b.mod(n)
+        (b.mod(n) + (c + d).mod(n)).mod(n) = b.mod(n).mod(n)
+        mod_mod(b, n)
+        b.mod(n).mod(n) = b.mod(n)
+        (b + (c + d)).mod(n) = b.mod(n)
+        (a + (c + d)).mod(n) = (b + (c + d)).mod(n)
+        a.mod(n) = b.mod(n)
+    }
+}
+
+/// Helper: in modulus zero, congr_mod is just equality, and addition cancels.
+theorem congr_mod_add_cancel_right_zero(a: Nat, b: Nat, c: Nat) {
+    (a + c).congr_mod(b + c, Nat.0) implies a.congr_mod(b, Nat.0)
+} by {
+    if (a + c).congr_mod(b + c, Nat.0) {
+        mod_by_zero(a + c)
+        mod_by_zero(b + c)
+        (a + c).mod(Nat.0) = a + c
+        (b + c).mod(Nat.0) = b + c
+        a + c = b + c
+        c + a = a + c
+        c + b = b + c
+        c + a = c + b
+        add_cancels_left(c, a, b)
+        a = b
+        mod_by_zero(a)
+        mod_by_zero(b)
+        a.mod(Nat.0) = a
+        b.mod(Nat.0) = b
+        a.mod(Nat.0) = b.mod(Nat.0)
+    }
+}
+
+/// Injectivity of the affine map `q -> (q * m + r).mod(n)` on `[0, n)`
+/// whenever `m.coprime(n)`. Building block for the row-by-row Euler totient
+/// argument: across each row `r` of `[0, m * n)`, this map permutes residues
+/// in `[0, n)`, so each row contributes the same `n.totient` count.
+theorem add_mul_mod_inj_below(m: Nat, n: Nat, r: Nat, x: Nat, y: Nat) {
+    n != Nat.0 and m.coprime(n) and x < n and y < n
+        and (x * m + r).mod(n) = (y * m + r).mod(n)
+        implies x = y
+} by {
+    if n != Nat.0 and m.coprime(n) and x < n and y < n
+        and (x * m + r).mod(n) = (y * m + r).mod(n) {
+        // Cancel the additive offset `r` from the congruence.
+        (x * m + r).congr_mod(y * m + r, n)
+        congr_mod_add_cancel_right_pos(x * m, y * m, r, n)
+        (x * m).congr_mod(y * m, n)
+        (x * m).mod(n) = (y * m).mod(n)
+        // Reorient as `m * x` and apply the existing injection.
+        x * m = m * x
+        y * m = m * y
+        (m * x).mod(n) = (m * y).mod(n)
+        mul_mod_inj_below(n, m, x, y)
+        x = y
     }
 }

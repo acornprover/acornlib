@@ -71,23 +71,15 @@ general `inverse_imp_coprime` (`a * b ≡ 1 (mod n) ⟹ b.coprime(n)`).
 `src/nat/nat_coprime.ac` contains `coprime_mul_iff` and `coprime_mod_iff`
 (coprimality is invariant under modular reduction).
 
-- [ ] Prove totient is multiplicative on coprime arguments
-      (`nat_totient(m * n) = nat_totient(m) * nat_totient(n)` when
-      `m.coprime(n)`) — generalises `totient_pq` via the CRT-induced
-      bijection between `[0, mn)` and `[0, m) x [0, n)`.
-- [ ] Generalise `euler_pq` to arbitrary moduli: `gcd(a, n) = 1` implies
-      `a.pow(nat_totient(n)).mod(n) = 1`. Remaining steps:
-      (1) bridge `product(mul_mod_residues(n, a))` to
-      `product(map(coprime_residues(n), scalar_mul_fn(a)))` modulo `n`
-      via the per-element congruence `(a*x).mod(n) ≡ a*x (mod n)`
-      (needs a "products of element-wise congruent lists are congruent
-      mod n" helper);
-      (2) substitute `product_map_scalar` to get
-      `a^totient(n) * product(coprime_residues(n))`;
-      (3) use `mul_mod_residues_is_permutation` +
-      `permutation_preserves_product` to equate both Nat-products;
-      (4) cancel `product(coprime_residues(n))` via `cancel_coprime`
-      using `product_coprime_residues_coprime`.
+- [ ] [totient-multiplicative](totient-multiplicative/todo.md): prove
+      `nat_totient(m * n) = nat_totient(m) * nat_totient(n)` when
+      `m.coprime(n)`, generalising `totient_pq`.
+- `fermat_euler_general` (in `src/nat/nat_totient.ac`): for `n != 0` and
+  `a.coprime(n)`, `a.pow(n.totient).congr_mod(1, n)`. Generalises both
+  `fermat_euler` (prime moduli) and `euler_pq` (`p * q`) via the
+  coprime-residues permutation argument. Helper
+  `product_mul_mod_congr_scalar` packages the "products of element-wise
+  congruent lists are congruent mod n" bridge.
 
 ## DSA
 
