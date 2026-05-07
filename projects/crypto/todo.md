@@ -105,6 +105,15 @@ general `inverse_imp_coprime` (`a * b ≡ 1 (mod n) ⟹ b.coprime(n)`).
   `(g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)`.
 - `dsa_exp_mod_q_factor`: pure-arithmetic mod-`q` identity
   `((h*sinv).mod(q) + x*(r*sinv).mod(q)).mod(q) = ((h + x*r)*sinv).mod(q)`.
+- `dsa_k_times_s_congr`: from `s ≡ kinv*(h + x*r)` and
+  `(k*kinv) ≡ 1` (mod `q`), `(k*s) ≡ h + x*r (mod q)`.
+- `dsa_finish_congr`: from `(k*s) ≡ h + x*r` and `(s*sinv) ≡ 1`
+  (mod `q`), `((h + x*r)*sinv) ≡ k (mod q)`.
+- `dsa_k_times_s_from_mod`: lifted form of `dsa_k_times_s_congr`
+  taking the integer `(k*kinv).mod(q) = 1` and
+  `s = (kinv*(h+x*r)).mod(q)` hypotheses directly (assumes `1 < q`).
+- `dsa_congr_to_eq`: a congruence `lhs ≡ k (mod q)` with `k < q`
+  upgrades to `lhs.mod(q) = k`.
 
 - [ ] Prove the DSA verification identity: for `s = kinv * (h + x*r) mod q`
       and `w = sinv mod q`, `(g^{h*w} * y^{r*w}) mod p mod q = r`.
