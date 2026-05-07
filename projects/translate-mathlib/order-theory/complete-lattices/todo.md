@@ -2,7 +2,7 @@
 
 Goal: support arbitrary suprema and infima, not just binary ones.
 
-- [ ] Continue downstream-driven quaternary natural-family complete-lattice wrappers beyond the verified fixed-slice/full flattened membership/subset/LUB/GLB, constant-family, complement-duality, preimage, and image transport foundation; likely next frontier is fixed-slice/full universal-property transport or componentwise reindexing wrappers
+- [ ] Add downstream-driven quaternary natural-family componentwise reindexing wrappers for fixed slices and full sequence unions/intersections
 - [ ] Do not extend fixed-arity independent-product wrappers past five factors without a named downstream theorem that cannot reasonably use indexed families instead
 - [ ] Revisit list/range complement and distributivity facts only after the invalid strict-check certificate issue is isolated
 - [ ] Decide the minimal general `CompleteLattice` typeclass shape after more unbundled users exist
@@ -61,3 +61,4 @@ Status:
 - `src/set_lattice.ac` now has quaternary natural-family constant/bottom/top wrappers and complement-duality wrappers for full sequence unions/intersections, with named empty, universal, constant, complement, preimage, and image family constructors available for downstream transport lemmas.
 - `src/set_lattice.ac` now has quaternary natural-family preimage and image transport wrappers for ternary slices and for full sequence unions/intersections, including image-of-intersection containment plus injective and bijective exactness for the first-slice and full-family forms.
 - `src/set_lattice.ac` now has quaternary natural-family transport and complement-duality wrappers for every fixed-coordinate ternary slice: preimage preserves slice unions/intersections, image preserves slice unions and is contained in slice intersections, injective/bijective images preserve slice intersections, and slice unions/intersections of complements satisfy De Morgan duality.
+- `src/set_lattice.ac` now has quaternary natural-family fixed-slice and full-family universal-property transport wrappers: slice/full upper-bound characterizations for preimage and image sequence unions, slice/full lower-bound characterizations for exact image sequence intersections under injective and bijective maps, and fixed-slice subset characterizations for sequence unions/intersections.
