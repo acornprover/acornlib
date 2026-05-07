@@ -1,5 +1,184 @@
 from nat import Nat
+from nat.nat_base import add_mod, small_mod
+from nat.nat_monoid import exp_add, exp_mul, one_exp
+from nat.nat_congruence import congr_mod_pow, congr_mod_mul, congr_mod_refl,
+    mod_congr_mod_self, congr_mod_symm, congr_mod_trans, congr_mod_add
 numerals Nat
+
+/// If `g` has order dividing `q` modulo `p` (i.e. `g^q ≡ 1 (mod p)`),
+/// then raising `g` to `k * q + r` is congruent modulo `p` to raising
+/// `g` to `r`.
+theorem dsa_pow_order_reduce(p: Nat, q: Nat, g: Nat, k: Nat, r: Nat) {
+    g.pow(q).mod(p) = 1 implies g.pow(k * q + r).mod(p) = g.pow(r).mod(p)
+} by {
+    if g.pow(q).mod(p) = 1 {
+        g.pow(q).congr_mod(Nat.1, p)
+        congr_mod_pow(g.pow(q), Nat.1, p, k)
+        Nat.1.pow(k) = Nat.1
+        g.pow(q).pow(k).congr_mod(Nat.1, p)
+        congr_mod_refl(g.pow(r), p)
+        g.pow(r).congr_mod(g.pow(r), p)
+        congr_mod_mul(g.pow(q).pow(k), g.pow(r), Nat.1, g.pow(r), p)
+        (g.pow(q).pow(k) * g.pow(r)).congr_mod(Nat.1 * g.pow(r), p)
+        (g.pow(q).pow(k) * g.pow(r)).mod(p) = (Nat.1 * g.pow(r)).mod(p)
+        Nat.1 * g.pow(r) = g.pow(r)
+        (Nat.1 * g.pow(r)).mod(p) = g.pow(r).mod(p)
+        (g.pow(q).pow(k) * g.pow(r)).mod(p) = g.pow(r).mod(p)
+        k * q = q * k
+        g.pow(k * q) = g.pow(q).pow(k)
+        g.pow(k * q + r) = g.pow(k * q) * g.pow(r)
+        g.pow(k * q + r).mod(p) = g.pow(r).mod(p)
+    }
+}
+
+/// If `g` has order dividing `q` modulo `p`, then `g.pow(a).mod(p)` only
+/// depends on `a` modulo `q`.
+theorem dsa_pow_mod_q(p: Nat, q: Nat, g: Nat, a: Nat) {
+    g.pow(q).mod(p) = 1 implies g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)
+} by {
+    if g.pow(q).mod(p) = 1 {
+        add_mod(a, q)
+        let k: Nat satisfy { k * q + a.mod(q) = a }
+        dsa_pow_order_reduce(p, q, g, k, a.mod(q))
+        g.pow(k * q + a.mod(q)).mod(p) = g.pow(a.mod(q)).mod(p)
+        g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)
+    }
+}
+
+/// If `y = g^x mod p`, then `y^b` is congruent to `g^(x*b)` modulo `p`.
+theorem dsa_y_pow_congr(p: Nat, g: Nat, x: Nat, y: Nat, b: Nat) {
+    y = g.pow(x).mod(p) implies y.pow(b).congr_mod(g.pow(x * b), p)
+} by {
+    if y = g.pow(x).mod(p) {
+        mod_congr_mod_self(g.pow(x), p)
+        g.pow(x).mod(p).congr_mod(g.pow(x), p)
+        y.congr_mod(g.pow(x), p)
+        congr_mod_pow(y, g.pow(x), p, b)
+        y.pow(b).congr_mod(g.pow(x).pow(b), p)
+        g.pow(x * b) = g.pow(x).pow(b)
+        y.pow(b).congr_mod(g.pow(x * b), p)
+    }
+}
+
+/// If `y = g^x mod p`, then `(g^a * y^b) mod p = g^(a + x*b) mod p`.
+theorem dsa_combine_pow(p: Nat, g: Nat, x: Nat, y: Nat, a: Nat, b: Nat) {
+    y = g.pow(x).mod(p) implies
+        (g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)
+} by {
+    if y = g.pow(x).mod(p) {
+        dsa_y_pow_congr(p, g, x, y, b)
+        y.pow(b).congr_mod(g.pow(x * b), p)
+        congr_mod_refl(g.pow(a), p)
+        g.pow(a).congr_mod(g.pow(a), p)
+        congr_mod_mul(g.pow(a), y.pow(b), g.pow(a), g.pow(x * b), p)
+        (g.pow(a) * y.pow(b)).congr_mod(g.pow(a) * g.pow(x * b), p)
+        g.pow(a) * g.pow(x * b) = g.pow(a + x * b)
+        (g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)
+    }
+}
+
+/// Mod-q normalization of the verifier's combined exponent: pulling the
+/// inner `.mod(q)` out of each summand leaves the result unchanged
+/// modulo `q`, and the outer expression equals `(h + x*r)*sinv mod q`.
+theorem dsa_exp_mod_q_factor(q: Nat, h: Nat, x: Nat, r: Nat, sinv: Nat) {
+    ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) =
+        ((h + x * r) * sinv).mod(q)
+} by {
+    mod_congr_mod_self(h * sinv, q)
+    (h * sinv).mod(q).congr_mod(h * sinv, q)
+    mod_congr_mod_self(r * sinv, q)
+    (r * sinv).mod(q).congr_mod(r * sinv, q)
+    congr_mod_refl(x, q)
+    x.congr_mod(x, q)
+    congr_mod_mul(x, (r * sinv).mod(q), x, r * sinv, q)
+    (x * (r * sinv).mod(q)).congr_mod(x * (r * sinv), q)
+    congr_mod_add((h * sinv).mod(q), x * (r * sinv).mod(q),
+                  h * sinv, x * (r * sinv), q)
+    ((h * sinv).mod(q) + x * (r * sinv).mod(q)).congr_mod(
+        h * sinv + x * (r * sinv), q)
+    h * sinv + x * (r * sinv) = (h + x * r) * sinv
+    ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) =
+        ((h + x * r) * sinv).mod(q)
+}
+
+/// Cancellation step: `s ≡ kinv*(h + x*r) (mod q)` together with
+/// `(k*kinv) ≡ 1 (mod q)` forces `k*s ≡ h + x*r (mod q)`.
+theorem dsa_k_times_s_congr(q: Nat, h: Nat, x: Nat, r: Nat,
+                             k: Nat, kinv: Nat, s: Nat) {
+    s.congr_mod(kinv * (h + x * r), q) and (k * kinv).congr_mod(Nat.1, q)
+    implies (k * s).congr_mod(h + x * r, q)
+} by {
+    if s.congr_mod(kinv * (h + x * r), q) and (k * kinv).congr_mod(Nat.1, q) {
+        congr_mod_refl(k, q)
+        congr_mod_mul(k, s, k, kinv * (h + x * r), q)
+        k * (kinv * (h + x * r)) = (k * kinv) * (h + x * r)
+        (k * s).congr_mod((k * kinv) * (h + x * r), q)
+        congr_mod_refl(h + x * r, q)
+        congr_mod_mul(k * kinv, h + x * r, Nat.1, h + x * r, q)
+        Nat.1 * (h + x * r) = h + x * r
+        ((k * kinv) * (h + x * r)).congr_mod(h + x * r, q)
+        congr_mod_trans(k * s, (k * kinv) * (h + x * r), h + x * r, q)
+        (k * s).congr_mod(h + x * r, q)
+    }
+}
+
+/// Multiplying `(k*s).congr_mod(h + x*r, q)` by `sinv` and applying
+/// `(s*sinv).congr_mod(1, q)` yields `((h + x*r)*sinv).congr_mod(k, q)`.
+theorem dsa_finish_congr(q: Nat, h: Nat, x: Nat, r: Nat,
+                          k: Nat, s: Nat, sinv: Nat) {
+    (k * s).congr_mod(h + x * r, q) and (s * sinv).congr_mod(Nat.1, q)
+    implies ((h + x * r) * sinv).congr_mod(k, q)
+} by {
+    if (k * s).congr_mod(h + x * r, q) and (s * sinv).congr_mod(Nat.1, q) {
+        congr_mod_symm(k * s, h + x * r, q)
+        congr_mod_refl(sinv, q)
+        congr_mod_mul(h + x * r, sinv, k * s, sinv, q)
+        ((h + x * r) * sinv).congr_mod(k * s * sinv, q)
+        k * s * sinv = k * (s * sinv)
+        ((h + x * r) * sinv).congr_mod(k * (s * sinv), q)
+        congr_mod_refl(k, q)
+        congr_mod_mul(k, s * sinv, k, Nat.1, q)
+        (k * (s * sinv)).congr_mod(k * Nat.1, q)
+        k * Nat.1 = k
+        (k * (s * sinv)).congr_mod(k, q)
+        congr_mod_trans((h + x * r) * sinv, k * (s * sinv), k, q)
+        ((h + x * r) * sinv).congr_mod(k, q)
+    }
+}
+
+/// Bridge: a congruence `lhs ≡ k (mod q)` together with `k < q` upgrades
+/// to the equality `lhs.mod(q) = k`.
+theorem dsa_congr_to_eq(q: Nat, k: Nat, lhs: Nat) {
+    k < q and lhs.congr_mod(k, q) implies lhs.mod(q) = k
+} by {
+    if k < q and lhs.congr_mod(k, q) {
+        lhs.mod(q) = k.mod(q)
+        small_mod(k, q)
+        k.mod(q) = k
+        lhs.mod(q) = k
+    }
+}
+
+/// Lifted form of `dsa_k_times_s_congr`: derives `(k*s) ≡ h + x*r (mod q)`
+/// directly from the integer mod hypotheses used in DSA.
+theorem dsa_k_times_s_from_mod(q: Nat, h: Nat, x: Nat, r: Nat,
+                                k: Nat, kinv: Nat, s: Nat) {
+    1 < q and (k * kinv).mod(q) = 1 and
+    s = (kinv * (h + x * r)).mod(q)
+    implies (k * s).congr_mod(h + x * r, q)
+} by {
+    if 1 < q and (k * kinv).mod(q) = 1 and
+       s = (kinv * (h + x * r)).mod(q) {
+        small_mod(Nat.1, q)
+        Nat.1.mod(q) = Nat.1
+        mod_congr_mod_self(kinv * (h + x * r), q)
+        s.congr_mod(kinv * (h + x * r), q)
+        (k * kinv).mod(q) = Nat.1.mod(q)
+        (k * kinv).congr_mod(Nat.1, q)
+        dsa_k_times_s_congr(q, h, x, r, k, kinv, s)
+        (k * s).congr_mod(h + x * r, q)
+    }
+}
 
 /// DSA domain parameters: a prime `p`, a prime `q` dividing `p - 1`,
 /// and a generator `g` of the unique order-`q` subgroup of `(Z/p)*`.
