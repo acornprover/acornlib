@@ -2,7 +2,7 @@
 
 Goal: add the standard discrete graph library used in combinatorics, linear algebra, and algorithms.
 
-- [ ] Define simple graphs and graph morphisms
+- [ ] Add graph morphisms (homomorphisms, embeddings, isomorphisms) between simple graphs
 - [ ] Add walks, paths, cycles, and connectedness
 - [ ] Develop trees, forests, and spanning-tree theory
 - [ ] Support matchings and Hall-style theorems
