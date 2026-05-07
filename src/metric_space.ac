@@ -1,4 +1,6 @@
+from nat import Nat
 from real import Real
+from real.real_seq import eps_lt_half
 from set import Set
 numerals Real
 
@@ -360,4 +362,143 @@ inductive Color {
 
 instance Color: MetricSpace {
     let distance: (Color, Color) -> Real = discrete
+}
+
+/// True if every term `q(i)` with `i >= n` is within `eps` of the limit candidate `a`.
+define metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat) {
+        n <= i implies q(i).distance(a) < eps
+    }
+}
+
+/// A sequence `q` in a metric space tends to `a` if for every positive `eps`,
+/// some tail of `q` lies within `eps` of `a`.
+define tendsto_metric[M: MetricSpace](q: Nat -> M, a: M) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            metric_tail_bound(q, a, n, eps)
+        }
+    }
+}
+
+/// True if every pair of terms `q(i)`, `q(j)` with `i, j >= n` are within `eps` of each other.
+define cauchy_metric_bound[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat, j: Nat) {
+        n <= i and n <= j implies q(i).distance(q(j)) < eps
+    }
+}
+
+/// A sequence `q` in a metric space is Cauchy if for every positive `eps`,
+/// some tail of `q` has all pairs within `eps`.
+define is_cauchy_metric[M: MetricSpace](q: Nat -> M) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_metric_bound(q, n, eps)
+        }
+    }
+}
+
+/// Unpacking `tendsto_metric` at a specific positive `eps`.
+theorem tendsto_metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, eps: Real) {
+    tendsto_metric(q, a) and eps.is_positive implies exists(n: Nat) {
+        metric_tail_bound(q, a, n, eps)
+    }
+} by {
+    tendsto_metric(q, a) = forall(e: Real) {
+        e.is_positive implies exists(n: Nat) {
+            metric_tail_bound(q, a, n, e)
+        }
+    }
+}
+
+/// Unpacking `metric_tail_bound` at a specific index.
+theorem metric_tail_bound_at[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real, i: Nat) {
+    metric_tail_bound(q, a, n, eps) and n <= i implies q(i).distance(a) < eps
+} by {
+    metric_tail_bound(q, a, n, eps) = forall(j: Nat) {
+        n <= j implies q(j).distance(a) < eps
+    }
+}
+
+/// A convergent sequence in a metric space is Cauchy.
+theorem tendsto_metric_imp_cauchy[M: MetricSpace](q: Nat -> M, a: M) {
+    tendsto_metric(q, a) implies is_cauchy_metric(q)
+} by {
+    if tendsto_metric(q, a) {
+        forall(eps: Real) {
+            if eps.is_positive {
+                let half: Real satisfy {
+                    half.is_positive and half + half < eps
+                }
+                tendsto_metric_tail_bound(q, a, half)
+                let n: Nat satisfy {
+                    metric_tail_bound(q, a, n, half)
+                }
+                forall(i: Nat, j: Nat) {
+                    if n <= i and n <= j {
+                        metric_tail_bound_at(q, a, n, half, i)
+                        metric_tail_bound_at(q, a, n, half, j)
+                        q(i).distance(a) < half
+                        q(j).distance(a) < half
+                        q(i).distance(q(j)) <= q(i).distance(a) + a.distance(q(j))
+                        a.distance(q(j)) = q(j).distance(a)
+                        q(i).distance(a) + a.distance(q(j)) = q(i).distance(a) + q(j).distance(a)
+                        q(i).distance(a) + q(j).distance(a) < half + half
+                        q(i).distance(q(j)) < half + half
+                        q(i).distance(q(j)) < eps
+                    }
+                }
+                cauchy_metric_bound(q, n, eps)
+                exists(m: Nat) { cauchy_metric_bound(q, m, eps) }
+            }
+        }
+    }
+}
+
+/// Limits of convergent sequences in a metric space are unique.
+theorem tendsto_metric_unique[M: MetricSpace](q: Nat -> M, a: M, b: M) {
+    tendsto_metric(q, a) and tendsto_metric(q, b) implies a = b
+} by {
+    if tendsto_metric(q, a) and tendsto_metric(q, b) {
+        forall(eps: Real) {
+            if eps.is_positive {
+                let half: Real satisfy {
+                    half.is_positive and half + half < eps
+                }
+                tendsto_metric_tail_bound(q, a, half)
+                tendsto_metric_tail_bound(q, b, half)
+                let na: Nat satisfy {
+                    metric_tail_bound(q, a, na, half)
+                }
+                let nb: Nat satisfy {
+                    metric_tail_bound(q, b, nb, half)
+                }
+                let n: Nat = if na <= nb { nb } else { na }
+                na <= n
+                nb <= n
+                metric_tail_bound_at(q, a, na, half, n)
+                metric_tail_bound_at(q, b, nb, half, n)
+                q(n).distance(a) < half
+                q(n).distance(b) < half
+                a.distance(b) <= a.distance(q(n)) + q(n).distance(b)
+                a.distance(q(n)) = q(n).distance(a)
+                a.distance(q(n)) + q(n).distance(b) < half + half
+                a.distance(b) < half + half
+                half + half < eps
+                a.distance(b) < eps
+            }
+        }
+        // a.distance(b) is non-negative and strictly less than every positive eps,
+        // hence equals zero, hence a = b.
+        not a.distance(b).is_negative
+        if a.distance(b) != 0 {
+            a.distance(b).is_positive
+            let eps = a.distance(b)
+            eps.is_positive
+            a.distance(b) < eps
+            false
+        }
+        a.distance(b) = 0
+        a = b
+    }
 }
