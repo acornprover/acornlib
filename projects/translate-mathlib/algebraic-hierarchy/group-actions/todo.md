@@ -7,5 +7,6 @@ Goal: provide a standard language for symmetry actions before representation the
 - [ ] Connect permutation actions with finite groups
 - [ ] Add product and restricted actions
 - [ ] Prove orbit-stabilizer style theorems
-- [ ] Add conjugation as a standard internal action
 - [ ] Record future links to representation theory and geometry
+
+Progress: `src/conjugation_action.ac` now defines `conjugation_act(g, x) = g * x * g.inverse`, proves it satisfies the action identity and multiplication constraints, packages it as the bundled `conjugation_action: MulAction[G, G]`, and adds the commutes-fixed-point characterization, identity-value invariance, multiplicativity in the second argument, and inverse preservation.
