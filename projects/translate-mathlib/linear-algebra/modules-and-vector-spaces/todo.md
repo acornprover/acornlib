@@ -23,7 +23,10 @@ work (linear maps, bases, matrices, etc.) can build on.
 
 - [ ] Add bundled `ModuleHom[R, M, N]` once the 3-typeclass-param structure bug is fixed,
       with extensionality, projections, identity, and composition.
-- [ ] Add module quotient by a submodule.
+- [ ] Package the submodule quotient as a `Module[R, QuotientOver[M]]` (axioms via
+      representatives, using `submodule_quotient_add/neg/zero/smul_by`).
+- [ ] Add the canonical projection `M -> QuotientOver[M]` and prove it is a linear map.
+- [ ] Show the kernel of the canonical projection is the originating submodule.
 - [ ] Extend packaged kernel/image submodule APIs only when downstream formalizations need additional lemmas.
 
 Status:
@@ -33,3 +36,4 @@ Status:
 - Linear-map kernels and images are represented by `linear_map_kernel` and `linear_map_image`, with verified zero/add/neg/smul closure lemmas.
 - `linear_map_kernel_submodule` and `linear_map_image_submodule` now package predicate-level kernels and images as `Submodule` values, using the full submodule outside the linear-map side condition.
 - Packaged kernel/image submodules have verified carrier lemmas, linear-map membership lemmas, kernel introduction/elimination lemmas, image value/elimination lemmas, subset-style universal properties, the trivial-kernel-to-zero-submodule inclusion, and surjectivity/full-image bridges.
+- `submodule_rel`, `submodule_quotient_relation`, `submodule_quotient_add/neg/zero`, and `submodule_quotient_smul_by` (left scalar multiplication for a fixed scalar, with projection and representative-compatibility lemmas) provide a representative-level quotient-by-submodule API, delegating additive structure to `submodule_to_add_subgroup` and the existing `add_subgroup` quotient.
