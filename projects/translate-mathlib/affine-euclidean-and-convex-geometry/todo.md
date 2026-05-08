@@ -2,7 +2,7 @@
 
 Goal: support the geometric language used in linear algebra, optimization, and classical geometry.
 
-- [ ] Extend `AffineSubspace` with preimage and span constructions (intersection predicate + subset API done)
+- [ ] Extend `AffineSubspace` with preimage and span constructions (intersection constructor + subset API done)
 - [ ] Add product `AffineSpace` instances (componentwise on `Pair[P, Q]`) [deferred: blocked on
       generic-`Pair` typeclass attribute rendering bug]
 - [ ] Add affine maps, barycentric coordinates, and affine combinations
