@@ -5,7 +5,6 @@ Goal: give order theory access to induction and recursion principles beyond the 
 - [ ] Prove actual existence principles for recursive definitions on well-founded relations, beyond uniqueness and choice once existence is supplied
 - [ ] Add chain-level forward transfer for injective pushforwards only when a downstream proof needs it
 - [ ] Add order-like map transfer lemmas beyond pullback/pushforward only when a concrete order API consumer appears
-- [ ] Add Noetherian-style induction principles from converse well-foundedness without prover timeouts
 - [ ] Connect well-founded order tools to termination arguments in definitions
 - [ ] Refactor one existing induction-heavy development to use the generalized API
 
@@ -18,5 +17,6 @@ Status:
 - `src/well_founded.ac` now has `relation_pushforward_is_well_founded_of_injection` and the matching `relation_pushforward_has_no_descending_chain_of_injection`, generalizing the existing bijection-based pushforward transfer lemmas to arbitrary injections.
 - The transfer API now reflects well-foundedness from pushforwards back to the source relation, proves surjective pullback well-foundedness iff the target relation is well-founded, and adds no-descending-chain inheritance for intersections, mutual inclusion, pushforward reflection, coordinate product relations, and lexicographic products under well-founded components.
 - The recursion API now has a predecessor-agreement predicate, a predecessor-extensionality predicate for recursive steps, a solution predicate for recursive equations, pointwise and function-level uniqueness of solutions over a well-founded relation, uniqueness of solutions when one exists, and `choose_or_default`-based chosen-solution wrappers that recover a solution and its step equation whenever existence is supplied.
-- The Noetherian relation API now names converse well-foundedness, provides ascending-chain predicates plus equivalence with descending chains for the converse relation, proves a maximal-element principle for nonempty predicates, and derives no-ascending-chain and ascending-chain contradiction lemmas. A direct Noetherian induction wrapper was attempted but deferred because the converse-step conversion timed out.
+- The Noetherian relation API now names converse well-foundedness, provides ascending-chain predicates plus equivalence with descending chains for the converse relation, proves a maximal-element principle for nonempty predicates, derives no-ascending-chain and ascending-chain contradiction lemmas, and has a successor-closed predicate with Noetherian induction and induction-at wrappers via converse well-foundedness.
 - The strict-natural-order recursion API now has Nat-specialized solution predicates, pointwise and function-level uniqueness, unique-existence wrappers, and chosen-solution lemmas that recover any supplied solution, ignore the default when a solution exists, and satisfy the recursive equation pointwise.
+- The Noetherian relation API now includes subrelation/intersection/mutual-inclusion transfer for Noetherianity, plus relation-inclusion transfer for ascending chains and absence of ascending chains.
