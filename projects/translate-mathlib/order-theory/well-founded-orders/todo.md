@@ -4,7 +4,7 @@ Goal: give order theory access to induction and recursion principles beyond the 
 
 - [ ] Prove actual existence principles for recursive definitions on well-founded relations, beyond uniqueness and choice once existence is supplied
 - [ ] Add chain-level forward transfer for injective pushforwards only when a downstream proof needs it
-- [ ] Add order-like map transfer lemmas beyond pullback/pushforward only when a concrete order API consumer appears
+- [ ] Add further order-like map transfer lemmas beyond pullback/pushforward only when a concrete order API consumer appears
 - [ ] Connect well-founded order tools to termination arguments in definitions
 - [ ] Refactor one existing induction-heavy development to use the generalized API
 
@@ -22,3 +22,4 @@ Status:
 - The strict-natural-order recursion API also includes a concrete primitive-recursive function constructor with zero and successor equations for base/step data.
 - The Noetherian relation API now includes subrelation/intersection/mutual-inclusion transfer for Noetherianity, plus relation-inclusion transfer for ascending chains and absence of ascending chains.
 - The Noetherian transfer API now mirrors the well-founded pullback/pushforward transport layer: arbitrary pullbacks preserve Noetherianity, surjective pullbacks reflect it and give an iff, injective and bijective pushforwards preserve it, bundled bijections transport it, and pushforwards reflect Noetherianity back to the source.
+- Noetherian coordinate-product transfer now covers first-coordinate and second-coordinate product relations, plus no-ascending-chain inheritance for those coordinate products. Lexicographic Noetherian transfer remains deferred until its proof can be made strict-check stable.
