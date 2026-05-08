@@ -15,4 +15,4 @@ Goal: make the algebraic core broad enough that later domain libraries reuse str
 
 ## Current Focus
 
-The remaining morphism and subobject items are deferred design cleanups. The active non-design branch is [products, opposites, and units](product-opposite-and-units/todo.md), with product work kept unbundled until the generic `Pair[A, B]` typeclass receiver blocker is resolved.
+The remaining morphism and subobject items are deferred design cleanups. Product work is kept unbundled until the generic `Pair[A, B]` typeclass receiver blocker is resolved. The next non-design execution frontier is [quotients](quotients/todo.md), where representative-level monoid/group quotient laws are being rounded out before bundled instances or universal properties.
