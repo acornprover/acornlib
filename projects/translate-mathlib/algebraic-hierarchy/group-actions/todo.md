@@ -5,14 +5,16 @@ Goal: provide a standard language for symmetry actions before representation the
 - [ ] Package orbits as equivalence classes and add the `is_transitive(orbit_relation(a))` wrapper when proof search can handle the generic relation obligation
 - [ ] Add action equivalences and categorical composition wrappers once equality transport between source/target actions is reliable
 - [ ] Connect permutation actions with finite groups
-- [ ] Add further restricted-action support and product-action refinements (transitivity/faithfulness reflection beyond the injectivity bridge)
+- [ ] Add further restricted-action support and product-action refinements (transitivity/faithfulness reflection and remaining bundled `ActionHom` transport conveniences)
 - [ ] Prove orbit-stabilizer style theorems
 - [ ] Record future links to representation theory and geometry
 
-Progress: `src/conjugation_action.ac` now defines `conjugation_act(g, x) = g * x * g.inverse`, proves it satisfies the action identity and multiplication constraints, packages it as the bundled `conjugation_action: MulAction[G, G]`, and adds the commutes-fixed-point characterization, identity-value invariance, multiplicativity in the second argument, and inverse preservation.
+Progress: `src/conjugation_action.ac` now defines `conjugation_act(g, x) = g * x * g.inverse`, proves it satisfies the action identity and multiplication constraints, packages it as the bundled `conjugation_action: MulAction[G, G]`, and adds the commutes-fixed-point characterization, identity-value invariance, multiplicativity in the second argument, inverse preservation, self-fixed-point, two-sided inverse-arg cancellation, and second-argument injectivity.
 
 Progress: `src/derived_action.ac` now provides the bundled `trivial_action[G, X]: MulAction[G, X]` (with action-evaluation and singleton-orbit lemmas, plus transitivity on subsingleton targets) and the bundled `restricted_action(phi, a)` pulling a `MulAction[G, X]` back along a `GroupHom[H, G]`, with action-evaluation, orbit-subset transport, and the faithful-implies-`phi`-injective bridge.
 
 Progress: `src/product_action.ac` now provides the componentwise product action on `Pair[X, Y]`, the bundled `product_action(a, b): MulAction[G, Pair[X, Y]]`, coordinate evaluation lemmas, equivariance of both projections, named projection maps, bundled projection action homomorphisms with source/target projection lemmas, basic orbit projection/same-witness introduction lemmas, and product-action orbit equality transport to product and coordinate orbits.
 
 Progress: `src/group_action.ac` now includes the basic `ActionHom` API: equivariant maps, bundled action homomorphisms, identity homomorphisms, map extensionality, composition of underlying equivariant maps, orbit-membership preservation, and injective orbit-membership reflection for equivariant maps and action homomorphisms.
+
+Progress: `src/product_action.ac` now identifies product-action stabilizers with intersections of coordinate stabilizers, and it includes a pointwise product map plus the equivariance bridge for pairing two equivariant maps into a product action. It also adds projection-evaluation lemmas, product-orbit same-witness introduction/projection lemmas, and equivariant-pair-map transport for orbit and stabilizer membership.
