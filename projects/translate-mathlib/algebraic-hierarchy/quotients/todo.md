@@ -20,4 +20,4 @@ Status:
 - Kernel quotient APIs now include primitive monoid/group power operations and zero/successor/projection identity lemmas.
 - Kernel quotient APIs now prove that powers of projected monoid and group representatives agree with projected powers.
 - Normal-subgroup quotient APIs now include quotient multiplication commutativity for commutative groups and primitive power operations.
-- Normal-subgroup quotient APIs now include the projected-power successor step for representatives.
+- Normal-subgroup quotient APIs now include the projected-power successor step for representatives and the first-power representative law.
