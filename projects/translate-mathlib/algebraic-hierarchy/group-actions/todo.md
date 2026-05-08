@@ -5,7 +5,7 @@ Goal: provide a standard language for symmetry actions before representation the
 - [ ] Package orbits as equivalence classes and add the `is_transitive(orbit_relation(a))` wrapper when proof search can handle the generic relation obligation
 - [ ] Add action equivalences and categorical composition wrappers once equality transport between source/target actions is reliable
 - [ ] Connect permutation actions with finite groups
-- [ ] Add further restricted-action support and product-action refinements (transitivity/faithfulness reflection beyond the injectivity bridge)
+- [ ] Add further restricted-action support and product-action refinements (transitivity/faithfulness reflection beyond the injectivity, stabilizer-intersection, and pair-map bridges)
 - [ ] Prove orbit-stabilizer style theorems
 - [ ] Record future links to representation theory and geometry
 
@@ -16,3 +16,5 @@ Progress: `src/derived_action.ac` now provides the bundled `trivial_action[G, X]
 Progress: `src/product_action.ac` now provides the componentwise product action on `Pair[X, Y]`, the bundled `product_action(a, b): MulAction[G, Pair[X, Y]]`, coordinate evaluation lemmas, equivariance of both projections, named projection maps, bundled projection action homomorphisms with source/target projection lemmas, basic orbit projection/same-witness introduction lemmas, and product-action orbit equality transport to product and coordinate orbits.
 
 Progress: `src/group_action.ac` now includes the basic `ActionHom` API: equivariant maps, bundled action homomorphisms, identity homomorphisms, map extensionality, composition of underlying equivariant maps, orbit-membership preservation, and injective orbit-membership reflection for equivariant maps and action homomorphisms.
+
+Progress: `src/product_action.ac` now identifies product-action stabilizers with intersections of coordinate stabilizers, and it includes a pointwise product map plus the equivariance bridge for pairing two equivariant maps into a product action.
