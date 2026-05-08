@@ -24,6 +24,12 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
       instances on `Pair[V1, V2]`/`Pair[P1, P2]`. Next action: report upstream with
       a minimal `Pair[A: AddCommGroup, B: AddCommGroup]: Add` (or `Pair: LTE`) repro,
       then revisit both bundled product `OrderIso` and product `AffineSpace` support.
+- [ ] prover-limitation: algebraic-hierarchy/quotients - the normal-subgroup quotient
+      projected-power law verifies at zero, successor, and first power, but the
+      all-`Nat` induction theorem times out even when the target equality is factored
+      into `normal_subgroup_quotient_projected_power_law`. Next action: improve
+      induction proof search or find a smaller proof packaging before adding
+      `normal_subgroup_quotient_pow_mk`.
 
 ## Foundational And Core Infrastructure
 
