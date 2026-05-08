@@ -4,7 +4,8 @@ Goal: give order theory access to induction and recursion principles beyond the 
 
 - [ ] Add recursion principles on well-founded relations
 - [ ] Connect well-foundedness with `Nat`-based structural recursion
-- [ ] Add remaining well-foundedness transfer lemmas across embeddings and order-like maps beyond bijective relation pushforwards
+- [ ] Add chain-level forward transfer for injective pushforwards only when a downstream proof needs it
+- [ ] Add order-like map transfer lemmas beyond pullback/pushforward only when a concrete order API consumer appears
 - [ ] Support Noetherian-style arguments via well-foundedness
 - [ ] Connect well-founded order tools to termination arguments in definitions
 - [ ] Refactor one existing induction-heavy development to use the generalized API
@@ -16,3 +17,4 @@ Status:
 - `src/well_founded.ac` now includes the strict natural order as a relation, proves the least-element principle for nonempty predicates on naturals, and adds pullback-controlled well-foundedness and descending-chain transfer lemmas for relations contained in pullbacks.
 - `src/well_founded.ac` now defines lexicographic and coordinate product relations on pairs, proves the coordinate product relations embed into the lexicographic relation, proves first- and second-coordinate product relations are well-founded by pullback, and proves that lexicographic product relations are well-founded when both component relations are well-founded. The descending-chain projection lemmas (first-coordinate non-strict descent, second-coordinate descent under irreflexive `r` on shared-first steps) remain in place for downstream chain arguments.
 - `src/well_founded.ac` now has `relation_pushforward_is_well_founded_of_injection` and the matching `relation_pushforward_has_no_descending_chain_of_injection`, generalizing the existing bijection-based pushforward transfer lemmas to arbitrary injections.
+- The transfer API now reflects well-foundedness from pushforwards back to the source relation, proves surjective pullback well-foundedness iff the target relation is well-founded, and adds no-descending-chain inheritance for intersections, mutual inclusion, pushforward reflection, coordinate product relations, and lexicographic products under well-founded components.
