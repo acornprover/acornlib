@@ -8,7 +8,7 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Add `finite_set_sum: FiniteSet[T] -> (T -> A) -> A` (generic over `AddCommMonoid`) in `finite_set_sum.ac`. Includes `finite_set_sum_eq_list_sum`, `finite_set_sum_empty`, and `finite_set_sum_add` (linearity in the function argument). Built via the unique-list strategy using `unique_same_contains_map_sum_eq` rather than the map-permutation lemma.
 - [x] Add `finite_set_sum_insert`: inserting a fresh element adds its value to the sum.
 - [x] Add `finite_set_sum_disjoint_union`: sum over `fs_union(a, b)` equals the sum of parts when `a` and `b` are disjoint.
-- [ ] Add monotonicity of `finite_set_sum` (over an ordered `AddCommMonoid` with nonneg pointwise inequality).
+- [ ] Finish monotonicity of `finite_set_sum` over `Real`. The cons-step helper `list_map_sum_le_cons` lands in `finite_set_sum_real.ac`; the wrap-up theorems `list_map_sum_le` and `finite_set_sum_le` time out under direct list induction with a `forall+implies` predicate. Try inducting on list length (Nat induction) instead, or rephrasing the predicate so the hypothesis sits outside.
 - [ ] Define `DiscretePMF[T]` as a `FiniteSet[T]` together with a nonnegative `T -> Real` function whose `finite_set_sum` is `Real.1`.
 - [ ] Define probability of an event as the sum of pmf values over the event subset.
 - [ ] Add complement, union, and inclusion-exclusion for discrete probability.
