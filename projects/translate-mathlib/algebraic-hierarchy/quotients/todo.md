@@ -16,4 +16,5 @@ Goal: make quotient constructions systematic across groups, rings, and later mod
 Status:
 
 - Kernel quotient APIs now include commutativity lemmas for commutative monoid, additive commutative monoid, and additive commutative group homomorphism quotients.
-- Normal-subgroup quotient APIs now include quotient multiplication commutativity for commutative groups.
+- Kernel quotient APIs now include primitive monoid/group power operations and zero/successor/projection identity lemmas.
+- Normal-subgroup quotient APIs now include quotient multiplication commutativity for commutative groups and primitive power operations.
