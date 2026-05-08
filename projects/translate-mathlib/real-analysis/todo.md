@@ -25,3 +25,4 @@ Status:
 - `src/real/continuity_pointwise_abs.ac` defines `pointwise_abs(f)(x) = f(x).abs` and proves it preserves continuity at a point and globally, using `abs_close_of_close`.
 - `src/real/continuity_square.ac` defines `square_real(x) = x * x`, identifies it with `pointwise_mul(identity_fn, identity_fn)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_cube.ac` defines `cube_real(x) = x * x * x`, identifies it with `pointwise_mul(square_real, identity_fn)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_quartic.ac` defines `quartic_real(x) = square_real(x) * square_real(x)`, identifies it with `pointwise_mul(square_real, square_real)`, and proves it is continuous at each point and globally.
