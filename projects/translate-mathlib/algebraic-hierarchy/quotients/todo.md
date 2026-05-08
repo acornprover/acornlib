@@ -32,3 +32,4 @@ Status:
 - Ideal quotient APIs now include projection-facing aliases for quotient addition/multiplication associativity, distributivity over addition/subtraction, subtraction reassociation/cancellation, and natural-power simplification laws.
 - `src/normal_subgroup.ac` now has the named `normal_subgroup_quotient_projected_power_law` predicate for the blocked all-power induction target.
 - Kernel quotient APIs now include canonical projection wrappers and projection-facing preservation/simplification aliases for group, ring, monoid, and additive-group homomorphism quotients.
+- Group-kernel quotient APIs now include representative-level and projection-facing inverse-cancellation simplification laws.
