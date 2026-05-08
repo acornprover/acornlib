@@ -31,7 +31,9 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
   - [x] Identity field hom `F -> F` and composition of field homs
         (`identity_field_hom`, `compose_field_hom`, associativity, identity laws
         in `src/field_hom.ac`).
-  - [ ] Field-hom image as a subfield (once subfield API exists)
+  - [x] Subfield structure with constraints, extensionality, and basic
+        closure theorems (`src/subfield.ac`)
+  - [ ] Field-hom image as a subfield (subfield API now available)
   - [x] `is_field_extension(phi: FieldHom[F, E])` and tower composition law
         (`src/field_extension.ac`)
 
