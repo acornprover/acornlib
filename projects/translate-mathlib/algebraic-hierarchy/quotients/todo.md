@@ -9,7 +9,7 @@ Goal: make quotient constructions systematic across groups, rings, and later mod
 - [ ] Add canonical projection morphisms and universal properties
 - [ ] Support kernels and quotients-by-kernel constructions
 - [ ] Connect quotients to the first isomorphism theorem
-- [ ] Add simplification lemmas for quotient representatives
+- [ ] Add remaining simplification lemmas for quotient representatives beyond the verified ideal-quotient negation/zero/product/subtraction laws
 - [ ] Blocked: prove the normal-subgroup quotient projected-power all-power law after the induction timeout is resolved
 - [ ] Support transport of finiteness and order structure through quotients where natural
 - [ ] Record migration targets where current code hand-simulates quotient reasoning
@@ -22,4 +22,6 @@ Status:
 - Normal-subgroup quotient APIs now include quotient multiplication commutativity for commutative groups and primitive power operations.
 - Normal-subgroup quotient APIs now include the projected-power successor step for representatives and the first-power representative law.
 - Group-kernel and normal-subgroup quotient APIs now include representative-level inverse-involution laws.
+- Normal-subgroup quotient APIs now include the representative-level inverse-of-product law.
+- Ideal quotient APIs now include representative-level negation/zero/product/subtraction simplification laws for projected representatives.
 - `src/normal_subgroup.ac` now has the named `normal_subgroup_quotient_projected_power_law` predicate for the blocked all-power induction target.
