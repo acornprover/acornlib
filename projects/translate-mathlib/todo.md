@@ -16,6 +16,15 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
       `is_transitive(normal_subgroup_rel(s))` times out, blocking `QuotientRelation[G]`
       packaging for normal subgroup quotients. Next action: improve prover/typeclass
       search for this wrapper or find a smaller definitionally equivalent packaging.
+- [ ] acorn-bug: functional-analysis - `instance Real: NormedAddCommGroup` (in
+      `src/real_normed.ac`) verifies under `acorn` but `acorn check` rejects the
+      auto-generated certificate for the `norm_triangle` obligation: "generated
+      invalid code: Witness declaration at step 2 is not obviously true ... let
+      w1: Real satisfy { not real_norm(add(w0, w1)) <= add(real_norm(w0),
+      real_norm(w1)) } (missing implicit existential)". Same error shape as the
+      `ModuleHom` and `Pair` certificate bugs. Next action: report upstream with
+      a minimal repro, then revisit further `NormedAddCommGroup` instances and
+      typeclass extensions.
 - [ ] acorn-bug: order-theory/order-isomorphisms - generic `Pair[A, B]: PartialOrder`
       instances fail while rendering `LTE.lte[Pair[A, B]](...)` ("typeclass
       attribute 'LTE.lte' for concrete receiver 'Pair' is not available in the
