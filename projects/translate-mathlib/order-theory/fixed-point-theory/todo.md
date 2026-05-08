@@ -4,8 +4,7 @@ Goal: support the fixed-point theorems that rest primarily on monotonicity and c
 
 - [ ] Add least and greatest fixed point constructions in complete lattices
 - [ ] Prove Knaster-Tarski style fixed point theorems
-- [ ] Add monotone iteration results
-- [ ] Support closure operators as fixed-point constructions
+- [ ] Connect fixed-point sets with complete-lattice infimum/supremum constructions
 - [ ] Add applications to inductive definitions and invariants
 - [ ] Connect fixed points with Galois insertions and complete lattices
 - [ ] Add examples from set operators and algebraic closure operations
@@ -19,3 +18,6 @@ Status:
 - `src/fixed_point.ac` now has `Nat`-indexed iterate wrappers built on `dynamical_systems.iterate`: every iterate of a pre-fixed point stays below the point, every iterate of a post-fixed point stays above, fixed-point iterates collapse to the point, and pre-fixed/post-fixed iterates form descending/ascending chains step-by-step.
 - `src/fixed_point.ac` now has iterate-distance wrappers showing every iterate of a pre-fixed/post-fixed/fixed point under a monotone map is itself a pre-fixed/post-fixed/fixed point, and that iterating further descends (pre-fixed) or ascends (post-fixed) by an arbitrary `Nat` distance.
 - `src/fixed_point.ac` now has `monotone_iterate_le_of_le` (equal-length iterates of a monotone map preserve `<=`) and `monotone_iterate_sandwich_middle` (iterates from `y <= x` stay ordered).
+- `src/fixed_point.ac` packages fixed, pre-fixed, and post-fixed points as sets, proves fixed points are exactly the intersection of pre-fixed and post-fixed points, and adds iterate bounds between post-fixed lower bounds and pre-fixed upper bounds.
+- `src/galois_connection.ac` exposes the generic `is_fixed_by` predicate plus closure/kernel operator image-fixed and comparison-with-fixed-point lemmas.
+- `src/set.ac` mirrors those closure/kernel operator comparison lemmas for set closure and kernel operators.
