@@ -16,12 +16,14 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
       `is_transitive(normal_subgroup_rel(s))` times out, blocking `QuotientRelation[G]`
       packaging for normal subgroup quotients. Next action: improve prover/typeclass
       search for this wrapper or find a smaller definitionally equivalent packaging.
-- [ ] acorn-bug: order-theory/order-isomorphisms - generic `Pair[A, B]: PartialOrder`
-      instances fail while rendering `LTE.lte[Pair[A, B]](...)` ("typeclass
-      attribute 'LTE.lte' for concrete receiver 'Pair' is not available in the
-      current scope"), blocking bundled product-order isomorphisms. Next action:
-      report upstream with the minimal `Pair[A: PartialOrder, B: PartialOrder]: LTE`
-      repro, then revisit bundled product `OrderIso` support.
+- [ ] acorn-bug: order-theory/order-isomorphisms and affine-euclidean-and-convex-geometry
+      - generic `Pair[A, B]` typeclass instances fail while rendering typeclass attributes
+      such as `LTE.lte[Pair[A, B]](...)` and `Add.add[Pair[A, B]](...)` ("typeclass
+      attribute '<attr>' for concrete receiver 'Pair' is not available in the current
+      scope"). Blocks bundled product-order isomorphisms and product `AffineSpace`
+      instances on `Pair[V1, V2]`/`Pair[P1, P2]`. Next action: report upstream with
+      a minimal `Pair[A: AddCommGroup, B: AddCommGroup]: Add` (or `Pair: LTE`) repro,
+      then revisit both bundled product `OrderIso` and product `AffineSpace` support.
 
 ## Foundational And Core Infrastructure
 
