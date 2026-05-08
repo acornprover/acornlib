@@ -19,3 +19,6 @@ Status:
   relation compatibility, projection lemmas, left/right compatibility, zero/one
   projection aliases, and basic identities with zero, self-subtraction, and
   addition of the quotient negation.
+- Canonical projection support now includes projection-equality/reflection lemmas
+  for related representatives and aliases for zero/one/zero-multiplication and
+  subtraction identities stated directly on projected representatives.
