@@ -2,11 +2,12 @@
 
 from nat.nat_base import Nat, strong_induction, true_below
 from pair import Pair, pair_eta
-from functions import is_bijection_fn, is_injective_fn, is_surjective_fn, bijection_fn_is_injective,
-    bijection_fn_is_surjective, Bijection, bijection_map_is_bijection
+from functions import function_extensionality, is_bijection_fn, is_injective_fn, is_surjective_fn,
+    bijection_fn_is_injective, bijection_fn_is_surjective, Bijection, bijection_map_is_bijection
 from relation_basic import is_irreflexive, relation_intersection, relation_intersection_left_subset,
     relation_intersection_right_subset, relation_subset, relation_subset_step
 from relation_transport import relation_pullback, relation_pushforward, predicate_pullback
+from witness import exists_unique, exists_unique_of_exists_and_pairwise
 
 /// True if every nonempty predicate on `T` has an element that is `r`-minimal,
 /// i.e. has no `r`-predecessor inside the predicate.
@@ -57,6 +58,48 @@ define descending_chain_second[A, B](c: Nat -> Pair[A, B], n: Nat) -> B {
 /// The strict order relation on natural numbers, written as a relation.
 define nat_lt_relation(x: Nat, y: Nat) -> Bool {
     x < y
+}
+
+/// True if two functions agree on every `r`-predecessor of an element.
+define functions_agree_on_predecessors[T, U](
+    r: (T, T) -> Bool,
+    x: T,
+    f: T -> U,
+    g: T -> U
+) -> Bool {
+    forall(y: T) {
+        r(y, x) implies f(y) = g(y)
+    }
+}
+
+/// True if a recursive step depends only on the values at `r`-predecessors.
+define is_predecessor_extensional_recursive_step[T, U](
+    r: (T, T) -> Bool,
+    step: (T, T -> U) -> U
+) -> Bool {
+    forall(x: T, f: T -> U, g: T -> U) {
+        functions_agree_on_predecessors(r, x, f, g) implies step(x, f) = step(x, g)
+    }
+}
+
+/// True if a function satisfies a recursive equation over a relation.
+define is_well_founded_recursive_solution[T, U](
+    r: (T, T) -> Bool,
+    step: (T, T -> U) -> U,
+    f: T -> U
+) -> Bool {
+    forall(x: T) {
+        f(x) = step(x, f)
+    }
+}
+
+/// The predicate of being a solution to a well-founded recursive equation.
+define well_founded_recursive_solution_predicate[T, U](
+    r: (T, T) -> Bool,
+    step: (T, T -> U) -> U,
+    f: T -> U
+) -> Bool {
+    is_well_founded_recursive_solution(r, step, f)
 }
 
 /// The lexicographic relation on pairs.
@@ -752,6 +795,91 @@ theorem well_founded_induction_at[T](r: (T, T) -> Bool, p: T -> Bool, x: T) {
             p(z)
         }
         p(x)
+    }
+}
+
+/// Recursive solutions over a well-founded relation agree pointwise.
+theorem well_founded_recursive_solution_eq_at[T, U](
+    r: (T, T) -> Bool,
+    step: (T, T -> U) -> U,
+    f: T -> U,
+    g: T -> U,
+    x: T
+) {
+    is_well_founded(r) and
+    is_predecessor_extensional_recursive_step(r, step) and
+    is_well_founded_recursive_solution(r, step, f) and
+    is_well_founded_recursive_solution(r, step, g) implies
+    f(x) = g(x)
+} by {
+    if is_well_founded(r) and
+        is_predecessor_extensional_recursive_step(r, step) and
+        is_well_founded_recursive_solution(r, step, f) and
+        is_well_founded_recursive_solution(r, step, g) {
+        let p: T -> Bool = function(z: T) {
+            f(z) = g(z)
+        }
+        forall(z: T) {
+            if forall(y: T) { r(y, z) implies p(y) } {
+                functions_agree_on_predecessors(r, z, f, g)
+                is_predecessor_extensional_recursive_step(r, step) =
+                    forall(a: T, h: T -> U, k: T -> U) {
+                        functions_agree_on_predecessors(r, a, h, k) implies step(a, h) = step(a, k)
+                    }
+                step(z, f) = step(z, g)
+                is_well_founded_recursive_solution(r, step, f) = forall(a: T) {
+                    f(a) = step(a, f)
+                }
+                is_well_founded_recursive_solution(r, step, g) = forall(a: T) {
+                    g(a) = step(a, g)
+                }
+                f(z) = step(z, f)
+                g(z) = step(z, g)
+                f(z) = g(z)
+                p(z)
+            }
+        }
+        well_founded_induction_at(r, p, x)
+        p(x)
+        f(x) = g(x)
+    }
+}
+
+/// If a well-founded recursive equation has a solution, then it has exactly one solution.
+theorem well_founded_recursive_solution_exists_unique[T, U](
+    r: (T, T) -> Bool,
+    step: (T, T -> U) -> U
+) {
+    is_well_founded(r) and
+    is_predecessor_extensional_recursive_step(r, step) and
+    exists(f: T -> U) {
+        is_well_founded_recursive_solution(r, step, f)
+    } implies
+    exists_unique(well_founded_recursive_solution_predicate(r, step))
+} by {
+    if is_well_founded(r) and
+        is_predecessor_extensional_recursive_step(r, step) and
+        exists(f: T -> U) {
+            is_well_founded_recursive_solution(r, step, f)
+        } {
+        forall(f: T -> U, g: T -> U) {
+            if well_founded_recursive_solution_predicate(r, step, f) and
+                well_founded_recursive_solution_predicate(r, step, g) {
+                is_well_founded_recursive_solution(r, step, f)
+                is_well_founded_recursive_solution(r, step, g)
+                forall(x: T) {
+                    well_founded_recursive_solution_eq_at(r, step, f, g, x)
+                    f(x) = g(x)
+                }
+                function_extensionality(f, g)
+                f = g
+            }
+        }
+        exists(f: T -> U) {
+            well_founded_recursive_solution_predicate(r, step, f)
+        }
+        exists_unique_of_exists_and_pairwise(well_founded_recursive_solution_predicate(r, step))
+        exists_unique(well_founded_recursive_solution_predicate(r, step))
     }
 }
 
