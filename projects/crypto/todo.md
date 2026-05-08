@@ -107,9 +107,12 @@ general `inverse_imp_coprime` (`a * b ≡ 1 (mod n) ⟹ b.coprime(n)`).
 - `dsa_congr_to_eq`: a congruence `lhs ≡ k (mod q)` with `k < q`
   upgrades to `lhs.mod(q) = k`.
 
-- [ ] Prove the DSA verification identity: for `s = kinv * (h + x*r) mod q`
-      and `w = sinv mod q`, `(g^{h*w} * y^{r*w}) mod p mod q = r`.
-- [ ] Uncomment and prove `dsa_correctness` in `src/crypto/dsa.ac`.
+`dsa_verify_identity` proves the verifier expression collapses to `g^k mod p`
+under the order-`q` subgroup hypothesis and modular-inverse relations, with
+helpers `dsa_verify_exponent_eq` (`((h*sinv).mod(q) + x*(r*sinv).mod(q)).mod(q)
+= k`) and `dsa_pow_combine` (the algebraic chain combining `dsa_combine_pow`
+and `dsa_pow_mod_q`). `dsa_verifier_mod_q_eq_r` bridges to `dsa_sign_r`, and
+`dsa_correctness` packages the full statement.
 
 ## ECDSA
 
