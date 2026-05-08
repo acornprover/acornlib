@@ -3,7 +3,6 @@
 Goal: build the measurable and integrable foundations needed by probability, analysis, and geometry.
 
 - [ ] Add generated sigma-algebras and Borel constructions
-- [ ] Add closure of sigma-algebras under finite union, intersection, set difference
 - [ ] Define measurable functions between sigma-algebras and basic preservation
 - [ ] Add the preimage sigma-algebra induced by a function
 - [ ] Define equality and refinement (`<=`) of sigma-algebras over a fixed type
