@@ -20,9 +20,10 @@ Status:
 - Kernel quotient APIs now include primitive monoid/group power operations and zero/successor/projection identity lemmas.
 - Kernel quotient APIs now prove that powers of projected monoid and group representatives agree with projected powers.
 - Normal-subgroup quotient APIs now include quotient multiplication commutativity for commutative groups and primitive power operations.
+- Normal-subgroup quotient APIs now include a canonical projection wrapper, equality/reflection with the normal-subgroup relation, and projection preservation for one, multiplication, inversion, zeroth powers, and first powers.
 - Normal-subgroup quotient APIs now include the projected-power successor step for representatives and the first-power representative law.
 - Group-kernel and normal-subgroup quotient APIs now include representative-level inverse-involution laws.
-- Normal-subgroup quotient APIs now include the representative-level inverse-of-product law.
+- Normal-subgroup quotient APIs now include projected representative identity, inverse, inverse-of-product, associativity, and commutativity laws.
 - Ideal quotient APIs now include representative-level negation/zero/product/subtraction simplification laws for projected representatives.
 - Ideal quotient APIs now include representative-level subtraction distribution, reassociation, and cancellation simplification laws.
 - Ideal quotient APIs now include a canonical projection wrapper with preservation lemmas for zero, one, addition, multiplication, negation, subtraction, and natural powers.
