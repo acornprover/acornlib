@@ -2,7 +2,8 @@ from nat import Nat
 from nat.nat_base import add_mod, small_mod
 from nat.nat_monoid import exp_add, exp_mul, one_exp
 from nat.nat_congruence import congr_mod_pow, congr_mod_mul, congr_mod_refl,
-    mod_congr_mod_self, congr_mod_symm, congr_mod_trans, congr_mod_add
+    mod_congr_mod_self, congr_mod_symm, congr_mod_trans, congr_mod_add, mod_lt
+from nat.nat_factorisation import prime_imp_no_proper_divisor
 numerals Nat
 
 /// If `g` has order dividing `q` modulo `p` (i.e. `g^q ≡ 1 (mod p)`),
@@ -219,27 +220,199 @@ define dsa_verify(p: Nat, q: Nat, g: Nat, y: Nat, h: Nat,
     (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p).mod(q) = r
 }
 
-// TODO: prove DSA correctness. Requires Fermat's little theorem
-// (a^{p-1} = 1 mod p for prime p, gcd(a, p) = 1), the order-q subgroup
-// structure of (Z/p)*, and modular-inverse arithmetic. The algebraic core
-// is: g^{(h + x r) k^{-1} s^{-1} (h + ...)} reduces, via g^q = 1 mod p, to
-// g^k mod p, so reducing mod q yields r. None of these are currently in
-// acornlib.
-//
-// /// DSA correctness: a signature produced by `dsa_sign_r` / `dsa_sign_s`
-// /// verifies under `dsa_verify` for the matching public key.
-// theorem dsa_correctness(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
-//                         k: Nat, kinv: Nat, h: Nat, sinv: Nat) {
-//     is_dsa_params(p, q, g) and
-//     is_dsa_keypair(p, q, g, x, y) and
-//     0 < k and k < q and
-//     is_mod_inverse(k, kinv, q) and
-//     is_mod_inverse(dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv), sinv, q) and
-//     0 < dsa_sign_r(p, q, g, k) and
-//     0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv)
-//     implies
-//         dsa_verify(p, q, g, y, h,
-//                    dsa_sign_r(p, q, g, k),
-//                    dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
-//                    sinv)
-// }
+/// Helper for `dsa_verify_identity`: the "exponent collapses to `k`" step.
+/// Given the modular-inverse relations and `s = kinv*(h+x*r) mod q`, the
+/// reduced exponent `((h*sinv).mod(q) + x*(r*sinv).mod(q)).mod(q)` equals `k`.
+theorem dsa_verify_exponent_eq(q: Nat, h: Nat, x: Nat, r: Nat,
+                                k: Nat, kinv: Nat, s: Nat, sinv: Nat) {
+    1 < q and k < q and
+    (k * kinv).mod(q) = 1 and
+    (s * sinv).mod(q) = 1 and
+    s = (kinv * (h + x * r)).mod(q)
+    implies
+        ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) = k
+} by {
+    if 1 < q and k < q and
+       (k * kinv).mod(q) = 1 and
+       (s * sinv).mod(q) = 1 and
+       s = (kinv * (h + x * r)).mod(q) {
+        dsa_exp_mod_q_factor(q, h, x, r, sinv)
+        ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) =
+            ((h + x * r) * sinv).mod(q)
+        dsa_k_times_s_from_mod(q, h, x, r, k, kinv, s)
+        (k * s).congr_mod(h + x * r, q)
+        small_mod(Nat.1, q)
+        Nat.1.mod(q) = Nat.1
+        (s * sinv).mod(q) = Nat.1.mod(q)
+        (s * sinv).congr_mod(Nat.1, q)
+        dsa_finish_congr(q, h, x, r, k, s, sinv)
+        ((h + x * r) * sinv).congr_mod(k, q)
+        dsa_congr_to_eq(q, k, (h + x * r) * sinv)
+        ((h + x * r) * sinv).mod(q) = k
+        ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) = k
+    }
+}
+
+/// Bundled algebraic step used by `dsa_verify_identity`. If `g^q ≡ 1 (mod p)`,
+/// `y = g^x mod p`, and the exponent `a + x*b` reduces modulo `q` to `k`, then
+/// `(g^a * y^b) mod p = g^k mod p`.
+theorem dsa_pow_combine(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
+                         a: Nat, b: Nat, k: Nat) {
+    y = g.pow(x).mod(p) and
+    g.pow(q).mod(p) = 1 and
+    (a + x * b).mod(q) = k
+    implies
+        (g.pow(a) * y.pow(b)).mod(p) = g.pow(k).mod(p)
+} by {
+    if y = g.pow(x).mod(p) and
+       g.pow(q).mod(p) = 1 and
+       (a + x * b).mod(q) = k {
+        dsa_combine_pow(p, g, x, y, a, b)
+        (g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)
+        dsa_pow_mod_q(p, q, g, a + x * b)
+        g.pow(a + x * b).mod(p) = g.pow((a + x * b).mod(q)).mod(p)
+        g.pow((a + x * b).mod(q)).mod(p) = g.pow(k).mod(p)
+        g.pow(a + x * b).mod(p) = g.pow(k).mod(p)
+        (g.pow(a) * y.pow(b)).mod(p) = g.pow(k).mod(p)
+    }
+}
+
+/// The DSA verification identity. Under the order-`q` subgroup hypothesis
+/// `g^q ≡ 1 (mod p)`, the public-key relation `y = g^x mod p`, and the
+/// modular-inverse hypotheses linking `k`, `kinv`, `s`, `sinv` with
+/// `s = kinv*(h + x*r) mod q`, the verifier expression
+/// `(g^{h*sinv mod q} * y^{r*sinv mod q}) mod p` collapses to `g^k mod p`.
+theorem dsa_verify_identity(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
+                             h: Nat, r: Nat, k: Nat, kinv: Nat,
+                             s: Nat, sinv: Nat) {
+    1 < q and
+    g.pow(q).mod(p) = 1 and
+    y = g.pow(x).mod(p) and
+    k < q and
+    (k * kinv).mod(q) = 1 and
+    (s * sinv).mod(q) = 1 and
+    s = (kinv * (h + x * r)).mod(q)
+    implies
+        (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p) =
+            g.pow(k).mod(p)
+} by {
+    if 1 < q and
+       g.pow(q).mod(p) = 1 and
+       y = g.pow(x).mod(p) and
+       k < q and
+       (k * kinv).mod(q) = 1 and
+       (s * sinv).mod(q) = 1 and
+       s = (kinv * (h + x * r)).mod(q) {
+        dsa_verify_exponent_eq(q, h, x, r, k, kinv, s, sinv)
+        ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) = k
+        dsa_pow_combine(p, q, g, x, y,
+                         (h * sinv).mod(q), (r * sinv).mod(q), k)
+        (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p) =
+            g.pow(k).mod(p)
+    }
+}
+
+/// Verifier expression equals `r`. Bridges `dsa_verify_identity` with the
+/// `dsa_sign_r` definition by chaining `(...).mod(p) = g.pow(k).mod(p)` with
+/// `r = g.pow(k).mod(p).mod(q)`.
+theorem dsa_verifier_mod_q_eq_r(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
+                                 h: Nat, k: Nat, kinv: Nat, sinv: Nat) {
+    Nat.1 < q and
+    g.pow(q).mod(p) = 1 and
+    y = g.pow(x).mod(p) and
+    k < q and
+    (k * kinv).mod(q) = 1 and
+    (dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q) = 1
+    implies
+        (g.pow((h * sinv).mod(q)) *
+         y.pow((dsa_sign_r(p, q, g, k) * sinv).mod(q))).mod(p).mod(q) =
+            dsa_sign_r(p, q, g, k)
+} by {
+    if Nat.1 < q and
+       g.pow(q).mod(p) = 1 and
+       y = g.pow(x).mod(p) and
+       k < q and
+       (k * kinv).mod(q) = 1 and
+       (dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q) = 1 {
+        let r: Nat = dsa_sign_r(p, q, g, k)
+        let s: Nat = dsa_sign_s(q, h, x, r, kinv)
+        r = g.pow(k).mod(p).mod(q)
+        s = (kinv * (h + x * r)).mod(q)
+        (s * sinv).mod(q) = 1
+        dsa_verify_identity(p, q, g, x, y, h, r, k, kinv, s, sinv)
+        (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p) =
+            g.pow(k).mod(p)
+        (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p).mod(q) =
+            g.pow(k).mod(p).mod(q)
+        (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p).mod(q) = r
+        r = dsa_sign_r(p, q, g, k)
+        (g.pow((h * sinv).mod(q)) *
+         y.pow((dsa_sign_r(p, q, g, k) * sinv).mod(q))).mod(p).mod(q) =
+            dsa_sign_r(p, q, g, k)
+    }
+}
+
+/// DSA correctness: a signature produced by `dsa_sign_r` / `dsa_sign_s`
+/// verifies under `dsa_verify` for the matching public key.
+theorem dsa_correctness(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
+                        k: Nat, kinv: Nat, h: Nat, sinv: Nat) {
+    is_dsa_params(p, q, g) and
+    is_dsa_keypair(p, q, g, x, y) and
+    0 < k and k < q and
+    is_mod_inverse(k, kinv, q) and
+    is_mod_inverse(dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv), sinv, q) and
+    0 < dsa_sign_r(p, q, g, k) and
+    0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv)
+    implies
+        dsa_verify(p, q, g, y, h,
+                   dsa_sign_r(p, q, g, k),
+                   dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
+                   sinv)
+} by {
+    if is_dsa_params(p, q, g) and
+       is_dsa_keypair(p, q, g, x, y) and
+       0 < k and k < q and
+       is_mod_inverse(k, kinv, q) and
+       is_mod_inverse(dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
+                      sinv, q) and
+       0 < dsa_sign_r(p, q, g, k) and
+       0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) {
+        is_dsa_params(p, q, g) = (p.is_prime and q.is_prime and
+            q.divides(p - 1) and Nat.1 < g and g < p and g.pow(q).mod(p) = 1)
+        prime_imp_no_proper_divisor(q)
+        Nat.1 < q
+        q != Nat.0
+        is_dsa_keypair(p, q, g, x, y) = (Nat.0 < x and x < q and
+            y = g.pow(x).mod(p))
+        is_mod_inverse(k, kinv, q) = ((k * kinv).mod(q) = 1)
+        is_mod_inverse(dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
+                       sinv, q) =
+            ((dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q)
+             = 1)
+        dsa_verifier_mod_q_eq_r(p, q, g, x, y, h, k, kinv, sinv)
+        mod_lt(g.pow(k).mod(p), q)
+        dsa_sign_r(p, q, g, k) = g.pow(k).mod(p).mod(q)
+        dsa_sign_r(p, q, g, k) < q
+        mod_lt(kinv * (h + x * dsa_sign_r(p, q, g, k)), q)
+        dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) =
+            (kinv * (h + x * dsa_sign_r(p, q, g, k))).mod(q)
+        dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) < q
+        dsa_verify(p, q, g, y, h,
+                   dsa_sign_r(p, q, g, k),
+                   dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
+                   sinv) = (
+            Nat.0 < dsa_sign_r(p, q, g, k) and
+            dsa_sign_r(p, q, g, k) < q and
+            Nat.0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) and
+            dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) < q and
+            is_mod_inverse(
+                dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv), sinv, q) and
+            (g.pow((h * sinv).mod(q)) *
+             y.pow((dsa_sign_r(p, q, g, k) * sinv).mod(q))).mod(p).mod(q) =
+                dsa_sign_r(p, q, g, k))
+        dsa_verify(p, q, g, y, h,
+                   dsa_sign_r(p, q, g, k),
+                   dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
+                   sinv)
+    }
+}
