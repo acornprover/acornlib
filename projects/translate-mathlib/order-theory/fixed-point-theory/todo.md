@@ -21,3 +21,4 @@ Status:
 - `src/fixed_point.ac` packages fixed, pre-fixed, and post-fixed points as sets, proves fixed points are exactly the intersection of pre-fixed and post-fixed points, and adds iterate bounds between post-fixed lower bounds and pre-fixed upper bounds.
 - `src/galois_connection.ac` exposes the generic `is_fixed_by` predicate plus closure/kernel operator image-fixed and comparison-with-fixed-point lemmas.
 - `src/set.ac` mirrors those closure/kernel operator comparison lemmas for set closure and kernel operators.
+- `src/fixed_point.ac` now has index-monotone iterate lemmas (`monotone_iterate_pre_fixed_anti_index`, `monotone_iterate_post_fixed_mono_index`) and any-map fixed-point iterate equalities (`fixed_point_iterate_eq`, `fixed_point_iterate_eq_iterate`).
