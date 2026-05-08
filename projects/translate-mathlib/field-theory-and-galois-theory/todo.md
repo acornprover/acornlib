@@ -28,7 +28,9 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
   - [x] `FieldHom[F, E]` structure with `is_field_hom`, ext lemmas, ring-hom coercion,
         preservation of `0/1/+/*/neg/inverse`, nonzero preservation, and injectivity
         (`src/field_hom.ac`).
-  - [ ] Identity field hom `F -> F` and composition of field homs
+  - [x] Identity field hom `F -> F` and composition of field homs
+        (`identity_field_hom`, `compose_field_hom`, associativity, identity laws
+        in `src/field_hom.ac`).
   - [ ] Field-hom image as a subfield (once subfield API exists)
   - [ ] `is_field_extension(phi: FieldHom[F, E])` and tower composition law
 
