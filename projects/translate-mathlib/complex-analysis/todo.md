@@ -2,8 +2,7 @@
 
 Goal: build the standard holomorphic-function theory that rests on top of complex numbers and real analysis.
 
-- [ ] Add more `from_real`/`smul`/inverse identities in `complex.ac`
-  (e.g. `from_real_div`, `re_div`/`im_div`, `conj_inverse`, `abs_squared_div`)
+- [ ] Add `re_div`/`im_div` and `abs_squared_div` identities in `complex.ac`
 - [ ] Build complex sequences and componentwise convergence on top of `real/real_seq.ac`
 - [ ] Add a complex modulus once real `sqrt` is available, plus triangle inequality
 - [ ] Define holomorphic and analytic functions
