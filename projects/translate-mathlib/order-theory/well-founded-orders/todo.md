@@ -3,7 +3,6 @@
 Goal: give order theory access to induction and recursion principles beyond the concrete naturals.
 
 - [ ] Prove actual existence principles for recursive definitions on well-founded relations, beyond uniqueness and choice once existence is supplied
-- [ ] Connect well-foundedness with `Nat`-based structural recursion
 - [ ] Add chain-level forward transfer for injective pushforwards only when a downstream proof needs it
 - [ ] Add order-like map transfer lemmas beyond pullback/pushforward only when a concrete order API consumer appears
 - [ ] Support Noetherian-style arguments via well-foundedness
@@ -19,3 +18,4 @@ Status:
 - `src/well_founded.ac` now has `relation_pushforward_is_well_founded_of_injection` and the matching `relation_pushforward_has_no_descending_chain_of_injection`, generalizing the existing bijection-based pushforward transfer lemmas to arbitrary injections.
 - The transfer API now reflects well-foundedness from pushforwards back to the source relation, proves surjective pullback well-foundedness iff the target relation is well-founded, and adds no-descending-chain inheritance for intersections, mutual inclusion, pushforward reflection, coordinate product relations, and lexicographic products under well-founded components.
 - The recursion API now has a predecessor-agreement predicate, a predecessor-extensionality predicate for recursive steps, a solution predicate for recursive equations, pointwise and function-level uniqueness of solutions over a well-founded relation, uniqueness of solutions when one exists, and `choose_or_default`-based chosen-solution wrappers that recover a solution and its step equation whenever existence is supplied.
+- The strict-natural-order recursion API now has Nat-specialized solution predicates, pointwise and function-level uniqueness, unique-existence wrappers, and chosen-solution lemmas that recover any supplied solution, ignore the default when a solution exists, and satisfy the recursive equation pointwise.
