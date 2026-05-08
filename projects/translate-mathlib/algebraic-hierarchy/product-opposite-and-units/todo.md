@@ -6,7 +6,7 @@ Goal: support standard derived algebraic constructions that recur throughout Mat
 - [ ] Design an indexed or finite-support product abstraction before adding any new product API that would otherwise need 4-ary-or-higher wrappers
 - [ ] Package the group of units as a `Group` instance once generic bundled instances are reliable
 - [ ] Add bundled homomorphism transport lemmas for product structures once bundled products are available
-- [ ] Support finite-support product constructions where useful
+- [ ] Extend finite-support support lemmas to product-valued functions once the nested pair projection proofs are decomposed
 - [ ] Add compact boolean `iff` wrappers for product, function-product, and pointwise unit predicates once the directional lemmas are enough for reliable proof search
 - [ ] Add the function-pair unit multiplication-closure wrapper after the componentwise proof-search tail is reduced
 - [ ] Refactor representative proofs to use product and unit APIs directly
@@ -24,6 +24,8 @@ Progress: `src/function_algebra.ac` now provides shared pointwise operations on 
 Progress: `src/function_product_algebra.ac` now specializes the shared function-level pointwise API to binary and ternary products of function spaces, with evaluation, coordinate, eta, pointwise operation, associativity, commutativity, identity, inverse, semiring distributivity, and zero-absorption laws. Existing quaternary and quinary helper layers should not be extended or used as a pattern for more fixed-arity APIs. Bundled product instances remain deferred until generic bundled instances are reliable.
 
 Progress: `src/product_units.ac` now connects bundled monoid units with unbundled componentwise product units, including value/inverse pairs, coordinate unit reflection, construction from component units, identity, inverse-witness, multiplication-closure lemmas, group-pair unit construction, inverse-pair unit construction, and coordinate zero-kernel/cancellation lemmas for multiplication by pair units over rings. `src/units.ac` also exposes unbundled `is_monoid_unit` zero-kernel, nonzero, and cancellation lemmas. Compact boolean `iff` wrappers and whole-pair cancellation wrappers remain deferred after verifier timeout reports; the verified directional and coordinate lemmas remain available.
+
+Progress: `src/finite_support.ac` now provides unbundled finite-support predicates for zero-valued tails of functions, including zero-function support, closure under pointwise addition, negation, and multiplication by a supported factor, and corresponding finite-supportedness wrappers. Product-valued support lemmas remain deferred after nested `Pair` projection proof-search timeouts.
 
 Progress: `src/function_units.ac` now provides unbundled pointwise-unit support for functions, including value/inverse functions from unit-valued functions, two-sided pointwise inverse laws, pointwise-unit construction, inverse-witness transport, pointwise reflection to ordinary monoid units, identity pointwise-unit, group pointwise-unit, closure of pointwise units under pointwise multiplication, and pointwise and whole-function zero-kernel/cancellation lemmas for multiplication by pointwise units over rings.
 
