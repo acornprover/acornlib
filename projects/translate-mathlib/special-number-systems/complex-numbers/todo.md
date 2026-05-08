@@ -8,4 +8,4 @@ Goal: round out the basic algebraic API of `Complex` so downstream analysis file
 - [ ] Add `conj` as a ring/field automorphism (involution + multiplicative + additive packaged)
 - [ ] Package `complex_re_fn`/`complex_im_fn` as `AddGroupHom[Complex, Real]` (helper lemmas `complex_re_fn_add`/`complex_im_fn_add` exist; wrapping with `is_add_group_hom` currently fails — `acorn` and `acorn check` disagree on the unfolding of the predicate at concrete types `Complex, Real`, so a smaller bridging lemma or prover assist is needed)
 - [ ] Add `re`/`im` `Real`-linearity once a scalar action exists
-- [ ] Extend `is_real` closure: division of nonzero reals, integer powers, sums of indexed real terms
+- [ ] Extend `is_real` closure: integer powers and sums of indexed real terms
