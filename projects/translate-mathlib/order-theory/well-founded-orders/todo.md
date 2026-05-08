@@ -2,7 +2,7 @@
 
 Goal: give order theory access to induction and recursion principles beyond the concrete naturals.
 
-- [ ] Add existence/construction principles for recursive definitions on well-founded relations
+- [ ] Prove actual existence principles for recursive definitions on well-founded relations, beyond uniqueness and choice once existence is supplied
 - [ ] Connect well-foundedness with `Nat`-based structural recursion
 - [ ] Add chain-level forward transfer for injective pushforwards only when a downstream proof needs it
 - [ ] Add order-like map transfer lemmas beyond pullback/pushforward only when a concrete order API consumer appears
@@ -18,4 +18,4 @@ Status:
 - `src/well_founded.ac` now defines lexicographic and coordinate product relations on pairs, proves the coordinate product relations embed into the lexicographic relation, proves first- and second-coordinate product relations are well-founded by pullback, and proves that lexicographic product relations are well-founded when both component relations are well-founded. The descending-chain projection lemmas (first-coordinate non-strict descent, second-coordinate descent under irreflexive `r` on shared-first steps) remain in place for downstream chain arguments.
 - `src/well_founded.ac` now has `relation_pushforward_is_well_founded_of_injection` and the matching `relation_pushforward_has_no_descending_chain_of_injection`, generalizing the existing bijection-based pushforward transfer lemmas to arbitrary injections.
 - The transfer API now reflects well-foundedness from pushforwards back to the source relation, proves surjective pullback well-foundedness iff the target relation is well-founded, and adds no-descending-chain inheritance for intersections, mutual inclusion, pushforward reflection, coordinate product relations, and lexicographic products under well-founded components.
-- The recursion API now has a predecessor-agreement predicate, a predecessor-extensionality predicate for recursive steps, a solution predicate for recursive equations, pointwise uniqueness of solutions over a well-founded relation, and uniqueness of solutions when one exists.
+- The recursion API now has a predecessor-agreement predicate, a predecessor-extensionality predicate for recursive steps, a solution predicate for recursive equations, pointwise and function-level uniqueness of solutions over a well-founded relation, uniqueness of solutions when one exists, and `choose_or_default`-based chosen-solution wrappers that recover a solution and its step equation whenever existence is supplied.
