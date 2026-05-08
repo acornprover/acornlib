@@ -9,7 +9,7 @@ Goal: make quotient constructions systematic across groups, rings, and later mod
 - [ ] Add bundled canonical projection morphisms and universal properties once quotient structures are packaged
 - [ ] Support kernels and quotients-by-kernel constructions
 - [ ] Connect quotients to the first isomorphism theorem
-- [ ] Audit remaining representative-level quotient simplification gaps before bundled quotient instances, excluding the verified ideal-quotient projection-facing associativity, distributivity, reassociation, cancellation, unary/binary, and power aliases
+- [ ] Audit remaining representative-level quotient simplification gaps before bundled quotient instances, excluding the verified ideal-quotient projection-facing associativity, distributivity, reassociation, cancellation, unary/binary, and power aliases and the verified group/ring/monoid/additive-group kernel projection aliases
 - [ ] Blocked: prove the normal-subgroup quotient projected-power all-power law after the induction timeout is resolved
 - [ ] Support transport of finiteness and order structure through quotients where natural
 - [ ] Record migration targets where current code hand-simulates quotient reasoning
@@ -31,3 +31,4 @@ Status:
 - Ideal quotient APIs now include projection-facing aliases for quotient addition/multiplication commutativity, negation identities, negation over addition/subtraction, subtraction of negation, and negated-factor products.
 - Ideal quotient APIs now include projection-facing aliases for quotient addition/multiplication associativity, distributivity over addition/subtraction, subtraction reassociation/cancellation, and natural-power simplification laws.
 - `src/normal_subgroup.ac` now has the named `normal_subgroup_quotient_projected_power_law` predicate for the blocked all-power induction target.
+- Kernel quotient APIs now include canonical projection wrappers and projection-facing preservation/simplification aliases for group, ring, monoid, and additive-group homomorphism quotients.
