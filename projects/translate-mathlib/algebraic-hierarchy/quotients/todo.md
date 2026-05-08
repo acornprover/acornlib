@@ -10,7 +10,7 @@ Goal: make quotient constructions systematic across groups, rings, and later mod
 - [ ] Support kernels and quotients-by-kernel constructions
 - [ ] Connect quotients to the first isomorphism theorem
 - [ ] Add simplification lemmas for quotient representatives
-- [ ] Prove normal-subgroup quotient projected-power successor/all-power laws without triggering the current timeout
+- [ ] Prove the normal-subgroup quotient projected-power all-power law without triggering the current timeout
 - [ ] Support transport of finiteness and order structure through quotients where natural
 - [ ] Record migration targets where current code hand-simulates quotient reasoning
 
@@ -20,3 +20,4 @@ Status:
 - Kernel quotient APIs now include primitive monoid/group power operations and zero/successor/projection identity lemmas.
 - Kernel quotient APIs now prove that powers of projected monoid and group representatives agree with projected powers.
 - Normal-subgroup quotient APIs now include quotient multiplication commutativity for commutative groups and primitive power operations.
+- Normal-subgroup quotient APIs now include the projected-power successor step for representatives.
