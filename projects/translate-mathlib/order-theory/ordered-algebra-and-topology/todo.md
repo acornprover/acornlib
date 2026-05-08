@@ -2,9 +2,9 @@
 
 Goal: make order theory interact smoothly with the rest of the library instead of living in isolation.
 
-- [ ] Standardize interfaces for ordered groups and ordered rings
+- [ ] Standardize ordered ring and ordered field interfaces
 - [ ] Connect lattice/order results with set containment APIs
-- [ ] Add monotone-map interfaces for algebraic operations
+- [ ] Add monotone-map interfaces for algebraic operations beyond ordered-group translations
 - [ ] Connect order-theoretic boundedness with current analysis definitions
 - [ ] Add order/topology bridge lemmas for intervals and closures
 - [ ] Support order-complete statements used in supremum and convergence arguments

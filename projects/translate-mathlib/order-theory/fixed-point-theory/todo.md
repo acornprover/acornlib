@@ -6,7 +6,7 @@ Goal: support the fixed-point theorems that rest primarily on monotonicity and c
 - [ ] Prove Knaster-Tarski style fixed point theorems
 - [ ] Connect fixed-point sets with complete-lattice infimum/supremum constructions
 - [ ] Add applications to inductive definitions and invariants
-- [ ] Connect fixed points with Galois insertions and complete lattices
+- [ ] Connect fixed points with complete-lattice APIs once the general complete-lattice receiver design is stable
 - [ ] Add examples from set operators and algebraic closure operations
 - [ ] Identify uses in topology, algebra, and semantics-oriented developments
 - [ ] Refactor at least one later proof to use the fixed-point API once available
@@ -21,3 +21,6 @@ Status:
 - `src/fixed_point.ac` packages fixed, pre-fixed, and post-fixed points as sets, proves fixed points are exactly the intersection of pre-fixed and post-fixed points, and adds iterate bounds between post-fixed lower bounds and pre-fixed upper bounds.
 - `src/galois_connection.ac` exposes the generic `is_fixed_by` predicate plus closure/kernel operator image-fixed and comparison-with-fixed-point lemmas.
 - `src/set.ac` mirrors those closure/kernel operator comparison lemmas for set closure and kernel operators.
+- `src/fixed_point.ac` now has index-monotone iterate lemmas (`monotone_iterate_pre_fixed_anti_index`, `monotone_iterate_post_fixed_mono_index`) and any-map fixed-point iterate equalities (`fixed_point_iterate_eq`, `fixed_point_iterate_eq_iterate`).
+- `src/fixed_point.ac` now has set-level closure lemmas: monotone maps map the fixed/pre-fixed/post-fixed point sets to themselves pointwise and iterate-wise.
+- `src/fixed_point.ac` now bridges fixed points with `is_fixed_by`, closure operators, kernel operators, and Galois-induced closure/kernel maps: closure pre-fixed points and kernel post-fixed points are exactly fixed points, and Galois closure/kernel images are fixed points.
