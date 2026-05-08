@@ -24,3 +24,4 @@ Status:
 - `src/real/continuity_pointwise_mul.ac` proves that pointwise multiplication of real functions preserves continuity at a point (`continuous_at_pointwise_mul`) and globally (`continuous_pointwise_mul`), using the local absolute bound on a continuous function and `mul_close_from_close`.
 - `src/real/continuity_pointwise_abs.ac` defines `pointwise_abs(f)(x) = f(x).abs` and proves it preserves continuity at a point and globally, using `abs_close_of_close`.
 - `src/real/continuity_square.ac` defines `square_real(x) = x * x`, identifies it with `pointwise_mul(identity_fn, identity_fn)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_cube.ac` defines `cube_real(x) = x * x * x`, identifies it with `pointwise_mul(square_real, identity_fn)`, and proves it is continuous at each point and globally.
