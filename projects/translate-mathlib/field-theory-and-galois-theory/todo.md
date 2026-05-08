@@ -32,7 +32,8 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
         (`identity_field_hom`, `compose_field_hom`, associativity, identity laws
         in `src/field_hom.ac`).
   - [ ] Field-hom image as a subfield (once subfield API exists)
-  - [ ] `is_field_extension(phi: FieldHom[F, E])` and tower composition law
+  - [x] `is_field_extension(phi: FieldHom[F, E])` and tower composition law
+        (`src/field_extension.ac`)
 
 - [ ] Algebraic elements and minimal polynomials
   - [ ] Define `is_algebraic[F: Field, E: Field, phi: F -> E](x: E)`
