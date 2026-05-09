@@ -9,7 +9,7 @@ Goal: make quotient constructions systematic across groups, rings, and later mod
 - [ ] Add bundled canonical projection morphisms and universal properties once quotient structures are packaged
 - [ ] Support kernels and quotients-by-kernel constructions
 - [ ] Connect quotients to the first isomorphism theorem
-- [ ] Audit remaining representative-level quotient simplification gaps before bundled quotient instances, excluding the verified ideal-quotient projection-facing associativity, distributivity, reassociation, cancellation, unary/binary, and power aliases; the verified group/ring/monoid/additive-group kernel projection aliases; the verified monoid/group kernel quotient natural-power addition, power-of-power, and one-power aliases; the verified additive-group-kernel subtraction/cancellation aliases; and the verified normal-subgroup inverse-cancellation aliases
+- [ ] Audit remaining representative-level quotient simplification gaps before bundled quotient instances, excluding the verified ideal-quotient projection-facing associativity, distributivity, reassociation, cancellation, unary/binary, and power aliases; the verified group/ring/monoid/additive-group kernel projection aliases; the verified monoid/group kernel quotient natural-power addition, power-of-power, and one-power aliases; the verified additive-group-kernel subtraction/cancellation aliases; the verified normal-subgroup inverse-cancellation aliases; and the verified ring-kernel subtraction/negation/product simplification aliases
 - [ ] Blocked: prove the normal-subgroup quotient projected-power all-power law after the induction timeout is resolved
 - [ ] Support transport of finiteness and order structure through quotients where natural
 - [ ] Record migration targets where current code hand-simulates quotient reasoning
@@ -36,3 +36,4 @@ Status:
 - Group-kernel quotient APIs now include representative-level and projection-facing inverse-cancellation simplification laws.
 - Additive-group-kernel quotient APIs now include representative-level and projection-facing subtraction/negation cancellation simplification laws.
 - Normal-subgroup quotient APIs now include representative-level and projection-facing inverse-cancellation simplification laws.
+- Ring-kernel quotient APIs now include representative-level and projection-facing subtraction identities, negation identities, negation/product simplifications, and multiplication distribution over subtraction.
