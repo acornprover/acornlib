@@ -2,7 +2,7 @@
 
 Goal: make quotient constructions systematic across groups, rings, and later modules.
 
-- [ ] Define congruence relations for the remaining algebraic structures
+- [ ] Add higher-structure congruence relations only when quotient APIs need them, such as field inverse or module scalar compatibility
 - [ ] Add bundled quotient monoid and quotient group instances after the representative-level APIs are complete
 - [ ] Support normal subgroups as quotient data
 - [ ] Package quotient rings by ideals using the verified ideal quotient relation
@@ -56,3 +56,4 @@ Status:
 - Ideal quotient APIs now include projection-facing related-representative compatibility aliases for addition, multiplication, negation, and subtraction of canonical projections.
 - Normal-subgroup quotient APIs now include projection-facing related-representative compatibility aliases for multiplication and inversion of canonical projections.
 - Kernel quotient APIs now include projection-facing related-representative compatibility aliases for canonical semiring addition/multiplication, monoid multiplication, additive-monoid addition, and additive-group addition/negation/subtraction.
+- `src/quotient_algebra.ac` now has named congruence predicates and kernel witnesses for additive monoids, additive commutative monoids, monoids, commutative monoids, additive commutative groups, commutative groups, and commutative rings, reusing the existing additive/multiplicative/group/ring congruence facts.
