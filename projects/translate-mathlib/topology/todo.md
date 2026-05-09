@@ -2,7 +2,7 @@
 
 Goal: provide the general topological language that analysis, geometry, and probability need.
 
-- [ ] Add the big-union axiom for the subspace topology: introduce the `lifted_open(a, d)` ambient family and prove `is_open_in_subspace(a, big_union(d))` whenever every `d(u)` is subspace-open. The two-direction trace identity proof timed out; needs further factoring
+- [ ] Migrate the existing `is_open_in_subspace` / `is_closed_in_subspace` predicate-style API and its lemmas onto the new `Subspace[T, a]: TopologicalSpace` carrier (now in `src/topological_space.ac`), then delete the predicates. The carrier and its `TopologicalSpace` instance verify; the four `open_*` axioms discharge via `subspace_open_empty_helper` / `_universal_helper` / `_inter_helper` / `_big_union_helper`. Note: `acorn check` currently rejects one cert (`subspace_open_empty_helper`, "Subspace[T0, x1] vs Subspace[T0, x0]") — bugged upstream as a strict-cert generator issue, but the verifier is happy
 - [ ] Add the binary-intersection and big-union axioms for `is_open_in_product`: the proofs unfold to `generated_open_inter`/`generated_open_big_union` applied to `is_box[X, Y]` (which has been shown to be a topological basis), but the conclusion-matching step timed out the prover
 - [ ] Add the binary-intersection and big-union axioms for `is_quotient_open`: each piece (open part, saturation under `r`) verifies in isolation, but stitching them together for the full conclusion timed out the prover
 - [ ] Add the binary-intersection and big-union axioms for `is_open_in_sum`: the preimage commutation lemmas verify, but stitching them together via the `is_open_in_sum_iff` definition timed out the prover
