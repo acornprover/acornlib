@@ -30,6 +30,7 @@ Status:
 - Ideal quotient APIs now include primitive natural-power operations and projected power laws (`0`, successor, first power, one power, power addition, and power-of-power).
 - Ideal quotient APIs now include projection-facing aliases for quotient addition/multiplication commutativity, negation identities, negation over addition/subtraction, subtraction of negation, and negated-factor products.
 - Ideal quotient APIs now include projection-facing aliases for quotient addition/multiplication associativity, distributivity over addition/subtraction, subtraction reassociation/cancellation, and natural-power simplification laws.
+- Ideal quotient APIs now include representative-level negation cancellation for matching additive summands and right-summand subtraction cancellation of quotient sums.
 - Ideal quotient APIs now identify projection equality with ideal membership of representative differences, characterize the quotient-zero fiber by ideal membership, and provide forward/backward aliases relating projected representative differences, projection equality, quotient relations, and ideal membership.
 - `src/normal_subgroup.ac` now has the named `normal_subgroup_quotient_projected_power_law` predicate for the blocked all-power induction target.
 - Kernel quotient APIs now include canonical projection wrappers and projection-facing preservation/simplification aliases for group, ring, monoid, and additive-group homomorphism quotients.
