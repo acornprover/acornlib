@@ -34,6 +34,10 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
   - [x] Subfield structure with constraints, extensionality, and basic
         closure theorems (`src/subfield.ac`)
   - [x] Field-hom image as a subfield (`field_hom_image` in `src/field_hom_image.ac`)
+  - [x] `top_subfield` (whole field as a subfield) and `field_hom_image_identity`
+        (identity hom's image is `top_subfield`); image of composition contained in
+        image of outer map (`src/field_hom_image.ac`)
+  - [ ] `bottom_subfield` (prime field) once integer/rational embedding is available
   - [ ] Field-extension API beyond `FieldHom`; previous vacuous
         `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
 
