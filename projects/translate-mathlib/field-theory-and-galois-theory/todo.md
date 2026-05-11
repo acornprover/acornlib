@@ -28,9 +28,14 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
   - [x] `FieldHom[F, E]` structure with `is_field_hom`, ext lemmas, ring-hom coercion,
         preservation of `0/1/+/*/neg/inverse`, nonzero preservation, and injectivity
         (`src/field_hom.ac`).
-  - [ ] Identity field hom `F -> F` and composition of field homs
-  - [ ] Field-hom image as a subfield (once subfield API exists)
-  - [ ] `is_field_extension(phi: FieldHom[F, E])` and tower composition law
+  - [x] Identity field hom `F -> F` and composition of field homs
+        (`identity_field_hom`, `compose_field_hom`, associativity, identity laws
+        in `src/field_hom.ac`).
+  - [x] Subfield structure with constraints, extensionality, and basic
+        closure theorems (`src/subfield.ac`)
+  - [ ] Field-hom image as a subfield (subfield API now available)
+  - [ ] Field-extension API beyond `FieldHom`; previous vacuous
+        `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
 
 - [ ] Algebraic elements and minimal polynomials
   - [ ] Define `is_algebraic[F: Field, E: Field, phi: F -> E](x: E)`

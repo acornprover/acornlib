@@ -45,6 +45,8 @@ work (linear maps, bases, matrices, etc.) can build on.
 Status:
 
 - `src/module_hom.ac` adds predicate-level linear-map convenience lemmas: `preserves_add_zero`, `linear_map_zero`, `linear_map_smul` (single-argument scalar preservation), `linear_map_add` (single-pair addition preservation), `linear_map_neg`, and `linear_map_sub`.
+- `src/module_hom.ac` defines pointwise `neg_fn` (and reuses `add_fn` from `add_semigroup.ac`) at the predicate level, with `add_fn_preserves_add`/`add_fn_preserves_smul`/`add_fn_is_linear_map` and `neg_fn_preserves_add`/`neg_fn_preserves_smul`/`neg_fn_is_linear_map` showing that pointwise sums and negations of linear maps are linear.
+- `src/module_hom.ac` defines pointwise `sub_fn` and proves `sub_fn_eq_add_neg`, `sub_fn_preserves_add`, `sub_fn_preserves_smul`, and `sub_fn_is_linear_map`. It also adds the additive-group identity/inverse laws on the linear-map function space at the predicate level: `add_fn_trivial_linear_map_left/right` and `add_fn_neg_fn`.
 - `src/submodule.ac` defines `submodule_zero_constraint`, `submodule_add_constraint`, `submodule_neg_constraint`, `submodule_smul_constraint`, `is_submodule`, and the bundled `Submodule[R, M]` structure, with extensionality and basic closure lemmas.
 - Submodule intersections are represented by `submodule_intersection_contains`, with verified closure lemmas and a combined `submodule_intersection_is_submodule` theorem.
 - Linear-map kernels and images are represented by `linear_map_kernel` and `linear_map_image`, with verified zero/add/neg/smul closure lemmas.

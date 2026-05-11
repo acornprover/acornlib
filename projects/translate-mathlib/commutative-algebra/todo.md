@@ -25,8 +25,12 @@ assembling `is_ideal` from its sub-constraints.
       extraction lemmas, the maximal-implies-prime theorem, and bundled
       `PrimeIdeal[R]`/`MaximalIdeal[R]` with `as_ideal`/`as_prime_ideal`
       coercions added in `src/ideal.ac`; field ↔ zero-maximal added in
-      `src/field_ideal.ac`; still needed: integral-domain ↔ zero-prime
-      (requires introducing an `IntegralDomain` typeclass), local-ring API)
+      `src/field_ideal.ac`; `IntegralDomain` typeclass and integral-domain
+      ↔ zero-prime added in `src/integral_domain.ac` with `Real` as an
+      instance; predicate-form `is_local_ring` with uniqueness lemmas
+      and field-is-local-ring added in `src/local_ring.ac`; still needed:
+      bundled `LocalRing[R]` and the non-units-form-an-ideal
+      characterization)
 - [ ] Add localization at submonoids and prime ideals
 - [ ] Develop Noetherian rings and modules
 - [ ] Support integral elements and integral extensions

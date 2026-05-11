@@ -4,6 +4,8 @@ Goal: round out the basic algebraic API of `Complex` so downstream analysis file
 
 - [ ] Add a real-valued absolute value `Complex.abs` via `Real.sqrt` and prove `abs(0) = 0`, `abs(1) = 1`, `abs(i) = 1`, `abs(-a) = abs(a)`, `abs(a.conj) = abs(a)`, `abs(a*b) = abs(a)*abs(b)` (blocked on a general `Real.sqrt` — `top100/theorem_001_sqrt2_irrational.ac` only handles a single specific case)
 - [ ] Prove the triangle inequality `abs(a+b) <= abs(a) + abs(b)` (needs Cauchy-Schwarz or expansion via `abs_squared`)
-- [ ] Add `Complex` as an `R`-module / `Real`-vector-space style structure (scalar multiplication by `Real`)
+- [ ] Package `Complex` as a `Module[Real, Complex]` (scalar action `complex_real_smul` and its add-left/add-right/assoc/one/zero-left/zero-right lemmas already in `src/complex.ac`; `is_module_action(complex_real_smul)` closure currently times out — needs a smaller lemma chain or prover assist)
 - [ ] Add `conj` as a ring/field automorphism (involution + multiplicative + additive packaged)
-- [ ] Add `re`/`im` as additive group homomorphisms (with `Real`-linearity once a scalar action exists)
+- [ ] Package `complex_re_fn`/`complex_im_fn` as `AddGroupHom[Complex, Real]` (helper lemmas `complex_re_fn_add`/`complex_im_fn_add` exist; wrapping with `is_add_group_hom` currently fails — `acorn` and `acorn check` disagree on the unfolding of the predicate at concrete types `Complex, Real`, so a smaller bridging lemma or prover assist is needed)
+- [ ] Add `re`/`im` `Real`-linearity once a scalar action exists
+- [ ] Extend `is_real` closure: integer powers and sums of indexed real terms
