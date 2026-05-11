@@ -5,7 +5,6 @@ Goal: build the measurable and integrable foundations needed by probability, ana
 - [ ] Add generated sigma-algebras and Borel constructions
 - [ ] Define measurable functions between sigma-algebras and basic preservation
 - [ ] Add the preimage sigma-algebra induced by a function
-- [ ] Define equality and refinement (`<=`) of sigma-algebras over a fixed type
 - [ ] Build the API for measurable functions
 - [ ] Develop outer measures and Caratheodory extension
 - [ ] Add measures, finite measures, and signed measures
