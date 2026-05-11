@@ -2,7 +2,7 @@
 
 Goal: build the standard holomorphic-function theory that rests on top of complex numbers and real analysis.
 
-- [ ] Build complex sequences and componentwise convergence on top of `real/real_seq.ac`
+- [ ] Add sum, scalar-multiple, and conjugate convergence laws on top of `complex_seq.ac`
 - [ ] Add a complex modulus once real `sqrt` is available, plus triangle inequality
 - [ ] Define holomorphic and analytic functions
 - [ ] Add power series and radius-of-convergence results
