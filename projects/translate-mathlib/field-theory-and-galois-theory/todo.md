@@ -33,7 +33,7 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
         in `src/field_hom.ac`).
   - [x] Subfield structure with constraints, extensionality, and basic
         closure theorems (`src/subfield.ac`)
-  - [ ] Field-hom image as a subfield (subfield API now available)
+  - [x] Field-hom image as a subfield (`field_hom_image` in `src/field_hom_image.ac`)
   - [ ] Field-extension API beyond `FieldHom`; previous vacuous
         `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
 
