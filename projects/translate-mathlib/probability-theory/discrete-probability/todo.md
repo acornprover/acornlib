@@ -11,7 +11,7 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Define `DiscretePMF[T]` as a `FiniteSet[T]` together with a nonnegative `T -> Real` function whose `finite_set_sum` is `Real.1`. Lives in `discrete_pmf.ac` with `is_pmf`, `discrete_pmf_mass_nonneg`, `discrete_pmf_total_mass`, and `discrete_pmf_ext`.
 - [x] Define probability of an event as the sum of pmf values over the event subset. `pmf_event_prob` plus empty/support/disjoint-union laws live in `discrete_pmf.ac`.
 - [x] Inclusion-exclusion for two discrete events: `pmf_event_prob_inclusion_exclusion` in `discrete_pmf.ac`, derived from disjoint-union additivity and the `B = (A ∩ B) ⊔ (B \ A)` decomposition.
-- [ ] Add complement and general (not necessarily disjoint) union for discrete probability. Complement needs `P(support \ A) = 1 - P(A)`, which follows from the disjoint decomposition `support = A ⊔ (support \ A)` whenever `A ⊆ support`; the general union law `P(A ∪ B) = P(A) + P(B) - P(A ∩ B)` is now a corollary of `pmf_event_prob_inclusion_exclusion`.
+- [x] Add general (not necessarily disjoint) union `pmf_event_prob_union` and the support-split identity `pmf_event_prob_support_split` (in `discrete_pmf.ac`), giving the complement law `P(A ∩ support) + P(support \ A) = 1`.
 - [ ] Define expectation `discrete_expectation(pmf, X)` for a `T -> Real` random variable.
 - [ ] Add linearity and monotonicity of discrete expectation.
 - [ ] Define variance and prove `Var(X) = E(X^2) - E(X)^2`.
