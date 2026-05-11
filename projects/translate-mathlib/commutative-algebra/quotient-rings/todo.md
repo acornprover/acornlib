@@ -12,3 +12,13 @@ ideal-quotient `QuotientRelation`.
 - [ ] State and prove the universal property: any ring hom vanishing on `I`
       factors uniquely through `R/I`
 - [ ] First isomorphism theorem for rings: `R/ker(f) ≃ image(f)`
+
+Status:
+
+- The representative-level ideal quotient API now includes subtraction:
+  relation compatibility, projection lemmas, left/right compatibility, zero/one
+  projection aliases, and basic identities with zero, self-subtraction, and
+  addition of the quotient negation.
+- Canonical projection support now includes projection-equality/reflection lemmas
+  for related representatives and aliases for zero/one/zero-multiplication and
+  subtraction identities stated directly on projected representatives.

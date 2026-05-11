@@ -4,8 +4,8 @@ Goal: provide a standard language for symmetry actions before representation the
 
 - [ ] Package orbits as equivalence classes and add the `is_transitive(orbit_relation(a))` wrapper when proof search can handle the generic relation obligation
 - [ ] Add action equivalences and categorical composition wrappers once equality transport between source/target actions is reliable
-- [ ] Connect permutation actions with finite groups
-- [ ] Add further restricted-action support and product-action refinements (transitivity/faithfulness reflection and remaining bundled `ActionHom` transport conveniences)
+- [ ] Use bundled action bijections to connect finite group actions with finite permutation images
+- [ ] Add remaining bundled `ActionHom` transport conveniences for restricted and product actions
 - [ ] Prove orbit-stabilizer style theorems
 - [ ] Record future links to representation theory and geometry
 
@@ -17,4 +17,10 @@ Progress: `src/product_action.ac` now provides the componentwise product action 
 
 Progress: `src/group_action.ac` now includes the basic `ActionHom` API: equivariant maps, bundled action homomorphisms, identity homomorphisms, map extensionality, composition of underlying equivariant maps, orbit-membership preservation, and injective orbit-membership reflection for equivariant maps and action homomorphisms.
 
+Progress: `src/group_action.ac` now exposes the permutation of the underlying type induced by each group element as `action_map(a, g)`, proves it is injective, surjective, and bijective, bundles it as `action_bijection(a, g)`, and records identity, multiplication-as-composition, and inverse-composition laws for the induced maps.
+
 Progress: `src/product_action.ac` now identifies product-action stabilizers with intersections of coordinate stabilizers, and it includes a pointwise product map plus the equivariance bridge for pairing two equivariant maps into a product action. It also adds projection-evaluation lemmas, product-orbit same-witness introduction/projection lemmas, and equivariant-pair-map transport for orbit and stabilizer membership.
+
+Progress: `src/regular_action.ac` now provides bundled left and right regular actions of a group on itself, with action evaluation, transitivity, faithfulness, and trivial stabilizer characterizations.
+
+Progress: restricted actions now transport transitivity along surjective group homomorphisms and faithfulness along injective group homomorphisms; product actions now reflect transitivity to either coordinate from a chosen base point in the other coordinate and inherit faithfulness from either faithful coordinate action.

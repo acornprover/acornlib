@@ -34,8 +34,8 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
   - [x] Subfield structure with constraints, extensionality, and basic
         closure theorems (`src/subfield.ac`)
   - [ ] Field-hom image as a subfield (subfield API now available)
-  - [x] `is_field_extension(phi: FieldHom[F, E])` and tower composition law
-        (`src/field_extension.ac`)
+  - [ ] Field-extension API beyond `FieldHom`; previous vacuous
+        `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
 
 - [ ] Algebraic elements and minimal polynomials
   - [ ] Define `is_algebraic[F: Field, E: Field, phi: F -> E](x: E)`

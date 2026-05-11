@@ -2,8 +2,6 @@
 
 Goal: build the standard holomorphic-function theory that rests on top of complex numbers and real analysis.
 
-- [ ] Extend `complex.ac` with real/imaginary part rules and basic identities
-  (re_mul, im_mul, abs_squared_eq, from_real_eq_zero, etc.) - in progress
 - [ ] Build complex sequences and componentwise convergence on top of `real/real_seq.ac`
 - [ ] Add a complex modulus once real `sqrt` is available, plus triangle inequality
 - [ ] Define holomorphic and analytic functions
