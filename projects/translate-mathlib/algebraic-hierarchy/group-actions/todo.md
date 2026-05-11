@@ -5,7 +5,7 @@ Goal: provide a standard language for symmetry actions before representation the
 - [ ] Package orbits as equivalence classes and add the `is_transitive(orbit_relation(a))` wrapper when proof search can handle the generic relation obligation
 - [ ] Add action equivalences and categorical composition wrappers once equality transport between source/target actions is reliable
 - [ ] Use bundled action bijections to connect finite group actions with finite permutation images
-- [ ] Add further restricted-action support and product-action refinements (transitivity/faithfulness reflection and remaining bundled `ActionHom` transport conveniences)
+- [ ] Add remaining bundled `ActionHom` transport conveniences for restricted and product actions
 - [ ] Prove orbit-stabilizer style theorems
 - [ ] Record future links to representation theory and geometry
 
@@ -22,3 +22,5 @@ Progress: `src/group_action.ac` now exposes the permutation of the underlying ty
 Progress: `src/product_action.ac` now identifies product-action stabilizers with intersections of coordinate stabilizers, and it includes a pointwise product map plus the equivariance bridge for pairing two equivariant maps into a product action. It also adds projection-evaluation lemmas, product-orbit same-witness introduction/projection lemmas, and equivariant-pair-map transport for orbit and stabilizer membership.
 
 Progress: `src/regular_action.ac` now provides bundled left and right regular actions of a group on itself, with action evaluation, transitivity, faithfulness, and trivial stabilizer characterizations.
+
+Progress: restricted actions now transport transitivity along surjective group homomorphisms and faithfulness along injective group homomorphisms; product actions now reflect transitivity to either coordinate from a chosen base point in the other coordinate and inherit faithfulness from either faithful coordinate action.
