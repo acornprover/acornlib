@@ -13,7 +13,9 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Inclusion-exclusion for two discrete events: `pmf_event_prob_inclusion_exclusion` in `discrete_pmf.ac`, derived from disjoint-union additivity and the `B = (A ∩ B) ⊔ (B \ A)` decomposition.
 - [x] Add general (not necessarily disjoint) union `pmf_event_prob_union` and the support-split identity `pmf_event_prob_support_split` (in `discrete_pmf.ac`), giving the complement law `P(A ∩ support) + P(support \ A) = 1`.
 - [x] Define expectation `discrete_expectation(pmf, X)` for a `T -> Real` random variable. Lives in `discrete_pmf.ac` as `finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, X))`, where `mass_weighted_value(mass, rv, x) = mass(x) * rv(x)`.
-- [ ] Add linearity and monotonicity of discrete expectation.
+- [x] Additivity of discrete expectation: `discrete_expectation_add` in `discrete_pmf.ac` proves `E(X + Y) = E(X) + E(Y)` via `finite_set_sum_add` plus pointwise `mass_weighted_value` decomposition and `function_extensionality`.
+- [ ] Add scalar scaling `E(c * X) = c * E(X)` for discrete expectation. Needs a `finite_set_sum_scalar_mul` analogue of `sum_scalar_mul` (or inlined via `finite_set_sum_eq_list_sum`).
+- [ ] Add monotonicity of discrete expectation: `X(x) <= Y(x)` on the support implies `E(X) <= E(Y)`. Blocked behind the deferred `finite_set_sum_le` task above.
 - [ ] Define variance and prove `Var(X) = E(X^2) - E(X)^2`.
 - [ ] Define independence of two discrete events and of two discrete random variables.
 - [ ] Show `E(X * Y) = E(X) * E(Y)` for independent discrete random variables.
