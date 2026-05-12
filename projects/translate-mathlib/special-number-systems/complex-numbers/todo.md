@@ -9,4 +9,4 @@ Goal: round out the basic algebraic API of `Complex` so downstream analysis file
 - [ ] Package `complex_re_fn`/`complex_im_fn` as `AddGroupHom[Complex, Real]` (helper lemmas `complex_re_fn_add`/`complex_im_fn_add` exist; wrapping with `is_add_group_hom` currently fails — `acorn` and `acorn check` disagree on the unfolding of the predicate at concrete types `Complex, Real`, so a smaller bridging lemma or prover assist is needed)
 - [ ] Add `re`/`im` `Real`-linearity once a scalar action exists
 - [ ] Extend `is_real` closure: sums of indexed real terms (natural-power closure in `src/complex_pow.ac` as `is_real_pow`; integer-power version still needs `pow` over `Int`)
-- [ ] Build out complex-sequence convergence API in `src/complex_seq.ac` (add/sub/scale/neg/conj/const-shift in place; remaining: pointwise multiplication of sequences, bounded-sequence machinery, and reciprocal/quotient convergence)
+- [ ] Build out complex-sequence convergence API in `src/complex_seq.ac` (add/sub/scale/neg/conj/const-shift/real-scalar-smul in place; remaining: pointwise multiplication of sequences, bounded-sequence machinery, and reciprocal/quotient convergence)
