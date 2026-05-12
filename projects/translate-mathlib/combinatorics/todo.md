@@ -5,9 +5,10 @@ Goal: cover the finite and enumerative mathematics that Mathlib collects under c
 - [ ] Add counting principles and bijective-combinatorics lemmas
   - [x] Positivity of binomial coefficients (`binom_pos`)
   - [x] Pascal's identity in successor form (`pascal_suc`)
-  - [ ] Sum of a row of binomials equals `2.pow(n)`
+  - [x] Sum of a row of binomials equals `2.pow(n)` (`binom_row_sum`)
   - [ ] Vandermonde's identity
 - [ ] Develop binomial identities and basic generating-function tools
+  - [x] Absorption identity `k * binom(n,k) = n * binom(n-1, k-1)` (`binom_absorption`)
 - [ ] Support inclusion-exclusion and Mobius inversion
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects
 - [ ] Develop posets, chains, and antichain theorems
