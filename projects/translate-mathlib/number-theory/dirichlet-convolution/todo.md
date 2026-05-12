@@ -4,7 +4,6 @@ Goal: define `dirichlet_convolve(f, g)(n) = sum_{d | n} f(d) * g(n/d)` and devel
 basic algebra (identity, zero annihilator, commutativity, associativity).
 
 - [ ] Prove the left and right identity laws with `nat_dirichlet_unit_fn`
-- [ ] Prove the zero annihilators with `nat_zero_arithmetic_fn`
 - [ ] Prove commutativity of `dirichlet_convolve`
 - [ ] Prove associativity of `dirichlet_convolve`
 - [ ] Prove `dirichlet_convolve` distributes over `arithmetic_fn_add`
@@ -18,3 +17,7 @@ Status:
 - `dirichlet_convolve(f, g)(n) = sum(map(divisor_list(n), dirichlet_term(f, g, n)))`
   is defined in the same file, with `dirichlet_term(f, g, n)(d) = f(d) * g(divisor_quotient(n, d))`.
 - Base values are proved: `dirichlet_convolve(f, g)(0) = 0`, `dirichlet_convolve(f, g)(1) = f(1) * g(1)`.
+- The zero annihilators `dirichlet_convolve(nat_zero_arithmetic_fn, g) = nat_zero_arithmetic_fn`
+  and `dirichlet_convolve(f, nat_zero_arithmetic_fn) = nat_zero_arithmetic_fn` are proved,
+  via the general list helper `sum_map_zero_fn(l, h)` (with its inductive predicate
+  `sum_map_zero_pred`).
