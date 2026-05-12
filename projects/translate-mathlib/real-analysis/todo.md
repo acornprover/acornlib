@@ -28,3 +28,5 @@ Status:
 - `src/real/continuity_quartic.ac` defines `quartic_real(x) = square_real(x) * square_real(x)`, identifies it with `pointwise_mul(square_real, square_real)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_quintic.ac` defines `quintic_real(x) = quartic_real(x) * x`, identifies it with `pointwise_mul(quartic_real, identity_fn)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_sextic.ac` defines `sextic_real(x) = cube_real(x) * cube_real(x)`, identifies it with `pointwise_mul(cube_real, cube_real)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_septic.ac` defines `septic_real(x) = sextic_real(x) * x`, identifies it with `pointwise_mul(sextic_real, identity_fn)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_octic.ac` defines `octic_real(x) = quartic_real(x) * quartic_real(x)`, identifies it with `pointwise_mul(quartic_real, quartic_real)`, and proves it is continuous at each point and globally.
