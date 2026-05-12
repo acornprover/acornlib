@@ -9,6 +9,8 @@ Goal: cover the finite and enumerative mathematics that Mathlib collects under c
   - [ ] Vandermonde's identity
 - [ ] Develop binomial identities and basic generating-function tools
   - [x] Absorption identity `k * binom(n,k) = n * binom(n-1, k-1)` (`binom_absorption`)
+  - [x] Successor-form absorption `(k+1) * binom(n+1, k+1) = (n+1) * binom(n, k)` (`binom_absorption_suc`)
+  - [x] Complementary absorption `(n - k) * binom(n, k) = (k + 1) * binom(n, k + 1)` (`binom_complement_absorption`)
   - [x] Subset selection identity `binom(n,k) * binom(k,j) = binom(n,j) * binom(n-j, k-j)` (`binom_subset_product`)
 - [ ] Support inclusion-exclusion and Mobius inversion
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects
