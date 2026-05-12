@@ -44,8 +44,9 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
         (`src/field_hom_image.ac`)
   - [x] Subfield intersection `subfield_inter`: defined as a subfield with
         `subfield_inter_contains_eq`, `subfield_inter_le_left`,
-        `subfield_inter_le_right`, `subfield_inter_greatest`, and
-        `subfield_inter_comm` (`src/subfield.ac`)
+        `subfield_inter_le_right`, `subfield_inter_greatest`,
+        `subfield_inter_comm`, `subfield_inter_idem`, and
+        `subfield_inter_assoc` (`src/subfield.ac`)
   - [x] Preimage of a codomain subfield under a field homomorphism
         (`subfield_preimage`, `subfield_preimage_contains_eq`,
         `subfield_preimage_top` in `src/field_hom_image.ac`)
