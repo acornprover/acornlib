@@ -14,7 +14,7 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Add path connectedness (needs the unit interval and continuous paths)
 - [ ] Build continuity in terms of closed-set preimages and filter convergence (the pointwise neighborhood-based variant `is_continuous_at` and the global ⇒ pointwise direction are in place; the converse direction and the closed-preimage and filter-convergence equivalences remain)
 - [ ] Prove the standard implications between separation axioms (Hausdorff ⇒ T1 ⇒ T0). Witness-extraction proofs timed out the prover; needs further factoring or a different proof shape
-- [ ] Prove `homeomorphism_inverse` (swapping the maps of a homeomorphism gives another); the proof is logically trivial but the prover timed out matching the conjunction order across the X→Y vs Y→X orientations
+- [ ] Prove `homeomorphism_inverse` (swapping the maps of a homeomorphism gives another); the proof is logically trivial but the prover timed out matching the conjunction order across the X→Y vs Y→X orientations. Per-field accessors `is_homeomorphism_continuous_fwd` / `_continuous_inv` / `_left_inv` / `_right_inv` are now in place, but stitching them back into `is_homeomorphism[Y, X](g, f)` (in either orientation, with or without `let`/Bool bindings) still times out the prover
 - [ ] Prove that the composition of two homeomorphisms is a homeomorphism
 - [ ] Define embeddings (an injective continuous map that is a homeomorphism onto its image; needs the subspace topology big-union axiom)
 - [ ] Add topological groups, rings, and modules
