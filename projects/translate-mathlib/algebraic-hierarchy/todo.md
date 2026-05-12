@@ -15,4 +15,4 @@ Goal: make the algebraic core broad enough that later domain libraries reuse str
 
 ## Current Focus
 
-The active branch is [subobjects](subobjects/todo.md). The remaining morphism items are deferred because they depend on a stable image API or notation/coercion design choices.
+The remaining morphism and subobject items are deferred design cleanups. Product work is kept unbundled until the generic `Pair[A, B]` typeclass receiver blocker is resolved. The next non-design execution frontier is [quotients](quotients/todo.md), where representative-level monoid/group quotient laws are being rounded out before bundled instances or universal properties.

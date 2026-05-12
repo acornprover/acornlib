@@ -6,7 +6,7 @@ Goal: provide finite-infimum and finite-supremum structure for ordered objects.
 
 Status:
 
-- `src/set_lattice.ac` now provides an unbundled lattice-style API for sets: binary `set_inf`/`set_sup`, membership characterizations, lower/upper-bound universal properties, commutativity, associativity, idempotence, empty/universal identities, absorption, and distributivity.
+- The set-specific binary lattice API in `src/set_lattice.ac` is closed to downstream-independent expansion; use existing facts there as support, not as a target for more wrappers.
 - `src/lattice.ac` now has theorem wrappers for the left distributivity laws, right-sided distributivity lemmas, left-sided absorption variants, one-sided monotonicity lemmas, basic meet/join equality iff aliases, equality consequences, commutation and reversed-associativity lemmas, and Mathlib-style `inf`/`sup` theorem aliases.
 - `Nat`, `Int`, `Rat`, and `Real` now instantiate `DistribLattice` using their `min` and `max` operations.
 - `src/list/list_lattice.ac` now has non-empty list meet/join constructions, list lower/upper bound predicates, pointwise element-bound theorems, and universal-property characterizations of list meet/join as greatest lower bounds and least upper bounds.
@@ -19,3 +19,7 @@ Status:
 - `src/ideal.ac` now has an unbundled ideal lattice API: mutual-inclusion equality, meet/intersection GLB iff, commutativity, associativity, idempotence, absorption under inclusion, zero/unit meet identities, join/sum LUB iff, commutativity, associativity, idempotence, absorption under inclusion, and zero/unit join identities.
 - `src/list/list_order.ac` now has iff bridges between list lower/upper/interval bounds and the corresponding membership-predicate bounds from `order_interval`.
 - `src/list/list_order.ac` now has recursive lower-bound, upper-bound, and interval-bound split lemmas for nil, cons, concatenation, singleton, and append, plus exported aliases connecting list minima/maxima to the shared `list_lower_bound` / `list_upper_bound` predicates.
+- `src/submodule.ac` now has bundled commutativity, associativity, and zero/full submodule identity laws for `Submodule.intersection` on equal-carrier submodules, completing the meet semilattice axioms at the bundled level.
+- `src/submodule.ac` now has bundled `submodule_intersection_eq_left_of_subset` / `submodule_intersection_eq_right_of_subset` absorption laws for same-carrier submodules.
+- `src/pair_order.ac` now has unbundled `pair_meet` and `pair_join` operations on `Pair[A, B]` for componentwise meet/join semilattice products, with component projection lemmas, lower/upper bound projections, and greatest-lower-bound / least-upper-bound iff characterizations.
+- `src/pair_order.ac` now also has commutativity, idempotence, and associativity laws for `pair_meet` and `pair_join`, plus `pair_meet_eq_left_iff_lte` and `pair_join_eq_right_iff_lte` order characterizations.

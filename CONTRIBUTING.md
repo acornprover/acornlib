@@ -10,6 +10,7 @@ We expect most of the library to be AI-generated. In general, most pull requests
 * `src` for the Acorn source code
 * `build` for the prover-generated artifacts
 * `projects` for keeping notes on progress
+* `pending` for recording theorems that the prover could not prove
 
 Try to be stylistically consistent with the rest of the codebase.
 
@@ -18,11 +19,13 @@ Try to be stylistically consistent with the rest of the codebase.
 
 Try to keep pull requests to below 2000 lines of Acorn code.
 
+Avoid adding fixed-arity APIs above ternary, such as 4-ary, 5-ary, etc. wrappers. Prefer indexed families, finite-support constructions, or named abstractions. Exceptions should be narrow support for a named downstream theorem, and the pull request should explain why the indexed or named API was not enough.
+
 Most pull requests will be AI-reviewed. Some areas will be escalated to human review:
 
 * Adding a new project
 * Tricky decisions
-* Touching any file outside of src, build, and projects
+* Touching any file outside of src, build, projects, and pending
 
 Adding a new subfolder within a project doesn't require human review per se. Just adding a new top-level project.
 
@@ -43,7 +46,9 @@ If there is a bug in the Acorn prover itself, please report it on the [https://g
 
 What counts as a bug? Any time the Acorn prover crashes, that is definitely a bug.
 
-In general, it is not a bug just because the Acorn prover cannot prove a proposition - it's a heuristic process and sometimes it will fail to find a proof. When you can't prove a theorem or a statement, you should break it down into smaller steps, and then prove the smaller steps. If you (or your AI) cannot figure out any way to break down the statement into smaller steps, and the theorem still cannot be proved, then that counts as a bug to report.
+In general, it is not a bug just because the Acorn prover cannot prove a proposition - it's a heuristic process and sometimes it will fail to find a proof. When you can't prove a theorem or a statement, try to break it down into smaller steps, and then prove the smaller steps.
+
+If you (or your AI) cannot figure out any way to break down the statement into smaller steps, and the theorem still cannot be proved, don't report this as an issue. Instead, create an `.ac` file in the `pending` directory containing the theorem that cannot be proven. `acorn check` knows to check these for syntactic validity, but not to expect a proof. We will gather difficult cases here over time.
 
 For now, let's avoid having AIs file an unbounded number of issues. One or two open AI-created issues at a time is okay. If you don't want to hook up your AI to GitHub issues, then when you submit a pull request, mention that you ran into a bug, and describe the bug there.
 
@@ -52,16 +57,26 @@ For now, let's avoid having AIs file an unbounded number of issues. One or two o
 
 The AcornLibrarian bot reviews every pull request.
 
-The triage process uses assignment status to indicate the stage of triage. If the PR is assigned to the original creator, that means the original clackreator must take the next step. If it's assigned to a human reviewer, that means the human reviewer must take the next step. If it's unassigned or assigned to the AcornLibrarian bot, that means the pull request requires triage.
+The triage process uses the review state to indicate the stage of triage.
+
+* If changes are requested, that means the original creator should take the next step.
+
+* If a review is requested, and it's assigned to a human maintainer, that means the human reviewer must take the next step.
+
+* If a review is requested, and it's unassigned, assigned to a human that isn't a maintainer, or assigned to the AcornLibrarian bot, that means the pull request requires triage, and the AcornLibrarianBot should take the next step.
+
+* Once the PR is approved, the AcornLibrarian bot should take next step step, getting it merged.
 
 For convenience, the `scripts/pr-status.sh` script shows the status of each pending pull request.
 
-If a PR doesn't pass CI, or if there is a merge conflict, the AcornLibrarian bot will try to fix it up. If it can't be fixed, or if the bot doesn't have access to modify the pull request, the bot will assign the PR back to the original creator.
+If a PR doesn't pass CI, or if there is a merge conflict, the AcornLibrarian bot will try to fix it up. If it can't be fixed, or if the bot doesn't have access to modify the pull request, the bot will request changes.
 
-Once it passes CI, the bot will use its own judgment as to whether the pull request "looks good". The bot can either add the PR to the merge queue, or assign to a human maintainer if there is something that needs to be escalated to human review. If the PR is stacked, ie if it's merging into a branch that is not master, the bot will approve it but not merge it until the PR it's stacked on top of is merged.
+Once it passes CI, the bot will use its own judgment as to whether the pull request "looks good". The bot can either add the PR to the merge queue, or assign to a human maintainer if there is something that needs to be escalated to human review. If the PR is stacked, ie if it's merging into a branch that is not master, the bot will approve it, but not merge it until the PR it's stacked on top of is merged.
 
-When escalating to a human, the bot should summarize the new definitions that were added. Type definitions and function definitions. Write as inline code with triple-```.
+If a PR repeatedly fails in the merge queue, the AcornLibrarian bot will escalate to a human maintainer.
+
+When escalating to a human maintainer, the bot should summarize the new definitions that were added. Type definitions, function definitions, constant definitions. Write the summary as inline code with triple-```. Be sure to include the "constraint" block on structure types, and be sure to include the actual definitions for "let" and "define" statements, not just the name and type of the thing we are defining. Theorems do not count as "new definitions" and do not need to be summarized.
 
 Once a human maintainer approves, the human may or may not add to the merge queue. The bot will take care of fixing any merge conflicts that subsequently arise, and getting the PR added to the merge queue.
 
-The same process occurs for pull requests created by the AcornLibrarian bot itself. Then, the bot acts as both creator and initial reviewer.
+The AcornLibrarian bot should not create pull requests itself.

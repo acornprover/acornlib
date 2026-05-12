@@ -1,0 +1,348 @@
+from finite_set import FiniteSet, fs_empty, fs_union, fs_intersection, fs_difference,
+    finite_set_ext, finite_set_intersection_union_difference_is_self,
+    finite_set_intersection_is_disjoint_difference
+from finite_set_sum import finite_set_sum, finite_set_sum_empty, finite_set_sum_disjoint_union,
+    finite_set_sum_add, finite_set_sum_scalar_mul
+from real import Real
+from set import Set, union_with_difference_decomp_rev, intersection_comm
+from add_semigroup import add_fn
+from semigroup import mul_fn
+from functions import function_extensionality
+
+/// True if `mass` is nonnegative on every point of `T`, vanishes outside `support`,
+/// and sums to one over `support`.
+define is_pmf[T](support: FiniteSet[T], mass: T -> Real) -> Bool {
+    (forall(x: T) { Real.0 <= mass(x) })
+        and (forall(x: T) { not support.contains(x) implies mass(x) = Real.0 })
+        and finite_set_sum(support, mass) = Real.1
+}
+
+/// A discrete probability mass function on a finite support: a finite set of outcomes
+/// together with a nonnegative mass function whose total over the support is one.
+structure DiscretePMF[T] {
+    /// The finite set of outcomes that the mass function ranges over.
+    support: FiniteSet[T]
+    /// The probability mass assigned to each element of `T`.
+    mass: T -> Real
+} constraint {
+    is_pmf(support, mass)
+}
+
+/// The mass function of a discrete PMF is nonnegative everywhere.
+theorem discrete_pmf_mass_nonneg[T](pmf: DiscretePMF[T], x: T) {
+    Real.0 <= pmf.mass(x)
+} by {
+    is_pmf(pmf.support, pmf.mass)
+    is_pmf(pmf.support, pmf.mass) =
+        ((forall(z: T) { Real.0 <= pmf.mass(z) })
+            and (forall(z: T) { not pmf.support.contains(z) implies pmf.mass(z) = Real.0 })
+            and finite_set_sum(pmf.support, pmf.mass) = Real.1)
+    forall(z: T) { Real.0 <= pmf.mass(z) }
+}
+
+/// The mass of a discrete PMF vanishes outside its support.
+theorem discrete_pmf_mass_zero_outside[T](pmf: DiscretePMF[T], x: T) {
+    not pmf.support.contains(x) implies pmf.mass(x) = Real.0
+} by {
+    is_pmf(pmf.support, pmf.mass)
+    is_pmf(pmf.support, pmf.mass) =
+        ((forall(z: T) { Real.0 <= pmf.mass(z) })
+            and (forall(z: T) { not pmf.support.contains(z) implies pmf.mass(z) = Real.0 })
+            and finite_set_sum(pmf.support, pmf.mass) = Real.1)
+    forall(z: T) { not pmf.support.contains(z) implies pmf.mass(z) = Real.0 }
+}
+
+/// The total mass of a discrete PMF over its support equals one.
+theorem discrete_pmf_total_mass[T](pmf: DiscretePMF[T]) {
+    finite_set_sum(pmf.support, pmf.mass) = Real.1
+} by {
+    is_pmf(pmf.support, pmf.mass)
+    is_pmf(pmf.support, pmf.mass) =
+        ((forall(z: T) { Real.0 <= pmf.mass(z) })
+            and (forall(z: T) { not pmf.support.contains(z) implies pmf.mass(z) = Real.0 })
+            and finite_set_sum(pmf.support, pmf.mass) = Real.1)
+}
+
+/// Discrete PMF extensionality: equal supports and equal mass functions imply equal PMFs.
+theorem discrete_pmf_ext[T](a: DiscretePMF[T], b: DiscretePMF[T]) {
+    a.support = b.support and a.mass = b.mass implies a = b
+}
+
+/// The probability that the outcome lies in `event` is the sum of `mass` over `event`.
+define pmf_event_prob[T](pmf: DiscretePMF[T], event: FiniteSet[T]) -> Real {
+    finite_set_sum(event, pmf.mass)
+}
+
+/// The pointwise product of a mass function and a real-valued random variable.
+define mass_weighted_value[T](mass: T -> Real, rv: T -> Real, x: T) -> Real {
+    mass(x) * rv(x)
+}
+
+/// The expectation of a real-valued random variable `rv` under a discrete pmf:
+/// the sum over the support of `mass(x) * rv(x)`.
+define discrete_expectation[T](pmf: DiscretePMF[T], rv: T -> Real) -> Real {
+    finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, rv))
+}
+
+/// Expectation is additive in the random variable:
+/// `E(X + Y) = E(X) + E(Y)` for discrete random variables `X` and `Y`.
+theorem discrete_expectation_add[T](pmf: DiscretePMF[T], x: T -> Real, y: T -> Real) {
+    discrete_expectation(pmf, add_fn(x, y))
+        = discrete_expectation(pmf, x) + discrete_expectation(pmf, y)
+} by {
+    let f = mass_weighted_value(pmf.mass, x)
+    let g = mass_weighted_value(pmf.mass, y)
+    let h = mass_weighted_value(pmf.mass, add_fn(x, y))
+    forall(t: T) {
+        h(t) = pmf.mass(t) * add_fn(x, y, t)
+        add_fn(x, y, t) = x(t) + y(t)
+        h(t) = pmf.mass(t) * (x(t) + y(t))
+        h(t) = pmf.mass(t) * x(t) + pmf.mass(t) * y(t)
+        f(t) = pmf.mass(t) * x(t)
+        g(t) = pmf.mass(t) * y(t)
+        h(t) = f(t) + g(t)
+        add_fn(f, g, t) = f(t) + g(t)
+        h(t) = add_fn(f, g, t)
+    }
+    function_extensionality[T, Real](h, add_fn(f, g))
+    h = add_fn(f, g)
+    finite_set_sum_add[T, Real](pmf.support, f, g)
+    finite_set_sum(pmf.support, f) + finite_set_sum(pmf.support, g) = finite_set_sum(pmf.support, add_fn(f, g))
+    finite_set_sum(pmf.support, f) + finite_set_sum(pmf.support, g) = finite_set_sum(pmf.support, h)
+}
+
+/// Expectation is linear in scalar multiplication of the random variable:
+/// `E(c * X) = c * E(X)` for any real constant `c`.
+theorem discrete_expectation_scalar_mul[T](pmf: DiscretePMF[T], c: Real, x: T -> Real) {
+    discrete_expectation(pmf, mul_fn(c, x)) = c * discrete_expectation(pmf, x)
+} by {
+    let f = mass_weighted_value(pmf.mass, x)
+    let h = mass_weighted_value(pmf.mass, mul_fn(c, x))
+    forall(t: T) {
+        h(t) = pmf.mass(t) * mul_fn(c, x, t)
+        mul_fn(c, x, t) = c * x(t)
+        h(t) = pmf.mass(t) * (c * x(t))
+        f(t) = pmf.mass(t) * x(t)
+        pmf.mass(t) * (c * x(t)) = c * (pmf.mass(t) * x(t))
+        h(t) = c * f(t)
+        mul_fn(c, f, t) = c * f(t)
+        h(t) = mul_fn(c, f, t)
+    }
+    function_extensionality[T, Real](h, mul_fn(c, f))
+    h = mul_fn(c, f)
+    finite_set_sum_scalar_mul[T, Real](c, pmf.support, f)
+    c * finite_set_sum(pmf.support, f) = finite_set_sum(pmf.support, mul_fn(c, f))
+    c * finite_set_sum(pmf.support, f) = finite_set_sum(pmf.support, h)
+}
+
+/// The pointwise square of a real-valued function.
+define square_fn[T](x: T -> Real, t: T) -> Real {
+    x(t) * x(t)
+}
+
+/// The pointwise squared deviation of `x` from `mu`.
+define square_dev[T](x: T -> Real, mu: Real, t: T) -> Real {
+    (x(t) - mu) * (x(t) - mu)
+}
+
+/// The variance of a real-valued random variable under a discrete pmf:
+/// the expectation of the squared deviation from the mean.
+define discrete_variance[T](pmf: DiscretePMF[T], x: T -> Real) -> Real {
+    discrete_expectation(pmf, square_dev(x, discrete_expectation(pmf, x)))
+}
+
+/// The constant real-valued function on `T`.
+define const_real_fn[T](c: Real, t: T) -> Real {
+    c
+}
+
+/// The expectation of a constant function under any discrete pmf is the constant.
+theorem discrete_expectation_const[T](pmf: DiscretePMF[T], c: Real) {
+    discrete_expectation(pmf, const_real_fn[T](c)) = c
+} by {
+    let f = mass_weighted_value(pmf.mass, const_real_fn[T](c))
+    forall(t: T) {
+        f(t) = pmf.mass(t) * const_real_fn[T](c, t)
+        const_real_fn[T](c, t) = c
+        f(t) = pmf.mass(t) * c
+        pmf.mass(t) * c = c * pmf.mass(t)
+        f(t) = c * pmf.mass(t)
+        mul_fn(c, pmf.mass, t) = c * pmf.mass(t)
+        f(t) = mul_fn(c, pmf.mass, t)
+    }
+    function_extensionality[T, Real](f, mul_fn(c, pmf.mass))
+    f = mul_fn(c, pmf.mass)
+    finite_set_sum_scalar_mul[T, Real](c, pmf.support, pmf.mass)
+    c * finite_set_sum(pmf.support, pmf.mass) = finite_set_sum(pmf.support, mul_fn(c, pmf.mass))
+    discrete_pmf_total_mass(pmf)
+    finite_set_sum(pmf.support, pmf.mass) = Real.1
+    c * Real.1 = finite_set_sum(pmf.support, mul_fn(c, pmf.mass))
+    c * Real.1 = c
+    c = finite_set_sum(pmf.support, f)
+    discrete_expectation(pmf, const_real_fn[T](c)) = finite_set_sum(pmf.support, f)
+}
+
+
+/// The probability of the empty event is zero.
+theorem pmf_event_prob_empty[T](pmf: DiscretePMF[T]) {
+    pmf_event_prob(pmf, fs_empty[T](Set[T].empty_set)) = Real.0
+} by {
+    finite_set_sum_empty[T, Real](pmf.mass)
+}
+
+/// The probability of the entire support is one.
+theorem pmf_event_prob_support[T](pmf: DiscretePMF[T]) {
+    pmf_event_prob(pmf, pmf.support) = Real.1
+} by {
+    discrete_pmf_total_mass(pmf)
+}
+
+/// The probability of a disjoint union of events is the sum of their probabilities.
+theorem pmf_event_prob_disjoint_union[T](pmf: DiscretePMF[T], a: FiniteSet[T], b: FiniteSet[T]) {
+    a.is_disjoint(b) implies
+        pmf_event_prob(pmf, fs_union(a, b)) = pmf_event_prob(pmf, a) + pmf_event_prob(pmf, b)
+} by {
+    if a.is_disjoint(b) {
+        finite_set_sum_disjoint_union[T, Real](a, b, pmf.mass)
+    }
+}
+
+/// Inclusion-exclusion for two discrete events:
+/// the probability of the union plus the probability of the intersection
+/// equals the sum of the individual probabilities.
+theorem pmf_event_prob_inclusion_exclusion[T](pmf: DiscretePMF[T], a: FiniteSet[T], b: FiniteSet[T]) {
+    pmf_event_prob(pmf, fs_union(a, b)) + pmf_event_prob(pmf, fs_intersection(a, b))
+        = pmf_event_prob(pmf, a) + pmf_event_prob(pmf, b)
+} by {
+    // A ∪ B = A ∪ (B \ A), with A and (B \ A) disjoint.
+    union_with_difference_decomp_rev(a.underlying_set, b.underlying_set)
+    a.underlying_set.union(b.underlying_set) = a.underlying_set.union(b.underlying_set.difference(a.underlying_set))
+    fs_union(a, b).underlying_set = a.underlying_set.union(b.underlying_set)
+    fs_difference(b, a).underlying_set = b.underlying_set.difference(a.underlying_set)
+    fs_union(a, fs_difference(b, a)).underlying_set =
+        a.underlying_set.union(fs_difference(b, a).underlying_set)
+    fs_union(a, fs_difference(b, a)).underlying_set =
+        a.underlying_set.union(b.underlying_set.difference(a.underlying_set))
+    fs_union(a, b).underlying_set = fs_union(a, fs_difference(b, a)).underlying_set
+    finite_set_ext(fs_union(a, b), fs_union(a, fs_difference(b, a)))
+    fs_union(a, b) = fs_union(a, fs_difference(b, a))
+
+    a.underlying_set.is_disjoint(b.underlying_set.difference(a.underlying_set))
+    a.underlying_set.is_disjoint(fs_difference(b, a).underlying_set)
+    a.is_disjoint(fs_difference(b, a))
+
+    pmf_event_prob_disjoint_union[T](pmf, a, fs_difference(b, a))
+    pmf_event_prob(pmf, fs_union(a, fs_difference(b, a))) =
+        pmf_event_prob(pmf, a) + pmf_event_prob(pmf, fs_difference(b, a))
+    pmf_event_prob(pmf, fs_union(a, b)) =
+        pmf_event_prob(pmf, a) + pmf_event_prob(pmf, fs_difference(b, a))
+
+    // B = (B ∩ A) ∪ (B \ A), disjointly.
+    finite_set_intersection_union_difference_is_self[T](b, a)
+    fs_union(fs_intersection(b, a), fs_difference(b, a)) = b
+    finite_set_intersection_is_disjoint_difference[T](b, a)
+    fs_intersection(b, a).is_disjoint(fs_difference(b, a))
+
+    pmf_event_prob_disjoint_union[T](pmf, fs_intersection(b, a), fs_difference(b, a))
+    pmf_event_prob(pmf, fs_union(fs_intersection(b, a), fs_difference(b, a))) =
+        pmf_event_prob(pmf, fs_intersection(b, a)) + pmf_event_prob(pmf, fs_difference(b, a))
+    pmf_event_prob(pmf, b) =
+        pmf_event_prob(pmf, fs_intersection(b, a)) + pmf_event_prob(pmf, fs_difference(b, a))
+
+    // Commute the intersection.
+    intersection_comm(a.underlying_set, b.underlying_set)
+    a.underlying_set.intersection(b.underlying_set) = b.underlying_set.intersection(a.underlying_set)
+    fs_intersection(a, b).underlying_set = a.underlying_set.intersection(b.underlying_set)
+    fs_intersection(b, a).underlying_set = b.underlying_set.intersection(a.underlying_set)
+    fs_intersection(a, b).underlying_set = fs_intersection(b, a).underlying_set
+    finite_set_ext(fs_intersection(a, b), fs_intersection(b, a))
+    fs_intersection(a, b) = fs_intersection(b, a)
+
+    pmf_event_prob(pmf, b) =
+        pmf_event_prob(pmf, fs_intersection(a, b)) + pmf_event_prob(pmf, fs_difference(b, a))
+
+    let pa = pmf_event_prob(pmf, a)
+    let pb = pmf_event_prob(pmf, b)
+    let pab_union = pmf_event_prob(pmf, fs_union(a, b))
+    let pab_inter = pmf_event_prob(pmf, fs_intersection(a, b))
+    let pb_minus_a = pmf_event_prob(pmf, fs_difference(b, a))
+    pab_union = pa + pb_minus_a
+    pb = pab_inter + pb_minus_a
+    pa + pb = pa + pab_inter + pb_minus_a
+    pa + pb = (pa + pb_minus_a) + pab_inter
+    pa + pb = pab_union + pab_inter
+    pab_union + pab_inter = pa + pb
+}
+
+/// General union law for two discrete events:
+/// `P(A ∪ B) = P(A) + P(B) - P(A ∩ B)`.
+theorem pmf_event_prob_union[T](pmf: DiscretePMF[T], a: FiniteSet[T], b: FiniteSet[T]) {
+    pmf_event_prob(pmf, fs_union(a, b))
+        = pmf_event_prob(pmf, a) + pmf_event_prob(pmf, b) - pmf_event_prob(pmf, fs_intersection(a, b))
+} by {
+    pmf_event_prob_inclusion_exclusion(pmf, a, b)
+    let pa = pmf_event_prob(pmf, a)
+    let pb = pmf_event_prob(pmf, b)
+    let pu = pmf_event_prob(pmf, fs_union(a, b))
+    let pi = pmf_event_prob(pmf, fs_intersection(a, b))
+    pu + pi = pa + pb
+    pu = pa + pb - pi
+}
+
+/// The support of a PMF decomposes as the disjoint union of any event's
+/// intersection with the support and the support minus the event, so
+/// `P(A ∩ support) + P(support \ A) = 1`.
+theorem pmf_event_prob_support_split[T](pmf: DiscretePMF[T], a: FiniteSet[T]) {
+    pmf_event_prob(pmf, fs_intersection(pmf.support, a))
+        + pmf_event_prob(pmf, fs_difference(pmf.support, a)) = Real.1
+} by {
+    finite_set_intersection_union_difference_is_self[T](pmf.support, a)
+    fs_union(fs_intersection(pmf.support, a), fs_difference(pmf.support, a)) = pmf.support
+    finite_set_intersection_is_disjoint_difference[T](pmf.support, a)
+    fs_intersection(pmf.support, a).is_disjoint(fs_difference(pmf.support, a))
+    pmf_event_prob_disjoint_union[T](pmf, fs_intersection(pmf.support, a), fs_difference(pmf.support, a))
+    let pi = pmf_event_prob(pmf, fs_intersection(pmf.support, a))
+    let pd = pmf_event_prob(pmf, fs_difference(pmf.support, a))
+    let pu = pmf_event_prob(pmf, fs_union(fs_intersection(pmf.support, a), fs_difference(pmf.support, a)))
+    pu = pi + pd
+    pmf_event_prob(pmf, pmf.support) = pi + pd
+    pmf_event_prob_support[T](pmf)
+    pmf_event_prob(pmf, pmf.support) = Real.1
+    pi + pd = Real.1
+}
+
+/// Two discrete events are independent under a pmf when the probability of their
+/// intersection equals the product of their probabilities.
+define discrete_events_independent[T](pmf: DiscretePMF[T], a: FiniteSet[T], b: FiniteSet[T]) -> Bool {
+    pmf_event_prob(pmf, fs_intersection(a, b))
+        = pmf_event_prob(pmf, a) * pmf_event_prob(pmf, b)
+}
+
+/// Independence of two events is symmetric.
+theorem discrete_events_independent_comm[T](pmf: DiscretePMF[T], a: FiniteSet[T], b: FiniteSet[T]) {
+    discrete_events_independent(pmf, a, b) implies discrete_events_independent(pmf, b, a)
+} by {
+    if discrete_events_independent(pmf, a, b) {
+        intersection_comm(a.underlying_set, b.underlying_set)
+        fs_intersection(a, b).underlying_set = a.underlying_set.intersection(b.underlying_set)
+        fs_intersection(b, a).underlying_set = b.underlying_set.intersection(a.underlying_set)
+        fs_intersection(a, b).underlying_set = fs_intersection(b, a).underlying_set
+        finite_set_ext(fs_intersection(a, b), fs_intersection(b, a))
+        fs_intersection(a, b) = fs_intersection(b, a)
+        pmf_event_prob(pmf, fs_intersection(b, a)) = pmf_event_prob(pmf, fs_intersection(a, b))
+    }
+}
+
+/// If `a` and `b` are independent, then `P(A ∪ B) = P(A) + P(B) - P(A) * P(B)`.
+theorem discrete_events_independent_union[T](pmf: DiscretePMF[T], a: FiniteSet[T], b: FiniteSet[T]) {
+    discrete_events_independent(pmf, a, b) implies
+        pmf_event_prob(pmf, fs_union(a, b))
+            = pmf_event_prob(pmf, a) + pmf_event_prob(pmf, b)
+                - pmf_event_prob(pmf, a) * pmf_event_prob(pmf, b)
+} by {
+    if discrete_events_independent(pmf, a, b) {
+        pmf_event_prob_union[T](pmf, a, b)
+        pmf_event_prob(pmf, fs_intersection(a, b)) =
+            pmf_event_prob(pmf, a) * pmf_event_prob(pmf, b)
+    }
+}

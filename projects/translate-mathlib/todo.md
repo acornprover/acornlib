@@ -16,12 +16,25 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
       `is_transitive(normal_subgroup_rel(s))` times out, blocking `QuotientRelation[G]`
       packaging for normal subgroup quotients. Next action: improve prover/typeclass
       search for this wrapper or find a smaller definitionally equivalent packaging.
-- [ ] acorn-bug: order-theory/order-isomorphisms - generic `Pair[A, B]: PartialOrder`
-      instances fail while rendering `LTE.lte[Pair[A, B]](...)` ("typeclass
-      attribute 'LTE.lte' for concrete receiver 'Pair' is not available in the
-      current scope"), blocking bundled product-order isomorphisms. Next action:
-      report upstream with the minimal `Pair[A: PartialOrder, B: PartialOrder]: LTE`
-      repro, then revisit bundled product `OrderIso` support.
+- [ ] acorn-bug: functional-analysis - `instance Real: NormedAddCommGroup` (in
+      `src/real_normed.ac`) verifies under `acorn` but strict `acorn check` can still
+      reject the auto-generated certificate for the `norm_triangle` obligation with
+      an invalid-code witness step. Next action: extract a minimal repro for upstream
+      and revisit `NormedAddCommGroup` instances after the certificate bug is fixed.
+- [ ] acorn-bug: order-theory/order-isomorphisms and affine-euclidean-and-convex-geometry
+      - generic `Pair[A, B]` typeclass instances fail while rendering typeclass attributes
+      such as `LTE.lte[Pair[A, B]](...)` and `Add.add[Pair[A, B]](...)` ("typeclass
+      attribute '<attr>' for concrete receiver 'Pair' is not available in the current
+      scope"). Blocks bundled product-order isomorphisms and product `AffineSpace`
+      instances on `Pair[V1, V2]`/`Pair[P1, P2]`. Next action: report upstream with
+      a minimal `Pair[A: AddCommGroup, B: AddCommGroup]: Add` (or `Pair: LTE`) repro,
+      then revisit both bundled product `OrderIso` and product `AffineSpace` support.
+- [ ] prover-limitation: algebraic-hierarchy/quotients - the normal-subgroup quotient
+      projected-power law verifies at zero, successor, and first power, but the
+      all-`Nat` induction theorem times out even when the target equality is factored
+      into `normal_subgroup_quotient_projected_power_law`. Next action: improve
+      induction proof search or find a smaller proof packaging before adding
+      `normal_subgroup_quotient_pow_mk`.
 
 ## Foundational And Core Infrastructure
 

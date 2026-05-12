@@ -71,31 +71,48 @@ general `inverse_imp_coprime` (`a * b ≡ 1 (mod n) ⟹ b.coprime(n)`).
 `src/nat/nat_coprime.ac` contains `coprime_mul_iff` and `coprime_mod_iff`
 (coprimality is invariant under modular reduction).
 
-- [ ] Prove totient is multiplicative on coprime arguments
-      (`nat_totient(m * n) = nat_totient(m) * nat_totient(n)` when
-      `m.coprime(n)`) — generalises `totient_pq` via the CRT-induced
-      bijection between `[0, mn)` and `[0, m) x [0, n)`.
-- [ ] Generalise `euler_pq` to arbitrary moduli: `gcd(a, n) = 1` implies
-      `a.pow(nat_totient(n)).mod(n) = 1`. Remaining steps:
-      (1) bridge `product(mul_mod_residues(n, a))` to
-      `product(map(coprime_residues(n), scalar_mul_fn(a)))` modulo `n`
-      via the per-element congruence `(a*x).mod(n) ≡ a*x (mod n)`
-      (needs a "products of element-wise congruent lists are congruent
-      mod n" helper);
-      (2) substitute `product_map_scalar` to get
-      `a^totient(n) * product(coprime_residues(n))`;
-      (3) use `mul_mod_residues_is_permutation` +
-      `permutation_preserves_product` to equate both Nat-products;
-      (4) cancel `product(coprime_residues(n))` via `cancel_coprime`
-      using `product_coprime_residues_coprime`.
+- [ ] [totient-multiplicative](totient-multiplicative/todo.md): prove
+      `nat_totient(m * n) = nat_totient(m) * nat_totient(n)` when
+      `m.coprime(n)`, generalising `totient_pq`.
+- `fermat_euler_general` (in `src/nat/nat_totient.ac`): for `n != 0` and
+  `a.coprime(n)`, `a.pow(n.totient).congr_mod(1, n)`. Generalises both
+  `fermat_euler` (prime moduli) and `euler_pq` (`p * q`) via the
+  coprime-residues permutation argument. Helper
+  `product_mul_mod_congr_scalar` packages the "products of element-wise
+  congruent lists are congruent mod n" bridge.
 
 ## DSA
 
 - [ ] Prove existence of an order-`q` element `g` in `(Z/p)*` when `q | p - 1`.
-- [ ] Prove `g.pow(k * q + r).mod(p) = g.pow(r).mod(p)` for an order-`q` `g`.
-- [ ] Prove the DSA verification identity: for `s = kinv * (h + x*r) mod q`
-      and `w = sinv mod q`, `(g^{h*w} * y^{r*w}) mod p mod q = r`.
-- [ ] Uncomment and prove `dsa_correctness` in `src/crypto/dsa.ac`.
+
+`src/crypto/dsa.ac` contains:
+- `dsa_pow_order_reduce`: if `g.pow(q).mod(p) = 1` then
+  `g.pow(k * q + r).mod(p) = g.pow(r).mod(p)`.
+- `dsa_pow_mod_q`: if `g.pow(q).mod(p) = 1` then
+  `g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)` — exponent only matters
+  modulo `q`.
+- `dsa_y_pow_congr`: if `y = g.pow(x).mod(p)` then
+  `y.pow(b).congr_mod(g.pow(x * b), p)`.
+- `dsa_combine_pow`: if `y = g.pow(x).mod(p)` then
+  `(g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)`.
+- `dsa_exp_mod_q_factor`: pure-arithmetic mod-`q` identity
+  `((h*sinv).mod(q) + x*(r*sinv).mod(q)).mod(q) = ((h + x*r)*sinv).mod(q)`.
+- `dsa_k_times_s_congr`: from `s ≡ kinv*(h + x*r)` and
+  `(k*kinv) ≡ 1` (mod `q`), `(k*s) ≡ h + x*r (mod q)`.
+- `dsa_finish_congr`: from `(k*s) ≡ h + x*r` and `(s*sinv) ≡ 1`
+  (mod `q`), `((h + x*r)*sinv) ≡ k (mod q)`.
+- `dsa_k_times_s_from_mod`: lifted form of `dsa_k_times_s_congr`
+  taking the integer `(k*kinv).mod(q) = 1` and
+  `s = (kinv*(h+x*r)).mod(q)` hypotheses directly (assumes `1 < q`).
+- `dsa_congr_to_eq`: a congruence `lhs ≡ k (mod q)` with `k < q`
+  upgrades to `lhs.mod(q) = k`.
+
+`dsa_verify_identity` proves the verifier expression collapses to `g^k mod p`
+under the order-`q` subgroup hypothesis and modular-inverse relations, with
+helpers `dsa_verify_exponent_eq` (`((h*sinv).mod(q) + x*(r*sinv).mod(q)).mod(q)
+= k`) and `dsa_pow_combine` (the algebraic chain combining `dsa_combine_pow`
+and `dsa_pow_mod_q`). `dsa_verifier_mod_q_eq_r` bridges to `dsa_sign_r`, and
+`dsa_correctness` packages the full statement.
 
 ## ECDSA
 
