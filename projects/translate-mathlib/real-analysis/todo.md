@@ -33,3 +33,4 @@ Status:
 - `src/real/continuity_nonic.ac` defines `nonic_real(x) = octic_real(x) * x`, identifies it with `pointwise_mul(octic_real, identity_fn)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_decic.ac` defines `decic_real(x) = quintic_real(x) * quintic_real(x)`, identifies it with `pointwise_mul(quintic_real, quintic_real)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_undecic.ac` defines `undecic_real(x) = decic_real(x) * x`, identifies it with `pointwise_mul(decic_real, identity_fn)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_duodecic.ac` defines `duodecic_real(x) = sextic_real(x) * sextic_real(x)`, identifies it with `pointwise_mul(sextic_real, sextic_real)`, and proves it is continuous at each point and globally.
