@@ -15,14 +15,13 @@ work (linear maps, bases, matrices, etc.) can build on.
   structure. Field-specific lemmas live in `src/vector_space.ac`.
 - Linear maps: predicate-level only (`preserves_add`, `preserves_smul`, `is_linear_map`)
   in `src/module_hom.ac`, plus `trivial_linear_map`, `identity_fn_is_linear_map`,
-  and composition lemmas. A bundled `ModuleHom[R, M, N]` structure was deferred due
-  to an Acorn certificate-serialization bug with 3-typeclass-parameter structures
-  (see root `## Blockers`).
+  and composition lemmas. Add a bundled `ModuleHom[R, M, N]` when the predicate-level
+  API needs a bundled wrapper.
 
 ## Implementation Tasks
 
-- [ ] Add bundled `ModuleHom[R, M, N]` once the 3-typeclass-param structure bug is fixed,
-      with extensionality, projections, identity, and composition.
+- [ ] Add bundled `ModuleHom[R, M, N]` with extensionality, projections, identity,
+      and composition.
 - [ ] Package the submodule quotient as a `Module[R, QuotientOver[M]]` (axioms via
       representatives, using `submodule_quotient_add/neg/zero/smul_by`). Note:
       requires first equipping `QuotientOver[M]` with an `AddCommGroup` instance,
@@ -60,5 +59,5 @@ Status:
 - `linear_map_preimage_submodule` packages the predicate-level preimage as a `Submodule[R, M]` (mirroring `linear_map_kernel_submodule`), defaulting to the full submodule when the map is not linear. The carrier is the source module and `linear_map_preimage_submodule_contains_eq` characterises membership as `t.contains(f(x))` whenever the map is linear, with introduction/elimination lemmas (`..._contains_of_image_in`, `..._image_in_of_contains`).
 - `linear_map_preimage_submodule_full_contains_at` gives the full-target characterisation pointwise: the preimage of `full_submodule(dst)` and `full_submodule(src)` share membership at every point under a linear map. `linear_map_preimage_submodule_mono` gives monotonicity in the target submodule (same `t1.carrier = t2.carrier` and `submodule_subset(t1, t2)` yield subset-inclusion of preimages).
 - `linear_map_preimage_submodule_zero_eq_kernel_at` gives the zero-target characterisation pointwise: under a linear map, the preimage submodule of `zero_submodule(dst)` and `linear_map_kernel_submodule(src, dst, f)` share membership at every point.
-- `linear_map_preimage_submodule_zero_subset_kernel`, `linear_map_kernel_subset_preimage_submodule_zero`, `linear_map_preimage_submodule_full_subset`, and `full_submodule_subset_linear_map_preimage_full` give subset-style inclusions between the preimage submodule (for the zero/full target submodules) and the kernel/full source submodules under a linear map. The corresponding full submodule equalities still time out via `submodule_subset_antisymm` on these large terms.
+- `linear_map_preimage_submodule_zero_subset_kernel`, `linear_map_kernel_subset_preimage_submodule_zero`, `linear_map_preimage_submodule_full_subset`, and `full_submodule_subset_linear_map_preimage_full` give subset-style inclusions between the preimage submodule (for the zero/full target submodules) and the kernel/full source submodules under a linear map. The corresponding full submodule equalities still need decomposed `submodule_subset_antisymm` proofs on these large terms.
 - `src/module_hom.ac` introduces a predicate-level linear-equivalence API: `is_linear_equiv` (linear map + bijection), with `linear_equiv_is_linear_map`/`linear_equiv_is_bijection`/`linear_equiv_is_injective`/`linear_equiv_is_surjective` projections, `identity_fn_is_linear_equiv`, `compose_is_linear_equiv`, `linear_map_two_sided_inverse_preserves_add`/`..._preserves_smul`/`..._is_linear_map` (showing any two-sided inverse of a linear map is itself linear in the opposite direction), `linear_equiv_two_sided_inverse_is_linear_equiv`, the convenience lemmas `linear_equiv_zero`/`linear_equiv_add`/`linear_equiv_smul`/`linear_equiv_neg`/`linear_equiv_sub`, the inverse-transport biconditional `linear_equiv_apply_eq_iff` (`f(x) = y iff x = g(y)`), the kernel-triviality biconditional `linear_equiv_apply_eq_zero_iff_eq_zero`, and convenience lemmas `linear_equiv_two_sided_inverse_zero`/`..._add`/`..._smul`/`..._neg`/`..._sub` giving the inverse map's pointwise additive and scalar behavior directly.

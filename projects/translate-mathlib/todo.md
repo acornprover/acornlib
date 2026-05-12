@@ -4,37 +4,7 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Blockers
 
-- [ ] acorn-bug: linear-algebra/modules-and-vector-spaces - structures with 3 typeclass
-      parameters (e.g. `ModuleHom[R: Ring, M: AddCommGroup, N: AddCommGroup]`) generate
-      certificates that fail strict `acorn check` ("generated invalid code: Argument 0
-      has type ModuleHom[AddCommGroup, Ring, Ring], but expected ModuleHom[Ring,
-      AddCommGroup, AddCommGroup]"). Reproducible via field accessors `.src`/`.dst`/`.hom`
-      on such a struct. Next action: report upstream with a minimal repro, then revisit
-      bundled `ModuleHom` once fixed.
-- [ ] prover-limitation: foundations/quotients/algebraic-quotients - `normal_subgroup_rel_transitive_statement`
-      verifies in `src/normal_subgroup.ac`, but the definitional wrapper
-      `is_transitive(normal_subgroup_rel(s))` times out, blocking `QuotientRelation[G]`
-      packaging for normal subgroup quotients. Next action: improve prover/typeclass
-      search for this wrapper or find a smaller definitionally equivalent packaging.
-- [ ] acorn-bug: functional-analysis - `instance Real: NormedAddCommGroup` (in
-      `src/real_normed.ac`) verifies under `acorn` but strict `acorn check` can still
-      reject the auto-generated certificate for the `norm_triangle` obligation with
-      an invalid-code witness step. Next action: extract a minimal repro for upstream
-      and revisit `NormedAddCommGroup` instances after the certificate bug is fixed.
-- [ ] acorn-bug: order-theory/order-isomorphisms and affine-euclidean-and-convex-geometry
-      - generic `Pair[A, B]` typeclass instances fail while rendering typeclass attributes
-      such as `LTE.lte[Pair[A, B]](...)` and `Add.add[Pair[A, B]](...)` ("typeclass
-      attribute '<attr>' for concrete receiver 'Pair' is not available in the current
-      scope"). Blocks bundled product-order isomorphisms and product `AffineSpace`
-      instances on `Pair[V1, V2]`/`Pair[P1, P2]`. Next action: report upstream with
-      a minimal `Pair[A: AddCommGroup, B: AddCommGroup]: Add` (or `Pair: LTE`) repro,
-      then revisit both bundled product `OrderIso` and product `AffineSpace` support.
-- [ ] prover-limitation: algebraic-hierarchy/quotients - the normal-subgroup quotient
-      projected-power law verifies at zero, successor, and first power, but the
-      all-`Nat` induction theorem times out even when the target equality is factored
-      into `normal_subgroup_quotient_projected_power_law`. Next action: improve
-      induction proof search or find a smaller proof packaging before adding
-      `normal_subgroup_quotient_pow_mk`.
+No current blockers.
 
 ## Foundational And Core Infrastructure
 
