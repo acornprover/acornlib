@@ -3,8 +3,8 @@
 Goal: support infinite-dimensional linear analysis in the style Mathlib uses for measure theory, PDE, and geometry.
 
 - [ ] Add `MetricSpace` instance via `norm_distance` for `NormedAddCommGroup` (blocked while typeclass-extension certificates fail `acorn check`)
-- [ ] Define normed vector spaces (norm compatibility with scalar multiplication)
 - [ ] Add Banach spaces and completeness infrastructure
+- [ ] Extend normed vector space API: scalar action via `Real.0`/`Real.1`, sub-additivity for linear combinations, scaled distance lemmas
 - [ ] Add Hilbert spaces and orthogonal projection results
 - [ ] Support bounded linear maps and operator composition
 - [ ] Develop operator norms and completeness of operator spaces
