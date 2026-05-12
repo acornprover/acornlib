@@ -14,6 +14,7 @@ Goal: cover the finite and enumerative mathematics that Mathlib collects under c
   - [x] Subset selection identity `binom(n,k) * binom(k,j) = binom(n,j) * binom(n-j, k-j)` (`binom_subset_product`)
   - [x] Near-top value `n.binom(n - 1) = n` (`binom_n_minus_one`)
   - [x] Closed form `2 * n.binom(2) = n * (n - 1)` (`binom_two_double`)
+  - [x] Closed form `6 * n.binom(3) = n * (n - 1) * (n - 2)` (`binom_three_factor`)
 - [ ] Support inclusion-exclusion and Mobius inversion
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects
 - [ ] Develop posets, chains, and antichain theorems
