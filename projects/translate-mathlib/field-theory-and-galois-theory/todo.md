@@ -39,6 +39,9 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
         image of outer map (`src/field_hom_image.ac`)
   - [x] Subfield inclusion preorder `subfield_le` with reflexivity, transitivity,
         antisymmetry (`src/subfield.ac`)
+  - [x] `top_subfield_ge` (every subfield is contained in `top_subfield`),
+        `field_hom_image_le_top`, and `field_hom_image_compose_le`
+        (`src/field_hom_image.ac`)
   - [ ] `bottom_subfield` (prime field) once integer/rational embedding is available
   - [ ] Field-extension API beyond `FieldHom`; previous vacuous
         `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
