@@ -3,7 +3,7 @@
 Goal: define `dirichlet_convolve(f, g)(n) = sum_{d | n} f(d) * g(n/d)` and develop its
 basic algebra (identity, zero annihilator, commutativity, associativity).
 
-- [ ] Prove the left and right identity laws with `nat_dirichlet_unit_fn`
+- [ ] Prove the left identity law `dirichlet_convolve(nat_dirichlet_unit_fn, f)(n) = f(n)` for `n > 0`
 - [ ] Prove commutativity of `dirichlet_convolve`
 - [ ] Prove associativity of `dirichlet_convolve`
 - [ ] Prove `dirichlet_convolve` distributes over `arithmetic_fn_add`
@@ -21,3 +21,10 @@ Status:
   and `dirichlet_convolve(f, nat_zero_arithmetic_fn) = nat_zero_arithmetic_fn` are proved,
   via the general list helper `sum_map_zero_fn(l, h)` (with its inductive predicate
   `sum_map_zero_pred`).
+- The right identity law `dirichlet_convolve(f, nat_dirichlet_unit_fn)(n) = f(n)` for
+  `n > 0` is proved (`dirichlet_convolve_unit_right`). The proof uses the cofactor
+  characterisation `divisor_quotient_proper_not_one` (proper divisors give non-one
+  cofactors), the per-term vanishing `dirichlet_term_unit_proper_zero`, and the
+  bounded sum-vanishing helper `dirichlet_unit_right_below` proved by induction on
+  the bound via `dirichlet_unit_right_below_step_yes`/`step_no` and the general
+  cons-step lemma `sum_cons_zero_head`.
