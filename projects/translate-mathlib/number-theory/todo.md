@@ -3,7 +3,7 @@
 Goal: push beyond the current arithmetic core into the standard theories that Mathlib treats as number theory.
 
 - [ ] Prove `tau` and `sigma` are multiplicative on coprime arguments
-- [ ] Define Dirichlet convolution `dirichlet_convolve(f, g)(n) = sum_{d | n} f(d) * g(n / d)` and prove it is associative with identity `nat_dirichlet_unit_fn`
+- [ ] Define Dirichlet convolution `dirichlet_convolve(f, g)(n) = sum_{d | n} f(d) * g(n / d)` and prove it is associative with identity `nat_dirichlet_unit_fn` — see [dirichlet-convolution/todo.md](dirichlet-convolution/todo.md)
 - [ ] Prove multiplicativity for standard number-theoretic functions such as totient where supporting lemmas are available
 - [ ] Add continued fractions and their approximation theory
 - [ ] Develop quadratic residues and quadratic reciprocity
