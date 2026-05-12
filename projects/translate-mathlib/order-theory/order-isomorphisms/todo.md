@@ -22,6 +22,7 @@ Status:
 - Representative ordered-additive-group and ordered-group comparison-iff proofs now route through the bundled translation `OrderIso` API instead of reusing the underlying order-embedding facts directly.
 - `src/pair_order.ac` now has diagonal-pair order embedding lemmas: the diagonal map `a |-> Pair.new(a, a)` preserves and reflects both non-strict and strict componentwise order on `Pair[A, A]`, with iff aliases.
 - `src/pair_order.ac` now has strict-component decomposition lemmas: strict pair order forces some component to be strictly below, decomposes (forward direction) into a single-strict-component disjunction, and is implied by either single-strict-component case.
+- `src/pair_order.ac` now has the iff form `pair_lt_iff_lte_and_some_strict_component` characterizing strict pair order as non-strict pair order together with at least one strictly-below component.
 
 - [ ] Decide the proof-carrying API for bundled positive-scalar `OrderIso`s in ordered fields
 - [ ] Add bundled ordered-field scalar-map `OrderDualIso` values once the positive-scalar bundling API is settled
