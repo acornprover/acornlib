@@ -46,6 +46,9 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
         `subfield_inter_contains_eq`, `subfield_inter_le_left`,
         `subfield_inter_le_right`, `subfield_inter_greatest`, and
         `subfield_inter_comm` (`src/subfield.ac`)
+  - [x] Preimage of a codomain subfield under a field homomorphism
+        (`subfield_preimage`, `subfield_preimage_contains_eq`,
+        `subfield_preimage_top` in `src/field_hom_image.ac`)
   - [ ] `bottom_subfield` (prime field) once integer/rational embedding is available
   - [ ] Field-extension API beyond `FieldHom`; previous vacuous
         `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
