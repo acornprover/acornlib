@@ -24,3 +24,4 @@ Status:
 - `src/fixed_point.ac` now has index-monotone iterate lemmas (`monotone_iterate_pre_fixed_anti_index`, `monotone_iterate_post_fixed_mono_index`) and any-map fixed-point iterate equalities (`fixed_point_iterate_eq`, `fixed_point_iterate_eq_iterate`).
 - `src/fixed_point.ac` now has set-level closure lemmas: monotone maps map the fixed/pre-fixed/post-fixed point sets to themselves pointwise and iterate-wise.
 - `src/fixed_point.ac` now bridges fixed points with `is_fixed_by`, closure operators, kernel operators, and Galois-induced closure/kernel maps: closure pre-fixed points and kernel post-fixed points are exactly fixed points, and Galois closure/kernel images are fixed points.
+- `src/fixed_point.ac` now also has additional monotone-iterate sandwich and index-comparison lemmas, single-step iterate bounds via `f(x)`, lower-iterate bounds for pre-fixed points, and forall-wrapped closure properties for the fixed/pre-fixed/post-fixed point sets.
