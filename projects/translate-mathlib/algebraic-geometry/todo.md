@@ -25,7 +25,8 @@ first.
       `Spec[R].vanishing`, antitonicity, `V(0)`, `V(R)`, `V(I+J)=V(I)∩V(J)`,
       `Spec[R].of_maximal`, `V(principal(f))`, `Spec[R].basic_open(f) = D(f)`
       with its values at `0` and `1`, `V(I) ∪ V(J) ⊆ V(I ∩ J)`, and
-      injectivity of `Spec[R].of_maximal` are now in `src/spec.ac`.
+      injectivity of `Spec[R].of_maximal`, and injectivity of `Spec[R].of_prime`
+      are now in `src/spec.ac`.
 - [ ] Define the Zariski topology via vanishing sets `V(I)` and prove the
       topology axioms (needs: prime ideals, topological spaces)
 - [ ] Add basic open sets `D(f)` and the distinguished base for the Zariski
