@@ -2,7 +2,9 @@ from nat import Nat
 from real import Real
 from real.real_seq import converges_to, converges, converges_to_unique, tail_bound, neg_is_close, add_close, close_and_lt_imp_close
 from real.real_base import self_close
-from complex import Complex, eq_by_components, neg_re, neg_im
+from real.real_ring import exists_small_mul_variant, mul_abs, lt_mul_pos_left
+from real.real_base import abs_not_neg, lt_trans
+from complex import Complex, eq_by_components, neg_re, neg_im, re_mul, im_mul
 
 /// The real-part projection of a complex sequence.
 define re_seq(z: Nat -> Complex, n: Nat) -> Real {
@@ -406,6 +408,297 @@ theorem complex_add_seq_converges(a: Nat -> Complex, b: Nat -> Complex) {
         complex_converges_to(complex_add_seq(a, b), w1 + w2)
         exists(w: Complex) {
             complex_converges_to(complex_add_seq(a, b), w)
+        }
+    }
+}
+
+/// Multiplication by a fixed real preserves closeness after rescaling the tolerance.
+theorem real_scalar_mul_close(c: Real, a: Real, b: Real, eps2: Real, eps: Real) {
+    eps.is_positive and a.is_close(b, eps2) and c.abs * eps2 < eps
+    implies (c * a).is_close(c * b, eps)
+} by {
+    a.is_close(b, eps2) = (a - b).abs < eps2
+    (a - b).abs < eps2
+    c * a - c * b = c * (a - b)
+    mul_abs(c, a - b)
+    (c * (a - b)).abs = c.abs * (a - b).abs
+    (c * a - c * b).abs = c.abs * (a - b).abs
+    if c.abs.is_positive {
+        lt_mul_pos_left((a - b).abs, eps2, c.abs)
+        c.abs * (a - b).abs < c.abs * eps2
+        lt_trans(c.abs * (a - b).abs, c.abs * eps2, eps)
+        c.abs * (a - b).abs < eps
+    } else {
+        abs_not_neg(c)
+        not c.abs.is_negative
+        c.abs = Real.0
+        c.abs * (a - b).abs = Real.0
+        Real.0 < eps
+        c.abs * (a - b).abs < eps
+    }
+    (c * a - c * b).abs < eps
+    (c * a).is_close(c * b, eps)
+}
+
+/// Helper: a sequence pointwise equal to a real scalar multiple inherits convergence to the scaled limit.
+theorem scalar_mul_pointwise_converges_to(a: Nat -> Real, b: Nat -> Real, c: Real, x: Real) {
+    converges_to(a, x) and forall(n: Nat) { b(n) = c * a(n) }
+    implies converges_to(b, c * x)
+} by {
+    if converges_to(a, x) and forall(n: Nat) { b(n) = c * a(n) } {
+        converges_to(a, x) = forall(e: Real) {
+            e.is_positive implies exists(m: Nat) {
+                tail_bound(a, x, m, e)
+            }
+        }
+        forall(eps: Real) {
+            if eps.is_positive {
+                exists_small_mul_variant(c, eps)
+                let eps2: Real satisfy {
+                    eps2.is_positive and c.abs * eps2 < eps
+                }
+                eps2.is_positive implies exists(m: Nat) {
+                    tail_bound(a, x, m, eps2)
+                }
+                exists(m: Nat) {
+                    tail_bound(a, x, m, eps2)
+                }
+                let n: Nat satisfy {
+                    tail_bound(a, x, n, eps2)
+                }
+                forall(i: Nat) {
+                    if n <= i {
+                        a(i).is_close(x, eps2)
+                        real_scalar_mul_close(c, a(i), x, eps2, eps)
+                        (c * a(i)).is_close(c * x, eps)
+                        b(i) = c * a(i)
+                        b(i).is_close(c * x, eps)
+                    }
+                }
+                tail_bound(b, c * x, n, eps)
+            }
+        }
+    }
+}
+
+/// The pointwise complex-scalar multiple of a complex sequence.
+define complex_scale_seq(c: Complex, z: Nat -> Complex, n: Nat) -> Complex {
+    c * z(n)
+}
+
+/// The real part of the complex-scalar multiple follows the (ac - bd) rule.
+theorem re_complex_scale_seq(c: Complex, z: Nat -> Complex, n: Nat) {
+    re_seq(complex_scale_seq(c, z), n) = c.re * re_seq(z, n) - c.im * im_seq(z, n)
+} by {
+    complex_scale_seq(c, z, n) = c * z(n)
+    re_mul(c, z(n))
+    (c * z(n)).re = c.re * z(n).re - c.im * z(n).im
+}
+
+/// The imaginary part of the complex-scalar multiple follows the (ad + bc) rule.
+theorem im_complex_scale_seq(c: Complex, z: Nat -> Complex, n: Nat) {
+    im_seq(complex_scale_seq(c, z), n) = c.re * im_seq(z, n) + c.im * re_seq(z, n)
+} by {
+    complex_scale_seq(c, z, n) = c * z(n)
+    im_mul(c, z(n))
+    (c * z(n)).im = c.re * z(n).im + c.im * z(n).re
+}
+
+/// The real-part component sequence obtained by scaling the real part of z by alpha.
+define re_scaled_seq(alpha: Real, z: Nat -> Complex, n: Nat) -> Real {
+    alpha * re_seq(z, n)
+}
+
+/// The imaginary-part component sequence obtained by scaling the imaginary part of z by alpha.
+define im_scaled_seq(alpha: Real, z: Nat -> Complex, n: Nat) -> Real {
+    alpha * im_seq(z, n)
+}
+
+/// Scaling the real-part sequence preserves componentwise convergence.
+theorem re_scaled_seq_converges_to(alpha: Real, z: Nat -> Complex, w: Complex) {
+    complex_converges_to(z, w) implies converges_to(re_scaled_seq(alpha, z), alpha * w.re)
+} by {
+    if complex_converges_to(z, w) {
+        converges_to(re_seq(z), w.re)
+        forall(n: Nat) {
+            re_scaled_seq(alpha, z, n) = alpha * re_seq(z, n)
+            re_scaled_seq(alpha, z)(n) = alpha * re_seq(z)(n)
+        }
+        scalar_mul_pointwise_converges_to(re_seq(z), re_scaled_seq(alpha, z), alpha, w.re)
+        converges_to(re_scaled_seq(alpha, z), alpha * w.re)
+    }
+}
+
+/// Scaling the imaginary-part sequence preserves componentwise convergence.
+theorem im_scaled_seq_converges_to(alpha: Real, z: Nat -> Complex, w: Complex) {
+    complex_converges_to(z, w) implies converges_to(im_scaled_seq(alpha, z), alpha * w.im)
+} by {
+    if complex_converges_to(z, w) {
+        converges_to(im_seq(z), w.im)
+        forall(n: Nat) {
+            im_scaled_seq(alpha, z, n) = alpha * im_seq(z, n)
+            im_scaled_seq(alpha, z)(n) = alpha * im_seq(z)(n)
+        }
+        scalar_mul_pointwise_converges_to(im_seq(z), im_scaled_seq(alpha, z), alpha, w.im)
+        converges_to(im_scaled_seq(alpha, z), alpha * w.im)
+    }
+}
+
+/// The negation of a scaled imaginary-part sequence.
+define neg_im_scaled_seq(alpha: Real, z: Nat -> Complex, n: Nat) -> Real {
+    -im_scaled_seq(alpha, z, n)
+}
+
+/// The negation of a scaled real-part sequence.
+define neg_re_scaled_seq(alpha: Real, z: Nat -> Complex, n: Nat) -> Real {
+    -re_scaled_seq(alpha, z, n)
+}
+
+/// The negation of a scaled imaginary-part sequence converges to the negation of the scaled limit.
+theorem neg_im_scaled_seq_converges_to(alpha: Real, z: Nat -> Complex, w: Complex) {
+    complex_converges_to(z, w) implies converges_to(neg_im_scaled_seq(alpha, z), -(alpha * w.im))
+} by {
+    if complex_converges_to(z, w) {
+        im_scaled_seq_converges_to(alpha, z, w)
+        converges_to(im_scaled_seq(alpha, z), alpha * w.im)
+        forall(n: Nat) {
+            neg_im_scaled_seq(alpha, z, n) = -im_scaled_seq(alpha, z, n)
+            neg_im_scaled_seq(alpha, z)(n) = -im_scaled_seq(alpha, z)(n)
+        }
+        neg_pointwise_converges_to(im_scaled_seq(alpha, z), neg_im_scaled_seq(alpha, z), alpha * w.im)
+        converges_to(neg_im_scaled_seq(alpha, z), -(alpha * w.im))
+    }
+}
+
+/// The negation of a scaled real-part sequence converges to the negation of the scaled limit.
+theorem neg_re_scaled_seq_converges_to(alpha: Real, z: Nat -> Complex, w: Complex) {
+    complex_converges_to(z, w) implies converges_to(neg_re_scaled_seq(alpha, z), -(alpha * w.re))
+} by {
+    if complex_converges_to(z, w) {
+        re_scaled_seq_converges_to(alpha, z, w)
+        converges_to(re_scaled_seq(alpha, z), alpha * w.re)
+        forall(n: Nat) {
+            neg_re_scaled_seq(alpha, z, n) = -re_scaled_seq(alpha, z, n)
+            neg_re_scaled_seq(alpha, z)(n) = -re_scaled_seq(alpha, z)(n)
+        }
+        neg_pointwise_converges_to(re_scaled_seq(alpha, z), neg_re_scaled_seq(alpha, z), alpha * w.re)
+        converges_to(neg_re_scaled_seq(alpha, z), -(alpha * w.re))
+    }
+}
+
+/// The pointwise complex-scalar multiple of a convergent complex sequence converges to the scaled limit.
+theorem complex_scale_seq_converges_to(c: Complex, z: Nat -> Complex, w: Complex) {
+    complex_converges_to(z, w) implies complex_converges_to(complex_scale_seq(c, z), c * w)
+} by {
+    if complex_converges_to(z, w) {
+        re_scaled_seq_converges_to(c.re, z, w)
+        converges_to(re_scaled_seq(c.re, z), c.re * w.re)
+        neg_im_scaled_seq_converges_to(c.im, z, w)
+        converges_to(neg_im_scaled_seq(c.im, z), -(c.im * w.im))
+        forall(n: Nat) {
+            re_seq(complex_scale_seq(c, z), n) = c.re * re_seq(z, n) - c.im * im_seq(z, n)
+            re_seq(complex_scale_seq(c, z), n) = re_scaled_seq(c.re, z, n) + neg_im_scaled_seq(c.im, z, n)
+            re_seq(complex_scale_seq(c, z))(n) = re_scaled_seq(c.re, z)(n) + neg_im_scaled_seq(c.im, z)(n)
+        }
+        add_pointwise_converges_to(re_scaled_seq(c.re, z), neg_im_scaled_seq(c.im, z),
+            re_seq(complex_scale_seq(c, z)), c.re * w.re, -(c.im * w.im))
+        converges_to(re_seq(complex_scale_seq(c, z)), c.re * w.re + -(c.im * w.im))
+        c.re * w.re + -(c.im * w.im) = c.re * w.re - c.im * w.im
+        re_mul(c, w)
+        (c * w).re = c.re * w.re - c.im * w.im
+        converges_to(re_seq(complex_scale_seq(c, z)), (c * w).re)
+
+        im_scaled_seq_converges_to(c.re, z, w)
+        converges_to(im_scaled_seq(c.re, z), c.re * w.im)
+        re_scaled_seq_converges_to(c.im, z, w)
+        converges_to(re_scaled_seq(c.im, z), c.im * w.re)
+        forall(n: Nat) {
+            im_seq(complex_scale_seq(c, z), n) = c.re * im_seq(z, n) + c.im * re_seq(z, n)
+            im_seq(complex_scale_seq(c, z), n) = im_scaled_seq(c.re, z, n) + re_scaled_seq(c.im, z, n)
+            im_seq(complex_scale_seq(c, z))(n) = im_scaled_seq(c.re, z)(n) + re_scaled_seq(c.im, z)(n)
+        }
+        add_pointwise_converges_to(im_scaled_seq(c.re, z), re_scaled_seq(c.im, z),
+            im_seq(complex_scale_seq(c, z)), c.re * w.im, c.im * w.re)
+        converges_to(im_seq(complex_scale_seq(c, z)), c.re * w.im + c.im * w.re)
+        im_mul(c, w)
+        (c * w).im = c.re * w.im + c.im * w.re
+        converges_to(im_seq(complex_scale_seq(c, z)), (c * w).im)
+
+        complex_converges_to(complex_scale_seq(c, z), c * w) = (converges_to(re_seq(complex_scale_seq(c, z)), (c * w).re) and converges_to(im_seq(complex_scale_seq(c, z)), (c * w).im))
+        complex_converges_to(complex_scale_seq(c, z), c * w)
+    }
+}
+
+/// The pointwise complex-scalar multiple of a convergent complex sequence is convergent.
+theorem complex_scale_seq_converges(c: Complex, z: Nat -> Complex) {
+    complex_converges(z) implies complex_converges(complex_scale_seq(c, z))
+} by {
+    if complex_converges(z) {
+        let w: Complex satisfy {
+            complex_converges_to(z, w)
+        }
+        complex_scale_seq_converges_to(c, z, w)
+        complex_converges_to(complex_scale_seq(c, z), c * w)
+        exists(v: Complex) {
+            complex_converges_to(complex_scale_seq(c, z), v)
+        }
+    }
+}
+
+/// The pointwise difference of two complex sequences.
+define complex_sub_seq(a: Nat -> Complex, b: Nat -> Complex, n: Nat) -> Complex {
+    a(n) - b(n)
+}
+
+/// Pointwise subtraction equals pointwise addition with the second sequence negated.
+theorem complex_sub_seq_eq_add_neg(a: Nat -> Complex, b: Nat -> Complex) {
+    complex_sub_seq(a, b) = complex_add_seq(a, neg_seq(b))
+} by {
+    forall(n: Nat) {
+        complex_sub_seq(a, b, n) = a(n) - b(n)
+        neg_seq(b, n) = -b(n)
+        complex_add_seq(a, neg_seq(b), n) = a(n) + neg_seq(b, n)
+        complex_add_seq(a, neg_seq(b), n) = a(n) + (-b(n))
+        a(n) + (-b(n)) = a(n) - b(n)
+        complex_add_seq(a, neg_seq(b), n) = a(n) - b(n)
+        complex_sub_seq(a, b, n) = complex_add_seq(a, neg_seq(b), n)
+        complex_sub_seq(a, b)(n) = complex_add_seq(a, neg_seq(b))(n)
+    }
+}
+
+/// The pointwise difference of two convergent complex sequences converges to the difference of limits.
+theorem complex_sub_seq_converges_to(a: Nat -> Complex, b: Nat -> Complex, w1: Complex, w2: Complex) {
+    complex_converges_to(a, w1) and complex_converges_to(b, w2)
+    implies complex_converges_to(complex_sub_seq(a, b), w1 - w2)
+} by {
+    if complex_converges_to(a, w1) and complex_converges_to(b, w2) {
+        neg_seq_converges_to(b, w2)
+        complex_converges_to(neg_seq(b), -w2)
+        complex_add_seq_converges_to(a, neg_seq(b), w1, -w2)
+        complex_converges_to(complex_add_seq(a, neg_seq(b)), w1 + -w2)
+        w1 + -w2 = w1 - w2
+        complex_converges_to(complex_add_seq(a, neg_seq(b)), w1 - w2)
+        complex_sub_seq_eq_add_neg(a, b)
+        complex_sub_seq(a, b) = complex_add_seq(a, neg_seq(b))
+        complex_converges_to(complex_sub_seq(a, b), w1 - w2)
+    }
+}
+
+/// The pointwise difference of two convergent complex sequences is convergent.
+theorem complex_sub_seq_converges(a: Nat -> Complex, b: Nat -> Complex) {
+    complex_converges(a) and complex_converges(b) implies complex_converges(complex_sub_seq(a, b))
+} by {
+    if complex_converges(a) and complex_converges(b) {
+        let w1: Complex satisfy {
+            complex_converges_to(a, w1)
+        }
+        let w2: Complex satisfy {
+            complex_converges_to(b, w2)
+        }
+        complex_sub_seq_converges_to(a, b, w1, w2)
+        complex_converges_to(complex_sub_seq(a, b), w1 - w2)
+        exists(w: Complex) {
+            complex_converges_to(complex_sub_seq(a, b), w)
         }
     }
 }
