@@ -5,7 +5,6 @@ basic algebra (identity, zero annihilator, commutativity, associativity).
 
 - [ ] Prove commutativity of `dirichlet_convolve`
 - [ ] Prove associativity of `dirichlet_convolve`
-- [ ] Prove `dirichlet_convolve` distributes over `arithmetic_fn_add`
 - [ ] Prove `dirichlet_convolve` of two multiplicative arithmetic functions is multiplicative
 
 Status:
@@ -44,3 +43,7 @@ Status:
   `dirichlet_term_flip` shows `dirichlet_term(f, g, n)(d) =
   dirichlet_term(g, f, n)(divisor_quotient(n, d))` for `d | n` and `n > 0`, ready
   to drive a permutation-based commutativity proof.
+- Distributivity of Dirichlet convolution over pointwise addition is proved on
+  both sides (`dirichlet_convolve_add_left`, `dirichlet_convolve_add_right`),
+  via the pointwise-term splittings `dirichlet_term_add_left_eq` and
+  `dirichlet_term_add_right_eq` and the list helper `map_sum_add`.
