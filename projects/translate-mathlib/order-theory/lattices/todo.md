@@ -23,3 +23,4 @@ Status:
 - `src/submodule.ac` now has bundled `submodule_intersection_eq_left_of_subset` / `submodule_intersection_eq_right_of_subset` absorption laws for same-carrier submodules.
 - `src/pair_order.ac` now has unbundled `pair_meet` and `pair_join` operations on `Pair[A, B]` for componentwise meet/join semilattice products, with component projection lemmas, lower/upper bound projections, and greatest-lower-bound / least-upper-bound iff characterizations.
 - `src/pair_order.ac` now also has commutativity, idempotence, and associativity laws for `pair_meet` and `pair_join`, plus `pair_meet_eq_left_iff_lte` and `pair_join_eq_right_iff_lte` order characterizations.
+- `src/pair_order.ac` now has the symmetric `pair_meet_eq_right_iff_lte` and `pair_join_eq_left_iff_lte` equalities, plus left and right pointwise monotonicity of `pair_meet` and `pair_join`.
