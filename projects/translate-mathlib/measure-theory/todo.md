@@ -2,8 +2,7 @@
 
 Goal: build the measurable and integrable foundations needed by probability, analysis, and geometry.
 
-- [ ] Add generated sigma-algebras and Borel constructions
-- [ ] Add the preimage sigma-algebra induced by a function
+- [ ] Add Borel sigma-algebra constructions on top of generated sigma-algebras
 - [ ] Build the API for measurable functions
 - [ ] Develop outer measures and Caratheodory extension
 - [ ] Add measures, finite measures, and signed measures
