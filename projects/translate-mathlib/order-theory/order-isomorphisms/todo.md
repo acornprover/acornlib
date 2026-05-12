@@ -20,6 +20,10 @@ Status:
 - `src/ordered_field.ac` now has unbundled positive-scalar order-isomorphism support: left/right scalar multiplication reflect non-strict order under explicit inverse-nonnegativity, are order embeddings, have inverse laws, form `is_order_iso_pair`s when the scalar and its inverse are positive, and expose direct strict and non-strict comparison-iff wrappers.
 - `src/ordered_field.ac` now also has unbundled negative-scalar order-dual-isomorphism support: left/right scalar multiplication and inverse multiplication form `is_order_dual_iso_pair`s under explicit inverse-negativity, with non-strict, strict, and reverse-comparison reflection wrappers.
 - Representative ordered-additive-group and ordered-group comparison-iff proofs now route through the bundled translation `OrderIso` API instead of reusing the underlying order-embedding facts directly.
+- `src/pair_order.ac` now has diagonal-pair order embedding lemmas: the diagonal map `a |-> Pair.new(a, a)` preserves and reflects both non-strict and strict componentwise order on `Pair[A, A]`, with iff aliases.
+- `src/pair_order.ac` now has strict-component decomposition lemmas: strict pair order forces some component to be strictly below, decomposes (forward direction) into a single-strict-component disjunction, and is implied by either single-strict-component case.
+- `src/pair_order.ac` now has the iff form `pair_lt_iff_lte_and_some_strict_component` characterizing strict pair order as non-strict pair order together with at least one strictly-below component.
+- `src/pair_order.ac` now has order-embedding reflection and iff lemmas for `pair_map_first` and `pair_map_second`: each single-component order embedding both preserves and reflects componentwise non-strict order.
 
 - [ ] Decide the proof-carrying API for bundled positive-scalar `OrderIso`s in ordered fields
 - [ ] Add bundled ordered-field scalar-map `OrderDualIso` values once the positive-scalar bundling API is settled

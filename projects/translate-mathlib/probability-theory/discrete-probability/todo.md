@@ -8,14 +8,17 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Add `finite_set_sum: FiniteSet[T] -> (T -> A) -> A` (generic over `AddCommMonoid`) in `finite_set_sum.ac`. Includes `finite_set_sum_eq_list_sum`, `finite_set_sum_empty`, and `finite_set_sum_add` (linearity in the function argument). Built via the unique-list strategy using `unique_same_contains_map_sum_eq` rather than the map-permutation lemma.
 - [x] Add `finite_set_sum_insert`: inserting a fresh element adds its value to the sum.
 - [x] Add `finite_set_sum_disjoint_union`: sum over `fs_union(a, b)` equals the sum of parts when `a` and `b` are disjoint.
-- [ ] Finish monotonicity of `finite_set_sum` over `Real`. The cons-step helper `list_map_sum_le_cons` lands in `finite_set_sum_real.ac`; the wrap-up theorems `list_map_sum_le` and `finite_set_sum_le` time out under direct list induction with a `forall+implies` predicate. Try inducting on list length (Nat induction) instead, or rephrasing the predicate so the hypothesis sits outside.
-- [ ] Define `DiscretePMF[T]` as a `FiniteSet[T]` together with a nonnegative `T -> Real` function whose `finite_set_sum` is `Real.1`.
-- [ ] Define probability of an event as the sum of pmf values over the event subset.
-- [ ] Add complement, union, and inclusion-exclusion for discrete probability.
-- [ ] Define expectation `discrete_expectation(pmf, X)` for a `T -> Real` random variable.
-- [ ] Add linearity and monotonicity of discrete expectation.
+- [x] Define `DiscretePMF[T]` as a `FiniteSet[T]` together with a nonnegative `T -> Real` function whose `finite_set_sum` is `Real.1`. Lives in `discrete_pmf.ac` with `is_pmf`, `discrete_pmf_mass_nonneg`, `discrete_pmf_total_mass`, and `discrete_pmf_ext`.
+- [x] Define probability of an event as the sum of pmf values over the event subset. `pmf_event_prob` plus empty/support/disjoint-union laws live in `discrete_pmf.ac`.
+- [x] Inclusion-exclusion for two discrete events: `pmf_event_prob_inclusion_exclusion` in `discrete_pmf.ac`, derived from disjoint-union additivity and the `B = (A ∩ B) ⊔ (B \ A)` decomposition.
+- [x] Add general (not necessarily disjoint) union `pmf_event_prob_union` and the support-split identity `pmf_event_prob_support_split` (in `discrete_pmf.ac`), giving the complement law `P(A ∩ support) + P(support \ A) = 1`.
+- [x] Define expectation `discrete_expectation(pmf, X)` for a `T -> Real` random variable. Lives in `discrete_pmf.ac` as `finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, X))`, where `mass_weighted_value(mass, rv, x) = mass(x) * rv(x)`.
+- [x] Additivity of discrete expectation: `discrete_expectation_add` in `discrete_pmf.ac` proves `E(X + Y) = E(X) + E(Y)` via `finite_set_sum_add` plus pointwise `mass_weighted_value` decomposition and `function_extensionality`.
+- [ ] Add scalar scaling `E(c * X) = c * E(X)` for discrete expectation. Needs a `finite_set_sum_scalar_mul` analogue of `sum_scalar_mul` (or inlined via `finite_set_sum_eq_list_sum`).
+- [ ] Add monotonicity of discrete expectation: `X(x) <= Y(x)` on the support implies `E(X) <= E(Y)`. Blocked behind the deferred `finite_set_sum_le` task above.
 - [ ] Define variance and prove `Var(X) = E(X^2) - E(X)^2`.
 - [ ] Define independence of two discrete events and of two discrete random variables.
 - [ ] Show `E(X * Y) = E(X) * E(Y)` for independent discrete random variables.
 - [ ] Define the uniform pmf on a nonempty `FiniteSet[T]`.
 - [ ] Define the Bernoulli pmf on `Bool` with parameter `p` and compute its expectation and variance.
+- [ ] Finish monotonicity of `finite_set_sum` over `Real` (deferred). The cons-step helper `list_map_sum_le_cons` lands in `finite_set_sum_real.ac`; the wrap-up theorems `list_map_sum_le` and `finite_set_sum_le` time out under direct list induction. Empirically, even with a localized hypothesis `forall(x: T) { l.contains(x) implies f(x) <= g(x) }` and the same wrap-up shape that works for Nat-valued predicates in `all_prime_only_primes`, the `p(l)` step after `List.induction` times out for `Real`-valued predicates. Try Nat induction on list length (needs a list destructor for non-empty lists), or route through `partial_seq_lte` by reindexing `map(l, f)` as a finite prefix of a Nat-indexed sequence.

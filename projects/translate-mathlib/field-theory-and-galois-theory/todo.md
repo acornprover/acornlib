@@ -31,8 +31,20 @@ rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
   - [x] Identity field hom `F -> F` and composition of field homs
         (`identity_field_hom`, `compose_field_hom`, associativity, identity laws
         in `src/field_hom.ac`).
-  - [ ] Field-hom image as a subfield (once subfield API exists)
-  - [ ] `is_field_extension(phi: FieldHom[F, E])` and tower composition law
+  - [x] Subfield structure with constraints, extensionality, and basic
+        closure theorems (`src/subfield.ac`)
+  - [x] Field-hom image as a subfield (`field_hom_image` in `src/field_hom_image.ac`)
+  - [x] `top_subfield` (whole field as a subfield) and `field_hom_image_identity`
+        (identity hom's image is `top_subfield`); image of composition contained in
+        image of outer map (`src/field_hom_image.ac`)
+  - [x] Subfield inclusion preorder `subfield_le` with reflexivity, transitivity,
+        antisymmetry (`src/subfield.ac`)
+  - [x] `top_subfield_ge` (every subfield is contained in `top_subfield`),
+        `field_hom_image_le_top`, and `field_hom_image_compose_le`
+        (`src/field_hom_image.ac`)
+  - [ ] `bottom_subfield` (prime field) once integer/rational embedding is available
+  - [ ] Field-extension API beyond `FieldHom`; previous vacuous
+        `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
 
 - [ ] Algebraic elements and minimal polynomials
   - [ ] Define `is_algebraic[F: Field, E: Field, phi: F -> E](x: E)`
