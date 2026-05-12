@@ -35,3 +35,12 @@ Status:
   cases `dirichlet_unit_left_below_step_above_yes`/`step_above_no` showing higher
   divisors contribute zero (using the value-preserving cons lemma
   `sum_cons_zero_head_eq`).
+- Cofactor involution scaffolding for commutativity is in place:
+  `divisor_quotient_divides` (the cofactor of a divisor is a divisor),
+  `divisor_quotient_positive` (cofactors of positive `n` are positive),
+  `divisor_of_positive_is_positive`, and the involution
+  `divisor_quotient_involution`: `divisor_quotient(n, divisor_quotient(n, d)) = d`
+  for positive `n` and `d | n`. The reindexing identity
+  `dirichlet_term_flip` shows `dirichlet_term(f, g, n)(d) =
+  dirichlet_term(g, f, n)(divisor_quotient(n, d))` for `d | n` and `n > 0`, ready
+  to drive a permutation-based commutativity proof.
