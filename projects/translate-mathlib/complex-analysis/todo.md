@@ -2,6 +2,7 @@
 
 Goal: build the standard holomorphic-function theory that rests on top of complex numbers and real analysis.
 
+- [ ] Add complex sequence product convergence law
 - [ ] Add a complex modulus once real `sqrt` is available, plus triangle inequality
 - [ ] Define holomorphic and analytic functions
 - [ ] Add power series and radius-of-convergence results
