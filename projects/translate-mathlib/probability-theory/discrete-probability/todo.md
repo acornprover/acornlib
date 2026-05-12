@@ -17,7 +17,8 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Add scalar scaling `E(c * X) = c * E(X)` for discrete expectation. `finite_set_sum_scalar_mul` (generic over `Semiring`) lives in `finite_set_sum.ac` and `discrete_expectation_scalar_mul` in `discrete_pmf.ac`.
 - [ ] Add monotonicity of discrete expectation: `X(x) <= Y(x)` on the support implies `E(X) <= E(Y)`. Blocked behind the deferred `finite_set_sum_le` task above.
 - [ ] Define variance and prove `Var(X) = E(X^2) - E(X)^2`.
-- [ ] Define independence of two discrete events and of two discrete random variables.
+- [x] Define independence of two discrete events: `discrete_events_independent` in `discrete_pmf.ac`, with `discrete_events_independent_comm` and the union law `P(A ∪ B) = P(A) + P(B) - P(A) P(B)` (`discrete_events_independent_union`).
+- [ ] Define independence of two discrete random variables (requires a joint pmf / product pmf API).
 - [ ] Show `E(X * Y) = E(X) * E(Y)` for independent discrete random variables.
 - [ ] Define the uniform pmf on a nonempty `FiniteSet[T]`.
 - [ ] Define the Bernoulli pmf on `Bool` with parameter `p` and compute its expectation and variance.
