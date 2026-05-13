@@ -36,3 +36,4 @@ Status:
 - `src/real/continuity_duodecic.ac` defines `duodecic_real(x) = sextic_real(x) * sextic_real(x)`, identifies it with `pointwise_mul(sextic_real, sextic_real)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_tredecic.ac` defines `tredecic_real(x) = duodecic_real(x) * x`, identifies it with `pointwise_mul(duodecic_real, identity_fn)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_quattuordecic.ac` defines `quattuordecic_real(x) = septic_real(x) * septic_real(x)`, identifies it with `pointwise_mul(septic_real, septic_real)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_quindecic.ac` defines `quindecic_real(x) = quattuordecic_real(x) * x`, identifies it with `pointwise_mul(quattuordecic_real, identity_fn)`, and proves it is continuous at each point and globally.
