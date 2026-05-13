@@ -10,8 +10,10 @@ from add_monoid import AddMonoid
 from add_group import AddGroup
 from add_comm_group import AddCommGroup
 from ring import Ring
+from semiring import Semiring
 from module import Module, module_smul_one, module_smul_zero_left
 from functions import function_extensionality
+from fin_sum import fin_sum, fin_pointwise_add, fin_sum_add, fin_sum_zero_of_bound_zero
 
 /// The entry of a pair-indexed matrix.
 define fin_matrix_entry[A](m: Nat, n: Nat, a: Pair[Fin[m], Fin[n]] -> A, i: Fin[m], j: Fin[n]) -> A {
@@ -62,6 +64,32 @@ define fin_matrix_row[A](m: Nat, n: Nat, a: Pair[Fin[m], Fin[n]] -> A, i: Fin[m]
 /// The `j`th column of an `m` by `n` matrix, as a coordinate vector of length `m`.
 define fin_matrix_col[A](m: Nat, n: Nat, a: Pair[Fin[m], Fin[n]] -> A, j: Fin[n], i: Fin[m]) -> A {
     a(Pair.new(i, j))
+}
+
+/// The `k`th summand in the product of an `m` by `n` matrix and an `n` by `p` matrix.
+define fin_matrix_mul_term[S: Semiring](
+    m: Nat,
+    n: Nat,
+    p: Nat,
+    a: Pair[Fin[m], Fin[n]] -> S,
+    b: Pair[Fin[n], Fin[p]] -> S,
+    i: Fin[m],
+    j: Fin[p],
+    k: Fin[n]
+) -> S {
+    a(Pair.new(i, k)) * b(Pair.new(k, j))
+}
+
+/// The product of an `m` by `n` matrix and an `n` by `p` matrix.
+define fin_matrix_mul[S: Semiring](
+    m: Nat,
+    n: Nat,
+    p: Nat,
+    a: Pair[Fin[m], Fin[n]] -> S,
+    b: Pair[Fin[n], Fin[p]] -> S,
+    q: Pair[Fin[m], Fin[p]]
+) -> S {
+    fin_sum[S](n, fin_matrix_mul_term[S](m, n, p, a, b, q.first, q.second))
 }
 
 /// Matrix extensionality.
@@ -134,6 +162,103 @@ theorem fin_matrix_row_apply[A](m: Nat, n: Nat, a: Pair[Fin[m], Fin[n]] -> A, i:
 /// Matrix columns agree with the corresponding entries.
 theorem fin_matrix_col_apply[A](m: Nat, n: Nat, a: Pair[Fin[m], Fin[n]] -> A, j: Fin[n], i: Fin[m]) {
     fin_matrix_col[A](m, n, a, j, i) = a(Pair.new(i, j))
+}
+
+/// A matrix product is the finite sum of its multiplication terms.
+theorem fin_matrix_mul_apply[S: Semiring](
+    m: Nat,
+    n: Nat,
+    p: Nat,
+    a: Pair[Fin[m], Fin[n]] -> S,
+    b: Pair[Fin[n], Fin[p]] -> S,
+    q: Pair[Fin[m], Fin[p]]
+) {
+    fin_matrix_mul[S](m, n, p, a, b, q) =
+        fin_sum[S](n, fin_matrix_mul_term[S](m, n, p, a, b, q.first, q.second))
+}
+
+/// A zero inner dimension gives the zero product entry.
+theorem fin_matrix_mul_inner_zero[S: Semiring](
+    m: Nat,
+    n: Nat,
+    p: Nat,
+    a: Pair[Fin[m], Fin[n]] -> S,
+    b: Pair[Fin[n], Fin[p]] -> S,
+    q: Pair[Fin[m], Fin[p]]
+) {
+    n = Nat.0 implies fin_matrix_mul[S](m, n, p, a, b, q) = S.0
+} by {
+    if n = Nat.0 {
+        fin_matrix_mul[S](m, n, p, a, b, q) =
+            fin_sum[S](n, fin_matrix_mul_term[S](m, n, p, a, b, q.first, q.second))
+        fin_sum_zero_of_bound_zero[S](n, fin_matrix_mul_term[S](m, n, p, a, b, q.first, q.second))
+    }
+}
+
+/// Matrix multiplication distributes over pointwise addition in the right factor.
+theorem fin_matrix_mul_add_right[S: Semiring](
+    m: Nat,
+    n: Nat,
+    p: Nat,
+    a: Pair[Fin[m], Fin[n]] -> S,
+    b: Pair[Fin[n], Fin[p]] -> S,
+    c: Pair[Fin[n], Fin[p]] -> S,
+    q: Pair[Fin[m], Fin[p]]
+) {
+    fin_matrix_mul[S](m, n, p, a, fin_matrix_add[S](n, p, b, c), q) =
+        fin_matrix_mul[S](m, n, p, a, b, q) + fin_matrix_mul[S](m, n, p, a, c, q)
+} by {
+    let h = fin_matrix_mul_term[S](m, n, p, a, fin_matrix_add[S](n, p, b, c), q.first, q.second)
+    let f = fin_matrix_mul_term[S](m, n, p, a, b, q.first, q.second)
+    let g = fin_matrix_mul_term[S](m, n, p, a, c, q.first, q.second)
+    forall(k: Fin[n]) {
+        h(k) = a(Pair.new(q.first, k)) * fin_matrix_add[S](n, p, b, c, Pair.new(k, q.second))
+        fin_matrix_add[S](n, p, b, c, Pair.new(k, q.second)) = b(Pair.new(k, q.second)) + c(Pair.new(k, q.second))
+        a(Pair.new(q.first, k)) * (b(Pair.new(k, q.second)) + c(Pair.new(k, q.second))) =
+            a(Pair.new(q.first, k)) * b(Pair.new(k, q.second)) + a(Pair.new(q.first, k)) * c(Pair.new(k, q.second))
+        f(k) = a(Pair.new(q.first, k)) * b(Pair.new(k, q.second))
+        g(k) = a(Pair.new(q.first, k)) * c(Pair.new(k, q.second))
+        fin_pointwise_add[S](n, f, g, k) = f(k) + g(k)
+        h(k) = fin_pointwise_add[S](n, f, g, k)
+    }
+    function_extensionality(h, fin_pointwise_add[S](n, f, g))
+    fin_sum_add[S](n, f, g)
+    fin_matrix_mul[S](m, n, p, a, fin_matrix_add[S](n, p, b, c), q) = fin_sum[S](n, h)
+    fin_matrix_mul[S](m, n, p, a, b, q) = fin_sum[S](n, f)
+    fin_matrix_mul[S](m, n, p, a, c, q) = fin_sum[S](n, g)
+}
+
+/// Matrix multiplication distributes over pointwise addition in the left factor.
+theorem fin_matrix_mul_add_left[S: Semiring](
+    m: Nat,
+    n: Nat,
+    p: Nat,
+    a: Pair[Fin[m], Fin[n]] -> S,
+    b: Pair[Fin[m], Fin[n]] -> S,
+    c: Pair[Fin[n], Fin[p]] -> S,
+    q: Pair[Fin[m], Fin[p]]
+) {
+    fin_matrix_mul[S](m, n, p, fin_matrix_add[S](m, n, a, b), c, q) =
+        fin_matrix_mul[S](m, n, p, a, c, q) + fin_matrix_mul[S](m, n, p, b, c, q)
+} by {
+    let h = fin_matrix_mul_term[S](m, n, p, fin_matrix_add[S](m, n, a, b), c, q.first, q.second)
+    let f = fin_matrix_mul_term[S](m, n, p, a, c, q.first, q.second)
+    let g = fin_matrix_mul_term[S](m, n, p, b, c, q.first, q.second)
+    forall(k: Fin[n]) {
+        h(k) = fin_matrix_add[S](m, n, a, b, Pair.new(q.first, k)) * c(Pair.new(k, q.second))
+        fin_matrix_add[S](m, n, a, b, Pair.new(q.first, k)) = a(Pair.new(q.first, k)) + b(Pair.new(q.first, k))
+        (a(Pair.new(q.first, k)) + b(Pair.new(q.first, k))) * c(Pair.new(k, q.second)) =
+            a(Pair.new(q.first, k)) * c(Pair.new(k, q.second)) + b(Pair.new(q.first, k)) * c(Pair.new(k, q.second))
+        f(k) = a(Pair.new(q.first, k)) * c(Pair.new(k, q.second))
+        g(k) = b(Pair.new(q.first, k)) * c(Pair.new(k, q.second))
+        fin_pointwise_add[S](n, f, g, k) = f(k) + g(k)
+        h(k) = fin_pointwise_add[S](n, f, g, k)
+    }
+    function_extensionality(h, fin_pointwise_add[S](n, f, g))
+    fin_sum_add[S](n, f, g)
+    fin_matrix_mul[S](m, n, p, fin_matrix_add[S](m, n, a, b), c, q) = fin_sum[S](n, h)
+    fin_matrix_mul[S](m, n, p, a, c, q) = fin_sum[S](n, f)
+    fin_matrix_mul[S](m, n, p, b, c, q) = fin_sum[S](n, g)
 }
 
 /// Pointwise matrix addition is associative at each index pair.
