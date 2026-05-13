@@ -28,4 +28,4 @@ Status:
 
 - [ ] Decide the proof-carrying API for bundled positive-scalar `OrderIso`s in ordered fields
 - [ ] Add bundled ordered-field scalar-map `OrderDualIso` values once the positive-scalar bundling API is settled
-- [ ] Blocked: add bundled product order isomorphisms once generic `Pair[A, B]: PartialOrder` instances render correctly
+- [ ] Add bundled product order isomorphisms
