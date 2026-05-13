@@ -5,7 +5,7 @@ Goal: make core definitions and proof patterns stable enough that later librarie
 - [ ] [Relation algebra for reflexive, symmetric, transitive, and equivalence relations](relation-algebra/todo.md)
 - [ ] [Canonical APIs for products, sums, options, and dependent pairs](core-type-constructions/todo.md)
 
-The [quotients](quotients/todo.md) branch is at a stable state — kernel relations, group/ring/module quotients, full algebraic axiom sets, migration audit, and the per-`qrel` vs typeclass design decision are all settled and recorded under that subtree.
+The [quotients](quotients/todo.md) branch is at a stable state — kernel relations, group/ring/module quotients, full algebraic axiom sets, quotient-migration notes, and the per-`qrel` vs typeclass design decision are all settled and recorded under that subtree.
 
 ## Current Focus
 

@@ -19,8 +19,8 @@ on them.
 - Modules and finite-dimensional vector spaces with a working dimension API
   ([linear-algebra](../linear-algebra/todo.md)).
 
-Until polynomials exist, treat every checklist item below as blocked-on-library-support
-rather than blocked-on-Acorn; do not add a root `## Blockers` entry for it.
+Until polynomials exist, treat every checklist item below as ordinary library work
+that depends on polynomial support; do not add a root `## Blockers` entry for it.
 
 ## Roadmap
 
