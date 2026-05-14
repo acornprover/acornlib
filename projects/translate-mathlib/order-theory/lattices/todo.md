@@ -29,3 +29,5 @@ Status:
 - `src/pair_order.ac` now has `pair_swap_meet` and `pair_swap_join` showing that `Pair.swap` commutes with componentwise pair meet and join, plus the reverse-direction `pair_meet_eq_swap_meet_swap` and `pair_join_eq_swap_join_swap` identities.
 - `src/pair_order.ac` now has joint two-sided monotonicity for componentwise pair meet and join: `pair_meet_lte_meet` and `pair_join_lte_join`.
 - `src/pair_order.ac` now has diagonal-pair meet and join identities: `pair_meet_diag` and `pair_join_diag` show that componentwise meet and join of diagonal pairs are diagonal pairs of the underlying meet and join.
+- `src/pair_order.ac` now has `pair_meet_new` and `pair_join_new` showing that componentwise meet/join of `Pair.new(a, b)` and `Pair.new(c, d)` equals `Pair.new(a.meet(c), b.meet(d))` and `Pair.new(a.join(c), b.join(d))` respectively.
+- `src/pair_order.ac` now has `pair_meet_assoc_rev`, `pair_join_assoc_rev`, `pair_meet_left_comm`, `pair_join_left_comm`, `pair_meet_right_comm`, and `pair_join_right_comm` rearrangement lemmas for nested componentwise pair meet/join.
