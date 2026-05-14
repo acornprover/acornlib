@@ -20,9 +20,6 @@ work (linear maps, bases, matrices, etc.) can build on.
 
 ## Implementation Tasks
 
-- [ ] Add `module_hom_compose` for bundled `ModuleHom[R, M, N]`. Because the
-      composition is only well-defined when the middle module instances agree
-      (`f.src = g.dst`), it likely needs an `Option`-valued API or a precondition.
 - [ ] Package the submodule quotient as a `Module[R, QuotientOver[M]]` (axioms via
       representatives, using `submodule_quotient_add/neg/zero/smul_by`). Note:
       requires first equipping `QuotientOver[M]` with an `AddCommGroup` instance,
@@ -64,4 +61,5 @@ Status:
 - `src/submodule.ac` adds bundled-`ModuleHom`-level kernel and image wrappers: `module_hom_kernel(f)` and `module_hom_image(f)` (taking only `f: ModuleHom[R, M, N]`), with carrier lemmas, kernel `contains` characterisation/intro/elim, and the image-contains-value lemma.
 - `src/module_hom.ac` adds the bundled `ModuleHom[R, M, N]` structure (fields `src`, `dst`, `hom` with `is_linear_map` constraint), extensionality (`module_hom_ext`), equality projections (`module_hom_eq_src/dst/hom/hom_at`), the linearity projection `module_hom_is_linear_map`, value-level lemmas (`module_hom_zero/add/smul/neg/sub`), the identity hom `module_hom_identity` with projection lemmas (`module_hom_identity_src/dst/hom/hom_at`), and an `ext` attribute alias.
 - `src/submodule.ac` adds pointwise kernel/image characterisations under a linear equivalence: `linear_equiv_kernel_iff_zero` (kernel membership iff input is zero) and `linear_equiv_image_full_at` (every destination point lies in the image). Bundled versions `linear_equiv_kernel_submodule_contains_iff_zero` and `linear_equiv_image_submodule_contains` lift these to the packaged kernel/image submodules.
+- `src/module_hom.ac` adds `module_hom_compose` for bundled `ModuleHom[R, M, N]` as an `Option`-valued composition (defined exactly when `f.src = g.dst`), with `module_hom_compose_some` (existence under the precondition) and projection lemmas `module_hom_compose_src`, `module_hom_compose_dst`, `module_hom_compose_hom`, and `module_hom_compose_hom_at`.
 - `src/module_hom.ac` introduces a predicate-level linear-equivalence API: `is_linear_equiv` (linear map + bijection), with `linear_equiv_is_linear_map`/`linear_equiv_is_bijection`/`linear_equiv_is_injective`/`linear_equiv_is_surjective` projections, `identity_fn_is_linear_equiv`, `compose_is_linear_equiv`, `linear_map_two_sided_inverse_preserves_add`/`..._preserves_smul`/`..._is_linear_map` (showing any two-sided inverse of a linear map is itself linear in the opposite direction), `linear_equiv_two_sided_inverse_is_linear_equiv`, the convenience lemmas `linear_equiv_zero`/`linear_equiv_add`/`linear_equiv_smul`/`linear_equiv_neg`/`linear_equiv_sub`, the inverse-transport biconditional `linear_equiv_apply_eq_iff` (`f(x) = y iff x = g(y)`), the kernel-triviality biconditional `linear_equiv_apply_eq_zero_iff_eq_zero`, and convenience lemmas `linear_equiv_two_sided_inverse_zero`/`..._add`/`..._smul`/`..._neg`/`..._sub` giving the inverse map's pointwise additive and scalar behavior directly.
