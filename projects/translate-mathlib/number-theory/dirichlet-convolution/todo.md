@@ -3,7 +3,7 @@
 Goal: define `dirichlet_convolve(f, g)(n) = sum_{d | n} f(d) * g(n/d)` and develop its
 basic algebra (identity, zero annihilator, commutativity, associativity).
 
-- [ ] Prove commutativity of `dirichlet_convolve`
+- [ ] Prove commutativity of `dirichlet_convolve` using the swap form and a permutation reindex via `unique_same_contains_map_sum_eq`
 - [ ] Prove associativity of `dirichlet_convolve`
 - [ ] Prove `dirichlet_convolve` of two multiplicative arithmetic functions is multiplicative
 
@@ -62,3 +62,11 @@ Status:
   `nat_divisor_quotient_fn_involution` and the divisor-preserving lemma
   `nat_divisor_quotient_fn_divides` are proved as unary corollaries of
   `divisor_quotient_involution` / `divisor_quotient_divides`.
+- The membership characterisation and uniqueness of `divisor_list` live in
+  `src/nat/nat_divisor_sum.ac`: `divisors_up_to_member(n, k, d)` shows entries
+  of `divisors_up_to(n, k)` are positive divisors of `n` bounded by `k`,
+  `divisors_up_to_complete(n, k, d)` is the converse, `divisor_list_contains_implies`
+  and `divisor_list_contains_of` are the `divisor_list(n)` corollaries, and
+  `divisors_up_to_unique` / `divisor_list_is_unique` establish that the divisor
+  list has no duplicates. These let the cofactor-reindex sum equality go through
+  via `unique_same_contains_map_sum_eq`.
