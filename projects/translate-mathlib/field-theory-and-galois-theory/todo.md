@@ -47,6 +47,11 @@ that depends on polynomial support; do not add a root `## Blockers` entry for it
         `subfield_inter_le_right`, `subfield_inter_greatest`,
         `subfield_inter_comm`, `subfield_inter_idem`, and
         `subfield_inter_assoc` (`src/subfield.ac`)
+  - [x] Subfield closure under subtraction (`subfield_contains_sub`) and
+        multiplication with an inverse of a nonzero element
+        (`subfield_contains_mul_inverse`) in `src/subfield.ac`
+  - [ ] Forward image of a subfield under a field homomorphism
+        (`subfield_image`), with analogues of the preimage lemmas
   - [x] Preimage of a codomain subfield under a field homomorphism
         (`subfield_preimage`, `subfield_preimage_contains_eq`,
         `subfield_preimage_top`, `subfield_preimage_le`,
