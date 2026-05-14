@@ -7,7 +7,6 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Add the binary-intersection and big-union axioms for `is_quotient_open`: each piece (open part, saturation under `r`) verifies in isolation; add stitching lemmas for the full conclusion
 - [ ] Add the binary-intersection and big-union axioms for `is_open_in_sum`: the preimage commutation lemmas verify; add stitching lemmas through the `is_open_in_sum_iff` definition
 - [ ] Define separability (existence of a countable dense subset) — needs a countability predicate
-- [ ] Add the dense-iff-every-nonempty-open-meets characterization: witness an open's point and apply `closure_iff_every_neighborhood_meets`, with helper lemmas to keep the proof shape shallow
 - [ ] Develop the compactness API (universal-set is compact, finite-union of compacts is compact, image of compact under continuous is compact, closed subset of compact is compact). The per-cover lemma `singleton_open_cover_imp_finite_subcover` is in place; add a decomposed wrapper for `singleton_is_compact` matching the unfolded `is_compact`
 - [ ] Prove equivalence of `is_connected` and `is_connected_via_clopen`
 - [ ] Add path connectedness (needs the unit interval and continuous paths)
