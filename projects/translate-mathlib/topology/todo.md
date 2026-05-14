@@ -4,10 +4,8 @@ Goal: provide the general topological language that analysis, geometry, and prob
 
 - [ ] Migrate the existing `is_open_in_subspace` / `is_closed_in_subspace` predicate-style API and its lemmas onto the new `Subspace[T, a]: TopologicalSpace` carrier (now in `src/topological_space.ac`), then delete the predicates. Keep subspace migration proofs small and cache-stable.
 - [ ] Add the binary-intersection and big-union axioms for `is_open_in_product`: the proofs unfold to `generated_open_inter`/`generated_open_big_union` applied to `is_box[X, Y]` (which has been shown to be a topological basis); split out the conclusion-matching steps
-- [ ] Add the binary-intersection and big-union axioms for `is_quotient_open`: each piece (open part, saturation under `r`) verifies in isolation; add stitching lemmas for the full conclusion
 - [ ] Add the binary-intersection and big-union axioms for `is_open_in_sum`: the preimage commutation lemmas verify; add stitching lemmas through the `is_open_in_sum_iff` definition
 - [ ] Define separability (existence of a countable dense subset) — needs a countability predicate
-- [ ] Add the dense-iff-every-nonempty-open-meets characterization: witness an open's point and apply `closure_iff_every_neighborhood_meets`, with helper lemmas to keep the proof shape shallow
 - [ ] Develop the compactness API (universal-set is compact, finite-union of compacts is compact, image of compact under continuous is compact, closed subset of compact is compact). The per-cover lemma `singleton_open_cover_imp_finite_subcover` is in place; add a decomposed wrapper for `singleton_is_compact` matching the unfolded `is_compact`
 - [ ] Prove equivalence of `is_connected` and `is_connected_via_clopen`
 - [ ] Add path connectedness (needs the unit interval and continuous paths)
