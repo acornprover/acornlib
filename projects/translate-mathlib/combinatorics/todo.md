@@ -15,6 +15,8 @@ Goal: cover the finite and enumerative mathematics that Mathlib collects under c
   - [x] Near-top value `n.binom(n - 1) = n` (`binom_n_minus_one`)
   - [x] Closed form `2 * n.binom(2) = n * (n - 1)` (`binom_two_double`)
   - [x] Closed form `6 * n.binom(3) = n * (n - 1) * (n - 2)` (`binom_three_factor`)
+  - [x] Monotonicity in the left half `n.binom(k) <= n.binom(k + 1)` when `2 * (k + 1) <= n` (`binom_le_binom_suc`)
+  - [x] Monotonicity in the right half `n.binom(k + 1) <= n.binom(k)` when `n <= 2 * k` (`binom_suc_le_binom`)
 - [ ] Support inclusion-exclusion and Mobius inversion
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects
 - [ ] Develop posets, chains, and antichain theorems
