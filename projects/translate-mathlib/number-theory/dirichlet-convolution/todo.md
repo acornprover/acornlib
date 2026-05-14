@@ -56,3 +56,9 @@ Status:
   `dirichlet_convolve(f, g)(n) = sum(map(divisor_list(n), dirichlet_cofactor_term(f, g, n)))`
   for `n > 0`. The remaining work for commutativity is to reindex this sum
   along the cofactor involution as a permutation of `divisor_list(n)`.
+- The cofactor map is packaged as a unary function `nat_divisor_quotient_fn(n)`
+  and lifted to the list-image `cofactor_image_list(n) = map(divisor_list(n),
+  nat_divisor_quotient_fn(n))`. The involution
+  `nat_divisor_quotient_fn_involution` and the divisor-preserving lemma
+  `nat_divisor_quotient_fn_divides` are proved as unary corollaries of
+  `divisor_quotient_involution` / `divisor_quotient_divides`.
