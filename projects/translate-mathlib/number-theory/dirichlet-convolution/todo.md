@@ -47,3 +47,18 @@ Status:
   both sides (`dirichlet_convolve_add_left`, `dirichlet_convolve_add_right`),
   via the pointwise-term splittings `dirichlet_term_add_left_eq` and
   `dirichlet_term_add_right_eq` and the list helper `map_sum_add`.
+- A swap form of the Dirichlet convolution is in place. The helper
+  `dirichlet_cofactor_term(f, g, n)(d) = dirichlet_term(g, f, n)(divisor_quotient(n, d))`
+  satisfies `dirichlet_term_eq_cofactor_term` on divisors of positive `n`. The
+  bounded induction `dirichlet_swap_below_pred` / `dirichlet_swap_below`
+  (with step cases `dirichlet_swap_below_step_yes` / `step_no`) then yields
+  `dirichlet_convolve_swap_form`:
+  `dirichlet_convolve(f, g)(n) = sum(map(divisor_list(n), dirichlet_cofactor_term(f, g, n)))`
+  for `n > 0`. The remaining work for commutativity is to reindex this sum
+  along the cofactor involution as a permutation of `divisor_list(n)`.
+- The cofactor map is packaged as a unary function `nat_divisor_quotient_fn(n)`
+  and lifted to the list-image `cofactor_image_list(n) = map(divisor_list(n),
+  nat_divisor_quotient_fn(n))`. The involution
+  `nat_divisor_quotient_fn_involution` and the divisor-preserving lemma
+  `nat_divisor_quotient_fn_divides` are proved as unary corollaries of
+  `divisor_quotient_involution` / `divisor_quotient_divides`.
