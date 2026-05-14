@@ -14,6 +14,7 @@ Goal: add the smooth geometric infrastructure behind Lie groups, manifolds, and 
   - [x] Restriction of a chart to a subset of its source (`chart_restr_constructible`)
   - [x] Inverse of a chart as a partial bijection from the model space (`chart_symm_constructible`)
   - [x] Atlas covers the space and chosen-chart corollaries (`charted_space_atlas_covers`, `charted_space_chart_at_map_source`, `charted_space_chart_at_left_inv`)
+  - [x] Chart coordinate maps are injective on their respective domains (`chart_to_fun_inj_on_source`, `chart_inv_fun_inj_on_target`)
   - [ ] Smoothness compatibility (needs differentiability infrastructure)
 - [ ] Support smooth maps and manifolds with boundary
 - [ ] Add tangent and cotangent bundles
