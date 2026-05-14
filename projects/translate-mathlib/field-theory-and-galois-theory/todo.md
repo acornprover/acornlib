@@ -55,8 +55,8 @@ that depends on polynomial support; do not add a root `## Blockers` entry for it
   - [x] Preimage of a codomain subfield under a field homomorphism
         (`subfield_preimage`, `subfield_preimage_contains_eq`,
         `subfield_preimage_top`, `subfield_preimage_le`,
-        `subfield_preimage_inter`, `subfield_preimage_identity` in
-        `src/field_hom_image.ac`)
+        `subfield_preimage_inter`, `subfield_preimage_identity`,
+        `subfield_preimage_compose` in `src/field_hom_image.ac`)
   - [ ] `bottom_subfield` (prime field) once integer/rational embedding is available
   - [ ] Field-extension API beyond `FieldHom`; previous vacuous
         `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
