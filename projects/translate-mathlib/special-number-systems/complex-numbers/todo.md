@@ -2,7 +2,7 @@
 
 Goal: round out the basic algebraic API of `Complex` so downstream analysis files (eventually `complex-analysis/`) can rely on it.
 
-- [ ] Prove the triangle inequality `abs(a+b) <= abs(a) + abs(b)` (needs Cauchy-Schwarz or expansion via `abs_squared`)
+- [ ] Add `complex_limit` lemmas for remaining sequence operations (`complex_real_smul_seq`, `complex_add_const`, `complex_sub_const`)
 - [ ] Package `Complex` as a `Module[Real, Complex]` (scalar action `complex_real_smul` and its add-left/add-right/assoc/one/zero-left/zero-right lemmas already in `src/complex.ac`; close `is_module_action(complex_real_smul)` with a smaller lemma chain)
 - [ ] Add `conj` as a ring/field automorphism: function-level `complex_conj_fn` with pointwise add/mul/one/involution lemmas now in `src/complex_conj_hom.ac`
 - [ ] Add `re`/`im` `Real`-linearity once a scalar action exists
