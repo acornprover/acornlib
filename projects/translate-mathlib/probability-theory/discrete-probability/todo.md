@@ -12,12 +12,14 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Define probability of an event as the sum of pmf values over the event subset. `pmf_event_prob` plus empty/support/disjoint-union laws live in `discrete_pmf.ac`.
 - [x] Inclusion-exclusion for two discrete events: `pmf_event_prob_inclusion_exclusion` in `discrete_pmf.ac`, derived from disjoint-union additivity and the `B = (A ∩ B) ⊔ (B \ A)` decomposition.
 - [x] Add general (not necessarily disjoint) union `pmf_event_prob_union` and the support-split identity `pmf_event_prob_support_split` (in `discrete_pmf.ac`), giving the complement law `P(A ∩ support) + P(support \ A) = 1`.
+- [x] Add `pmf_event_prob_complement`: `P(support \ A) = 1 - P(support ∩ A)`, a direct corollary of the support-split identity.
 - [x] Define expectation `discrete_expectation(pmf, X)` for a `T -> Real` random variable. Lives in `discrete_pmf.ac` as `finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, X))`, where `mass_weighted_value(mass, rv, x) = mass(x) * rv(x)`.
 - [x] Additivity of discrete expectation: `discrete_expectation_add` in `discrete_pmf.ac` proves `E(X + Y) = E(X) + E(Y)` via `finite_set_sum_add` plus pointwise `mass_weighted_value` decomposition and `function_extensionality`.
 - [x] Add scalar scaling `E(c * X) = c * E(X)` for discrete expectation. `finite_set_sum_scalar_mul` (generic over `Semiring`) lives in `finite_set_sum.ac` and `discrete_expectation_scalar_mul` in `discrete_pmf.ac`.
 - [ ] Add monotonicity of discrete expectation: `X(x) <= Y(x)` on the support implies `E(X) <= E(Y)`. Depends on finishing `finite_set_sum_le`.
 - [x] Define `discrete_variance(pmf, x) = E((x - E(x))^2)` in `discrete_pmf.ac`, with pointwise helpers `square_fn` and `square_dev`.
 - [x] Define `const_real_fn` and prove `discrete_expectation_const`: `E(const c) = c` for any discrete pmf.
+- [x] Add `discrete_expectation_zero`: `E(0) = 0`, a direct corollary of `discrete_expectation_const`.
 - [ ] Prove the computational variance formula `Var(X) = E(X^2) - E(X)^2`. The bulk of the proof (linearity of expectation over the support, factoring through `mul_fn` and `add_fn`) is straightforward, but the pointwise algebraic identity `m*(a-b)^2 + 2*b*(m*a) = m*a^2 + b^2*m` needs subtraction rearrangement helpers such as `neg_add_distrib` (`-(a + b) = -a + -b`) and `sub_sub_eq_sub_add` (`a - (b - c) = a - b + c`) before the wrap-up.
 - [x] Define independence of two discrete events: `discrete_events_independent` in `discrete_pmf.ac`, with `discrete_events_independent_comm` and the union law `P(A ∪ B) = P(A) + P(B) - P(A) P(B)` (`discrete_events_independent_union`).
 - [ ] Define independence of two discrete random variables (requires a joint pmf / product pmf API).
