@@ -44,3 +44,4 @@ Status:
 - `src/real/continuity_vicenic.ac` defines `vicenic_real(x) = decic_real(x) * decic_real(x)`, identifies it with `pointwise_mul(decic_real, decic_real)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_unvicenic.ac` defines `unvicenic_real(x) = vicenic_real(x) * x`, identifies it with `pointwise_mul(vicenic_real, identity_fn)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_duovicenic.ac` defines `duovicenic_real(x) = undecic_real(x) * undecic_real(x)`, identifies it with `pointwise_mul(undecic_real, undecic_real)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_const_add.ac` defines `const_add_left(c, f)(x) = c + f(x)` and `const_add_right(f, c)(x) = f(x) + c` and proves they preserve continuity at a point and globally; also proves agreement with `add_fns(constant(c), f)` and `add_fns(f, constant(c))`.
