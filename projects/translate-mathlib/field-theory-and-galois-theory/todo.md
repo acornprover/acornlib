@@ -54,8 +54,9 @@ that depends on polynomial support; do not add a root `## Blockers` entry for it
         (`subfield_image`, `subfield_image_contains_eq`,
         `subfield_image_contains_hom`, `subfield_image_le`,
         `subfield_image_top`, `subfield_image_identity`,
-        `subfield_image_compose`, `subfield_image_inter` in
-        `src/field_hom_image.ac`)
+        `subfield_image_compose`, `subfield_image_inter`,
+        `subfield_image_le_field_hom_image`,
+        `field_hom_image_compose_eq` in `src/field_hom_image.ac`)
   - [x] Preimage of a codomain subfield under a field homomorphism
         (`subfield_preimage`, `subfield_preimage_contains_eq`,
         `subfield_preimage_top`, `subfield_preimage_le`,
