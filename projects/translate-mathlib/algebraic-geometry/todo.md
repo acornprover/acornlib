@@ -19,21 +19,18 @@ first.
 
 ## Roadmap
 
-- [ ] Extend the `V(I)` API: vanishing of products `V(I·J)`, vanishing of an
-      indexed family of ideals, and the bijection between closed sets of the
-      Zariski topology and radical ideals (needs: ideal product, radicals).
-      `Spec[R].vanishing`, antitonicity, `V(0)`, `V(R)`, `V(I+J)=V(I)∩V(J)`,
-      `Spec[R].of_maximal`, `V(principal(f))`, `Spec[R].basic_open(f) = D(f)`
-      with its values at `0` and `1`, `V(I) ∪ V(J) ⊆ V(I ∩ J)`, and
-      injectivity of `Spec[R].of_maximal`, injectivity of `Spec[R].of_prime`,
-      `⋃_i V(I_i) ⊆ V(⋂_i I_i)` for indexed families of ideals,
-      `D(f * g) = D(f) ∩ D(g)`, point-membership characterizations
-      `Spec.of_prime(p) ∈ V(I) ↔ I ⊆ p` and
-      `Spec.of_maximal(m) ∈ V(I) ↔ I ⊆ m`, and
-      `V(I) ∪ V(J) = V(I ∩ J)`, `D(f).c = V(principal(f))`, and
-      `V(I).c ∩ V(J).c = V(I ∩ J).c` are now in `src/spec.ac`.
+- [ ] Vanishing of products `V(I·J) = V(I ∩ J) = V(I) ∪ V(J)`
+      (needs: ideal product in `src/ideal.ac`).
+- [ ] Bijection between closed sets of the Zariski topology and radical ideals
+      (needs: radicals and the Zariski topology declared as a `TopologicalSpace`
+      instance).
 - [ ] Define the Zariski topology via vanishing sets `V(I)` and prove the
-      topology axioms (needs: prime ideals, topological spaces)
+      topology axioms (needs: prime ideals, topological spaces). The
+      Zariski-closed predicate `spec_zariski_closed`, closure of the closed
+      family under binary intersection and binary union, and the closedness of
+      both `∅` and the whole spectrum are now in `src/spec.ac`. Remaining work:
+      arbitrary-intersection closure (needs indexed ideal sum), then a
+      `TopologicalSpace` instance declaration for `Spec[R]`.
 - [ ] Add basic open sets `D(f)` and the distinguished base for the Zariski
       topology (needs: Zariski topology, bases for topologies)
 - [ ] Build the structure sheaf on `Spec(R)` from localizations
