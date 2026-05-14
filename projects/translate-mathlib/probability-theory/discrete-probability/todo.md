@@ -12,6 +12,7 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Define probability of an event as the sum of pmf values over the event subset. `pmf_event_prob` plus empty/support/disjoint-union laws live in `discrete_pmf.ac`.
 - [x] Inclusion-exclusion for two discrete events: `pmf_event_prob_inclusion_exclusion` in `discrete_pmf.ac`, derived from disjoint-union additivity and the `B = (A ∩ B) ⊔ (B \ A)` decomposition.
 - [x] Add general (not necessarily disjoint) union `pmf_event_prob_union` and the support-split identity `pmf_event_prob_support_split` (in `discrete_pmf.ac`), giving the complement law `P(A ∩ support) + P(support \ A) = 1`.
+- [x] Add `pmf_event_prob_complement`: `P(support \ A) = 1 - P(support ∩ A)`, a direct corollary of the support-split identity.
 - [x] Define expectation `discrete_expectation(pmf, X)` for a `T -> Real` random variable. Lives in `discrete_pmf.ac` as `finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, X))`, where `mass_weighted_value(mass, rv, x) = mass(x) * rv(x)`.
 - [x] Additivity of discrete expectation: `discrete_expectation_add` in `discrete_pmf.ac` proves `E(X + Y) = E(X) + E(Y)` via `finite_set_sum_add` plus pointwise `mass_weighted_value` decomposition and `function_extensionality`.
 - [x] Add scalar scaling `E(c * X) = c * E(X)` for discrete expectation. `finite_set_sum_scalar_mul` (generic over `Semiring`) lives in `finite_set_sum.ac` and `discrete_expectation_scalar_mul` in `discrete_pmf.ac`.
