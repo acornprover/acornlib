@@ -20,7 +20,9 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Define `discrete_variance(pmf, x) = E((x - E(x))^2)` in `discrete_pmf.ac`, with pointwise helpers `square_fn` and `square_dev`.
 - [x] Define `const_real_fn` and prove `discrete_expectation_const`: `E(const c) = c` for any discrete pmf.
 - [x] Add `discrete_expectation_zero`: `E(0) = 0`, a direct corollary of `discrete_expectation_const`.
-- [ ] Prove the computational variance formula `Var(X) = E(X^2) - E(X)^2`. The bulk of the proof (linearity of expectation over the support, factoring through `mul_fn` and `add_fn`) is straightforward, but the pointwise algebraic identity `m*(a-b)^2 + 2*b*(m*a) = m*a^2 + b^2*m` needs subtraction rearrangement helpers such as `neg_add_distrib` (`-(a + b) = -a + -b`) and `sub_sub_eq_sub_add` (`a - (b - c) = a - b + c`) before the wrap-up.
+- [x] Add `discrete_expectation_neg`: `E(-X) = -E(X)`, via `discrete_expectation_scalar_mul` with scalar `-Real.1`.
+- [x] Add `discrete_variance_const`: the variance of a constant random variable is zero, via `discrete_variance_formula` and `discrete_expectation_const`.
+- [x] Prove the computational variance formula `Var(X) = E(X^2) - E(X)^2` (`discrete_variance_formula` in `discrete_pmf.ac`). Decomposes `square_dev(x, mu)` pointwise into `square_fn(x) + (-(mu+mu))*x + mu*mu` and finishes via linearity (`discrete_expectation_add`, `discrete_expectation_scalar_mul`, `discrete_expectation_const`). Uses `mu + mu` rather than a literal `Real.2` because the latter is not defined.
 - [x] Define independence of two discrete events: `discrete_events_independent` in `discrete_pmf.ac`, with `discrete_events_independent_comm` and the union law `P(A ∪ B) = P(A) + P(B) - P(A) P(B)` (`discrete_events_independent_union`).
 - [ ] Define independence of two discrete random variables (requires a joint pmf / product pmf API).
 - [ ] Show `E(X * Y) = E(X) * E(Y)` for independent discrete random variables.
