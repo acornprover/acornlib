@@ -30,7 +30,8 @@ first.
       `D(f * g) = D(f) ∩ D(g)`, point-membership characterizations
       `Spec.of_prime(p) ∈ V(I) ↔ I ⊆ p` and
       `Spec.of_maximal(m) ∈ V(I) ↔ I ⊆ m`, and
-      `V(I) ∪ V(J) = V(I ∩ J)` are now in `src/spec.ac`.
+      `V(I) ∪ V(J) = V(I ∩ J)`, `D(f).c = V(principal(f))`, and
+      `V(I).c ∩ V(J).c = V(I ∩ J).c` are now in `src/spec.ac`.
 - [ ] Define the Zariski topology via vanishing sets `V(I)` and prove the
       topology axioms (needs: prime ideals, topological spaces)
 - [ ] Add basic open sets `D(f)` and the distinguished base for the Zariski
