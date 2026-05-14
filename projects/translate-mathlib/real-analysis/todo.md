@@ -41,3 +41,4 @@ Status:
 - `src/real/continuity_septendecic.ac` defines `septendecic_real(x) = sexdecic_real(x) * x`, identifies it with `pointwise_mul(sexdecic_real, identity_fn)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_octodecic.ac` defines `octodecic_real(x) = nonic_real(x) * nonic_real(x)`, identifies it with `pointwise_mul(nonic_real, nonic_real)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_novendecic.ac` defines `novendecic_real(x) = octodecic_real(x) * x`, identifies it with `pointwise_mul(octodecic_real, identity_fn)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_vicenic.ac` defines `vicenic_real(x) = decic_real(x) * decic_real(x)`, identifies it with `pointwise_mul(decic_real, decic_real)`, and proves it is continuous at each point and globally.
