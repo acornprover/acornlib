@@ -27,9 +27,10 @@ first.
       with its values at `0` and `1`, `V(I) ∪ V(J) ⊆ V(I ∩ J)`, and
       injectivity of `Spec[R].of_maximal`, injectivity of `Spec[R].of_prime`,
       `⋃_i V(I_i) ⊆ V(⋂_i I_i)` for indexed families of ideals,
-      `D(f * g) = D(f) ∩ D(g)`, and point-membership characterizations
+      `D(f * g) = D(f) ∩ D(g)`, point-membership characterizations
       `Spec.of_prime(p) ∈ V(I) ↔ I ⊆ p` and
-      `Spec.of_maximal(m) ∈ V(I) ↔ I ⊆ m` are now in `src/spec.ac`.
+      `Spec.of_maximal(m) ∈ V(I) ↔ I ⊆ m`, and
+      `V(I) ∪ V(J) = V(I ∩ J)` are now in `src/spec.ac`.
 - [ ] Define the Zariski topology via vanishing sets `V(I)` and prove the
       topology axioms (needs: prime ideals, topological spaces)
 - [ ] Add basic open sets `D(f)` and the distinguished base for the Zariski
