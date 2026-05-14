@@ -50,8 +50,13 @@ that depends on polynomial support; do not add a root `## Blockers` entry for it
   - [x] Subfield closure under subtraction (`subfield_contains_sub`) and
         multiplication with an inverse of a nonzero element
         (`subfield_contains_mul_inverse`) in `src/subfield.ac`
-  - [ ] Forward image of a subfield under a field homomorphism
-        (`subfield_image`), with analogues of the preimage lemmas
+  - [x] Forward image of a subfield under a field homomorphism
+        (`subfield_image`, `subfield_image_contains_eq`,
+        `subfield_image_contains_hom`, `subfield_image_le`,
+        `subfield_image_top`, `subfield_image_identity`,
+        `subfield_image_compose`, `subfield_image_inter`,
+        `subfield_image_le_field_hom_image`,
+        `field_hom_image_compose_eq` in `src/field_hom_image.ac`)
   - [x] Preimage of a codomain subfield under a field homomorphism
         (`subfield_preimage`, `subfield_preimage_contains_eq`,
         `subfield_preimage_top`, `subfield_preimage_le`,
