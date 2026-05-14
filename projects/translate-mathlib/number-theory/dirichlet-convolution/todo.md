@@ -3,7 +3,6 @@
 Goal: define `dirichlet_convolve(f, g)(n) = sum_{d | n} f(d) * g(n/d)` and develop its
 basic algebra (identity, zero annihilator, commutativity, associativity).
 
-- [ ] Prove commutativity of `dirichlet_convolve`
 - [ ] Prove associativity of `dirichlet_convolve`
 - [ ] Prove `dirichlet_convolve` of two multiplicative arithmetic functions is multiplicative
 
@@ -62,3 +61,22 @@ Status:
   `nat_divisor_quotient_fn_involution` and the divisor-preserving lemma
   `nat_divisor_quotient_fn_divides` are proved as unary corollaries of
   `divisor_quotient_involution` / `divisor_quotient_divides`.
+- Commutativity of Dirichlet convolution is proved
+  (`dirichlet_convolve_comm(f, g): dirichlet_convolve(f, g) = dirichlet_convolve(g, f)`)
+  in `src/nat/nat_dirichlet.ac`. The proof goes through the swap form, the
+  cofactor-map composition rewrite (`cofactor_term_compose`,
+  `cofactor_term_compose_pred`), `cofactor_image_list_contains_iff` (the
+  divisor list and its cofactor image have the same elements for positive
+  `n`), `cofactor_image_list_is_unique` (via the injectivity helper
+  `cofactor_image_unique_thm` and the cons-uniqueness lemma
+  `cons_unique_of_fresh`), and `unique_same_contains_map_sum_eq` to identify
+  the two sums. The positive-`n` case is `dirichlet_convolve_comm_positive`
+  and the `n = 0` case is handled by `dirichlet_convolve_at_zero`.
+- The membership characterisation and uniqueness of `divisor_list` live in
+  `src/nat/nat_divisor_sum.ac`: `divisors_up_to_member(n, k, d)` shows entries
+  of `divisors_up_to(n, k)` are positive divisors of `n` bounded by `k`,
+  `divisors_up_to_complete(n, k, d)` is the converse, `divisor_list_contains_implies`
+  and `divisor_list_contains_of` are the `divisor_list(n)` corollaries, and
+  `divisors_up_to_unique` / `divisor_list_is_unique` establish that the divisor
+  list has no duplicates. These let the cofactor-reindex sum equality go through
+  via `unique_same_contains_map_sum_eq`.
