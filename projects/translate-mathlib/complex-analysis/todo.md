@@ -2,8 +2,8 @@
 
 Goal: build the standard holomorphic-function theory that rests on top of complex numbers and real analysis.
 
-- [ ] Prove the triangle inequality for the complex modulus (modulus already defined)
 - [ ] Add complex sequence limit lemmas for sum, difference, and product with decomposed proof steps
+- [ ] Add reverse triangle inequality `||a| - |b|| <= |a - b|` for the complex modulus
 - [ ] Define holomorphic and analytic functions
 - [ ] Add power series and radius-of-convergence results
 - [ ] Prove the Cauchy integral formula
