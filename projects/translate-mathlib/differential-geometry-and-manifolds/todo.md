@@ -11,6 +11,8 @@ Goal: add the smooth geometric infrastructure behind Lie groups, manifolds, and 
   - [x] Define `ChartedSpace[M, E]` structure via an atlas of charts (in `src/charted_space.ac`)
   - [x] Constructibility of a single-chart charted space from a chart with full source (`charted_space_of_global_chart_constructible`)
   - [x] Transition maps between overlapping charts (`chart_transition_constructible`)
+  - [x] Restriction of a chart to a subset of its source (`chart_restr_constructible`)
+  - [x] Inverse of a chart as a partial bijection from the model space (`chart_symm_constructible`)
   - [ ] Smoothness compatibility (needs differentiability infrastructure)
 - [ ] Support smooth maps and manifolds with boundary
 - [ ] Add tangent and cotangent bundles
