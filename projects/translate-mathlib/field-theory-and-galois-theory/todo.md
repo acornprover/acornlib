@@ -66,6 +66,9 @@ that depends on polynomial support; do not add a root `## Blockers` entry for it
         `subfield_le_preimage_image`, `subfield_preimage_image_eq` (via injectivity),
         `subfield_image_preimage_eq_inter`, and pointwise helpers in
         `src/field_hom_image.ac`; plus `subfield_le_intro` in `src/subfield.ac`
+  - [x] Galois connection between `subfield_image` and `subfield_preimage`:
+        `subfield_image_le_of_le_preimage`, `subfield_le_preimage_of_image_le`,
+        and `subfield_image_le_iff_le_preimage` (`src/field_hom_image.ac`)
   - [ ] `bottom_subfield` (prime field) once integer/rational embedding is available
   - [ ] Field-extension API beyond `FieldHom`; previous vacuous
         `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
