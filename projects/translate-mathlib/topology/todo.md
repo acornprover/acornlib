@@ -16,8 +16,7 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Define embeddings (an injective continuous map that is a homeomorphism onto its image; needs the subspace topology big-union axiom)
 - [ ] Add topological groups, rings, and modules
 - [ ] Prove foundational results such as Baire-category style theorems
-- [ ] Add an indiscrete-topology instance: prove the `big_union` axiom on `s = empty or s = universal`. Helpers `big_union_of_empty_family` and `big_union_with_universal_member` are in place; combine them via case split on whether any family member is universal
-- [ ] Generate a topology from a subbasis: finite intersections of subbasis members form a basis. A `List[Set[T]]`-based `list_inter` attempt needs a different inductive structure or explicit helper lemmas for `all_in_subbasis_concat` and `list_inter_concat`
+- [ ] Generate a topology from a subbasis: finite intersections of subbasis members form a basis. `list_inter_of_sets` and its nil/cons unfolding lemmas are in place; add `all_in_subbasis_concat` and `list_inter_concat` next
 
 Note: families of sets are still modelled as `Set[T] -> Bool` predicates and consumed
 via `big_union` / `big_intersection`; revisit direct `Set[Set[T]]` collections
