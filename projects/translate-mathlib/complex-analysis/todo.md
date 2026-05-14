@@ -2,8 +2,8 @@
 
 Goal: build the standard holomorphic-function theory that rests on top of complex numbers and real analysis.
 
-- [ ] Add reverse triangle inequality `||a| - |b|| <= |a - b|` for the complex modulus
 - [ ] Add `complex_limit` lemmas for division and reciprocal of complex sequences
+  (requires: a real reciprocal-sequence convergence lemma in `real/real_seq.ac` as a prerequisite)
 - [ ] Define holomorphic and analytic functions
 - [ ] Add power series and radius-of-convergence results
 - [ ] Prove the Cauchy integral formula
