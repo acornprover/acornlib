@@ -28,3 +28,4 @@ Status:
 - `src/pair_order.ac` now has componentwise distributivity laws for pair distributive lattices: left and right meet-over-join and join-over-meet distributivity (`pair_meet_join_distrib_left`/`_right`, `pair_join_meet_distrib_left`/`_right`).
 - `src/pair_order.ac` now has `pair_swap_meet` and `pair_swap_join` showing that `Pair.swap` commutes with componentwise pair meet and join, plus the reverse-direction `pair_meet_eq_swap_meet_swap` and `pair_join_eq_swap_join_swap` identities.
 - `src/pair_order.ac` now has joint two-sided monotonicity for componentwise pair meet and join: `pair_meet_lte_meet` and `pair_join_lte_join`.
+- `src/pair_order.ac` now has diagonal-pair meet and join identities: `pair_meet_diag` and `pair_join_diag` show that componentwise meet and join of diagonal pairs are diagonal pairs of the underlying meet and join.
