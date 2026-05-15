@@ -16,7 +16,7 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Define embeddings (an injective continuous map that is a homeomorphism onto its image; needs the subspace topology big-union axiom)
 - [ ] Add topological groups, rings, and modules
 - [ ] Prove foundational results such as Baire-category style theorems
-- [ ] Generate a topology from a subbasis: finite intersections of subbasis members form a basis. `list_inter_of_sets` and its nil/cons unfolding lemmas are in place; add `all_in_subbasis_concat` and `list_inter_concat` next
+- [ ] Generate a topology from a subbasis: finite intersections of subbasis members form a basis. `list_inter_of_sets` and its nil/cons unfolding lemmas are in place, and `is_subfamily_nil` / `is_subfamily_cons_mp` / `is_subfamily_cons_mpr` provide the subfamily unfoldings; `list_inter_concat` and `is_subfamily_concat` proofs by list induction time out the prover even with explicit step-by-step witnesses (the base+cons-step pattern that succeeds for `add_contains_left` does not close here), so either decompose further or take an axiom shortcut next
 
 Note: families of sets are still modelled as `Set[T] -> Bool` predicates and consumed
 via `big_union` / `big_intersection`; revisit direct `Set[Set[T]]` collections
