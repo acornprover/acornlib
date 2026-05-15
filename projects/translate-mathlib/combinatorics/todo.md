@@ -6,7 +6,7 @@ Goal: cover the finite and enumerative mathematics that Mathlib collects under c
   - [x] Positivity of binomial coefficients (`binom_pos`)
   - [x] Pascal's identity in successor form (`pascal_suc`)
   - [x] Sum of a row of binomials equals `2.pow(n)` (`binom_row_sum`)
-  - [ ] Vandermonde's identity
+  - [ ] Vandermonde's identity (definitions, m=0 base case, and inductive step `vandermonde_step` are in place; final assembly via induction on m is open)
 - [ ] Develop binomial identities and basic generating-function tools
   - [x] Absorption identity `k * binom(n,k) = n * binom(n-1, k-1)` (`binom_absorption`)
   - [x] Successor-form absorption `(k+1) * binom(n+1, k+1) = (n+1) * binom(n, k)` (`binom_absorption_suc`)
