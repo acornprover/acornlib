@@ -25,5 +25,6 @@ Status:
 - `src/real/continuity_pointwise_abs.ac` defines `pointwise_abs(f)(x) = f(x).abs` and proves it preserves continuity at a point and globally, using `abs_close_of_close`.
 - `src/real/continuity_square.ac` defines `square_real(x) = x * x`, identifies it with `pointwise_mul(identity_fn, identity_fn)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_cube.ac` defines `cube_real(x) = x * x * x`, identifies it with `pointwise_mul(square_real, identity_fn)`, and proves it is continuous at each point and globally.
+- `src/real/continuity_quartic.ac` defines `quartic_real(x) = x * x * x * x`, identifies it with `pointwise_mul(cube_real, identity_fn)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_const_add.ac` defines `const_add_left(c, f)(x) = c + f(x)` and `const_add_right(f, c)(x) = f(x) + c` and proves they preserve continuity at a point and globally; also proves agreement with `add_fns(constant(c), f)` and `add_fns(f, constant(c))`.
 - `src/real/continuity_const_sub.ac` defines `const_sub_left(c, f)(x) = c - f(x)` and `const_sub_right(f, c)(x) = f(x) - c` and proves they preserve continuity at a point and globally, via reduction to `const_add_left` of `pointwise_neg(f)` and `const_add_right(f, -c)`.
