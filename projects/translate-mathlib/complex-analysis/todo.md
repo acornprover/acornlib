@@ -2,9 +2,8 @@
 
 Goal: build the standard holomorphic-function theory that rests on top of complex numbers and real analysis.
 
-- [ ] Add `re_div`/`im_div` and `abs_squared_div` identities in `complex.ac`
-- [ ] Build complex sequences and componentwise convergence on top of `real/real_seq.ac`
-- [ ] Add a complex modulus once real `sqrt` is available, plus triangle inequality
+- [ ] Add `complex_limit` lemmas for division and reciprocal of complex sequences
+  (requires: a real reciprocal-sequence convergence lemma in `real/real_seq.ac` as a prerequisite)
 - [ ] Define holomorphic and analytic functions
 - [ ] Add power series and radius-of-convergence results
 - [ ] Prove the Cauchy integral formula

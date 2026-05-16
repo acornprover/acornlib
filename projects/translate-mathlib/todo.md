@@ -4,26 +4,7 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Blockers
 
-- [ ] acorn-bug: linear-algebra/modules-and-vector-spaces - structures with 3 typeclass
-      parameters (e.g. `ModuleHom[R: Ring, M: AddCommGroup, N: AddCommGroup]`) generate
-      certificates that fail strict `acorn check` ("generated invalid code: Argument 0
-      has type ModuleHom[AddCommGroup, Ring, Ring], but expected ModuleHom[Ring,
-      AddCommGroup, AddCommGroup]"). Reproducible via field accessors `.src`/`.dst`/`.hom`
-      on such a struct. Next action: report upstream with a minimal repro, then revisit
-      bundled `ModuleHom` once fixed.
-- [ ] prover-limitation: foundations/quotients/algebraic-quotients - `normal_subgroup_rel_transitive_statement`
-      verifies in `src/normal_subgroup.ac`, but the definitional wrapper
-      `is_transitive(normal_subgroup_rel(s))` times out, blocking `QuotientRelation[G]`
-      packaging for normal subgroup quotients. Next action: improve prover/typeclass
-      search for this wrapper or find a smaller definitionally equivalent packaging.
-- [ ] acorn-bug: order-theory/order-isomorphisms and affine-euclidean-and-convex-geometry
-      - generic `Pair[A, B]` typeclass instances fail while rendering typeclass attributes
-      such as `LTE.lte[Pair[A, B]](...)` and `Add.add[Pair[A, B]](...)` ("typeclass
-      attribute '<attr>' for concrete receiver 'Pair' is not available in the current
-      scope"). Blocks bundled product-order isomorphisms and product `AffineSpace`
-      instances on `Pair[V1, V2]`/`Pair[P1, P2]`. Next action: report upstream with
-      a minimal `Pair[A: AddCommGroup, B: AddCommGroup]: Add` (or `Pair: LTE`) repro,
-      then revisit both bundled product `OrderIso` and product `AffineSpace` support.
+No current blockers.
 
 ## Foundational And Core Infrastructure
 
