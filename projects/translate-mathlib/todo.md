@@ -4,24 +4,7 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Blockers
 
-- [ ] acorn-bug: linear-algebra/modules-and-vector-spaces - structures with 3 typeclass
-      parameters (e.g. `ModuleHom[R: Ring, M: AddCommGroup, N: AddCommGroup]`) generate
-      certificates that fail strict `acorn check` ("generated invalid code: Argument 0
-      has type ModuleHom[AddCommGroup, Ring, Ring], but expected ModuleHom[Ring,
-      AddCommGroup, AddCommGroup]"). Reproducible via field accessors `.src`/`.dst`/`.hom`
-      on such a struct. Next action: report upstream with a minimal repro, then revisit
-      bundled `ModuleHom` once fixed.
-- [ ] prover-limitation: foundations/quotients/algebraic-quotients - `normal_subgroup_rel_transitive_statement`
-      verifies in `src/normal_subgroup.ac`, but the definitional wrapper
-      `is_transitive(normal_subgroup_rel(s))` times out, blocking `QuotientRelation[G]`
-      packaging for normal subgroup quotients. Next action: improve prover/typeclass
-      search for this wrapper or find a smaller definitionally equivalent packaging.
-- [ ] acorn-bug: order-theory/order-isomorphisms - generic `Pair[A, B]: PartialOrder`
-      instances fail while rendering `LTE.lte[Pair[A, B]](...)` ("typeclass
-      attribute 'LTE.lte' for concrete receiver 'Pair' is not available in the
-      current scope"), blocking bundled product-order isomorphisms. Next action:
-      report upstream with the minimal `Pair[A: PartialOrder, B: PartialOrder]: LTE`
-      repro, then revisit bundled product `OrderIso` support.
+No current blockers.
 
 ## Foundational And Core Infrastructure
 

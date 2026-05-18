@@ -2,7 +2,7 @@
 
 Goal: reduce friction when moving between elements, subsets, subobjects, and bundled morphisms.
 
-- [ ] Audit current coercions from bundled structures to functions
+- [ ] Catalog current coercions from bundled structures to functions
 - [ ] Standardize notation for bundled morphisms
 - [ ] Standardize notation for subobject membership
 - [ ] Add coercions from subobjects to underlying predicates only when they are stable

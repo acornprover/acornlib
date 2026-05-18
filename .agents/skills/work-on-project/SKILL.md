@@ -194,6 +194,8 @@ In execution mode, the project roadmap is not enough by itself. Always try to ve
 - Keep the project tree ordered as a real queue: active work first, deferred work later.
 - If an item is deferred, reorder it toward the end rather than leaving it in place.
 - If an entire subtopic is deferred, move the parent link for that subtopic toward the end of the parent `todo.md`.
+- Do not increase arity of constructs unless it's necessary for the next step - in that case bundle the changes; never increase the arity separately or just in case.
+- If requested to make commits, always include the updated build files along with source changes.
 
 ## Output
 

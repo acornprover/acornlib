@@ -19,7 +19,7 @@ Try to be stylistically consistent with the rest of the codebase.
 
 Try to keep pull requests to below 2000 lines of Acorn code.
 
-Avoid adding fixed-arity APIs above ternary, such as 4-ary, 5-ary, etc. wrappers. Prefer indexed families, finite-support constructions, or named abstractions. Exceptions should be narrow support for a named downstream theorem, and the pull request should explain why the indexed or named API was not enough.
+Avoid extending fixed-size API or theorem families just by incrementing `n`. Having cases through `n = 3` is generally enough; do not add the `n = 4`, `n = 5`, `n = 6`, etc. variants, including fixed-arity wrappers or special theorems such as fourth-, fifth-, and sixth-power identities. Prefer a general theorem, indexed family, finite-support construction, or named abstraction. Exceptions should be narrow support for a named downstream theorem, and the pull request should identify that theorem and explain why a general form was not enough.
 
 Most pull requests will be AI-reviewed. Some areas will be escalated to human review:
 
