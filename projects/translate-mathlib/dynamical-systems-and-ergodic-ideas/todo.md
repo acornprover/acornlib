@@ -2,9 +2,9 @@
 
 Goal: support iterative, topological, and measure-theoretic dynamics in a unified way.
 
-- [ ] Finish prime-period existence: prover times out unfolding the local predicate inside `has_min`; needs a small helper lemma or a non-local predicate definition
-- [ ] Develop topological omega-limit sets once topology layer supports closures and neighborhoods
-- [ ] Extend periodic-point set API further: closure under iterate, characterization via prime period, intersection with orbits
+- [ ] Finish prime-period existence: unfold the local predicate inside `has_min` with a small helper lemma or a non-local predicate definition
+- [ ] Develop topological omega-limit and alpha-limit sets once the topology layer supports the needed closures and neighborhoods
+- [ ] Extend the periodic-point API further: closure under iterate, characterization via prime period, the relation to `fixed_point_set`, and interaction with orbits
 - [ ] Add symbolic-dynamics basics
 - [ ] Support interval and circle dynamics
 - [ ] Develop topological-entropy preliminaries

@@ -1,6 +1,6 @@
 # Standard Distributions
 
-Discrete distributions can lift onto the [discrete-probability](../discrete-probability/todo.md) layer once that exists. Continuous distributions are blocked by [measure-theory](../../measure-theory/todo.md), Lebesgue measure, and density-based constructions.
+Discrete distributions can lift onto the [discrete-probability](../discrete-probability/todo.md) layer once that exists. Continuous distributions depend on [measure-theory](../../measure-theory/todo.md), Lebesgue measure, and density-based constructions.
 
 - [ ] Bernoulli pmf on `Bool` with parameter `p`; expectation and variance.
 - [ ] Binomial pmf on `Fin(n + 1)` for parameters `(n, p)`; expectation and variance.
