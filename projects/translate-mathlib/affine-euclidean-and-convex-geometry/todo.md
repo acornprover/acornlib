@@ -2,11 +2,11 @@
 
 Goal: support the geometric language used in linear algebra, optimization, and classical geometry.
 
-- [ ] Extend `AffineSubspace` with preimage construction (intersection, subset, span done; preimage waits on affine maps)
-- [ ] Add product `AffineSpace` instances (componentwise on `Pair[P, Q]`) [deferred: blocked on
-      generic-`Pair` typeclass attribute rendering bug]
-- [ ] Add affine maps (structure, identity, constant, extensionality, preservation lemma, composition done; still need preimage of subspaces, barycentric coordinates, and affine combinations)
-- [ ] Develop affine span, independence, and parallelism
+- [ ] Add product `AffineSpace` instances componentwise on `Pair[P, Q]`
+- [ ] Add affine maps (structure, identity, constant, extensionality, preservation lemma, composition, preimage and image of subspaces done; still need barycentric coordinates and affine combinations)
+- [ ] Develop affine span, independence, and parallelism (span monotonicity, empty/univ
+      span lemmas done; still need affine independence, parallelism, and finite-source
+      span characterizations)
 - [ ] Add Euclidean geometry of points, lines, and planes
 - [ ] Support inner product spaces and orthogonal projection geometry
 - [ ] Develop distances, angles, and isometries

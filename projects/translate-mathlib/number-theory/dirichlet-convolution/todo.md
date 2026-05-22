@@ -3,9 +3,7 @@
 Goal: define `dirichlet_convolve(f, g)(n) = sum_{d | n} f(d) * g(n/d)` and develop its
 basic algebra (identity, zero annihilator, commutativity, associativity).
 
-- [ ] Prove commutativity of `dirichlet_convolve`
 - [ ] Prove associativity of `dirichlet_convolve`
-- [ ] Prove `dirichlet_convolve` distributes over `arithmetic_fn_add`
 - [ ] Prove `dirichlet_convolve` of two multiplicative arithmetic functions is multiplicative
 
 Status:
@@ -35,3 +33,50 @@ Status:
   cases `dirichlet_unit_left_below_step_above_yes`/`step_above_no` showing higher
   divisors contribute zero (using the value-preserving cons lemma
   `sum_cons_zero_head_eq`).
+- Cofactor involution scaffolding for commutativity is in place:
+  `divisor_quotient_divides` (the cofactor of a divisor is a divisor),
+  `divisor_quotient_positive` (cofactors of positive `n` are positive),
+  `divisor_of_positive_is_positive`, and the involution
+  `divisor_quotient_involution`: `divisor_quotient(n, divisor_quotient(n, d)) = d`
+  for positive `n` and `d | n`. The reindexing identity
+  `dirichlet_term_flip` shows `dirichlet_term(f, g, n)(d) =
+  dirichlet_term(g, f, n)(divisor_quotient(n, d))` for `d | n` and `n > 0`, ready
+  to drive a permutation-based commutativity proof.
+- Distributivity of Dirichlet convolution over pointwise addition is proved on
+  both sides (`dirichlet_convolve_add_left`, `dirichlet_convolve_add_right`),
+  via the pointwise-term splittings `dirichlet_term_add_left_eq` and
+  `dirichlet_term_add_right_eq` and the list helper `map_sum_add`.
+- A swap form of the Dirichlet convolution is in place. The helper
+  `dirichlet_cofactor_term(f, g, n)(d) = dirichlet_term(g, f, n)(divisor_quotient(n, d))`
+  satisfies `dirichlet_term_eq_cofactor_term` on divisors of positive `n`. The
+  bounded induction `dirichlet_swap_below_pred` / `dirichlet_swap_below`
+  (with step cases `dirichlet_swap_below_step_yes` / `step_no`) then yields
+  `dirichlet_convolve_swap_form`:
+  `dirichlet_convolve(f, g)(n) = sum(map(divisor_list(n), dirichlet_cofactor_term(f, g, n)))`
+  for `n > 0`. The remaining work for commutativity is to reindex this sum
+  along the cofactor involution as a permutation of `divisor_list(n)`.
+- The cofactor map is packaged as a unary function `nat_divisor_quotient_fn(n)`
+  and lifted to the list-image `cofactor_image_list(n) = map(divisor_list(n),
+  nat_divisor_quotient_fn(n))`. The involution
+  `nat_divisor_quotient_fn_involution` and the divisor-preserving lemma
+  `nat_divisor_quotient_fn_divides` are proved as unary corollaries of
+  `divisor_quotient_involution` / `divisor_quotient_divides`.
+- Commutativity of Dirichlet convolution is proved
+  (`dirichlet_convolve_comm(f, g): dirichlet_convolve(f, g) = dirichlet_convolve(g, f)`)
+  in `src/nat/nat_dirichlet.ac`. The proof goes through the swap form, the
+  cofactor-map composition rewrite (`cofactor_term_compose`,
+  `cofactor_term_compose_pred`), `cofactor_image_list_contains_iff` (the
+  divisor list and its cofactor image have the same elements for positive
+  `n`), `cofactor_image_list_is_unique` (via the injectivity helper
+  `cofactor_image_unique_thm` and the cons-uniqueness lemma
+  `cons_unique_of_fresh`), and `unique_same_contains_map_sum_eq` to identify
+  the two sums. The positive-`n` case is `dirichlet_convolve_comm_positive`
+  and the `n = 0` case is handled by `dirichlet_convolve_at_zero`.
+- The membership characterisation and uniqueness of `divisor_list` live in
+  `src/nat/nat_divisor_sum.ac`: `divisors_up_to_member(n, k, d)` shows entries
+  of `divisors_up_to(n, k)` are positive divisors of `n` bounded by `k`,
+  `divisors_up_to_complete(n, k, d)` is the converse, `divisor_list_contains_implies`
+  and `divisor_list_contains_of` are the `divisor_list(n)` corollaries, and
+  `divisors_up_to_unique` / `divisor_list_is_unique` establish that the divisor
+  list has no duplicates. These let the cofactor-reindex sum equality go through
+  via `unique_same_contains_map_sum_eq`.

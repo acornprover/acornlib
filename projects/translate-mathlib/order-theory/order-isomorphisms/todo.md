@@ -25,7 +25,9 @@ Status:
 - `src/pair_order.ac` now has the iff form `pair_lt_iff_lte_and_some_strict_component` characterizing strict pair order as non-strict pair order together with at least one strictly-below component.
 - `src/pair_order.ac` now has order-embedding reflection and iff lemmas for `pair_map_first` and `pair_map_second`: each single-component order embedding both preserves and reflects componentwise non-strict order.
 - `src/pair_order.ac` now has antitone and mixed-variance `pair_map` lemmas: componentwise pair-order preservation under a monotone first map with an antitone second map, the symmetric variant, and reversed strict pair order under componentwise antitone order embeddings.
+- `src/pair_order.ac` now has one-sided swap rearrangements for pair meet and join: swapping a single argument equals swapping the whole binary operation after swapping the other argument.
+- `src/pair_order.ac` now has mixed diagonal-pair meet and join lemmas: the componentwise meet or join of a diagonal pair with an arbitrary pair simplifies componentwise, on either the left or the right.
 
 - [ ] Decide the proof-carrying API for bundled positive-scalar `OrderIso`s in ordered fields
 - [ ] Add bundled ordered-field scalar-map `OrderDualIso` values once the positive-scalar bundling API is settled
-- [ ] Blocked: add bundled product order isomorphisms once generic `Pair[A, B]: PartialOrder` instances render correctly
+- [ ] Add bundled product order isomorphisms
