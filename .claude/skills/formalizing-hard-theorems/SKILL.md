@@ -24,9 +24,10 @@ Follow this order.
 1. Understand the theorem informally.
 2. Research dependencies.
 3. Make the import situation explicit.
-4. Try decomposition strategies one by one.
-5. Verify after each meaningful change.
-6. Only give up after exhausting the available strategies.
+4. Explicitly cite the theorem instances you expect to use.
+5. Try decomposition strategies one by one.
+6. Verify after each meaningful change.
+7. Only give up after exhausting the available strategies.
 
 ## Dependency Research
 
@@ -46,6 +47,18 @@ When looking for dependencies, ask:
 - Which missing hypotheses should become helper lemmas?
 
 Every proof step combines only a small number of immediate dependencies. If your proof idea depends on many facts at once, there is almost always a linear breakdown hiding inside it.
+
+## Pre-Strategy Citation Pass
+
+Before trying the numbered strategies below, make the intended dependencies explicit in the proof.
+
+- Cite every theorem you expect to use, with concrete arguments where possible.
+- Put theorem citations near the facts they are meant to justify.
+- If a theorem needs hypotheses, prove or cite the hypotheses immediately before citing the theorem.
+- If the final proof will need a rewrite, cite the rewrite theorem before asking Acorn to reduce the goal.
+- If a citation is too hard to instantiate directly, make the missing instantiation or hypothesis a helper lemma.
+
+This pass is not optional for hard theorems. Explicit citations make the prover's job smaller and turn later proof steps into local reductions instead of broad dependency search.
 
 ## Strategy Order
 
@@ -114,15 +127,6 @@ For example, if the goal is `p = q`, try proving `p = q` by contradiction. In
 the `p` case, prove `q`, so both sides are `true`. In the `not p` case, prove
 `not q`, so both sides are `false`.
 
-### 6. Reduce Search Width
-
-If the statement is true and the plan is correct but Acorn times out, reduce the number of choices the prover has.
-
-- Replace implicit leaps with explicit intermediate statements.
-- Name helper lemmas instead of repeating the same local reasoning.
-- Avoid asking one theorem to do several conceptually different things.
-- Prefer short local lemmas over one giant `by` block.
-
 ## Working Style
 
 - Try each strategy deliberately, one by one.
@@ -139,6 +143,7 @@ If a theorem still resists formalization, rewrite the remaining work into narrow
 - Check that imports are sufficient before blaming the prover.
 - Acorn promises one-step uses of explicit cited theorems.
 - Acorn also promises cited rewrites and Boolean reduction once the relevant theorem is cited.
+- Your job is to provide enough explicit citations and intermediate facts that the proof reduces locally, not to adjust search behavior.
 
 For example, if you have:
 
@@ -198,5 +203,6 @@ When you use this skill, report:
 - the theorem you are trying to formalize
 - the informal proof idea you are using
 - the key dependencies you found
+- the theorem instances you explicitly cited before trying decomposition
 - which decomposition strategy you are trying
 - whether the theorem was completed or split into narrower helper lemmas
