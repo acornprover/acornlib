@@ -33,8 +33,11 @@ assembling `is_ideal` from its sub-constraints.
       lemmas added in `src/local_ring.ac`; `is_unit` predicate with
       one/mul/witness lemmas and the `non_units` set plus
       field-non-unit-iff-zero characterization added in
-      `src/comm_ring_unit.ac`; still needed: the non-units-form-an-ideal
-      characterization of local rings)
+      `src/comm_ring_unit.ac`; `non_units` set predicate plus
+      `ideal_with_unit_eq_unit_ideal`, `proper_ideal_no_units`, and
+      `proper_ideal_subset_non_units` added in `src/comm_ring_unit.ac`;
+      still needed: the non-units-form-an-ideal characterization of
+      local rings)
 - [ ] Add localization at submonoids and prime ideals
 - [ ] Develop Noetherian rings and modules
 - [ ] Support integral elements and integral extensions
