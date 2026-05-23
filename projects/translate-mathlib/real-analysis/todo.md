@@ -29,3 +29,4 @@ Status:
 - `src/real/continuity_sub_fns.ac` defines `sub_fns(f, g)(x) = f(x) - g(x)` directly on real-valued functions, identifies it with `add_fns(f, pointwise_neg(g))`, and proves it preserves continuity at a point and globally.
 - `src/real/continuity_const_add.ac` defines `const_add_left(c, f)(x) = c + f(x)` and `const_add_right(f, c)(x) = f(x) + c` and proves they preserve continuity at a point and globally; also proves agreement with `add_fns(constant(c), f)` and `add_fns(f, constant(c))`.
 - `src/real/continuity_const_sub.ac` defines `const_sub_left(c, f)(x) = c - f(x)` and `const_sub_right(f, c)(x) = f(x) - c` and proves they preserve continuity at a point and globally, via reduction to `const_add_left` of `pointwise_neg(f)` and `const_add_right(f, -c)`.
+- `src/real/continuity_affine.ac` defines `affine_real(a, b)(x) = a * x + b`, identifies it with `const_add_right(const_mul_left(a, identity_fn), b)`, and proves it is continuous at each point and globally.
