@@ -24,6 +24,7 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Add `discrete_expectation_sub`: `E(X + (-1) * Y) = E(X) - E(Y)`, via `discrete_expectation_add` and `discrete_expectation_neg`. Stated through the existing `add_fn`/`mul_fn` combinators because `acornlib` has no `sub_fn` yet.
 - [x] Add `discrete_variance_const`: the variance of a constant random variable is zero, via `discrete_variance_formula` and `discrete_expectation_const`.
 - [x] Add `discrete_variance_neg`: variance is invariant under negation of the random variable, via `discrete_variance_formula`, `mul_neg_neg`, and `discrete_expectation_neg`.
+- [x] Add `discrete_variance_scalar_mul`: `Var(c * X) = c^2 * Var(X)`, via `discrete_variance_formula` and `discrete_expectation_scalar_mul`.
 - [x] Prove the computational variance formula `Var(X) = E(X^2) - E(X)^2` (`discrete_variance_formula` in `discrete_pmf.ac`). Decomposes `square_dev(x, mu)` pointwise into `square_fn(x) + (-(mu+mu))*x + mu*mu` and finishes via linearity (`discrete_expectation_add`, `discrete_expectation_scalar_mul`, `discrete_expectation_const`). Uses `mu + mu` rather than a literal `Real.2` because the latter is not defined.
 - [x] Define independence of two discrete events: `discrete_events_independent` in `discrete_pmf.ac`, with `discrete_events_independent_comm` and the union law `P(A ∪ B) = P(A) + P(B) - P(A) P(B)` (`discrete_events_independent_union`).
 - [ ] Define independence of two discrete random variables (requires a joint pmf / product pmf API).
