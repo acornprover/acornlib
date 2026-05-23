@@ -37,3 +37,4 @@ Status:
 - `src/pair_order.ac` now has direct first/second component projection lemmas for the swap of a componentwise pair meet/join: `pair_meet_swap_first`/`_second` and `pair_join_swap_first`/`_second`.
 - `src/pair_order.ac` now has `pair_meet_assoc_rev`, `pair_join_assoc_rev`, `pair_meet_left_comm`, `pair_join_left_comm`, `pair_meet_right_comm`, and `pair_join_right_comm` rearrangement lemmas for nested componentwise pair meet/join.
 - `src/pair_order.ac` now has direct first/second component projection lemmas for left-nested and right-nested triple pair meet/join: `pair_meet_assoc_first`/`_second`, `pair_join_assoc_first`/`_second`, `pair_meet_assoc_rev_first`/`_second`, and `pair_join_assoc_rev_first`/`_second`.
+- `src/pair_order.ac` now has `pair_meet_new_left`/`_right` and `pair_join_new_left`/`_right` showing that the componentwise meet/join of a `Pair.new` pair with an arbitrary pair reduces componentwise.
