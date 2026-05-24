@@ -22,3 +22,11 @@ Status:
 - Canonical projection support now includes projection-equality/reflection lemmas
   for related representatives and aliases for zero/one/zero-multiplication and
   subtraction identities stated directly on projected representatives.
+- Quotient power API extended with `ideal_quotient_pow_mul` /
+  `ideal_quotient_project_pow_mul` (powers distribute over multiplication of
+  projected representatives) and `ideal_quotient_pow_two` /
+  `ideal_quotient_project_pow_two` (squares of projected representatives).
+- Quotient-zero ideal-membership characterizations for projected sums, products,
+  and natural powers: `ideal_quotient_project_add_eq_zero_iff_contains`,
+  `ideal_quotient_project_mul_eq_zero_iff_contains`, and
+  `ideal_quotient_project_pow_eq_zero_iff_contains`.
