@@ -28,6 +28,7 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Add `discrete_expectation_add_const`: `E(X + c) = E(X) + c`, via `discrete_expectation_add` and `discrete_expectation_const`.
 - [x] Add `discrete_expectation_sub_const`: `E(X + (-c)) = E(X) - c`, a direct corollary of `discrete_expectation_add_const` with constant `-c`.
 - [x] Add `discrete_variance_add_const`: `Var(X + c) = Var(X)`, via pointwise equality of `square_dev` since `(X(t) + c) - (mu + c) = X(t) - mu`.
+- [x] Add `discrete_variance_sub_const`: `Var(X + (-c)) = Var(X)`, a direct corollary of `discrete_variance_add_const` with constant `-c`.
 - [x] Prove the computational variance formula `Var(X) = E(X^2) - E(X)^2` (`discrete_variance_formula` in `discrete_pmf.ac`). Decomposes `square_dev(x, mu)` pointwise into `square_fn(x) + (-(mu+mu))*x + mu*mu` and finishes via linearity (`discrete_expectation_add`, `discrete_expectation_scalar_mul`, `discrete_expectation_const`). Uses `mu + mu` rather than a literal `Real.2` because the latter is not defined.
 - [x] Define independence of two discrete events: `discrete_events_independent` in `discrete_pmf.ac`, with `discrete_events_independent_comm` and the union law `P(A ∪ B) = P(A) + P(B) - P(A) P(B)` (`discrete_events_independent_union`).
 - [ ] Define independence of two discrete random variables (requires a joint pmf / product pmf API).
