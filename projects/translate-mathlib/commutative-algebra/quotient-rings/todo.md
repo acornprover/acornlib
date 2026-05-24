@@ -30,3 +30,10 @@ Status:
   and natural powers: `ideal_quotient_project_add_eq_zero_iff_contains`,
   `ideal_quotient_project_mul_eq_zero_iff_contains`, and
   `ideal_quotient_project_pow_eq_zero_iff_contains`.
+- Quotient-one ideal-membership characterizations
+  (`ideal_quotient_project_eq_one_iff_contains_sub_one`,
+  `ideal_quotient_one_eq_project_iff_contains_one_sub`), a swapped form of the
+  projection-equality characterization, and power unfolds/identities on the
+  quotient: `ideal_quotient_project_pow_zero`, `_pow_suc`,
+  `ideal_quotient_zero_pow_zero`, `ideal_quotient_zero_pow_suc`, and
+  `ideal_quotient_project_pow_one_eq_one`.
