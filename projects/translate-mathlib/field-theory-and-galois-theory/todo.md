@@ -75,6 +75,14 @@ that depends on polynomial support; do not add a root `## Blockers` entry for it
   - [x] Fixed-point characterization of the image-preimage round trip:
         `subfield_image_preimage_eq_iff_le_image` (`src/field_hom_image.ac`),
         plus lattice helper `subfield_inter_eq_left_iff_le` (`src/subfield.ac`)
+  - [x] Monotonicity of subfield intersection under `subfield_le`:
+        `subfield_inter_mono_left`, `subfield_inter_mono_right`,
+        `subfield_inter_mono`, `subfield_le_inter_iff` (`src/subfield.ac`),
+        plus `subfield_image_inter_le` (`src/field_hom_image.ac`)
+  - [x] Surjective field homomorphisms: `is_field_hom_surjective`,
+        `field_hom_image_eq_top_iff_surjective` (with split direction
+        lemmas), `identity_field_hom_surjective`, and
+        `compose_field_hom_surjective` (`src/field_hom_image.ac`)
   - [ ] `bottom_subfield` (prime field) once integer/rational embedding is available
   - [ ] Field-extension API beyond `FieldHom`; previous vacuous
         `is_field_extension(phi: FieldHom[F, E])` design was removed after review.
