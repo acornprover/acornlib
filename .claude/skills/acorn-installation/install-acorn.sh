@@ -18,10 +18,19 @@ VERSION=${LATEST#v}  # strip 'v' prefix
 
 echo "Latest version: ${LATEST}"
 
+# Pick the asset matching this platform
+case "$(uname -s)-$(uname -m)" in
+    Darwin-arm64) ASSET="acorn-${VERSION}-darwin-arm64" ;;
+    Darwin-x86_64) ASSET="acorn-${VERSION}-darwin-x64" ;;
+    Linux-x86_64) ASSET="acorn-${VERSION}-linux-x64" ;;
+    Linux-aarch64) ASSET="acorn-${VERSION}-linux-arm64" ;;
+    *) ASSET="acorn-${VERSION}-linux-x64" ;;
+esac
+
 # Download binary
-echo "Downloading Acorn binary..."
+echo "Downloading Acorn binary (${ASSET})..."
 mkdir -p ~/.local/bin
-curl -L "https://github.com/acornprover/acorn/releases/download/${LATEST}/acorn-${VERSION}-linux-x64" \
+curl -L "https://github.com/acornprover/acorn/releases/download/${LATEST}/${ASSET}" \
   -o ~/.local/bin/acorn
 
 chmod +x ~/.local/bin/acorn
