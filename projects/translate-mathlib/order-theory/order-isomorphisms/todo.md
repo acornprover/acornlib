@@ -33,5 +33,4 @@ Status:
 - `src/pair_order.ac` now has product order-isomorphism application laws: `pair_order_iso_apply`, `pair_order_iso_unapply`, and `pair_order_iso_apply_new` evaluate the bundled `order_iso_apply` / `order_iso_unapply` of a product isomorphism componentwise, including on a constructed `Pair.new` input.
 
 - `src/ordered_field.ac` now settles the bundled positive-scalar `OrderIso` API as an existence interface: `inverse_of_positive_is_positive` / `inverse_of_negative_is_negative` derive the strict positivity/negativity of inverses, and `mul_right_order_iso_exists` / `mul_left_order_iso_exists` produce a bundled `OrderIso[F, F]` whose `map` is scalar multiplication and whose `inv` is multiplication by the inverse whenever the scalar is positive.
-
-- [ ] Add bundled ordered-field scalar-map `OrderDualIso` values matching the positive-scalar `OrderIso` existence API for negative scalars
+- `src/ordered_field.ac` now has the negative-scalar dual analogue: `mul_right_order_dual_iso_exists` / `mul_left_order_dual_iso_exists` produce a bundled `OrderDualIso[F, F]` whose `map` is scalar multiplication and whose `inv` is multiplication by the inverse whenever the scalar is negative.
