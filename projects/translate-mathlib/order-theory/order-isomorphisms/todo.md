@@ -28,6 +28,7 @@ Status:
 - `src/pair_order.ac` now has one-sided swap rearrangements for pair meet and join: swapping a single argument equals swapping the whole binary operation after swapping the other argument.
 - `src/pair_order.ac` now has mixed diagonal-pair meet and join lemmas: the componentwise meet or join of a diagonal pair with an arbitrary pair simplifies componentwise, on either the left or the right.
 
+- `src/pair_order.ac` now has bundled product order isomorphisms: `pair_map_is_order_embedding` (componentwise pair map of two embeddings is an embedding for the `Pair` componentwise order), `pair_map_is_order_iso_pair`, and the bundled `pair_order_iso` value combining two `OrderIso`s into an `OrderIso[Pair[A, B], Pair[C, D]]`, with `pair_order_iso_map` / `pair_order_iso_inv` projection lemmas. Depends on the new bundled `Pair` `PartialOrder`/lattice instances.
+
 - [ ] Decide the proof-carrying API for bundled positive-scalar `OrderIso`s in ordered fields
 - [ ] Add bundled ordered-field scalar-map `OrderDualIso` values once the positive-scalar bundling API is settled
-- [ ] Add bundled product order isomorphisms
