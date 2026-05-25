@@ -31,3 +31,4 @@ Status:
 - `src/real/continuity_const_sub.ac` defines `const_sub_left(c, f)(x) = c - f(x)` and `const_sub_right(f, c)(x) = f(x) - c` and proves they preserve continuity at a point and globally, via reduction to `const_add_left` of `pointwise_neg(f)` and `const_add_right(f, -c)`.
 - `src/real/continuity_affine.ac` defines `affine_real(a, b)(x) = a * x + b`, identifies it with `const_add_right(const_mul_left(a, identity_fn), b)`, and proves it is continuous at each point and globally.
 - `src/real/continuity_const_div.ac` defines `const_div_right(f, c)(x) = f(x) / c`, identifies it with `const_mul_right(f, c.inverse)`, and proves it preserves continuity at a point and globally.
+- `src/real/continuity_pow.ac` defines `pow_real_fn(n)(x) = x.pow(n)`, identifies the zeroth power with the constant one and the successor power with `pointwise_mul(identity_fn, pow_real_fn(n))`, and proves every natural-number power function on the reals is continuous by induction.
