@@ -10,7 +10,6 @@ Goal: provide the general topological language that analysis, geometry, and prob
 - [ ] Prove equivalence of `is_connected` and `is_connected_via_clopen`
 - [ ] Add path connectedness (needs the unit interval and continuous paths)
 - [ ] Build continuity in terms of closed-set preimages and filter convergence (the pointwise neighborhood-based variant `is_continuous_at` and the equivalence `continuous_iff_continuous_at` are in place; the closed-preimage and filter-convergence equivalences remain)
-- [ ] Prove the standard implications between separation axioms (Hausdorff ⇒ T1 ⇒ T0). Witness-extraction proofs timed out the prover; needs further factoring or a different proof shape
 - [ ] Prove `homeomorphism_inverse` (swapping the maps of a homeomorphism gives another); add orientation-specific conjunction lemmas across the X→Y vs Y→X directions. The proof is logically trivial, but even with per-field accessors `is_homeomorphism_continuous_fwd` / `_continuous_inv` / `_left_inv` / `_right_inv`, stitching them back into `is_homeomorphism[Y, X](g, f)` still times out the prover
 - [ ] Prove that the composition of two homeomorphisms is a homeomorphism. The continuity halves (`continuous_compose`) and the pointwise inverse halves (`homeomorphism_compose_left_inv` / `_right_inv`) are now in place; assembling the four pieces back into `is_homeomorphism[X, Z](compose(f2, f1), compose(g1, g2))` still times out the prover
 - [ ] Define embeddings (an injective continuous map that is a homeomorphism onto its image; needs the subspace topology big-union axiom)
