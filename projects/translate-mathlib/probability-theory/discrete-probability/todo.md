@@ -16,6 +16,7 @@ Prerequisite: a finite-sum-over-`FiniteSet[T]` of reals helper. None currently e
 - [x] Define expectation `discrete_expectation(pmf, X)` for a `T -> Real` random variable. Lives in `discrete_pmf.ac` as `finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, X))`, where `mass_weighted_value(mass, rv, x) = mass(x) * rv(x)`.
 - [x] Additivity of discrete expectation: `discrete_expectation_add` in `discrete_pmf.ac` proves `E(X + Y) = E(X) + E(Y)` via `finite_set_sum_add` plus pointwise `mass_weighted_value` decomposition and `function_extensionality`.
 - [x] Add scalar scaling `E(c * X) = c * E(X)` for discrete expectation. `finite_set_sum_scalar_mul` (generic over `Semiring`) lives in `finite_set_sum.ac` and `discrete_expectation_scalar_mul` in `discrete_pmf.ac`.
+- [x] Add two-term linearity `discrete_expectation_linear_combo`: `E(a * X + b * Y) = a * E(X) + b * E(Y)`, composing `discrete_expectation_add` and `discrete_expectation_scalar_mul`.
 - [ ] Add monotonicity of discrete expectation: `X(x) <= Y(x)` on the support implies `E(X) <= E(Y)`. Depends on finishing `finite_set_sum_le`.
 - [x] Define `discrete_variance(pmf, x) = E((x - E(x))^2)` in `discrete_pmf.ac`, with pointwise helpers `square_fn` and `square_dev`.
 - [x] Define `const_real_fn` and prove `discrete_expectation_const`: `E(const c) = c` for any discrete pmf.
