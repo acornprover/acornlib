@@ -2,7 +2,7 @@
 
 Build out the `MetricSpace` typeclass in `src/metric_space.ac` with definitions and APIs analogous to Mathlib's `MetricSpace`.
 
-- [ ] Add `diameter_singleton` and `diameter_empty` follow-up theorems and other `diameter` lemmas built on top of `diameter_is_diameter` / `distance_le_diameter_fn`
+- [ ] Add monotonicity (`diameter_le_of_subset`) and `diameter_le` characterization lemmas built on top of `is_diameter` / `distance_le_diameter_fn`
 - [ ] Define product metric on `Pair[M, N]` and prove triangle inequality
 - [ ] Define pseudometric typeclass and relate to `MetricSpace`
 - [ ] Add `Set[M].universal_set` and `Set[M].empty_set` instances as closed and other closed-set library lemmas (countable intersection, finite-union variants)
