@@ -4,7 +4,7 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Blockers
 
-No current blockers.
+- [ ] prover-limitation: topology/todo.md (compactness API) - `singleton_is_compact` cannot be assembled from the per-cover lemma `singleton_open_cover_imp_finite_subcover`. The universally-quantified `is_compact` definition's cover-dependent existential closure times out even when each per-cover instance is the cited theorem, and a `choose_from_set_or_default`-based concrete-witness workaround over `Set[Set[T]].new(c)` also times out on higher-order `exists`/witness-predicate matching. Next action: revisit once Acorn's prover better handles generalizing a cover-dependent existential under a `forall` over a `Set[T] -> Bool` family (or provides cheaper `exists`-intro for set-of-set families).
 
 ## Foundational And Core Infrastructure
 
