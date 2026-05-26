@@ -17,6 +17,12 @@ work (linear maps, bases, matrices, etc.) can build on.
   in `src/module_hom.ac`, plus `trivial_linear_map`, `identity_fn_is_linear_map`,
   and composition lemmas. Add a bundled `ModuleHom[R, M, N]` when the predicate-level
   API needs a bundled wrapper.
+- Linear equivalences: predicate-level (`is_linear_equiv` in `src/module_hom.ac`) plus the
+  pair-based `is_linear_equiv_pair`/`modules_linearly_equivalent` relation in
+  `src/module_iso.ac`. A bundled `LinearEquiv[R, M, N]` structure remains deferred: extracting
+  its constrained function field times out when the constraint unfolds to an existential. The
+  pair-based encoding (forward map + two-sided inverse witness, mirroring `LinearEquiv`'s
+  `inv_fun`) is the working substitute; revisit bundling if the prover's premise handling improves.
 
 ## Implementation Tasks
 
@@ -38,6 +44,7 @@ work (linear maps, bases, matrices, etc.) can build on.
       (`submodule_quotient_mk_eq_zero_iff_in_submodule`) is in place.
 - [ ] Extend packaged kernel/image submodule APIs only when downstream formalizations need additional lemmas.
 - [ ] Extend the packaged `linear_map_preimage_submodule` API only when downstream formalizations need additional lemmas (e.g. monotonicity in the target submodule, agreement with `linear_map_kernel_submodule` on the zero submodule, or full-target characterisation).
+- [ ] Build on the `modules_linearly_equivalent` relation in `src/module_iso.ac`: transport submodule/kernel/image structure across a linear equivalence pair, and promote a bundled `ModuleHom[R, M, N]` whose underlying function is a linear equivalence to a `modules_linearly_equivalent` witness.
 
 Status:
 
@@ -78,3 +85,5 @@ Status:
 - `src/module_hom_compose_kernel.ac` adds `module_hom_compose_kernel_contains_of_kernel`: an element of the kernel of the inner homomorphism `g` lies in the kernel of a bundled composition `module_hom_compose(f, g)`. Isolated in its own module to keep proof search fast.
 - `src/module_hom_compose_image.ac` adds `module_hom_compose_image_contains_implies_image_outer`: a point in the image of a bundled composition `module_hom_compose(f, g)` lies in the image of the outer homomorphism `f`. Isolated in its own module to keep proof search fast.
 - `src/complex_conj_module_hom.ac` verifies that complex conjugation is a real-linear map from `Complex` (as a real module) to itself: `complex_conj_fn_preserves_add`, `complex_conj_fn_smul_eq`, `complex_conj_fn_preserves_smul`, and `complex_conj_fn_is_linear_map`. The map is packaged as a bundled `ModuleHom[Real, Complex, Complex]` via `complex_conj_module_hom`, with existence helper `complex_conj_fn_module_hom_some` and source/destination projections `complex_conj_module_hom_src`/`complex_conj_module_hom_dst`. It also proves conjugation is a real-linear equivalence: `complex_conj_fn_two_sided_inverse` (conjugation is its own two-sided inverse, via `conj_conj`), `complex_conj_fn_is_bijection`, and `complex_conj_fn_is_linear_equiv`.
+- `src/module_iso.ac` actually uses the predicate-level linear-equivalence API to define module isomorphism. It introduces `is_linear_equiv_pair(src, dst, f, g)` (a linear equivalence `f` bundled with a two-sided inverse `g`, mirroring how a `LinearEquiv` bundles its forward and inverse map), with projections `linear_equiv_pair_forward`/`linear_equiv_pair_inverse`/`linear_equiv_pair_inverse_is_linear_equiv`, the identity pair `linear_equiv_pair_identity`, reversal `linear_equiv_pair_swap`, and composition `linear_equiv_pair_compose`. It then defines the relation `modules_linearly_equivalent(src, dst)` (existence of such a pair) with introduction lemma `modules_linearly_equivalent_of_pair`, the composition bridges `modules_linearly_equivalent_of_composed_pairs`/`modules_linearly_equivalent_of_pair_trans`, and proves it is an equivalence relation: `modules_linearly_equivalent_refl`, `modules_linearly_equivalent_symm`, `modules_linearly_equivalent_trans`. Bundling the inverse witness inside the existential keeps `symm`/`trans` constructive (no `Inhabited`/choice needed). Note: the existential-introduction step with `compose(...)` witness terms required explicit inline witnesses and explicit hypothesis/goal restatements before each cited lemma to stay inside the prover's search budget.
+- `src/complex_conj_module_hom.ac` exercises the `module_iso` API concretely: `complex_conj_fn_is_linear_equiv_pair` packages complex conjugation as a real-linear equivalence pair (its own two-sided inverse), and `complex_real_module_linearly_equivalent_self` concludes that `Complex` as a real module is linearly equivalent to itself via that (non-identity) equivalence.
