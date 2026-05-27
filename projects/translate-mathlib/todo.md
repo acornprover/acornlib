@@ -5,6 +5,7 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 ## Blockers
 
 - [ ] prover-limitation: topology/todo.md (compactness API) - `singleton_is_compact` cannot be assembled from the per-cover lemma `singleton_open_cover_imp_finite_subcover`. The universally-quantified `is_compact` definition's cover-dependent existential closure times out even when each per-cover instance is the cited theorem, and a `choose_from_set_or_default`-based concrete-witness workaround over `Set[Set[T]].new(c)` also times out on higher-order `exists`/witness-predicate matching. Next action: revisit once Acorn's prover better handles generalizing a cover-dependent existential under a `forall` over a `Set[T] -> Bool` family (or provides cheaper `exists`-intro for set-of-set families).
+- [ ] prover-limitation: topology/todo.md (connectedness, `via_clopen_imp_connected` reverse direction) - extracting a single conjunct from a disconnection over a higher-order openness predicate times out. Even the isolated minimal-premise lemma `is_disconnection[T](open, u, v) implies open(u)` (rewrite by `is_disconnection_iff`, take one conjunct) does not verify, because matching the higher-order application `open(u)` where `open` is a free `Set[T] -> Bool` parameter blows up proof search. The supporting set lemmas (`compl_eq_of_disjoint_cover` etc.) and the clopen-side construction are ready. Next action: revisit once Acorn handles applications of free higher-order predicate parameters more cheaply.
 
 ## Foundational And Core Infrastructure
 
