@@ -17,6 +17,19 @@ work (linear maps, bases, matrices, etc.) can build on.
   in `src/module_hom.ac`, plus `trivial_linear_map`, `identity_fn_is_linear_map`,
   and composition lemmas. Add a bundled `ModuleHom[R, M, N]` when the predicate-level
   API needs a bundled wrapper.
+- Linear equivalences: predicate-level (`is_linear_equiv` in `src/module_hom.ac`), the
+  pair-based `is_linear_equiv_pair`/`modules_linearly_equivalent` relation, and the bundled
+  `LinearEquiv[R, M, N]` structure, all in `src/module_iso.ac`. `LinearEquiv` bundles `src`,
+  `dst`, `to_fn`, `inv_fn` with a forall-only constraint
+  (`is_linear_map(src, dst, to_fn) and is_two_sided_inverse_fn(to_fn, inv_fn)`, mirroring
+  Mathlib's `to_fun`/`inv_fun`/`left_inv`/`right_inv`). The forall-only constraint sidesteps the
+  earlier failure (constraining with `is_linear_equiv`, whose surjectivity unfolds to an
+  existential, timed out on field extraction). Known limitation: extracting the concrete
+  forward/inverse *value* (`.to_fn`/`.inv_fn`) from a *specific constructed* equivalence
+  (`linear_equiv_identity`/`_symm`/`_compose`) times out — the two-function-field relational
+  constraint blows up field extraction even in an isolated minimal module (a `ModuleHom`-style
+  single-function-field struct does not). Endpoint (`.src`/`.dst`) projections work; generic
+  per-`e` lemmas work.
 
 ## Implementation Tasks
 
@@ -38,6 +51,8 @@ work (linear maps, bases, matrices, etc.) can build on.
       (`submodule_quotient_mk_eq_zero_iff_in_submodule`) is in place.
 - [ ] Extend packaged kernel/image submodule APIs only when downstream formalizations need additional lemmas.
 - [ ] Extend the packaged `linear_map_preimage_submodule` API only when downstream formalizations need additional lemmas (e.g. monotonicity in the target submodule, agreement with `linear_map_kernel_submodule` on the zero submodule, or full-target characterisation).
+- [ ] Build on the bundled `LinearEquiv[R, M, N]` / `modules_linearly_equivalent` relation in `src/module_iso.ac`: transport submodule/kernel/image structure across a linear equivalence, build a bundled `LinearEquiv` from a `ModuleHom` whose underlying function is a linear equivalence, and add a concrete `LinearEquiv` instance (e.g. complex conjugation).
+- [ ] prover-limitation (narrow): `linear_equiv_identity`/`_symm`/`_compose` in `src/module_iso.ac` lack `.to_fn`/`.inv_fn` value projections — extracting a constrained function field from a constructed value times out for `LinearEquiv`'s two-function-field relational constraint. Revisit if the prover's field-extraction improves; until then use the constructors' defining `satisfy` property or the generic per-`e` lemmas.
 
 Status:
 
@@ -78,3 +93,6 @@ Status:
 - `src/module_hom_compose_kernel.ac` adds `module_hom_compose_kernel_contains_of_kernel`: an element of the kernel of the inner homomorphism `g` lies in the kernel of a bundled composition `module_hom_compose(f, g)`. Isolated in its own module to keep proof search fast.
 - `src/module_hom_compose_image.ac` adds `module_hom_compose_image_contains_implies_image_outer`: a point in the image of a bundled composition `module_hom_compose(f, g)` lies in the image of the outer homomorphism `f`. Isolated in its own module to keep proof search fast.
 - `src/complex_conj_module_hom.ac` verifies that complex conjugation is a real-linear map from `Complex` (as a real module) to itself: `complex_conj_fn_preserves_add`, `complex_conj_fn_smul_eq`, `complex_conj_fn_preserves_smul`, and `complex_conj_fn_is_linear_map`. The map is packaged as a bundled `ModuleHom[Real, Complex, Complex]` via `complex_conj_module_hom`, with existence helper `complex_conj_fn_module_hom_some` and source/destination projections `complex_conj_module_hom_src`/`complex_conj_module_hom_dst`. It also proves conjugation is a real-linear equivalence: `complex_conj_fn_two_sided_inverse` (conjugation is its own two-sided inverse, via `conj_conj`), `complex_conj_fn_is_bijection`, and `complex_conj_fn_is_linear_equiv`.
+- `src/module_iso.ac` actually uses the predicate-level linear-equivalence API to define module isomorphism. It introduces `is_linear_equiv_pair(src, dst, f, g)` (`is_linear_map(src, dst, f) and is_two_sided_inverse_fn(f, g)`, matching the `LinearEquiv` constraint exactly — bijectivity is implied by the two-sided inverse, so it is not stated separately), with projections `linear_equiv_pair_forward`/`linear_equiv_pair_inverse`/`linear_equiv_pair_inverse_is_linear_equiv`, the identity pair `linear_equiv_pair_identity`, reversal `linear_equiv_pair_swap`, and composition `linear_equiv_pair_compose`. It then defines the relation `modules_linearly_equivalent(src, dst)` (existence of such a pair) with introduction lemma `modules_linearly_equivalent_of_pair`, the composition bridges `modules_linearly_equivalent_of_composed_pairs`/`modules_linearly_equivalent_of_pair_trans`, and proves it is an equivalence relation: `modules_linearly_equivalent_refl`, `modules_linearly_equivalent_symm`, `modules_linearly_equivalent_trans`. Bundling the inverse witness inside the existential keeps `symm`/`trans` constructive (no `Inhabited`/choice needed). Note: the existential-introduction step with `compose(...)` witness terms required explicit inline witnesses and explicit hypothesis/goal restatements before each cited lemma to stay inside the prover's search budget.
+- `src/complex_conj_module_hom.ac` exercises the `module_iso` API concretely: `complex_conj_fn_is_linear_equiv_pair` packages complex conjugation as a real-linear equivalence pair (its own two-sided inverse), and `complex_real_module_linearly_equivalent_self` concludes that `Complex` as a real module is linearly equivalent to itself via that (non-identity) equivalence.
+- `src/module_iso.ac` adds the bundled `LinearEquiv[R, M, N]` structure (fields `src`, `dst`, `to_fn`, `inv_fn`; forall-only constraint `is_linear_map(src, dst, to_fn) and is_two_sided_inverse_fn(to_fn, inv_fn)`), with generic projections `linear_equiv_to_fn_is_linear_map`, `linear_equiv_to_inv_two_sided`, `linear_equiv_left_inverse`/`linear_equiv_right_inverse` (pointwise), `linear_equiv_to_fn_is_linear_equiv`, `linear_equiv_inv_fn_is_linear_map`, `linear_equiv_is_pair`, `linear_equiv_modules_linearly_equivalent` (a bundled equivalence witnesses `modules_linearly_equivalent`), value lemmas `linear_equiv_map_zero/add/smul/neg/sub`, extensionality `linear_equiv_ext`, and the groupoid constructors `linear_equiv_identity`/`linear_equiv_symm`/`linear_equiv_compose` (the latter `Option`-valued, with existence `linear_equiv_compose_some`) each with `.src`/`.dst` endpoint projections. The forall-only constraint avoids the existential-unfold field-extraction timeout that previously blocked bundling. `src/functions.ac` adds the supporting pointwise inverse-extraction lemmas `left_inverse_fn_apply`, `right_inverse_fn_apply`, `two_sided_inverse_fn_left_apply`, `two_sided_inverse_fn_right_apply`.
