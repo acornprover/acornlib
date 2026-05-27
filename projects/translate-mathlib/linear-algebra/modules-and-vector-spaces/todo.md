@@ -51,7 +51,7 @@ work (linear maps, bases, matrices, etc.) can build on.
       (`submodule_quotient_mk_eq_zero_iff_in_submodule`) is in place.
 - [ ] Extend packaged kernel/image submodule APIs only when downstream formalizations need additional lemmas.
 - [ ] Extend the packaged `linear_map_preimage_submodule` API only when downstream formalizations need additional lemmas (e.g. monotonicity in the target submodule, agreement with `linear_map_kernel_submodule` on the zero submodule, or full-target characterisation).
-- [ ] Build on the bundled `LinearEquiv[R, M, N]` / `modules_linearly_equivalent` relation in `src/module_iso.ac`: transport submodule/kernel/image structure across a linear equivalence, build a bundled `LinearEquiv` from a `ModuleHom` whose underlying function is a linear equivalence, and add a concrete `LinearEquiv` instance (e.g. complex conjugation).
+- [ ] Build on the bundled `LinearEquiv[R, M, N]` / `modules_linearly_equivalent` relation in `src/module_iso.ac`: transport submodule/kernel/image structure across a linear equivalence, and add a concrete `LinearEquiv` instance (e.g. complex conjugation). Done: `linear_equiv_of_module_hom` builds a bundled `LinearEquiv` from a `ModuleHom` plus a two-sided inverse of its underlying function, with existence (`..._some`) and `.src`/`.dst` projection lemmas.
 - [ ] prover-limitation (narrow): `linear_equiv_identity`/`_symm`/`_compose` in `src/module_iso.ac` lack `.to_fn`/`.inv_fn` value projections — extracting a constrained function field from a constructed value times out for `LinearEquiv`'s two-function-field relational constraint. Revisit if the prover's field-extraction improves; until then use the constructors' defining `satisfy` property or the generic per-`e` lemmas.
 
 Status:
