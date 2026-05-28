@@ -40,3 +40,4 @@ Status:
 - `src/order_bounds.ac` now has split-direction characterizations of `is_lower_bound`/`is_upper_bound` against `is_in_pair(a, b)`: `is_lower_bound_is_in_pair_imp`/`_of` and `is_upper_bound_is_in_pair_imp`/`_of`.
 - `src/order_bounds.ac` now has basic `is_in_pair` shape lemmas: `is_in_pair_comm`, `is_in_pair_self_iff`, `is_in_pair_left`, `is_in_pair_right`.
 - `src/order_bounds.ac` now has `is_in_pair_iff` unfold and `is_in_pair_of_eq_left`/`is_in_pair_of_eq_right` equality intros.
+- `src/order_bounds.ac` now has `is_in_pair_self_imp_eq` and `not_is_in_pair_iff` membership lemmas.
