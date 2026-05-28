@@ -35,3 +35,4 @@ Status:
 - `src/order_bounds.ac` now has a two-sided `is_bounded` predicate with unfold/intro lemmas (`is_bounded_iff`, `is_bounded_intro`), projection lemmas (`is_bounded_imp_bounded_above`/`_below`), explicit-bound construction (`is_bounded_of`), and empty/singleton boundedness (`empty_set_bounded`, `singleton_bounded`).
 - `src/order_bounds.ac` now has directional and iff-form predicate-equality transport for two-sided `is_bounded` (`is_bounded_of_pred_eq`, `is_bounded_pred_eq_iff`).
 - `src/order_bounds.ac` now has `pair_bounded`: in a `Lattice`, the two-element predicate `is_in_pair(a, b)` is two-sided bounded.
+- `src/order_bounds.ac` now has semilattice-level pair boundedness: `pair_bounded_above` in a `JoinSemilattice` and `pair_bounded_below` in a `MeetSemilattice`.
