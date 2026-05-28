@@ -37,3 +37,4 @@ Status:
 - `src/order_bounds.ac` now has `pair_bounded`: in a `Lattice`, the two-element predicate `is_in_pair(a, b)` is two-sided bounded.
 - `src/order_bounds.ac` now has semilattice-level pair boundedness: `pair_bounded_above` in a `JoinSemilattice` and `pair_bounded_below` in a `MeetSemilattice`.
 - `src/order_bounds.ac` now has `is_bounded_above_iff` and `is_bounded_below_iff` unfold lemmas exposing one-sided boundedness as the existence of a bound.
+- `src/order_bounds.ac` now has split-direction characterizations of `is_lower_bound`/`is_upper_bound` against `is_in_pair(a, b)`: `is_lower_bound_is_in_pair_imp`/`_of` and `is_upper_bound_is_in_pair_imp`/`_of`.
