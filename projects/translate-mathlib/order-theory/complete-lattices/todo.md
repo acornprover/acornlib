@@ -29,3 +29,4 @@ Status:
 - `src/order_bounds.ac` now has iff-form predicate-equality transport for all six bound predicates (`is_lower_bound`, `is_upper_bound`, `is_glb`, `is_lub`, `is_least`, `is_greatest`).
 - `src/order_bounds.ac` now has intersection bounds via `pred_inter`: a lower/upper bound of either part is automatically a lower/upper bound of the intersection.
 - `src/order_bounds.ac` now has `is_bounded_above`/`is_bounded_below` set-level predicates with witnessing lemmas from explicit bounds, suprema/infima, and least/greatest elements; subset monotonicity; and empty-set and singleton boundedness.
+- `src/order_bounds.ac` now has union and intersection boundedness lemmas: `union_bounded_above_of_common`/`union_bounded_below_of_common` lift a common explicit bound on both parts, and `inter_bounded_above_left`/`_right` and `inter_bounded_below_left`/`_right` inherit boundedness of `pred_inter(p, q)` from either side.
