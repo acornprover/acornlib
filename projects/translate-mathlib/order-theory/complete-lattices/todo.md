@@ -41,3 +41,4 @@ Status:
 - `src/order_bounds.ac` now has basic `is_in_pair` shape lemmas: `is_in_pair_comm`, `is_in_pair_self_iff`, `is_in_pair_left`, `is_in_pair_right`.
 - `src/order_bounds.ac` now has `is_in_pair_iff` unfold and `is_in_pair_of_eq_left`/`is_in_pair_of_eq_right` equality intros.
 - `src/order_bounds.ac` now has `is_in_pair_self_imp_eq` and `not_is_in_pair_iff` membership lemmas.
+- `src/order_bounds.ac` now has `is_in_pair_iff_insert_singleton`, `is_in_pair_iff_union_singletons`, and `is_in_pair_self_iff_singleton` pointwise bridges from `is_in_pair` to `pred_insert`/`pred_union`/`is_singleton`.
