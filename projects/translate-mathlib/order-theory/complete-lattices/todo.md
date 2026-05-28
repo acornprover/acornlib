@@ -22,3 +22,4 @@ Status:
 - `src/order_bounds.ac` now has the singleton-set API: `is_singleton`, the lower/upper bound iff characterizations, and the singleton as its own least, greatest, infimum, and supremum.
 - `src/order_bounds.ac` now also has the empty-set lower/upper bound facts (every element is a bound) and union-set bound facts via `pred_union`: each part inherits a bound of the union, and a common bound of both parts is a bound of the union.
 - `src/order_bounds.ac` now has the binary union/meet/join compatibility: in a `MeetSemilattice`/`JoinSemilattice` the infimum/supremum of `pred_union(p, q)` is the meet/join of the individual infima/suprema.
+- `src/order_bounds.ac` now has insertion bounds via `pred_insert`: a lower/upper bound of `pred_insert(a, p)` splits into a bound of `a` plus a bound of `p`, and combining the two reconstitutes the insertion bound.
