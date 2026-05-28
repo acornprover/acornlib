@@ -27,3 +27,4 @@ Status:
 - `src/order_bounds.ac` now has predicate-equality transport for lower/upper bounds and for `is_glb`/`is_lub`, so pointwise-equal predicates share their bound structure.
 - `src/order_bounds.ac` now has predicate-equality transport for `is_least` and `is_greatest`.
 - `src/order_bounds.ac` now has iff-form predicate-equality transport for all six bound predicates (`is_lower_bound`, `is_upper_bound`, `is_glb`, `is_lub`, `is_least`, `is_greatest`).
+- `src/order_bounds.ac` now has intersection bounds via `pred_inter`: a lower/upper bound of either part is automatically a lower/upper bound of the intersection.
