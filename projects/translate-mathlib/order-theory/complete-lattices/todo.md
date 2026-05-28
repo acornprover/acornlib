@@ -42,3 +42,4 @@ Status:
 - `src/order_bounds.ac` now has `is_in_pair_iff` unfold and `is_in_pair_of_eq_left`/`is_in_pair_of_eq_right` equality intros.
 - `src/order_bounds.ac` now has `is_in_pair_self_imp_eq` and `not_is_in_pair_iff` membership lemmas.
 - `src/order_bounds.ac` now has `is_in_pair_iff_insert_singleton`, `is_in_pair_iff_union_singletons`, and `is_in_pair_self_iff_singleton` pointwise bridges from `is_in_pair` to `pred_insert`/`pred_union`/`is_singleton`.
+- `src/order_bounds.ac` now has direct corollaries `is_in_pair_lte_join` and `meet_lte_is_in_pair` bounding any pair member above the meet and below the join.
