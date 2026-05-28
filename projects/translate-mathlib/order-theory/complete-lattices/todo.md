@@ -5,7 +5,6 @@ Goal: support arbitrary suprema and infima, not just binary ones.
 - [ ] Revisit list/range complement and distributivity facts after decomposing the remaining bundled-set lattice proof obligations
 - [ ] Decide the minimal general `CompleteLattice` typeclass shape after more unbundled users exist
 - [ ] Add general `sup`, `inf`, `sSup`, and `sInf` APIs once the receiver design is stable
-- [ ] Prove the standard order characterizations of arbitrary suprema and infima for the general API
 - [ ] Add monotonicity lemmas for general `sSup` and `sInf`
 - [ ] Add complete lattice APIs for predicates and bundled instances where the typeclass receiver supports them
 - [ ] Support complete sublattices and closure operators
@@ -18,3 +17,5 @@ Status:
 - `src/set_lattice.ac` is closed to downstream-independent expansion. Do not add more general-purpose set-family, sequence-family, 4-ary-or-higher natural-family, or 4-ary-or-higher independent-product wrappers there.
 - Additions to `src/set_lattice.ac` should only be maintenance fixes or narrow support for a named downstream theorem that cannot use the existing indexed-family API.
 - A direct `Set[K]: PartialOrder` / `Lattice` instance still needs decomposed bundled-instance proof obligations for transitivity, antisymmetry, and meet/join semilattice wrappers. The verified unbundled API keeps set complete-lattice facts usable until those wrapper proofs are added.
+- `src/order_bounds.ac` now provides the generic predicate-based bounds API over any `PartialOrder`: `is_lower_bound`, `is_upper_bound`, `is_least`, `is_greatest`, `is_glb`, and `is_lub`, with projection lemmas, predicate-inclusion monotonicity, below-a-lower-bound / above-an-upper-bound closure, uniqueness of least/greatest/glb/lub, and least↔glb / greatest↔lub correspondences. This settles the standard order characterizations of arbitrary suprema and infima ahead of a bundled `CompleteLattice` receiver.
+- `src/order_bounds.ac` now also has set-inclusion monotonicity of `is_glb`/`is_lub` (enlarging a set lowers its infimum and raises its supremum), the explicit characterizations of the infimum as the `is_greatest` lower bound and the supremum as the `is_least` upper bound, and the binary-lattice instances: in a `MeetSemilattice`/`JoinSemilattice` the meet/join of two elements is the `is_glb`/`is_lub` of the two-element predicate `is_in_pair`.
