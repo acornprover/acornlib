@@ -45,3 +45,5 @@ Status:
 - `src/order_bounds.ac` now has direct corollaries `is_in_pair_lte_join` and `meet_lte_is_in_pair` bounding any pair member above the meet and below the join.
 - `src/order_bounds.ac` now has `is_glb_is_in_pair_eq_meet` / `is_lub_is_in_pair_eq_join` plus iff-form characterizations identifying the infimum/supremum of `is_in_pair(a, b)` with the meet/join.
 - `src/order_bounds.ac` now has `is_least_is_in_pair_of_lte` / `is_greatest_is_in_pair_of_lte` and corresponding `is_glb_is_in_pair_of_lte` / `is_lub_is_in_pair_of_lte` reducing pair bounds to endpoints when one element dominates the other.
+- `src/order_bounds.ac` now has symmetric `_right` variants `is_least_is_in_pair_of_lte_right`, `is_greatest_is_in_pair_of_lte_right`, `is_glb_is_in_pair_of_lte_right`, `is_lub_is_in_pair_of_lte_right` for the `b <= a` direction.
+- `src/order_bounds.ac` now has iff-form pair least/greatest characterizations against the lte hypothesis: `is_least_is_in_pair_left_iff_lte`, `is_greatest_is_in_pair_right_iff_lte`, `is_least_is_in_pair_right_iff_lte`, and `is_greatest_is_in_pair_left_iff_lte`.
