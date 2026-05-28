@@ -2,7 +2,7 @@
 
 Build out the `MetricSpace` typeclass in `src/metric_space.ac` with definitions and APIs analogous to Mathlib's `MetricSpace`.
 
-- [ ] Define product metric on `Pair[M, N]` and prove triangle inequality
+- [ ] Register `Pair[M: MetricSpace, N: MetricSpace]: MetricSpace` once the instance axiom-search overhead for `pair_distance` is reduced; helpers `pair_distance_self/_zero_imp_eq/_symmetric/_triangle` are in `pair_metric.ac`
 - [ ] Strengthen `diameter_le` to a pairwise statement (`forall x y in s, x.distance(y) <= b`) once the prover can handle the free-pred instantiation; current form characterizes via `is_set_upper_bound(distance_set(s), b)`
 - [ ] Define pseudometric typeclass and relate to `MetricSpace`
 - [ ] Add `Set[M].universal_set` and `Set[M].empty_set` instances as closed and other closed-set library lemmas (countable intersection, finite-union variants)
