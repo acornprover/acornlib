@@ -24,3 +24,4 @@ Status:
 - `src/order_bounds.ac` now has the binary union/meet/join compatibility: in a `MeetSemilattice`/`JoinSemilattice` the infimum/supremum of `pred_union(p, q)` is the meet/join of the individual infima/suprema.
 - `src/order_bounds.ac` now has insertion bounds via `pred_insert`: a lower/upper bound of `pred_insert(a, p)` splits into a bound of `a` plus a bound of `p`, and combining the two reconstitutes the insertion bound.
 - `src/order_bounds.ac` now has the insertion meet/join compatibility: in a `MeetSemilattice`/`JoinSemilattice` the infimum/supremum of `pred_insert(a, p)` is the meet/join of `a` with the infimum/supremum of `p`.
+- `src/order_bounds.ac` now has predicate-equality transport for lower/upper bounds and for `is_glb`/`is_lub`, so pointwise-equal predicates share their bound structure.
