@@ -1,11 +1,61 @@
+from finite_set import FiniteSet, finite_set_has_unique_list, fs_from_list
+from finite_set_sum import finite_set_sum, finite_set_sum_eq_list_sum
 from list import List
 from list.list_base import map
 from list.list_sum import sum
+from logic import true_implies
 from real import Real
 from add_ordered_group import add_le_add
 from nat import Nat
+from set import list_set, list_set_contains_eq
 
 numerals Nat
+numerals Real
+
+/// Specialized at-point list induction wrapper.  Keeping the target item as an
+/// explicit theorem parameter avoids repeatedly asking search to instantiate the
+/// list induction conclusion through a large Real-valued predicate.
+theorem list_induction_at[T](p: List[T] -> Bool, items: List[T]) {
+    p(List.nil[T]) and (forall(head: T, tail: List[T]) {
+        p(tail) implies p(List.cons(head, tail))
+    }) implies p(items)
+} by {
+    if p(List.nil[T]) and forall(head: T, tail: List[T]) { p(tail) implies p(List.cons(head, tail)) } {
+        List.induction(p)
+        p(items)
+    }
+}
+
+/// Every cons list contains its head.
+theorem cons_contains_head[T](head: T, tail: List[T]) {
+    List.cons(head, tail).contains(head)
+}
+
+/// Tail membership implies membership after consing a head.
+theorem cons_contains_tail[T](head: T, tail: List[T], x: T) {
+    tail.contains(x) implies List.cons(head, tail).contains(x)
+} by {
+    if tail.contains(x) {
+        if head = x {
+            List.cons(head, tail).contains(x) = true
+            List.cons(head, tail).contains(x)
+        } else {
+            List.cons(head, tail).contains(x) = tail.contains(x)
+            List.cons(head, tail).contains(x)
+        }
+    }
+}
+
+/// Instantiates a predicate known on all members of a list.
+theorem list_forall_contains_elim[T](items: List[T], p: T -> Bool, x: T) {
+    (forall(y: T) { items.contains(y) implies p(y) }) and items.contains(x) implies p(x)
+} by {
+    if (forall(y: T) { items.contains(y) implies p(y) }) and items.contains(x) {
+        (forall(y: T) { items.contains(y) implies p(y) }) = true
+        items.contains(x) implies p(x)
+        p(x)
+    }
+}
 
 /// True if `f` is pointwise less than or equal to `g` everywhere.
 define pointwise_le[T](f: T -> Real, g: T -> Real) -> Bool {
@@ -20,6 +70,18 @@ theorem pointwise_le_at[T](f: T -> Real, g: T -> Real, t: T) {
         pointwise_le(f, g) = forall(s: T) { f(s) <= g(s) }
         f(t) <= g(t)
     }
+}
+
+/// The mapped-sum monotonicity predicate, with function arguments first so it can
+/// be partially applied to a `List[T] -> Bool` induction predicate.
+define list_map_sum_le_pred[T](f: T -> Real, g: T -> Real, items: List[T]) -> Bool {
+    sum[Real](map(items, f)) <= sum[Real](map(items, g))
+}
+
+/// Unfolds the mapped-sum monotonicity predicate.
+theorem list_map_sum_le_pred_eq[T](items: List[T], f: T -> Real, g: T -> Real) {
+    list_map_sum_le_pred(f, g, items) =
+        (sum[Real](map(items, f)) <= sum[Real](map(items, g)))
 }
 
 /// Cons step for the pointwise sum inequality: if the inequality holds for the tail
@@ -41,25 +103,367 @@ theorem list_map_sum_le_cons[T](head: T, tail: List[T], f: T -> Real, g: T -> Re
     }
 }
 
-// TODO(probability-theory/discrete-probability): list_map_sum_le (pointwise monotonicity
-// of sum-over-mapped-list) and finite_set_sum_le.
-//
-// All the hard pieces now verify: pointwise_le / pointwise_le_at (extract f(t) <= g(t)
-// from the pointwise hypothesis by asserting the def-equality
-// `pointwise_le(f, g) = forall(s) { f(s) <= g(s) }` before instantiating), and the
-// inductive cons step `list_map_sum_le_cons`. With the bare predicate
-// `p(l) = sum(map(l, f)) <= sum(map(l, g))` inside `if pointwise_le(f, g)`, both the base
-// case `p(List.nil)` and the inductive `p(List.cons(head, tail))` verify.
-//
-// The ONLY remaining gap is the induction *closure*: deriving `p(list)` from the universal
-// `forall(l) { p(l) }` yielded by `List.induction` (or by auto-induction) times out
-// consistently at 5s, for a predicate whose body is a Real inequality. This is the same
-// failure documented before, and it is specific to List-structural induction over a Real
-// predicate -- the analogous Nat-induction closure in `real_series.partial_seq_lte` (which
-// instantiates `forall(n) { partial(a)(n) <= partial(b)(n) }`) verifies fine.
-//
-// Next try (ordinary library work, not a blocker): reindex `sum(map(l, f))` as a Nat
-// `partial` sum over `l.length` -- prove `sum(map(l, f)) = partial(function(i){ f(l.get(i)) }, l.length)`
-// by an *equality* list induction (equality closures verify, e.g. `map_sum_add`), then apply
-// `partial_seq_lte` to get the inequality through the Nat-induction path that does close.
-// This needs a list indexing/`get` lemma relating `map` to `partial`.
+/// Predicate form of the cons step for the pointwise sum inequality.
+theorem list_map_sum_le_pred_cons[T](head: T, tail: List[T], f: T -> Real, g: T -> Real) {
+    list_map_sum_le_pred(f, g, tail) and f(head) <= g(head)
+        implies list_map_sum_le_pred(f, g, List.cons(head, tail))
+} by {
+    if list_map_sum_le_pred(f, g, tail) and f(head) <= g(head) {
+        list_map_sum_le_pred_eq[T](tail, f, g)
+        list_map_sum_le_pred_eq[T](List.cons(head, tail), f, g)
+        sum[Real](map(tail, f)) <= sum[Real](map(tail, g))
+        list_map_sum_le_cons[T](head, tail, f, g)
+        sum[Real](map(List.cons(head, tail), f)) <= sum[Real](map(List.cons(head, tail), g))
+        list_map_sum_le_pred(f, g, List.cons(head, tail))
+    }
+}
+
+/// A pointwise inequality on a list implies inequality of mapped sums.
+theorem list_map_sum_le[T](items: List[T], f: T -> Real, g: T -> Real) {
+    pointwise_le(f, g) implies sum[Real](map(items, f)) <= sum[Real](map(items, g))
+} by {
+    if pointwise_le(f, g) {
+        let p: List[T] -> Bool = list_map_sum_le_pred(f, g)
+        list_map_sum_le_pred_eq[T](List.nil[T], f, g)
+        map[T, Real](List.nil[T], f) = List.nil[Real]
+        map[T, Real](List.nil[T], g) = List.nil[Real]
+        sum[Real](List.nil[Real]) = 0
+        sum[Real](map(List.nil[T], f)) = 0
+        sum[Real](map(List.nil[T], g)) = 0
+        0 <= 0
+        list_map_sum_le_pred(f, g, List.nil[T])
+        p(List.nil[T])
+        forall(head: T, tail: List[T]) {
+            if p(tail) {
+                list_map_sum_le_pred(f, g, tail)
+                pointwise_le_at[T](f, g, head)
+                f(head) <= g(head)
+                list_map_sum_le_pred_cons[T](head, tail, f, g)
+                list_map_sum_le_pred(f, g, List.cons(head, tail))
+                p(List.cons(head, tail))
+            }
+        }
+        forall(head: T, tail: List[T]) { p(tail) implies p(List.cons(head, tail)) }
+        list_induction_at[T](p, items)
+        p(items)
+        list_map_sum_le_pred(f, g, items)
+        list_map_sum_le_pred_eq[T](items, f, g)
+        sum[Real](map(items, f)) <= sum[Real](map(items, g))
+    }
+}
+
+/// Membership-restricted mapped-sum monotonicity predicate.
+define list_map_sum_le_of_contains_pred[T](f: T -> Real, g: T -> Real, items: List[T]) -> Bool {
+    (forall(x: T) { items.contains(x) implies f(x) <= g(x) }) implies
+        list_map_sum_le_pred(f, g, items)
+}
+
+/// Unfolds the membership-restricted mapped-sum monotonicity predicate.
+theorem list_map_sum_le_of_contains_pred_eq[T](items: List[T], f: T -> Real, g: T -> Real) {
+    list_map_sum_le_of_contains_pred(f, g, items) =
+        ((forall(x: T) { items.contains(x) implies f(x) <= g(x) }) implies
+            list_map_sum_le_pred(f, g, items))
+}
+
+/// Empty-list instance of membership-restricted mapped-sum monotonicity.
+theorem list_map_sum_le_of_contains_nil[T](f: T -> Real, g: T -> Real) {
+    list_map_sum_le_of_contains_pred(f, g, List.nil[T])
+} by {
+    list_map_sum_le_of_contains_pred_eq[T](List.nil[T], f, g)
+    if forall(x: T) { List.nil[T].contains(x) implies f(x) <= g(x) } {
+        list_map_sum_le_pred_eq[T](List.nil[T], f, g)
+        map[T, Real](List.nil[T], f) = List.nil[Real]
+        map[T, Real](List.nil[T], g) = List.nil[Real]
+        sum[Real](List.nil[Real]) = 0
+        sum[Real](map(List.nil[T], f)) = 0
+        sum[Real](map(List.nil[T], g)) = 0
+        0 <= 0
+        list_map_sum_le_pred(f, g, List.nil[T])
+    }
+}
+
+/// Cons step for membership-restricted mapped-sum monotonicity.
+theorem list_map_sum_le_of_contains_step[T](head: T, tail: List[T], f: T -> Real, g: T -> Real) {
+    list_map_sum_le_of_contains_pred(f, g, tail)
+        implies list_map_sum_le_of_contains_pred(f, g, List.cons(head, tail))
+} by {
+    if list_map_sum_le_of_contains_pred(f, g, tail) {
+        list_map_sum_le_of_contains_pred_eq[T](List.cons(head, tail), f, g)
+        if forall(x: T) { List.cons(head, tail).contains(x) implies f(x) <= g(x) } {
+            cons_contains_head[T](head, tail)
+            list_forall_contains_elim[T](List.cons(head, tail), function(x: T) { f(x) <= g(x) }, head)
+            f(head) <= g(head)
+            let tail_h: Bool = forall(x: T) { tail.contains(x) implies f(x) <= g(x) }
+            tail_h = forall(x: T) { tail.contains(x) implies f(x) <= g(x) }
+            forall(x: T) {
+                if tail.contains(x) {
+                    cons_contains_tail[T](head, tail, x)
+                    list_forall_contains_elim[T](List.cons(head, tail), function(y: T) { f(y) <= g(y) }, x)
+                    f(x) <= g(x)
+                }
+            }
+            tail_h
+            let tail_q: Bool = list_map_sum_le_pred(f, g, tail)
+            tail_h = true
+            list_map_sum_le_of_contains_pred_eq[T](tail, f, g)
+            list_map_sum_le_of_contains_pred(f, g, tail) = (tail_h implies tail_q)
+            (tail_h implies tail_q) = (true implies tail_q)
+            true_implies(tail_q)
+            (true implies tail_q) = tail_q
+            tail_q
+            list_map_sum_le_pred(f, g, tail)
+            list_map_sum_le_pred_cons[T](head, tail, f, g)
+            list_map_sum_le_pred(f, g, List.cons(head, tail))
+        }
+        list_map_sum_le_of_contains_pred(f, g, List.cons(head, tail))
+    }
+}
+
+/// Membership-restricted pointwise inequality on a list implies inequality of mapped sums.
+theorem list_map_sum_le_of_contains[T](items: List[T], f: T -> Real, g: T -> Real) {
+    forall(x: T) { items.contains(x) implies f(x) <= g(x) }
+        implies sum[Real](map(items, f)) <= sum[Real](map(items, g))
+} by {
+    let p: List[T] -> Bool = list_map_sum_le_of_contains_pred(f, g)
+    list_map_sum_le_of_contains_nil[T](f, g)
+    p(List.nil[T])
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            list_map_sum_le_of_contains_pred(f, g, tail)
+            list_map_sum_le_of_contains_step[T](head, tail, f, g)
+            list_map_sum_le_of_contains_pred(f, g, List.cons(head, tail))
+            p(List.cons(head, tail))
+        }
+    }
+    forall(head: T, tail: List[T]) { p(tail) implies p(List.cons(head, tail)) }
+    list_induction_at[T](p, items)
+    p(items)
+    list_map_sum_le_of_contains_pred(f, g, items)
+    list_map_sum_le_of_contains_pred_eq[T](items, f, g)
+    if forall(x: T) { items.contains(x) implies f(x) <= g(x) } {
+        let h_items: Bool = forall(x: T) { items.contains(x) implies f(x) <= g(x) }
+        h_items = forall(x: T) { items.contains(x) implies f(x) <= g(x) }
+        h_items
+        let q_items: Bool = list_map_sum_le_pred(f, g, items)
+        h_items = true
+        list_map_sum_le_of_contains_pred(f, g, items) = (h_items implies q_items)
+        (h_items implies q_items) = (true implies q_items)
+        true_implies(q_items)
+        (true implies q_items) = q_items
+        q_items
+        list_map_sum_le_pred(f, g, items)
+        list_map_sum_le_pred_eq[T](items, f, g)
+        sum[Real](map(items, f)) <= sum[Real](map(items, g))
+    }
+}
+
+/// Nonnegativity cons step for a mapped real list sum.
+theorem list_map_sum_nonneg_cons[T](head: T, tail: List[T], f: T -> Real) {
+    0 <= sum[Real](map(tail, f)) and 0 <= f(head)
+        implies 0 <= sum[Real](map(List.cons(head, tail), f))
+} by {
+    if 0 <= sum[Real](map(tail, f)) and 0 <= f(head) {
+        map[T, Real](List.cons(head, tail), f) = List.cons(f(head), map(tail, f))
+        sum[Real](List.cons(f(head), map(tail, f))) = f(head) + sum[Real](map(tail, f))
+        sum[Real](map(List.cons(head, tail), f)) = f(head) + sum[Real](map(tail, f))
+        add_le_add[Real](0, f(head), 0, sum[Real](map(tail, f)))
+        0 + 0 <= f(head) + sum[Real](map(tail, f))
+        0 + 0 = 0
+        0 <= f(head) + sum[Real](map(tail, f))
+        0 <= sum[Real](map(List.cons(head, tail), f))
+    }
+}
+
+/// Mapped-sum nonnegativity predicate.
+define list_map_sum_nonneg_pred[T](f: T -> Real, items: List[T]) -> Bool {
+    (forall(x: T) { items.contains(x) implies 0 <= f(x) }) implies
+        0 <= sum[Real](map(items, f))
+}
+
+/// Unfolds the mapped-sum nonnegativity predicate.
+theorem list_map_sum_nonneg_pred_eq[T](items: List[T], f: T -> Real) {
+    list_map_sum_nonneg_pred(f, items) =
+        ((forall(x: T) { items.contains(x) implies 0 <= f(x) }) implies
+            0 <= sum[Real](map(items, f)))
+}
+
+/// Empty-list instance of mapped-sum nonnegativity.
+theorem list_map_sum_nonneg_nil[T](f: T -> Real) {
+    list_map_sum_nonneg_pred(f, List.nil[T])
+} by {
+    list_map_sum_nonneg_pred_eq[T](List.nil[T], f)
+    if forall(x: T) { List.nil[T].contains(x) implies 0 <= f(x) } {
+        map[T, Real](List.nil[T], f) = List.nil[Real]
+        sum[Real](List.nil[Real]) = 0
+        sum[Real](map(List.nil[T], f)) = 0
+        0 <= 0
+        0 <= sum[Real](map(List.nil[T], f))
+    }
+}
+
+/// Cons step for mapped-sum nonnegativity.
+theorem list_map_sum_nonneg_step[T](head: T, tail: List[T], f: T -> Real) {
+    list_map_sum_nonneg_pred(f, tail)
+        implies list_map_sum_nonneg_pred(f, List.cons(head, tail))
+} by {
+    if list_map_sum_nonneg_pred(f, tail) {
+        list_map_sum_nonneg_pred_eq[T](List.cons(head, tail), f)
+        if forall(x: T) { List.cons(head, tail).contains(x) implies 0 <= f(x) } {
+            cons_contains_head[T](head, tail)
+            list_forall_contains_elim[T](List.cons(head, tail), function(x: T) { 0 <= f(x) }, head)
+            0 <= f(head)
+            let tail_h: Bool = forall(x: T) { tail.contains(x) implies 0 <= f(x) }
+            tail_h = forall(x: T) { tail.contains(x) implies 0 <= f(x) }
+            forall(x: T) {
+                if tail.contains(x) {
+                    cons_contains_tail[T](head, tail, x)
+                    list_forall_contains_elim[T](List.cons(head, tail), function(y: T) { 0 <= f(y) }, x)
+                    0 <= f(x)
+                }
+            }
+            tail_h
+            let tail_q: Bool = 0 <= sum[Real](map(tail, f))
+            tail_h = true
+            list_map_sum_nonneg_pred_eq[T](tail, f)
+            list_map_sum_nonneg_pred(f, tail) = (tail_h implies tail_q)
+            (tail_h implies tail_q) = (true implies tail_q)
+            true_implies(tail_q)
+            (true implies tail_q) = tail_q
+            tail_q
+            0 <= sum[Real](map(tail, f))
+            list_map_sum_nonneg_cons[T](head, tail, f)
+            0 <= sum[Real](map(List.cons(head, tail), f))
+        }
+        list_map_sum_nonneg_pred(f, List.cons(head, tail))
+    }
+}
+
+/// If all mapped values on a list are nonnegative, the mapped sum is nonnegative.
+theorem list_map_sum_nonneg[T](items: List[T], f: T -> Real) {
+    forall(x: T) { items.contains(x) implies 0 <= f(x) }
+        implies 0 <= sum[Real](map(items, f))
+} by {
+    let p: List[T] -> Bool = list_map_sum_nonneg_pred(f)
+    list_map_sum_nonneg_nil[T](f)
+    p(List.nil[T])
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            list_map_sum_nonneg_pred(f, tail)
+            list_map_sum_nonneg_step[T](head, tail, f)
+            list_map_sum_nonneg_pred(f, List.cons(head, tail))
+            p(List.cons(head, tail))
+        }
+    }
+    forall(head: T, tail: List[T]) { p(tail) implies p(List.cons(head, tail)) }
+    list_induction_at[T](p, items)
+    p(items)
+    list_map_sum_nonneg_pred(f, items)
+    list_map_sum_nonneg_pred_eq[T](items, f)
+    if forall(x: T) { items.contains(x) implies 0 <= f(x) } {
+        let h_items: Bool = forall(x: T) { items.contains(x) implies 0 <= f(x) }
+        h_items = forall(x: T) { items.contains(x) implies 0 <= f(x) }
+        h_items
+        let q_items: Bool = 0 <= sum[Real](map(items, f))
+        h_items = true
+        list_map_sum_nonneg_pred(f, items) = (h_items implies q_items)
+        (h_items implies q_items) = (true implies q_items)
+        true_implies(q_items)
+        (true implies q_items) = q_items
+        q_items
+        0 <= sum[Real](map(items, f))
+    }
+}
+
+/// A list and the finite set it generates have the same membership predicate.
+theorem fs_from_list_contains_eq[T](items: List[T], x: T) {
+    fs_from_list(items).contains(x) = items.contains(x)
+} by {
+    fs_from_list(items).underlying_set = list_set(items)
+    fs_from_list(items).contains(x) = fs_from_list(items).underlying_set.contains(x)
+    list_set_contains_eq(items, x)
+    list_set(items).contains(x) = items.contains(x)
+    fs_from_list(items).contains(x) = items.contains(x)
+}
+
+/// A chosen list representation of a finite set has the same membership predicate.
+theorem finite_set_list_contains_eq[T](s: FiniteSet[T], items: List[T], x: T) {
+    fs_from_list(items) = s implies items.contains(x) = s.contains(x)
+} by {
+    if fs_from_list(items) = s {
+        fs_from_list_contains_eq[T](items, x)
+        fs_from_list(items).contains(x) = items.contains(x)
+        fs_from_list(items).contains(x) = s.contains(x)
+        items.contains(x) = s.contains(x)
+    }
+}
+
+/// Pointwise monotonicity of finite-set sums.
+theorem finite_set_sum_le[T](s: FiniteSet[T], f: T -> Real, g: T -> Real) {
+    pointwise_le(f, g) implies finite_set_sum(s, f) <= finite_set_sum(s, g)
+} by {
+    if pointwise_le(f, g) {
+        finite_set_has_unique_list(s)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique
+        }
+        finite_set_sum_eq_list_sum[T, Real](items, f)
+        finite_set_sum_eq_list_sum[T, Real](items, g)
+        finite_set_sum(s, f) = sum[Real](map(items, f))
+        finite_set_sum(s, g) = sum[Real](map(items, g))
+        list_map_sum_le[T](items, f, g)
+        sum[Real](map(items, f)) <= sum[Real](map(items, g))
+        finite_set_sum(s, f) <= finite_set_sum(s, g)
+    }
+}
+
+/// Membership-restricted monotonicity of finite-set sums.
+theorem finite_set_sum_le_of_contains[T](s: FiniteSet[T], f: T -> Real, g: T -> Real) {
+    forall(x: T) { s.contains(x) implies f(x) <= g(x) }
+        implies finite_set_sum(s, f) <= finite_set_sum(s, g)
+} by {
+    if forall(x: T) { s.contains(x) implies f(x) <= g(x) } {
+        finite_set_has_unique_list(s)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique
+        }
+        finite_set_sum_eq_list_sum[T, Real](items, f)
+        finite_set_sum_eq_list_sum[T, Real](items, g)
+        finite_set_sum(s, f) = sum[Real](map(items, f))
+        finite_set_sum(s, g) = sum[Real](map(items, g))
+        forall(x: T) {
+            if items.contains(x) {
+                finite_set_list_contains_eq[T](s, items, x)
+                s.contains(x)
+                f(x) <= g(x)
+            }
+        }
+        list_map_sum_le_of_contains[T](items, f, g)
+        sum[Real](map(items, f)) <= sum[Real](map(items, g))
+        finite_set_sum(s, f) <= finite_set_sum(s, g)
+    }
+}
+
+/// Nonnegativity of finite-set sums.
+theorem finite_set_sum_nonneg[T](s: FiniteSet[T], f: T -> Real) {
+    forall(x: T) { s.contains(x) implies 0 <= f(x) }
+        implies 0 <= finite_set_sum(s, f)
+} by {
+    if forall(x: T) { s.contains(x) implies 0 <= f(x) } {
+        finite_set_has_unique_list(s)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique
+        }
+        finite_set_sum_eq_list_sum[T, Real](items, f)
+        finite_set_sum(s, f) = sum[Real](map(items, f))
+        forall(x: T) {
+            if items.contains(x) {
+                finite_set_list_contains_eq[T](s, items, x)
+                s.contains(x)
+                0 <= f(x)
+            }
+        }
+        list_map_sum_nonneg[T](items, f)
+        0 <= sum[Real](map(items, f))
+        0 <= finite_set_sum(s, f)
+    }
+}
