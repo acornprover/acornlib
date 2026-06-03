@@ -8,8 +8,8 @@ batch_size=20
 
 git rev-parse --git-dir >/dev/null 2>&1
 
-printf 'Fetching and pruning %s...\n' "$remote"
-git fetch --prune "$remote"
+printf 'Fetching and pruning heads from %s...\n' "$remote"
+git fetch --prune "$remote" "+refs/heads/*:refs/remotes/${remote}/*"
 
 base_ref="refs/remotes/${remote}/${base_branch}"
 base_oid="$(git rev-parse "$base_ref")"
@@ -85,8 +85,24 @@ for ((start = 0; start < total; start += batch_size)); do
                 for ((i = start; i < end; i++)); do
                     branch="${branches[$i]}"
                     printf 'Deleting %s/%s...\n' "$remote" "$branch"
-                    git push "$remote" --delete "$branch"
-                    git update-ref -d "refs/remotes/${remote}/${branch}" || true
+                    if git push "$remote" --delete "$branch"; then
+                        git update-ref -d "refs/remotes/${remote}/${branch}" || true
+                    else
+                        push_status="$?"
+                        if git ls-remote --exit-code "$remote" "refs/heads/${branch}" >/dev/null; then
+                            printf 'Failed to delete %s/%s.\n' "$remote" "$branch" >&2
+                            exit "$push_status"
+                        else
+                            ls_remote_status="$?"
+                            if [[ "$ls_remote_status" -eq 2 ]]; then
+                                printf '%s/%s is already absent; removing local tracking ref.\n' "$remote" "$branch"
+                                git update-ref -d "refs/remotes/${remote}/${branch}" || true
+                            else
+                                printf 'Failed to confirm whether %s/%s still exists.\n' "$remote" "$branch" >&2
+                                exit "$ls_remote_status"
+                            fi
+                        fi
+                    fi
                 done
                 break
                 ;;
