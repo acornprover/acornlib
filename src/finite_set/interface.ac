@@ -1,6 +1,11 @@
 from nat import Nat
 from list import List
-from list.list_sum import pigeonhole_map_into_list
+from list.list_base import map
+from list.list_sum import pigeonhole_map_into_list, sum
+from add_comm_monoid import AddCommMonoid
+from add_semigroup import add_fn
+from semigroup import mul_fn
+from semiring import Semiring
 from functions import Inhabited, inverse_fn, is_bijection_fn, is_injective_fn,
     bijection_fn_is_injective
 from logic import exists_intro
@@ -440,4 +445,84 @@ theorem finite_set_inclusion_exclusion[T](s: FiniteSet[T], t: FiniteSet[T],
     n_s: Nat, n_t: Nat, n_inter: Nat) {
     s.cardinality_is(n_s) and t.cardinality_is(n_t) and fs_intersection(s, t).cardinality_is(n_inter)
     implies fs_union(s, t).cardinality_is(n_s + n_t - n_inter)
+}
+
+/// Insert a fixed element into a finite subset.
+/// This is the map used for the containing half of the subset enumerator.
+define insert_into_subset[A](x: A, s: FiniteSet[A]) -> FiniteSet[A] {
+    s.insert(x)
+}
+
+/// The list of finite subsets of the finite set represented by `items`.
+/// Each recursive step keeps each old subset and also inserts the new head.
+define list_subsets[A](items: List[A]) -> List[FiniteSet[A]] {
+    match items {
+        List.nil[A] {
+            List.singleton[FiniteSet[A]](FiniteSet.empty[A])
+        }
+        List.cons[A](head, tail) {
+            list_subsets[A](tail) + map[FiniteSet[A], FiniteSet[A]](
+                list_subsets[A](tail),
+                insert_into_subset[A](head)
+            )
+        }
+    }
+}
+
+/// The finite powerset represented by the subset list associated to `items`.
+define finite_powerset_from_list[A](items: List[A]) -> FiniteSet[FiniteSet[A]] {
+    fs_from_list[FiniteSet[A]](list_subsets[A](items))
+}
+
+/// The list-backed finite powerset contains exactly the finite subsets of `FiniteSet.from_list(items)`.
+theorem finite_powerset_from_list_exact[A](items: List[A]) {
+    forall(s: FiniteSet[A]) {
+        finite_powerset_from_list[A](items).contains(s) = s.subset_eq(FiniteSet.from_list[A](items))
+    }
+}
+
+/// A list-backed finite powerset over a duplicate-free base has cardinality `2 ^ items.length`.
+theorem finite_powerset_from_list_cardinality[A](items: List[A]) {
+    items.is_unique implies finite_powerset_from_list[A](items).cardinality_is(Nat.2.pow(items.length))
+}
+
+/// The sum of `f` over the elements of a finite set.
+/// Defined as the sum of `f` mapped over any unique-list representation of the set;
+/// well-defined because two unique lists with the same membership give the same mapped sum.
+let finite_set_sum[T, A: AddCommMonoid](s: FiniteSet[T], f: T -> A) -> result: A satisfy {
+    exists(items: List[T]) {
+        fs_from_list(items) = s and items.is_unique and sum[A](map(items, f)) = result
+    }
+}
+
+/// `finite_set_sum` is computed as the sum of `f` over any unique-list representation.
+theorem finite_set_sum_eq_list_sum[T, A: AddCommMonoid](items: List[T], f: T -> A) {
+    items.is_unique implies finite_set_sum(fs_from_list(items), f) = sum[A](map(items, f))
+}
+
+/// The sum over the empty finite set is zero.
+theorem finite_set_sum_empty[T, A: AddCommMonoid](f: T -> A) {
+    finite_set_sum(fs_empty[T](Set[T].empty_set), f) = A.0
+}
+
+/// Inserting an element not already in the set adds its value to the sum.
+theorem finite_set_sum_insert[T, A: AddCommMonoid](s: FiniteSet[T], item: T, f: T -> A) {
+    not s.contains(item) implies finite_set_sum(fs_insert(s, item), f) = f(item) + finite_set_sum(s, f)
+}
+
+/// Sum is additive in the function argument.
+theorem finite_set_sum_add[T, A: AddCommMonoid](s: FiniteSet[T], f: T -> A, g: T -> A) {
+    finite_set_sum(s, f) + finite_set_sum(s, g) = finite_set_sum(s, add_fn(f, g))
+}
+
+/// The sum over a disjoint union splits as the sum over each part.
+theorem finite_set_sum_disjoint_union[T, A: AddCommMonoid](a: FiniteSet[T], b: FiniteSet[T], f: T -> A) {
+    a.is_disjoint(b) implies
+        finite_set_sum(fs_union(a, b), f) = finite_set_sum(a, f) + finite_set_sum(b, f)
+}
+
+/// Scalar multiplication distributes over a finite sum:
+/// `c * finite_set_sum(s, f) = finite_set_sum(s, x -> c * f(x))`.
+theorem finite_set_sum_scalar_mul[T, S: Semiring](c: S, s: FiniteSet[T], f: T -> S) {
+    c * finite_set_sum(s, f) = finite_set_sum(s, mul_fn(c, f))
 }
