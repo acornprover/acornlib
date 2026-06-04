@@ -1,0 +1,486 @@
+from functions import function_eq_transport_predicate_rev, function_extensionality, identity_fn
+from list import List
+from logic import not_forall_imp_exists_not
+from nat.nat_base import Nat, alt_induction
+from pair import Pair, pair_new_first, pair_new_second
+from polynomial import coeff_eval, coeff_tail
+from real.continuity_monomial import monomial_real_fn
+from real.derivative_basic import differentiable_at, has_derivative_at
+from real.derivative_polynomial_terms import mixed_monomial_terms_sum_deriv,
+    mixed_monomial_terms_sum_fn, mixed_monomial_terms_sum_has_derivative_at,
+    positive_monomial_fn_from_data, positive_monomial_terms_sum_fn
+from real.real_ring import Real, mul_assoc, mul_distrib_right, mul_one_right,
+    mul_zero_right, real_mul_comm
+from semiring import Semiring
+
+/// Horner evaluation with zero coefficients is zero at a zero bound.
+lemma coeff_eval_zero[R: Semiring](c: Nat -> R, x: R) {
+    coeff_eval(c, x, Nat.0) = R.0
+} by {
+}
+
+/// Horner evaluation at a successor bound exposes the constant term and tail.
+lemma coeff_eval_suc[R: Semiring](c: Nat -> R, x: R, n: Nat) {
+    coeff_eval(c, x, n.suc) = c(Nat.0) + x * coeff_eval(coeff_tail(c), x, n)
+} by {
+}
+
+lemma coeff_eval_nat_induction_at(p: Nat -> Bool, n: Nat) {
+    p(Nat.0) and forall(k: Nat) { p(k) implies p(k.suc) } implies p(n)
+} by {
+    alt_induction(p)
+    function[T0](x0: T0) { identity_fn[T0](x0) = x0 }[Nat](n)
+    p(Nat.0)
+    if not p(identity_fn[Nat](n)) {
+        (forall(k: Nat) { not p(k) or p(k.suc) }) = true
+        function(k: Nat) { p(k) }(identity_fn[Nat](n))
+        false
+    }
+    p(identity_fn[Nat](n))
+    p(n)
+}
+
+/// Positive-degree monomial coefficient data for a shifted coefficient tail.
+/// The first emitted pair has exponent predecessor `degree_pred_start`.
+define coeff_positive_monomial_data_from(
+    c: Nat -> Real, degree_pred_start: Nat, n: Nat
+) -> List[Pair[Real, Nat]] {
+    match n {
+        Nat.zero {
+            List.nil[Pair[Real, Nat]]
+        }
+        Nat.suc(pred) {
+            List.cons(
+                Pair.new(c(Nat.0), degree_pred_start),
+                coeff_positive_monomial_data_from(coeff_tail(c), degree_pred_start.suc, pred)
+            )
+        }
+    }
+}
+
+/// For coefficients `c`, the first `n` positive-degree terms:
+/// `(c(1), 0)`, `(c(2), 1)`, ..., `(c(n), n-1)`.
+define coeff_positive_monomial_data(c: Nat -> Real, n: Nat) -> List[Pair[Real, Nat]] {
+    coeff_positive_monomial_data_from(coeff_tail(c), Nat.0, n)
+}
+
+/// The explicit mixed monomial function represented by the first `n.suc` coefficients.
+define coeff_mixed_monomial_sum_fn(c: Nat -> Real, n: Nat, x: Real) -> Real {
+    mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n), x)
+}
+
+lemma coeff_positive_monomial_data_from_zero(c: Nat -> Real, start: Nat) {
+    coeff_positive_monomial_data_from(c, start, Nat.0) = List.nil[Pair[Real, Nat]]
+} by {
+    coeff_positive_monomial_data_from(c, start, Nat.zero) = List.nil[Pair[Real, Nat]]
+    Nat.0 = Nat.zero
+}
+
+lemma coeff_positive_monomial_data_from_suc(c: Nat -> Real, start: Nat, n: Nat) {
+    coeff_positive_monomial_data_from(c, start, n.suc) =
+        List.cons(Pair.new(c(Nat.0), start), coeff_positive_monomial_data_from(coeff_tail(c), start.suc, n))
+} by {
+    coeff_positive_monomial_data_from(c, start, Nat.suc(n)) =
+        List.cons(Pair.new(c(Nat.0), start), coeff_positive_monomial_data_from(coeff_tail(c), start.suc, n))
+}
+
+lemma positive_monomial_terms_sum_fn_cons_pair(
+    coefficient: Real, degree_pred: Nat, tail: List[Pair[Real, Nat]], x: Real
+) {
+    positive_monomial_terms_sum_fn(List.cons(Pair.new(coefficient, degree_pred), tail), x) =
+        coefficient * x.pow(degree_pred.suc) + positive_monomial_terms_sum_fn(tail, x)
+} by {
+    let head = Pair.new(coefficient, degree_pred)
+    pair_new_first(coefficient, degree_pred)
+    head.first = coefficient
+    pair_new_second(coefficient, degree_pred)
+    head.second = degree_pred
+    positive_monomial_terms_sum_fn(List.cons(head, tail), x) =
+        positive_monomial_fn_from_data(head, x) + positive_monomial_terms_sum_fn(tail, x)
+    positive_monomial_fn_from_data(head, x) = monomial_real_fn(head.first, head.second.suc, x)
+    monomial_real_fn(head.first, head.second.suc, x) = head.first * x.pow(head.second.suc)
+    head.first * x.pow(head.second.suc) = coefficient * x.pow(degree_pred.suc)
+    positive_monomial_fn_from_data(head, x) = coefficient * x.pow(degree_pred.suc)
+}
+
+lemma real_pow_zero(x: Real) {
+    x.pow(Nat.0) = Real.1
+} by {
+}
+
+lemma real_pow_one_from_zero_suc(x: Real) {
+    x.pow(Nat.0.suc) = x
+} by {
+    x.pow(Nat.0.suc) = x * x.pow(Nat.0)
+    real_pow_zero(x)
+    x.pow(Nat.0) = Real.1
+    x * x.pow(Nat.0) = x * Real.1
+    mul_one_right(x)
+    x * Real.1 = x
+}
+
+lemma real_pow_suc_mul_tail(x: Real, n: Nat, value: Real) {
+    x.pow(n.suc) * (x * value) = x.pow(n.suc.suc) * value
+} by {
+    x.pow(n.suc.suc) = x * x.pow(n.suc)
+    mul_assoc(x.pow(n.suc), x, value)
+    x.pow(n.suc) * (x * value) = x.pow(n.suc) * x * value
+    real_mul_comm(x.pow(n.suc), x)
+    x.pow(n.suc) * x = x * x.pow(n.suc)
+    x.pow(n.suc) * x * value = x * x.pow(n.suc) * value
+    x.pow(n.suc) * (x * value) = x.pow(n.suc.suc) * value
+}
+
+lemma forall3_apply[A, B, C](p: (A, B, C) -> Bool, a: A, b: B, c: C) {
+    (forall(x: A, y: B, z: C) { p(x, y, z) }) implies p(a, b, c)
+} by {
+    if forall(x: A, y: B, z: C) { p(x, y, z) } {
+        p(a, b, c)
+    }
+}
+
+lemma coeff_eval_pow_mul_eq_positive_monomial_sum_from(
+    c: Nat -> Real, degree_pred_start: Nat, n: Nat, x: Real
+) {
+    x.pow(degree_pred_start.suc) * coeff_eval(c, x, n) =
+        positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(c, degree_pred_start, n), x)
+} by {
+    define scaled_at(d: Nat -> Real, start: Nat, k: Nat, y: Real) -> Bool {
+        y.pow(start.suc) * coeff_eval(d, y, k) =
+            positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(d, start, k), y)
+    }
+
+    define statement(k: Nat) -> Bool {
+        forall(d: Nat -> Real, start: Nat, y: Real) {
+            scaled_at(d, start, k, y)
+        }
+    }
+
+    forall(d: Nat -> Real, start: Nat, y: Real) {
+        coeff_eval_zero[Real](d, y)
+        coeff_eval(d, y, Nat.0) = Real.0
+        coeff_positive_monomial_data_from_zero(d, start)
+        coeff_positive_monomial_data_from(d, start, Nat.0) = List.nil[Pair[Real, Nat]]
+        positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(d, start, Nat.0), y) =
+            positive_monomial_terms_sum_fn(List.nil[Pair[Real, Nat]], y)
+        positive_monomial_terms_sum_fn(List.nil[Pair[Real, Nat]], y) = Real.0
+        y.pow(start.suc) * coeff_eval(d, y, Nat.0) = y.pow(start.suc) * Real.0
+        mul_zero_right(y.pow(start.suc))
+        y.pow(start.suc) * Real.0 = Real.0
+        y.pow(start.suc) * coeff_eval(d, y, Nat.0) =
+            positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(d, start, Nat.0), y)
+        scaled_at(d, start, Nat.0, y)
+    }
+    if not statement(Nat.0) {
+        statement(Nat.0) = forall(d: Nat -> Real, start: Nat, y: Real) {
+            scaled_at(d, start, Nat.0, y)
+        }
+        not_forall_imp_exists_not[Nat -> Real](function(d: Nat -> Real) {
+            forall(start: Nat, y: Real) {
+                scaled_at(d, start, Nat.0, y)
+            }
+        })
+        exists(bad_d: Nat -> Real) {
+            not forall(start: Nat, y: Real) {
+                scaled_at(bad_d, start, Nat.0, y)
+            }
+        }
+        let bad_d: Nat -> Real satisfy {
+            not forall(start: Nat, y: Real) {
+                scaled_at(bad_d, start, Nat.0, y)
+            }
+        }
+        not_forall_imp_exists_not[Nat](function(start: Nat) {
+            forall(y: Real) {
+                scaled_at(bad_d, start, Nat.0, y)
+            }
+        })
+        exists(bad_start: Nat) {
+            not forall(y: Real) {
+                scaled_at(bad_d, bad_start, Nat.0, y)
+            }
+        }
+        let bad_start: Nat satisfy {
+            not forall(y: Real) {
+                scaled_at(bad_d, bad_start, Nat.0, y)
+            }
+        }
+        not_forall_imp_exists_not[Real](function(y: Real) {
+            scaled_at(bad_d, bad_start, Nat.0, y)
+        })
+        exists(bad_y: Real) {
+            not scaled_at(bad_d, bad_start, Nat.0, bad_y)
+        }
+        let bad_y: Real satisfy {
+            not scaled_at(bad_d, bad_start, Nat.0, bad_y)
+        }
+        scaled_at(bad_d, bad_start, Nat.0, bad_y)
+        false
+    }
+    statement(Nat.0)
+
+    forall(k: Nat) {
+        if statement(k) {
+            forall(d: Nat -> Real, start: Nat, y: Real) {
+                let tail = coeff_tail(d)
+                statement(k) = forall(e: Nat -> Real, s: Nat, z: Real) {
+                    scaled_at(e, s, k, z)
+                }
+                forall3_apply[Nat -> Real, Nat, Real](
+                    function(e: Nat -> Real, s: Nat, z: Real) {
+                        scaled_at(e, s, k, z)
+                    },
+                    tail,
+                    start.suc,
+                    y
+                )
+                scaled_at(tail, start.suc, k, y)
+                y.pow(start.suc.suc) * coeff_eval(tail, y, k) =
+                    positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(tail, start.suc, k), y)
+
+                coeff_eval_suc[Real](d, y, k)
+                coeff_eval(d, y, k.suc) = d(Nat.0) + y * coeff_eval(coeff_tail(d), y, k)
+                coeff_eval(d, y, k.suc) = d(Nat.0) + y * coeff_eval(tail, y, k)
+                coeff_positive_monomial_data_from_suc(d, start, k)
+                coeff_positive_monomial_data_from(d, start, k.suc) =
+                    List.cons(Pair.new(d(Nat.0), start), coeff_positive_monomial_data_from(tail, start.suc, k))
+                positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(d, start, k.suc), y) =
+                    positive_monomial_terms_sum_fn(
+                        List.cons(Pair.new(d(Nat.0), start), coeff_positive_monomial_data_from(tail, start.suc, k)),
+                        y
+                    )
+                positive_monomial_terms_sum_fn_cons_pair(
+                    d(Nat.0),
+                    start,
+                    coeff_positive_monomial_data_from(tail, start.suc, k),
+                    y
+                )
+                positive_monomial_terms_sum_fn(
+                    List.cons(Pair.new(d(Nat.0), start), coeff_positive_monomial_data_from(tail, start.suc, k)),
+                    y
+                ) = d(Nat.0) * y.pow(start.suc) +
+                    positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(tail, start.suc, k), y)
+
+                y.pow(start.suc) * coeff_eval(d, y, k.suc) =
+                    y.pow(start.suc) * (d(Nat.0) + y * coeff_eval(tail, y, k))
+                mul_distrib_right(y.pow(start.suc), d(Nat.0), y * coeff_eval(tail, y, k))
+                y.pow(start.suc) * (d(Nat.0) + y * coeff_eval(tail, y, k)) =
+                    y.pow(start.suc) * d(Nat.0) + y.pow(start.suc) * (y * coeff_eval(tail, y, k))
+                real_mul_comm(y.pow(start.suc), d(Nat.0))
+                y.pow(start.suc) * d(Nat.0) = d(Nat.0) * y.pow(start.suc)
+                real_pow_suc_mul_tail(y, start, coeff_eval(tail, y, k))
+                y.pow(start.suc) * (y * coeff_eval(tail, y, k)) =
+                    y.pow(start.suc.suc) * coeff_eval(tail, y, k)
+                y.pow(start.suc) * coeff_eval(d, y, k.suc) =
+                    d(Nat.0) * y.pow(start.suc) + y.pow(start.suc.suc) * coeff_eval(tail, y, k)
+                y.pow(start.suc) * coeff_eval(d, y, k.suc) =
+                    d(Nat.0) * y.pow(start.suc) +
+                    positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(tail, start.suc, k), y)
+                y.pow(start.suc) * coeff_eval(d, y, k.suc) =
+                    positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(d, start, k.suc), y)
+                scaled_at(d, start, k.suc, y)
+            }
+            if not statement(k.suc) {
+                statement(k.suc) = forall(d: Nat -> Real, start: Nat, y: Real) {
+                    scaled_at(d, start, k.suc, y)
+                }
+                not_forall_imp_exists_not[Nat -> Real](function(d: Nat -> Real) {
+                    forall(start: Nat, y: Real) {
+                        scaled_at(d, start, k.suc, y)
+                    }
+                })
+                exists(bad_d: Nat -> Real) {
+                    not forall(start: Nat, y: Real) {
+                        scaled_at(bad_d, start, k.suc, y)
+                    }
+                }
+                let bad_d: Nat -> Real satisfy {
+                    not forall(start: Nat, y: Real) {
+                        scaled_at(bad_d, start, k.suc, y)
+                    }
+                }
+                not_forall_imp_exists_not[Nat](function(start: Nat) {
+                    forall(y: Real) {
+                        scaled_at(bad_d, start, k.suc, y)
+                    }
+                })
+                exists(bad_start: Nat) {
+                    not forall(y: Real) {
+                        scaled_at(bad_d, bad_start, k.suc, y)
+                    }
+                }
+                let bad_start: Nat satisfy {
+                    not forall(y: Real) {
+                        scaled_at(bad_d, bad_start, k.suc, y)
+                    }
+                }
+                not_forall_imp_exists_not[Real](function(y: Real) {
+                    scaled_at(bad_d, bad_start, k.suc, y)
+                })
+                exists(bad_y: Real) {
+                    not scaled_at(bad_d, bad_start, k.suc, bad_y)
+                }
+                let bad_y: Real satisfy {
+                    not scaled_at(bad_d, bad_start, k.suc, bad_y)
+                }
+                scaled_at(bad_d, bad_start, k.suc, bad_y)
+                false
+            }
+            statement(k.suc)
+        }
+    }
+
+    forall(k: Nat) {
+        statement(k) implies statement(k.suc)
+    }
+    coeff_eval_nat_induction_at(statement, n)
+    statement(n)
+    statement(n) = forall(d: Nat -> Real, start: Nat, y: Real) {
+        scaled_at(d, start, n, y)
+    }
+    forall3_apply[Nat -> Real, Nat, Real](
+        function(d: Nat -> Real, start: Nat, y: Real) {
+            scaled_at(d, start, n, y)
+        },
+        c,
+        degree_pred_start,
+        x
+    )
+    scaled_at(c, degree_pred_start, n, x)
+    scaled_at(c, degree_pred_start, n, x) = (x.pow(degree_pred_start.suc) * coeff_eval(c, x, n) =
+        positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(c, degree_pred_start, n), x))
+    x.pow(degree_pred_start.suc) * coeff_eval(c, x, n) =
+        positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(c, degree_pred_start, n), x)
+}
+
+lemma coeff_eval_mul_x_eq_positive_monomial_sum(c: Nat -> Real, n: Nat, x: Real) {
+    x * coeff_eval(c, x, n) =
+        positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(c, Nat.0, n), x)
+} by {
+    coeff_eval_pow_mul_eq_positive_monomial_sum_from(c, Nat.0, n, x)
+    x.pow(Nat.0.suc) * coeff_eval(c, x, n) =
+        positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(c, Nat.0, n), x)
+    real_pow_one_from_zero_suc(x)
+    x.pow(Nat.0.suc) = x
+    x * coeff_eval(c, x, n) =
+        positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(c, Nat.0, n), x)
+}
+
+theorem coeff_eval_suc_eq_mixed_monomial_sum_fn(c: Nat -> Real, n: Nat, x: Real) {
+    coeff_eval(c, x, n.suc) = coeff_mixed_monomial_sum_fn(c, n, x)
+} by {
+    let tail = coeff_tail(c)
+    coeff_eval_suc[Real](c, x, n)
+    coeff_eval(c, x, n.suc) = c(Nat.0) + x * coeff_eval(coeff_tail(c), x, n)
+    coeff_eval(c, x, n.suc) = c(Nat.0) + x * coeff_eval(tail, x, n)
+    coeff_eval_mul_x_eq_positive_monomial_sum(tail, n, x)
+    x * coeff_eval(tail, x, n) =
+        positive_monomial_terms_sum_fn(coeff_positive_monomial_data_from(tail, Nat.0, n), x)
+    coeff_positive_monomial_data(c, n) = coeff_positive_monomial_data_from(coeff_tail(c), Nat.0, n)
+    coeff_positive_monomial_data(c, n) = coeff_positive_monomial_data_from(tail, Nat.0, n)
+    mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n), x) =
+        c(Nat.0) + positive_monomial_terms_sum_fn(coeff_positive_monomial_data(c, n), x)
+    coeff_mixed_monomial_sum_fn(c, n, x) =
+        mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n), x)
+    coeff_eval(c, x, n.suc) = coeff_mixed_monomial_sum_fn(c, n, x)
+}
+
+lemma coeff_eval_suc_fn_eq_mixed_monomial_sum_fn(c: Nat -> Real, n: Nat) {
+    function(x: Real) { coeff_eval(c, x, n.suc) } = coeff_mixed_monomial_sum_fn(c, n)
+} by {
+    if function(x: Real) { coeff_eval(c, x, n.suc) } != coeff_mixed_monomial_sum_fn(c, n) {
+        exists(y: Real) {
+            function(x: Real) { coeff_eval(c, x, n.suc) }(y) != coeff_mixed_monomial_sum_fn(c, n, y)
+        }
+        let y: Real satisfy {
+            function(x: Real) { coeff_eval(c, x, n.suc) }(y) != coeff_mixed_monomial_sum_fn(c, n, y)
+        }
+        coeff_eval_suc_eq_mixed_monomial_sum_fn(c, n, y)
+        coeff_eval(c, y, n.suc) = coeff_mixed_monomial_sum_fn(c, n, y)
+        function(x: Real) { coeff_eval(c, x, n.suc) }(y) = coeff_eval(c, y, n.suc)
+        function(x: Real) { coeff_eval(c, x, n.suc) }(y) = coeff_mixed_monomial_sum_fn(c, n, y)
+        false
+    }
+    function(x: Real) { coeff_eval(c, x, n.suc) } = coeff_mixed_monomial_sum_fn(c, n)
+}
+
+lemma coeff_mixed_monomial_sum_fn_eq_mixed_terms(c: Nat -> Real, n: Nat) {
+    coeff_mixed_monomial_sum_fn(c, n) = mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n))
+} by {
+    forall(x: Real) {
+        coeff_mixed_monomial_sum_fn(c, n, x) = mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n), x)
+    }
+    function_extensionality(coeff_mixed_monomial_sum_fn(c, n), mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n)))
+}
+
+lemma coeff_mixed_monomial_sum_has_derivative_at(c: Nat -> Real, n: Nat, x0: Real) {
+    has_derivative_at(
+        coeff_mixed_monomial_sum_fn(c, n),
+        x0,
+        mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0)
+    )
+} by {
+    define derivative_pred(value: Real, h: Real -> Real) -> Bool {
+        has_derivative_at(h, x0, value)
+    }
+    mixed_monomial_terms_sum_has_derivative_at(c(Nat.0), coeff_positive_monomial_data(c, n), x0)
+    has_derivative_at(
+        mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n)),
+        x0,
+        mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0)
+    )
+    coeff_mixed_monomial_sum_fn_eq_mixed_terms(c, n)
+    coeff_mixed_monomial_sum_fn(c, n) = mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n))
+    derivative_pred(
+        mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0),
+        mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n))
+    )
+    function_eq_transport_predicate_rev(
+        derivative_pred(mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0)),
+        coeff_mixed_monomial_sum_fn(c, n),
+        mixed_monomial_terms_sum_fn(c(Nat.0), coeff_positive_monomial_data(c, n))
+    )
+    derivative_pred(mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0), coeff_mixed_monomial_sum_fn(c, n))
+}
+
+theorem coeff_eval_suc_has_derivative_at(c: Nat -> Real, n: Nat, x0: Real) {
+    has_derivative_at(
+        function(x: Real) { coeff_eval(c, x, n.suc) },
+        x0,
+        mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0)
+    )
+} by {
+    define derivative_pred(value: Real, h: Real -> Real) -> Bool {
+        has_derivative_at(h, x0, value)
+    }
+    coeff_mixed_monomial_sum_has_derivative_at(c, n, x0)
+    has_derivative_at(
+        coeff_mixed_monomial_sum_fn(c, n),
+        x0,
+        mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0)
+    )
+    coeff_eval_suc_fn_eq_mixed_monomial_sum_fn(c, n)
+    function(x: Real) { coeff_eval(c, x, n.suc) } = coeff_mixed_monomial_sum_fn(c, n)
+    derivative_pred(
+        mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0),
+        coeff_mixed_monomial_sum_fn(c, n)
+    )
+    function_eq_transport_predicate_rev(
+        derivative_pred(mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0)),
+        function(x: Real) { coeff_eval(c, x, n.suc) },
+        coeff_mixed_monomial_sum_fn(c, n)
+    )
+    derivative_pred(
+        mixed_monomial_terms_sum_deriv(coeff_positive_monomial_data(c, n), x0),
+        function(x: Real) { coeff_eval(c, x, n.suc) }
+    )
+}
+
+theorem coeff_eval_suc_differentiable_at(c: Nat -> Real, n: Nat, x0: Real) {
+    differentiable_at(function(x: Real) { coeff_eval(c, x, n.suc) }, x0)
+} by {
+    coeff_eval_suc_has_derivative_at(c, n, x0)
+    exists(d: Real) {
+        has_derivative_at(function(x: Real) { coeff_eval(c, x, n.suc) }, x0, d)
+    }
+}
