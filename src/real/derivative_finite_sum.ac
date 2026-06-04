@@ -1,0 +1,283 @@
+from function_algebra import pointwise_add
+from functions import function_eq_transport_predicate_rev, function_extensionality
+from list import List
+from real.derivative_list_all import derivative_list_all, derivative_list_all_nil,
+    derivative_list_all_head, derivative_list_all_tail, derivative_list_all_singleton
+from nat.nat_base import Nat
+from pair import Pair, pair_new_first, pair_new_second
+from real.continuity_monomial import monomial_real_fn
+from real.derivative_basic import constant_has_derivative_at, differentiable_at,
+    has_derivative_at
+from real.derivative_monomial import derivative_monomial_real_fn_suc
+from real.derivative_rules import derivative_pointwise_add
+from real.real_base import Real
+from semiring import from_nat
+
+/// The pointwise sum of a finite list of functions paired with derivative data.
+define derivative_terms_sum_fn(terms: List[Pair[Real -> Real, Real]], x: Real) -> Real {
+    match terms {
+        List.nil {
+            Real.0
+        }
+        List.cons(head, tail) {
+            head.first(x) + derivative_terms_sum_fn(tail, x)
+        }
+    }
+}
+
+/// The sum of the listed derivative values.
+define derivative_terms_sum_deriv(terms: List[Pair[Real -> Real, Real]]) -> Real {
+    match terms {
+        List.nil {
+            Real.0
+        }
+        List.cons(head, tail) {
+            head.second + derivative_terms_sum_deriv(tail)
+        }
+    }
+}
+
+/// A single derivative term is valid at the point when its listed derivative is certified.
+define derivative_term_valid_at(x0: Real, term: Pair[Real -> Real, Real]) -> Bool {
+    has_derivative_at(term.first, x0, term.second)
+}
+
+/// Every term in the finite list has its listed derivative at the point.
+define derivative_terms_valid_at(terms: List[Pair[Real -> Real, Real]], x0: Real) -> Bool {
+    derivative_list_all(terms, derivative_term_valid_at(x0))
+}
+
+lemma derivative_term_valid_at_has_derivative_at(x0: Real, term: Pair[Real -> Real, Real]) {
+    derivative_term_valid_at(x0, term) implies has_derivative_at(term.first, x0, term.second)
+} by {
+    if derivative_term_valid_at(x0, term) {
+        has_derivative_at(term.first, x0, term.second)
+    }
+}
+
+lemma derivative_terms_valid_at_nil(x0: Real) {
+    derivative_terms_valid_at(List.nil[Pair[Real -> Real, Real]], x0)
+} by {
+    derivative_list_all_nil(derivative_term_valid_at(x0))
+    derivative_list_all(List.nil[Pair[Real -> Real, Real]], derivative_term_valid_at(x0))
+    derivative_terms_valid_at(List.nil[Pair[Real -> Real, Real]], x0)
+}
+
+lemma derivative_terms_valid_at_cons_head(
+    head: Pair[Real -> Real, Real], tail: List[Pair[Real -> Real, Real]], x0: Real
+) {
+    derivative_terms_valid_at(List.cons(head, tail), x0) implies has_derivative_at(head.first, x0, head.second)
+} by {
+    if derivative_terms_valid_at(List.cons(head, tail), x0) {
+        derivative_list_all_head(derivative_term_valid_at(x0), head, tail)
+        derivative_term_valid_at(x0, head)
+        derivative_term_valid_at_has_derivative_at(x0, head)
+        has_derivative_at(head.first, x0, head.second)
+    }
+}
+
+lemma derivative_terms_valid_at_cons_tail(
+    head: Pair[Real -> Real, Real], tail: List[Pair[Real -> Real, Real]], x0: Real
+) {
+    derivative_terms_valid_at(List.cons(head, tail), x0) implies derivative_terms_valid_at(tail, x0)
+} by {
+    if derivative_terms_valid_at(List.cons(head, tail), x0) {
+        derivative_list_all_tail(derivative_term_valid_at(x0), head, tail)
+        derivative_list_all(tail, derivative_term_valid_at(x0))
+        derivative_terms_valid_at(tail, x0)
+    }
+}
+
+lemma derivative_terms_sum_fn_nil_eq_constant {
+    derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]) = constant[Real, Real](Real.0)
+} by {
+    forall(x: Real) {
+        derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]], x) = Real.0
+        constant[Real, Real](Real.0, x) = Real.0
+        derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]], x) = constant[Real, Real](Real.0, x)
+    }
+    function_extensionality(derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]), constant[Real, Real](Real.0))
+}
+
+lemma derivative_terms_sum_fn_cons_eq_pointwise_add(
+    head: Pair[Real -> Real, Real], tail: List[Pair[Real -> Real, Real]]
+) {
+    derivative_terms_sum_fn(List.cons(head, tail)) =
+        pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail))
+} by {
+    forall(x: Real) {
+        derivative_terms_sum_fn(List.cons(head, tail), x) = head.first(x) + derivative_terms_sum_fn(tail, x)
+        pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail), x) =
+            head.first(x) + derivative_terms_sum_fn(tail, x)
+        derivative_terms_sum_fn(List.cons(head, tail), x) =
+            pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail), x)
+    }
+    function_extensionality(
+        derivative_terms_sum_fn(List.cons(head, tail)),
+        pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail))
+    )
+}
+
+/// A finite sum of functions has derivative equal to the finite sum of the listed derivatives.
+theorem derivative_terms_sum_has_derivative_at(terms: List[Pair[Real -> Real, Real]], x0: Real) {
+    derivative_terms_valid_at(terms, x0) implies
+    has_derivative_at(derivative_terms_sum_fn(terms), x0, derivative_terms_sum_deriv(terms))
+} by {
+    define p(ts: List[Pair[Real -> Real, Real]]) -> Bool {
+        derivative_terms_valid_at(ts, x0) implies
+        has_derivative_at(derivative_terms_sum_fn(ts), x0, derivative_terms_sum_deriv(ts))
+    }
+    define derivative_pred(value: Real, h: Real -> Real) -> Bool {
+        has_derivative_at(h, x0, value)
+    }
+
+    constant_has_derivative_at(Real.0, x0)
+    has_derivative_at(constant[Real, Real](Real.0), x0, Real.0)
+    derivative_terms_sum_fn_nil_eq_constant
+    derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]) = constant[Real, Real](Real.0)
+    derivative_terms_sum_deriv(List.nil[Pair[Real -> Real, Real]]) = Real.0
+    derivative_pred(Real.0, constant[Real, Real](Real.0))
+    function_eq_transport_predicate_rev(
+        derivative_pred(Real.0),
+        derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]),
+        constant[Real, Real](Real.0)
+    )
+    derivative_pred(Real.0, derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]))
+    has_derivative_at(derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]), x0, Real.0)
+    has_derivative_at(
+        derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]),
+        x0,
+        derivative_terms_sum_deriv(List.nil[Pair[Real -> Real, Real]])
+    )
+    if derivative_terms_valid_at(List.nil[Pair[Real -> Real, Real]], x0) {
+        has_derivative_at(
+            derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]),
+            x0,
+            derivative_terms_sum_deriv(List.nil[Pair[Real -> Real, Real]])
+        )
+    }
+    p(List.nil[Pair[Real -> Real, Real]]) = (derivative_terms_valid_at(List.nil[Pair[Real -> Real, Real]], x0) implies
+        has_derivative_at(
+            derivative_terms_sum_fn(List.nil[Pair[Real -> Real, Real]]),
+            x0,
+            derivative_terms_sum_deriv(List.nil[Pair[Real -> Real, Real]])
+        ))
+    p(List.nil[Pair[Real -> Real, Real]])
+
+    forall(head: Pair[Real -> Real, Real], tail: List[Pair[Real -> Real, Real]]) {
+        if p(tail) {
+            if derivative_terms_valid_at(List.cons(head, tail), x0) {
+                derivative_terms_valid_at_cons_head(head, tail, x0)
+                has_derivative_at(head.first, x0, head.second)
+                derivative_terms_valid_at_cons_tail(head, tail, x0)
+                derivative_terms_valid_at(tail, x0)
+                p(tail) = (derivative_terms_valid_at(tail, x0) implies
+                    has_derivative_at(derivative_terms_sum_fn(tail), x0, derivative_terms_sum_deriv(tail)))
+                (derivative_terms_valid_at(tail, x0) implies
+                    has_derivative_at(derivative_terms_sum_fn(tail), x0, derivative_terms_sum_deriv(tail)))
+                has_derivative_at(derivative_terms_sum_fn(tail), x0, derivative_terms_sum_deriv(tail))
+                derivative_pointwise_add(head.first, derivative_terms_sum_fn(tail), x0, head.second,
+                    derivative_terms_sum_deriv(tail))
+                has_derivative_at(
+                    pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail)),
+                    x0,
+                    head.second + derivative_terms_sum_deriv(tail)
+                )
+                derivative_terms_sum_deriv(List.cons(head, tail)) = head.second + derivative_terms_sum_deriv(tail)
+                has_derivative_at(
+                    pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail)),
+                    x0,
+                    derivative_terms_sum_deriv(List.cons(head, tail))
+                )
+                derivative_terms_sum_fn_cons_eq_pointwise_add(head, tail)
+                derivative_terms_sum_fn(List.cons(head, tail)) =
+                    pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail))
+                derivative_pred(
+                    derivative_terms_sum_deriv(List.cons(head, tail)),
+                    pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail))
+                )
+                function_eq_transport_predicate_rev(
+                    derivative_pred(derivative_terms_sum_deriv(List.cons(head, tail))),
+                    derivative_terms_sum_fn(List.cons(head, tail)),
+                    pointwise_add[Real, Real](head.first, derivative_terms_sum_fn(tail))
+                )
+                derivative_pred(derivative_terms_sum_deriv(List.cons(head, tail)), derivative_terms_sum_fn(List.cons(head, tail)))
+                has_derivative_at(
+                    derivative_terms_sum_fn(List.cons(head, tail)),
+                    x0,
+                    derivative_terms_sum_deriv(List.cons(head, tail))
+                )
+            }
+            p(List.cons(head, tail)) = (derivative_terms_valid_at(List.cons(head, tail), x0) implies
+                has_derivative_at(
+                    derivative_terms_sum_fn(List.cons(head, tail)),
+                    x0,
+                    derivative_terms_sum_deriv(List.cons(head, tail))
+                ))
+            p(List.cons(head, tail))
+        }
+    }
+
+    List.induction(function(ts: List[Pair[Real -> Real, Real]]) { p(ts) })
+    if not p(terms) {
+        exists(head: Pair[Real -> Real, Real], tail: List[Pair[Real -> Real, Real]]) {
+            p(tail) and not p(List.cons(head, tail))
+        }
+        let bad_head: Pair[Real -> Real, Real] satisfy {
+            exists(bad_tail: List[Pair[Real -> Real, Real]]) {
+                p(bad_tail) and not p(List.cons(bad_head, bad_tail))
+            }
+        }
+        let bad_tail: List[Pair[Real -> Real, Real]] satisfy {
+            p(bad_tail) and not p(List.cons(bad_head, bad_tail))
+        }
+        p(bad_tail)
+        not p(List.cons(bad_head, bad_tail))
+        false
+    }
+    p(terms)
+}
+
+/// A finite sum of functions with listed derivatives is differentiable.
+theorem derivative_terms_sum_differentiable_at(terms: List[Pair[Real -> Real, Real]], x0: Real) {
+    derivative_terms_valid_at(terms, x0) implies differentiable_at(derivative_terms_sum_fn(terms), x0)
+} by {
+    derivative_terms_sum_has_derivative_at(terms, x0)
+    has_derivative_at(derivative_terms_sum_fn(terms), x0, derivative_terms_sum_deriv(terms))
+    exists(d: Real) {
+        has_derivative_at(derivative_terms_sum_fn(terms), x0, d)
+    }
+}
+
+/// The derivative term associated to a positive-degree real monomial at a point.
+define monomial_derivative_term_suc(c: Real, n: Nat, x0: Real) -> Pair[Real -> Real, Real] {
+    Pair.new(monomial_real_fn(c, n.suc), c * (from_nat[Real](n.suc) * x0.pow(n)))
+}
+
+lemma monomial_derivative_term_suc_valid_term(c: Real, n: Nat, x0: Real) {
+    derivative_term_valid_at(x0, monomial_derivative_term_suc(c, n, x0))
+} by {
+    derivative_monomial_real_fn_suc(c, n, x0)
+    has_derivative_at(monomial_real_fn(c, n.suc), x0, c * (from_nat[Real](n.suc) * x0.pow(n)))
+    monomial_derivative_term_suc(c, n, x0) =
+        Pair.new(monomial_real_fn(c, n.suc), c * (from_nat[Real](n.suc) * x0.pow(n)))
+    pair_new_first(monomial_real_fn(c, n.suc), c * (from_nat[Real](n.suc) * x0.pow(n)))
+    monomial_derivative_term_suc(c, n, x0).first = monomial_real_fn(c, n.suc)
+    pair_new_second(monomial_real_fn(c, n.suc), c * (from_nat[Real](n.suc) * x0.pow(n)))
+    monomial_derivative_term_suc(c, n, x0).second = c * (from_nat[Real](n.suc) * x0.pow(n))
+    derivative_term_valid_at(x0, monomial_derivative_term_suc(c, n, x0))
+}
+
+/// A positive-degree real monomial gives a valid singleton derivative term.
+theorem monomial_derivative_term_suc_valid_at(c: Real, n: Nat, x0: Real) {
+    derivative_terms_valid_at(List.singleton(monomial_derivative_term_suc(c, n, x0)), x0)
+} by {
+    monomial_derivative_term_suc_valid_term(c, n, x0)
+    derivative_term_valid_at(x0, monomial_derivative_term_suc(c, n, x0))
+    derivative_list_all_singleton(derivative_term_valid_at(x0), monomial_derivative_term_suc(c, n, x0))
+    derivative_list_all(
+        List.singleton(monomial_derivative_term_suc(c, n, x0)),
+        derivative_term_valid_at(x0)
+    )
+    derivative_terms_valid_at(List.singleton(monomial_derivative_term_suc(c, n, x0)), x0)
+}
