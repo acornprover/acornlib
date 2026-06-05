@@ -10,7 +10,7 @@ We expect most of the library to be AI-generated. In general, most pull requests
 * `src` for the Acorn source code
 * `build` for the prover-generated artifacts
 * `projects` for keeping notes on progress
-* `pending` for recording theorems that the prover could not prove
+* `hard_problems` for recording theorem goals that should train future provers
 
 Try to be stylistically consistent with the rest of the codebase.
 
@@ -25,7 +25,7 @@ Most pull requests will be AI-reviewed. Some areas will be escalated to human re
 
 * Adding a new project
 * Tricky decisions
-* Touching any file outside of src, build, projects, and pending
+* Touching any file outside of src, build, projects, and hard_problems
 
 Adding a new subfolder within a project doesn't require human review per se. Just adding a new top-level project.
 
@@ -48,7 +48,7 @@ What counts as a bug? Any time the Acorn prover crashes, that is definitely a bu
 
 In general, it is not a bug just because the Acorn prover cannot prove a proposition - it's a heuristic process and sometimes it will fail to find a proof. When you can't prove a theorem or a statement, try to break it down into smaller steps, and then prove the smaller steps.
 
-If you (or your AI) cannot figure out any way to break down the statement into smaller steps, and the theorem still cannot be proved, don't report this as an issue. Instead, create an `.ac` file in the `pending` directory containing the theorem that cannot be proven. `acorn check` knows to check these for syntactic validity, but not to expect a proof. We will gather difficult cases here over time.
+If you (or your AI) cannot figure out any way to break down the statement into smaller steps, and the theorem still cannot be proved, don't report this as an issue. Instead, create an `.ac` file in the `hard_problems` directory containing the theorem goal. `acorn check` knows to check these for syntactic validity, but not to expect a proof. See `hard_problems/README.md` for the purpose and format of these examples.
 
 For now, let's avoid having AIs file an unbounded number of issues. One or two open AI-created issues at a time is okay. If you don't want to hook up your AI to GitHub issues, then when you submit a pull request, mention that you ran into a bug, and describe the bug there.
 

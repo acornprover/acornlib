@@ -25,7 +25,7 @@ For a pure refactor, run `acorn check`, not `acorn verify`.
 
 - Downstream code should import from the package interface when a theorem or definition is meant to be public.
 - If `acorn check` fails because a moved theorem is no longer visible, add it to the relevant `interface.ac` rather than importing a package-internal module from downstream code.
-- Include `pending/` import-path updates when the refactor changes public paths; `acorn check` elaborates pending files.
+- Include `hard_problems/` import-path updates when the refactor changes public paths; `acorn check` elaborates hard problem files.
 
 5. Run targeted checks while iterating.
 
@@ -113,5 +113,5 @@ Before opening a PR:
 
 - Read `CONTRIBUTING.md`.
 - Run full `acorn check` and report the `0 searches performed` result.
-- Ensure unrelated local changes are either intentionally included or left out. For path refactors, pending import updates usually should be included.
+- Ensure unrelated local changes are either intentionally included or left out. For path refactors, hard problem import updates usually should be included.
 - Set `maintainerCanModify` to true. If the GitHub connector or CLI does not stick, use the GitHub API directly.
