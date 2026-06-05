@@ -6,6 +6,7 @@ Goal: give order-preserving maps a reusable interface.
 
 Status:
 
+- `src/nat/nat_base.ac` now exposes concrete first-cluster monotonicity support: `lte_suc_suc`, left/right addition and multiplication comparison lemmas, fixed add/mul maps, successor as an order embedding, and shared `is_monotone` wrappers for successor plus fixed-side addition and multiplication.
 - `src/real/rectangular_sum.ac`, `src/real/triangular_sum.ac`, and `src/real/double_sum.ac` now expose named sequence helpers plus shared `is_monotone` wrappers for rectangular row/column bounds, triangular truncation bounds, row/column partial sums, and square partial sums.
 - `src/real/real_series.ac` now has reverse bridges from local increasing/decreasing sequence predicates to shared `is_monotone`/`is_antitone`, iff characterizations, distant-index aliases, first-term bound aliases, and monotone partial sums for nonnegative sequences.
 - `src/real/limits.ac` now exposes `k.mul` and `k.add` as shared monotone maps and routes every-kth/tail convergence through the monotone-unbounded composition theorem.
