@@ -2,17 +2,11 @@
 
 Goal: over time, give Acornlib a reasonable analogue of each major area of mathematics covered in Lean Mathlib, with the active priority optimized for attacking Erdos problems by AI-assisted formalization and proof grinding.
 
+The sections below are listed in priority order: work top to bottom.
+
 ## Blockers
 
 (none currently)
-
-## Core Infrastructure
-
-- [ ] [Algebraic hierarchy](algebraic-hierarchy/todo.md)
-  Note: the first Erdos algebra baseline is complete; resume only when downstream number theory or combinatorics exposes a concrete missing algebra API.
-
-- [ ] [Order theory and lattices](order-theory/todo.md)
-  Note: the first-cluster comparison, interval/range, monotonicity, and least-witness baseline is in place; resume broad order theory only when a downstream proof exposes a concrete gap.
 
 ## Erdos-Facing Discrete And Elementary Mathematics
 
@@ -44,6 +38,16 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 - [ ] [Special number systems](special-number-systems/todo.md)
   Note: extend complex numbers, extended reals, p-adics, and other completions when they support asymptotic, analytic, or modular Erdos targets.
+
+## Deferred Foundational Algebra And Order Theory
+
+These foundational abstractions are built reactively, not up front: a baseline already exists, so resume each only when an active Erdos-facing or supporting proof exposes a concrete gap.
+
+- [ ] [Order theory and lattices](order-theory/todo.md)
+  Note: the first-cluster comparison, interval/range, monotonicity, and least-witness baseline is in place; resume broad order theory only when a downstream proof exposes a concrete gap.
+
+- [ ] [Algebraic hierarchy](algebraic-hierarchy/todo.md)
+  Note: the first Erdos algebra baseline is complete; resume only when downstream number theory or combinatorics exposes a concrete missing algebra API.
 
 ## General Mathlib Breadth
 
@@ -79,28 +83,3 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 - [ ] [Algebraic geometry](algebraic-geometry/todo.md)
   Note: keep algebraic geometry at the end of this roadmap; it has little near-term leverage on the current Erdos target ranking.
-
-## Suggested Execution Order
-
-1. [Number theory](number-theory/todo.md)
-2. [Combinatorics](combinatorics/todo.md)
-3. [Graph theory](graph-theory/todo.md)
-4. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
-5. [Linear algebra](linear-algebra/todo.md)
-6. [Real analysis](real-analysis/todo.md)
-7. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
-8. [Topology](topology/todo.md)
-9. [Special number systems](special-number-systems/todo.md)
-10. [Order theory and lattices](order-theory/todo.md)
-11. [Algebraic hierarchy](algebraic-hierarchy/todo.md)
-12. [Probability theory](probability-theory/todo.md)
-13. [Measure theory](measure-theory/todo.md)
-14. [Commutative algebra](commutative-algebra/todo.md)
-15. [Field theory and Galois theory](field-theory-and-galois-theory/todo.md)
-16. [Category theory](category-theory/todo.md)
-17. [Complex analysis](complex-analysis/todo.md)
-18. [Functional analysis](functional-analysis/todo.md)
-19. [Dynamical systems and ergodic ideas](dynamical-systems-and-ergodic-ideas/todo.md)
-20. [Differential geometry and manifolds](differential-geometry-and-manifolds/todo.md)
-21. [Representation theory and Lie algebra basics](representation-theory-and-lie-algebra/todo.md)
-22. [Algebraic geometry](algebraic-geometry/todo.md)
