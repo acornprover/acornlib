@@ -1,3 +1,4 @@
+from list import List
 from nat import Nat
 numerals Nat
 
@@ -6,6 +7,34 @@ numerals Nat
 structure Multiset[T] {
     /// A function taking each element to a count of how many times it appears in the multiset.
     multiplicity: T -> Nat
+}
+
+/// The everywhere-zero multiplicity function.
+define empty_count[T](x: T) -> Nat {
+    Nat.0
+}
+
+/// The multiplicity function with one copy at one chosen element.
+define singleton_count[T](item: T, x: T) -> Nat {
+    if x = item {
+        Nat.1
+    } else {
+        Nat.0
+    }
+}
+
+/// The multiplicity function obtained by adding one copy of an element.
+define inserted_count[T](a: Multiset[T], item: T, x: T) -> Nat {
+    if x = item {
+        a.multiplicity(x).suc
+    } else {
+        a.multiplicity(x)
+    }
+}
+
+/// The pointwise sum of two multiset multiplicity functions.
+define sum_count[T](a: Multiset[T], b: Multiset[T], x: T) -> Nat {
+    a.multiplicity(x) + b.multiplicity(x)
 }
 
 /// Multiset extensionality: two multisets are equal when every element has the same multiplicity.
@@ -17,9 +46,39 @@ theorem multiset_ext[T](a: Multiset[T], b: Multiset[T]) {
     }
 }
 
+/// Equality of multisets is exactly pointwise equality of multiplicities.
+theorem multiset_eq_iff_multiplicity_eq[T](a: Multiset[T], b: Multiset[T]) {
+    (a = b) = forall(x: T) { a.multiplicity(x) = b.multiplicity(x) }
+} by {
+    if a = b {
+        forall(x: T) {
+            a.multiplicity(x) = b.multiplicity(x)
+        }
+    }
+    if forall(x: T) { a.multiplicity(x) = b.multiplicity(x) } {
+        multiset_ext(a, b)
+        a = b
+    }
+}
+
 attributes Multiset[T] {
     /// Multiset extensionality from pointwise equality of multiplicity.
     let ext = multiset_ext[T]
+
+    /// The empty multiset, whose multiplicity is zero at every element.
+    let empty: Multiset[T] = Multiset.new(empty_count[T])
+
+    /// The multiset containing exactly one copy of the given element.
+    let singleton: T -> Multiset[T] = function(item: T) {
+        Multiset.new(singleton_count(item))
+    }
+
+    /// The multiset whose multiplicities are the counts of elements in a list.
+    let from_list: List[T] -> Multiset[T] = function(items: List[T]) {
+        Multiset.new(function(x: T) {
+            items.count(x)
+        })
+    }
 
     /// True if the multiset contains at least one copy of the given item.
     define contains(self, item: T) -> Bool {
@@ -28,13 +87,12 @@ attributes Multiset[T] {
 
     /// Adds one more copy of the given item to the multiset.
     define insert(self, item: T) -> Multiset[T] {
-        Multiset.new(function(x: T) {
-            if x = item {
-                self.multiplicity(x).suc
-            } else {
-                self.multiplicity(x)
-            }
-        })
+        Multiset.new(inserted_count(self, item))
+    }
+
+    /// The pointwise sum of multiplicities, also called bag union.
+    define add(self, other: Multiset[T]) -> Multiset[T] {
+        Multiset.new(sum_count(self, other))
     }
 
     /// True if the multiset is empty (contains no elements).
@@ -50,4 +108,187 @@ attributes Multiset[T] {
             self.multiplicity(x) > 1
         }
     }
+}
+
+/// The empty multiset has zero multiplicity at every element.
+theorem empty_multiplicity[T](item: T) {
+    Multiset.empty[T].multiplicity(item) = Nat.0
+} by {
+    Multiset.empty[T] = Multiset.new(empty_count[T])
+    Multiset.new(empty_count[T]).multiplicity(item) = empty_count[T](item)
+    empty_count[T](item) = Nat.0
+    Multiset.empty[T].multiplicity(item) = Nat.0
+}
+
+/// A singleton has multiplicity one at its chosen element.
+theorem singleton_multiplicity_self[T](item: T) {
+    Multiset.singleton(item).multiplicity(item) = Nat.1
+} by {
+    Multiset.singleton(item) = Multiset.new(singleton_count(item))
+    Multiset.new(singleton_count(item)).multiplicity(item) = singleton_count(item, item)
+    singleton_count(item, item) = Nat.1
+    Multiset.singleton(item).multiplicity(item) = Nat.1
+}
+
+/// A singleton has multiplicity zero away from its chosen element.
+theorem singleton_multiplicity_other[T](item: T, other: T) {
+    item != other implies Multiset.singleton(item).multiplicity(other) = Nat.0
+} by {
+    if item != other {
+        other != item
+        Multiset.singleton(item) = Multiset.new(singleton_count(item))
+        Multiset.new(singleton_count(item)).multiplicity(other) = singleton_count(item, other)
+        singleton_count(item, other) = Nat.0
+        Multiset.singleton(item).multiplicity(other) = Nat.0
+    }
+}
+
+/// Inserting an element increases its own multiplicity by one.
+theorem insert_multiplicity_self[T](a: Multiset[T], item: T) {
+    a.insert(item).multiplicity(item) = a.multiplicity(item).suc
+} by {
+    a.insert(item) = Multiset.new(inserted_count(a, item))
+    Multiset.new(inserted_count(a, item)).multiplicity(item) = inserted_count(a, item, item)
+    inserted_count(a, item, item) = a.multiplicity(item).suc
+    a.insert(item).multiplicity(item) = a.multiplicity(item).suc
+}
+
+/// Inserting one element leaves all other multiplicities unchanged.
+theorem insert_multiplicity_other[T](a: Multiset[T], item: T, other: T) {
+    item != other implies a.insert(item).multiplicity(other) = a.multiplicity(other)
+} by {
+    if item != other {
+        other != item
+        a.insert(item) = Multiset.new(inserted_count(a, item))
+        Multiset.new(inserted_count(a, item)).multiplicity(other) = inserted_count(a, item, other)
+        inserted_count(a, item, other) = a.multiplicity(other)
+        a.insert(item).multiplicity(other) = a.multiplicity(other)
+    }
+}
+
+/// The pointwise sum has multiplicity equal to the sum of multiplicities.
+theorem add_multiplicity[T](a: Multiset[T], b: Multiset[T], item: T) {
+    (a + b).multiplicity(item) = a.multiplicity(item) + b.multiplicity(item)
+} by {
+    a + b = Multiset.new(sum_count(a, b))
+    Multiset.new(sum_count(a, b)).multiplicity(item) = sum_count(a, b, item)
+    sum_count(a, b, item) = a.multiplicity(item) + b.multiplicity(item)
+    (a + b).multiplicity(item) = a.multiplicity(item) + b.multiplicity(item)
+}
+
+/// Adding the empty multiset on the right changes nothing.
+theorem multiset_add_empty_right[T](a: Multiset[T]) {
+    a + Multiset.empty[T] = a
+} by {
+    forall(x: T) {
+        (a + Multiset.empty[T]).multiplicity(x) =
+            a.multiplicity(x) + Multiset.empty[T].multiplicity(x)
+        Multiset.empty[T].multiplicity(x) = Nat.0
+        a.multiplicity(x) + Nat.0 = a.multiplicity(x)
+        (a + Multiset.empty[T]).multiplicity(x) = a.multiplicity(x)
+    }
+    multiset_ext(a + Multiset.empty[T], a)
+}
+
+/// Adding the empty multiset on the left changes nothing.
+theorem multiset_empty_add[T](a: Multiset[T]) {
+    Multiset.empty[T] + a = a
+} by {
+    forall(x: T) {
+        (Multiset.empty[T] + a).multiplicity(x) =
+            Multiset.empty[T].multiplicity(x) + a.multiplicity(x)
+        Multiset.empty[T].multiplicity(x) = Nat.0
+        Nat.0 + a.multiplicity(x) = a.multiplicity(x)
+        (Multiset.empty[T] + a).multiplicity(x) = a.multiplicity(x)
+    }
+    multiset_ext(Multiset.empty[T] + a, a)
+}
+
+/// Pointwise addition of multisets is commutative.
+theorem multiset_add_comm[T](a: Multiset[T], b: Multiset[T]) {
+    a + b = b + a
+} by {
+    forall(x: T) {
+        (a + b).multiplicity(x) = a.multiplicity(x) + b.multiplicity(x)
+        (b + a).multiplicity(x) = b.multiplicity(x) + a.multiplicity(x)
+        a.multiplicity(x) + b.multiplicity(x) = b.multiplicity(x) + a.multiplicity(x)
+        (a + b).multiplicity(x) = (b + a).multiplicity(x)
+    }
+    multiset_ext(a + b, b + a)
+}
+
+/// Pointwise addition of multisets is associative.
+theorem multiset_add_assoc[T](a: Multiset[T], b: Multiset[T], c: Multiset[T]) {
+    (a + b) + c = a + (b + c)
+} by {
+    forall(x: T) {
+        ((a + b) + c).multiplicity(x) =
+            (a.multiplicity(x) + b.multiplicity(x)) + c.multiplicity(x)
+        (a + (b + c)).multiplicity(x) =
+            a.multiplicity(x) + (b.multiplicity(x) + c.multiplicity(x))
+        (a.multiplicity(x) + b.multiplicity(x)) + c.multiplicity(x) =
+            a.multiplicity(x) + (b.multiplicity(x) + c.multiplicity(x))
+        ((a + b) + c).multiplicity(x) = (a + (b + c)).multiplicity(x)
+    }
+    multiset_ext((a + b) + c, a + (b + c))
+}
+
+/// Containment is equivalent to having positive multiplicity.
+theorem contains_iff_positive_multiplicity[T](a: Multiset[T], item: T) {
+    a.contains(item) = (a.multiplicity(item) > Nat.0)
+} by {
+    if a.contains(item) {
+        a.multiplicity(item) != Nat.0
+        if not a.multiplicity(item) > Nat.0 {
+            a.multiplicity(item) = Nat.0
+            false
+        }
+    }
+    if a.multiplicity(item) > Nat.0 {
+        if not a.contains(item) {
+            a.multiplicity(item) = Nat.0
+            false
+        }
+    }
+}
+
+/// A multiset is empty exactly when it equals the empty multiset.
+theorem is_empty_iff_eq_empty[T](a: Multiset[T]) {
+    a.is_empty = (a = Multiset.empty[T])
+} by {
+    if a.is_empty {
+        forall(x: T) {
+            a.multiplicity(x) = Nat.0
+            Multiset.empty[T].multiplicity(x) = Nat.0
+            a.multiplicity(x) = Multiset.empty[T].multiplicity(x)
+        }
+        multiset_ext(a, Multiset.empty[T])
+        a = Multiset.empty[T]
+    }
+    if a = Multiset.empty[T] {
+        forall(x: T) {
+            a.multiplicity(x) = Multiset.empty[T].multiplicity(x)
+            Multiset.empty[T].multiplicity(x) = Nat.0
+            a.multiplicity(x) = Nat.0
+        }
+        a.is_empty
+    }
+}
+
+/// The multiplicity in `from_list` is the list count.
+theorem from_list_multiplicity[T](items: List[T], item: T) {
+    Multiset.from_list(items).multiplicity(item) = items.count(item)
+}
+
+/// The empty list represents the empty multiset.
+theorem from_list_nil[T] {
+    Multiset.from_list(List.nil[T]) = Multiset.empty[T]
+} by {
+    forall(x: T) {
+        Multiset.from_list(List.nil[T]).multiplicity(x) = List.nil[T].count(x)
+        List.nil[T].count(x) = Nat.0
+        Multiset.empty[T].multiplicity(x) = Nat.0
+        Multiset.from_list(List.nil[T]).multiplicity(x) = Multiset.empty[T].multiplicity(x)
+    }
+    multiset_ext(Multiset.from_list(List.nil[T]), Multiset.empty[T])
 }

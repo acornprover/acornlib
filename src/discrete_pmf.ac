@@ -1,13 +1,19 @@
 from finite_set import FiniteSet, fs_empty, fs_union, fs_intersection, fs_difference,
     finite_set_ext, finite_set_intersection_union_difference_is_self,
-    finite_set_intersection_is_disjoint_difference, finite_set_sum, finite_set_sum_empty,
-    finite_set_sum_disjoint_union, finite_set_sum_add, finite_set_sum_scalar_mul
+    finite_set_intersection_is_disjoint_difference
+from finite_set import finite_set_sum, finite_set_sum_empty, finite_set_sum_disjoint_union,
+    finite_set_sum_add, finite_set_sum_scalar_mul
+from finite_set_sum_real import pointwise_le, finite_set_sum_le, finite_set_sum_nonneg
 from real import Real
-from set import Set, union_with_difference_decomp_rev, intersection_comm
+from set import Set, union_with_difference_decomp_rev, intersection_comm,
+    intersection_with_superset_is_self
 from add_semigroup import add_fn
 from semigroup import mul_fn
 from ring import mul_neg_neg
 from functions import function_extensionality
+from add_ordered_group import add_le_add_left
+from order import lt_imp_lte
+from ordered_field import zero_is_smaller_than_one
 
 /// True if `mass` is nonnegative on every point of `T`, vanishes outside `support`,
 /// and sums to one over `support`.
@@ -71,6 +77,76 @@ theorem discrete_pmf_ext[T](a: DiscretePMF[T], b: DiscretePMF[T]) {
 /// The probability that the outcome lies in `event` is the sum of `mass` over `event`.
 define pmf_event_prob[T](pmf: DiscretePMF[T], event: FiniteSet[T]) -> Real {
     finite_set_sum(event, pmf.mass)
+}
+
+/// The Real-valued indicator of a finite event.
+define finite_event_indicator[T](event: FiniteSet[T], x: T) -> Real {
+    if event.contains(x) { Real.1 } else { Real.0 }
+}
+
+/// The indicator is one on the event.
+theorem finite_event_indicator_one_of_contains[T](event: FiniteSet[T], x: T) {
+    event.contains(x) implies finite_event_indicator(event, x) = Real.1
+} by {
+    if event.contains(x) {
+        finite_event_indicator(event, x) = Real.1
+    }
+}
+
+/// The indicator is zero off the event.
+theorem finite_event_indicator_zero_of_not_contains[T](event: FiniteSet[T], x: T) {
+    not event.contains(x) implies finite_event_indicator(event, x) = Real.0
+} by {
+    if not event.contains(x) {
+        finite_event_indicator(event, x) = Real.0
+    }
+}
+
+lemma real_zero_le_one {
+    Real.0 <= Real.1
+} by {
+    zero_is_smaller_than_one[Real]
+    lt_imp_lte[Real](Real.0, Real.1)
+}
+
+/// A finite-event indicator is nonnegative.
+theorem finite_event_indicator_nonneg[T](event: FiniteSet[T], x: T) {
+    Real.0 <= finite_event_indicator(event, x)
+} by {
+    if event.contains(x) {
+        finite_event_indicator_one_of_contains(event, x)
+        finite_event_indicator(event, x) = Real.1
+        real_zero_le_one
+        Real.0 <= finite_event_indicator(event, x)
+    }
+    if not event.contains(x) {
+        finite_event_indicator_zero_of_not_contains(event, x)
+        finite_event_indicator(event, x) = Real.0
+        Real.0 <= Real.0
+        Real.0 <= finite_event_indicator(event, x)
+    }
+    event.contains(x) or not event.contains(x)
+    Real.0 <= finite_event_indicator(event, x)
+}
+
+/// A finite-event indicator is bounded above by one.
+theorem finite_event_indicator_le_one[T](event: FiniteSet[T], x: T) {
+    finite_event_indicator(event, x) <= Real.1
+} by {
+    if event.contains(x) {
+        finite_event_indicator_one_of_contains(event, x)
+        finite_event_indicator(event, x) = Real.1
+        Real.1 <= Real.1
+        finite_event_indicator(event, x) <= Real.1
+    }
+    if not event.contains(x) {
+        finite_event_indicator_zero_of_not_contains(event, x)
+        finite_event_indicator(event, x) = Real.0
+        real_zero_le_one
+        finite_event_indicator(event, x) <= Real.1
+    }
+    event.contains(x) or not event.contains(x)
+    finite_event_indicator(event, x) <= Real.1
 }
 
 /// The pointwise product of a mass function and a real-valued random variable.
@@ -156,6 +232,10 @@ define const_real_fn[T](c: Real, t: T) -> Real {
     c
 }
 
+lemma const_real_fn_apply[T](c: Real, t: T) {
+    const_real_fn[T](c, t) = c
+}
+
 /// The expectation of a constant function under any discrete pmf is the constant.
 theorem discrete_expectation_const[T](pmf: DiscretePMF[T], c: Real) {
     discrete_expectation(pmf, const_real_fn[T](c)) = c
@@ -195,6 +275,125 @@ theorem pmf_event_prob_support[T](pmf: DiscretePMF[T]) {
     pmf_event_prob(pmf, pmf.support) = Real.1
 } by {
     discrete_pmf_total_mass(pmf)
+}
+
+/// Event probabilities are nonnegative.
+theorem pmf_event_prob_nonneg[T](pmf: DiscretePMF[T], event: FiniteSet[T]) {
+    Real.0 <= pmf_event_prob(pmf, event)
+} by {
+    forall(x: T) {
+        discrete_pmf_mass_nonneg(pmf, x)
+        Real.0 <= pmf.mass(x)
+    }
+    finite_set_sum_nonneg[T](event, pmf.mass)
+    Real.0 <= finite_set_sum(event, pmf.mass)
+    Real.0 <= pmf_event_prob(pmf, event)
+}
+
+/// The expectation is monotone under pointwise order on the support.
+theorem discrete_expectation_monotone[T](pmf: DiscretePMF[T], x: T -> Real, y: T -> Real) {
+    (forall(t: T) { pmf.support.contains(t) implies x(t) <= y(t) }) implies
+        discrete_expectation(pmf, x) <= discrete_expectation(pmf, y)
+} by {
+    if forall(t: T) { pmf.support.contains(t) implies x(t) <= y(t) } {
+        let x_weighted = mass_weighted_value(pmf.mass, x)
+        let y_weighted = mass_weighted_value(pmf.mass, y)
+        forall(t: T) {
+            if pmf.support.contains(t) {
+                x(t) <= y(t)
+                discrete_pmf_mass_nonneg(pmf, t)
+                Real.0 <= pmf.mass(t)
+                pmf.mass(t) * x(t) <= pmf.mass(t) * y(t)
+                x_weighted(t) = pmf.mass(t) * x(t)
+                y_weighted(t) = pmf.mass(t) * y(t)
+                x_weighted(t) <= y_weighted(t)
+            }
+            if not pmf.support.contains(t) {
+                discrete_pmf_mass_zero_outside(pmf, t)
+                pmf.mass(t) = Real.0
+                x_weighted(t) = pmf.mass(t) * x(t)
+                y_weighted(t) = pmf.mass(t) * y(t)
+                pmf.mass(t) * x(t) = Real.0 * x(t)
+                pmf.mass(t) * y(t) = Real.0 * y(t)
+                Real.0 * x(t) = Real.0
+                Real.0 * y(t) = Real.0
+                x_weighted(t) = Real.0
+                y_weighted(t) = Real.0
+                Real.0 <= Real.0
+                x_weighted(t) <= y_weighted(t)
+            }
+            pmf.support.contains(t) or not pmf.support.contains(t)
+            x_weighted(t) <= y_weighted(t)
+        }
+        pointwise_le[T](x_weighted, y_weighted) = forall(t: T) {
+            x_weighted(t) <= y_weighted(t)
+        }
+        pointwise_le[T](x_weighted, y_weighted)
+        finite_set_sum_le[T](pmf.support, x_weighted, y_weighted)
+        finite_set_sum(pmf.support, x_weighted) <= finite_set_sum(pmf.support, y_weighted)
+        discrete_expectation(pmf, x) <= discrete_expectation(pmf, y)
+    }
+}
+
+/// If a random variable is bounded above by a constant on the support, then
+/// its expectation is bounded above by that constant.
+theorem discrete_expectation_le_const[T](pmf: DiscretePMF[T], x: T -> Real, c: Real) {
+    (forall(t: T) { pmf.support.contains(t) implies x(t) <= c }) implies
+        discrete_expectation(pmf, x) <= c
+} by {
+    if forall(t: T) { pmf.support.contains(t) implies x(t) <= c } {
+        let c_fn = const_real_fn[T](c)
+        forall(t: T) {
+            if pmf.support.contains(t) {
+                x(t) <= c
+                const_real_fn_apply[T](c, t)
+                c_fn(t) = c
+                x(t) <= c_fn(t)
+            }
+        }
+        forall(t: T) { pmf.support.contains(t) implies x(t) <= c_fn(t) }
+        discrete_expectation_monotone(pmf, x, c_fn)
+        discrete_expectation(pmf, x) <= discrete_expectation(pmf, c_fn)
+        discrete_expectation_const(pmf, c)
+        discrete_expectation(pmf, c_fn) = c
+        discrete_expectation(pmf, x) <= c
+    }
+}
+
+/// If a random variable is bounded below by a constant on the support, then
+/// its expectation is bounded below by that constant.
+theorem const_le_discrete_expectation[T](pmf: DiscretePMF[T], x: T -> Real, c: Real) {
+    (forall(t: T) { pmf.support.contains(t) implies c <= x(t) }) implies
+        c <= discrete_expectation(pmf, x)
+} by {
+    if forall(t: T) { pmf.support.contains(t) implies c <= x(t) } {
+        let c_fn = const_real_fn[T](c)
+        forall(t: T) {
+            if pmf.support.contains(t) {
+                c <= x(t)
+                const_real_fn_apply[T](c, t)
+                c_fn(t) = c
+                c_fn(t) <= x(t)
+            }
+        }
+        forall(t: T) { pmf.support.contains(t) implies c_fn(t) <= x(t) }
+        discrete_expectation_monotone(pmf, c_fn, x)
+        discrete_expectation(pmf, c_fn) <= discrete_expectation(pmf, x)
+        discrete_expectation_const(pmf, c)
+        discrete_expectation(pmf, c_fn) = c
+        c <= discrete_expectation(pmf, x)
+    }
+}
+
+/// A nonnegative random variable on the support has nonnegative expectation.
+theorem discrete_expectation_nonneg[T](pmf: DiscretePMF[T], x: T -> Real) {
+    (forall(t: T) { pmf.support.contains(t) implies Real.0 <= x(t) }) implies
+        Real.0 <= discrete_expectation(pmf, x)
+} by {
+    if forall(t: T) { pmf.support.contains(t) implies Real.0 <= x(t) } {
+        const_le_discrete_expectation(pmf, x, Real.0)
+        Real.0 <= discrete_expectation(pmf, x)
+    }
 }
 
 /// The probability of a disjoint union of events is the sum of their probabilities.
@@ -309,6 +508,78 @@ theorem pmf_event_prob_support_split[T](pmf: DiscretePMF[T], a: FiniteSet[T]) {
     pmf_event_prob_support[T](pmf)
     pmf_event_prob(pmf, pmf.support) = Real.1
     pi + pd = Real.1
+}
+
+lemma finite_set_intersection_eq_right_of_subset[T](left: FiniteSet[T], right: FiniteSet[T]) {
+    right.subset_eq(left) implies fs_intersection(left, right) = right
+} by {
+    if right.subset_eq(left) {
+        right.underlying_set.subset(left.underlying_set)
+        intersection_with_superset_is_self(right.underlying_set, left.underlying_set)
+        right.underlying_set.intersection(left.underlying_set) = right.underlying_set
+        intersection_comm(left.underlying_set, right.underlying_set)
+        left.underlying_set.intersection(right.underlying_set) =
+            right.underlying_set.intersection(left.underlying_set)
+        fs_intersection(left, right).underlying_set =
+            left.underlying_set.intersection(right.underlying_set)
+        fs_intersection(left, right).underlying_set = right.underlying_set
+        finite_set_ext(fs_intersection(left, right), right)
+        fs_intersection(left, right) = right
+    }
+}
+
+lemma real_le_of_add_nonneg_eq(a: Real, b: Real, c: Real) {
+    Real.0 <= b and a + b = c implies a <= c
+} by {
+    if Real.0 <= b and a + b = c {
+        add_le_add_left[Real](Real.0, b, a)
+        a + Real.0 <= a + b
+        Real.add_identity_right(a)
+        a + Real.0 = a
+        a <= a + b
+        a <= c
+    }
+}
+
+/// Event probability is monotone under inclusion of finite events.
+theorem pmf_event_prob_mono[T](pmf: DiscretePMF[T], a: FiniteSet[T], b: FiniteSet[T]) {
+    a.subset_eq(b) implies pmf_event_prob(pmf, a) <= pmf_event_prob(pmf, b)
+} by {
+    if a.subset_eq(b) {
+        finite_set_intersection_eq_right_of_subset(b, a)
+        fs_intersection(b, a) = a
+        finite_set_intersection_union_difference_is_self[T](b, a)
+        fs_union(fs_intersection(b, a), fs_difference(b, a)) = b
+        fs_union(a, fs_difference(b, a)) = b
+        finite_set_intersection_is_disjoint_difference[T](b, a)
+        fs_intersection(b, a).is_disjoint(fs_difference(b, a))
+        a.is_disjoint(fs_difference(b, a))
+        pmf_event_prob_disjoint_union[T](pmf, a, fs_difference(b, a))
+        let pa = pmf_event_prob(pmf, a)
+        let pd = pmf_event_prob(pmf, fs_difference(b, a))
+        let pb = pmf_event_prob(pmf, b)
+        pmf_event_prob(pmf, fs_union(a, fs_difference(b, a))) = pa + pd
+        pb = pa + pd
+        pa + pd = pb
+        pmf_event_prob_nonneg(pmf, fs_difference(b, a))
+        Real.0 <= pd
+        real_le_of_add_nonneg_eq(pa, pd, pb)
+        pa <= pb
+        pmf_event_prob(pmf, a) <= pmf_event_prob(pmf, b)
+    }
+}
+
+/// An event contained in the support has probability at most one.
+theorem pmf_event_prob_le_one[T](pmf: DiscretePMF[T], event: FiniteSet[T]) {
+    event.subset_eq(pmf.support) implies pmf_event_prob(pmf, event) <= Real.1
+} by {
+    if event.subset_eq(pmf.support) {
+        pmf_event_prob_mono(pmf, event, pmf.support)
+        pmf_event_prob(pmf, event) <= pmf_event_prob(pmf, pmf.support)
+        pmf_event_prob_support[T](pmf)
+        pmf_event_prob(pmf, pmf.support) = Real.1
+        pmf_event_prob(pmf, event) <= Real.1
+    }
 }
 
 /// The variance formula: `Var(X) = E(X^2) - E(X)^2` for any discrete pmf.
@@ -471,6 +742,7 @@ theorem discrete_variance_const[T](pmf: DiscretePMF[T], c: Real) {
     discrete_expectation(pmf, const_real_fn[T](c)) = c
     forall(t: T) {
         square_fn(const_real_fn[T](c), t) = const_real_fn[T](c, t) * const_real_fn[T](c, t)
+        const_real_fn_apply[T](c, t)
         const_real_fn[T](c, t) = c
         square_fn(const_real_fn[T](c), t) = c * c
         const_real_fn[T](c * c, t) = c * c
@@ -614,6 +886,7 @@ theorem discrete_variance_add_const[T](pmf: DiscretePMF[T], x: T -> Real, c: Rea
     forall(t: T) {
         y(t) = add_fn(x, const_real_fn[T](c), t)
         add_fn(x, const_real_fn[T](c), t) = x(t) + const_real_fn[T](c, t)
+        const_real_fn_apply[T](c, t)
         const_real_fn[T](c, t) = c
         y(t) = x(t) + c
         y(t) - mu_y = (x(t) + c) - (mu_x + c)
