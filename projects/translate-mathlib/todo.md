@@ -8,10 +8,7 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 - [ ] prover-limitation: topology/todo.md (product map continuity, `fan_out_preimage_box_open`) - the box step of fan-out continuity reduces to the basic fact `is_continuous(f) and Y.is_open(v) implies X.is_open(set_preimage(f, v))`, but its only proof route is the `is_continuous` define-unfold forall-instantiation, which times out (5s) when used outside `topological_space.ac`. Factoring it into a general lemma `continuous_open_preimage` beside the definition poisons the premise pool and breaks the previously-cached `continuous_imp_continuous_at` proof. The verified pieces (`fan_out_preimage_box`, projection-recovery, `open_inter`) are ready. Next action: revisit once Acorn instantiates a definitional `forall` (or exposes a cheap continuous-preimage-open lemma) without premise-pool blowup.
 
-## Foundational And Core Infrastructure
-
-- [ ] [Foundations and set-theoretic infrastructure](foundations/todo.md)
-  Note: strengthen finite sets, relations, functions, quotients, finite/infinite constructions, and reusable proof infrastructure needed by discrete Erdos problems.
+## Core Infrastructure
 
 - [ ] [Order theory and lattices](order-theory/todo.md)
   Note: complete the reusable order API for extremal functions, intervals, monotone maps, lattices, and finite-search arguments.
@@ -87,26 +84,25 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Suggested Execution Order
 
-1. [Foundations and set-theoretic infrastructure](foundations/todo.md)
-2. [Order theory and lattices](order-theory/todo.md)
-3. [Algebraic hierarchy](algebraic-hierarchy/todo.md)
-4. [Number theory](number-theory/todo.md)
-5. [Combinatorics](combinatorics/todo.md)
-6. [Graph theory](graph-theory/todo.md)
-7. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
-8. [Linear algebra](linear-algebra/todo.md)
-9. [Real analysis](real-analysis/todo.md)
-10. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
-11. [Topology](topology/todo.md)
-12. [Special number systems](special-number-systems/todo.md)
-13. [Probability theory](probability-theory/todo.md)
-14. [Measure theory](measure-theory/todo.md)
-15. [Commutative algebra](commutative-algebra/todo.md)
-16. [Field theory and Galois theory](field-theory-and-galois-theory/todo.md)
-17. [Category theory](category-theory/todo.md)
-18. [Complex analysis](complex-analysis/todo.md)
-19. [Functional analysis](functional-analysis/todo.md)
-20. [Dynamical systems and ergodic ideas](dynamical-systems-and-ergodic-ideas/todo.md)
-21. [Differential geometry and manifolds](differential-geometry-and-manifolds/todo.md)
-22. [Representation theory and Lie algebra basics](representation-theory-and-lie-algebra/todo.md)
-23. [Algebraic geometry](algebraic-geometry/todo.md)
+1. [Order theory and lattices](order-theory/todo.md)
+2. [Algebraic hierarchy](algebraic-hierarchy/todo.md)
+3. [Number theory](number-theory/todo.md)
+4. [Combinatorics](combinatorics/todo.md)
+5. [Graph theory](graph-theory/todo.md)
+6. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
+7. [Linear algebra](linear-algebra/todo.md)
+8. [Real analysis](real-analysis/todo.md)
+9. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
+10. [Topology](topology/todo.md)
+11. [Special number systems](special-number-systems/todo.md)
+12. [Probability theory](probability-theory/todo.md)
+13. [Measure theory](measure-theory/todo.md)
+14. [Commutative algebra](commutative-algebra/todo.md)
+15. [Field theory and Galois theory](field-theory-and-galois-theory/todo.md)
+16. [Category theory](category-theory/todo.md)
+17. [Complex analysis](complex-analysis/todo.md)
+18. [Functional analysis](functional-analysis/todo.md)
+19. [Dynamical systems and ergodic ideas](dynamical-systems-and-ergodic-ideas/todo.md)
+20. [Differential geometry and manifolds](differential-geometry-and-manifolds/todo.md)
+21. [Representation theory and Lie algebra basics](representation-theory-and-lie-algebra/todo.md)
+22. [Algebraic geometry](algebraic-geometry/todo.md)
