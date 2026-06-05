@@ -2,19 +2,24 @@
 
 Goal: make quotient constructions systematic across groups, rings, and later modules.
 
-- [ ] Define congruence relations for the remaining algebraic structures
-- [ ] Add bundled quotient monoid and quotient group instances after the representative-level APIs are complete
-- [ ] Support normal subgroups as quotient data
-- [ ] Package quotient rings by ideals using the verified ideal quotient relation
-- [ ] Add bundled canonical projection morphisms and universal properties once quotient structures are packaged
-- [ ] Support kernels and quotients-by-kernel constructions
-- [ ] Package the first isomorphism theorem as a bundled isomorphism from the kernel quotient onto the image (the induced map now has the homomorphism property, injectivity on projections including iff characterizations against both image equality and projection equality, and surjectivity onto the image for every kernel quotient; remaining: bundle these into an isomorphism statement — design note: `is_bijection_fn` over the whole `QuotientOver[T]` is wrong because `quotient_over_lift_to` ignores the carrier relation, so a quotient element built from a different relation can share a representative; bundling needs the domain restricted to the projection image)
-- [ ] Review remaining representative-level quotient simplification gaps before bundled quotient instances, excluding the verified ideal-quotient projection-facing associativity, distributivity, reassociation, cancellation, unary/binary, relation/zero-membership, projected-difference, power, and related-representative operation-compatibility aliases; the verified group/ring/monoid/additive-monoid/additive-group/semiring/linear-map kernel projection aliases and projection-equality iff lemmas; the verified semiring/monoid/additive-monoid/additive-group/group/ring kernel projection-facing related-representative operation-compatibility aliases; the verified semiring-kernel representative-respecting, identity, zero, associativity, commutativity, distributivity, and natural-power aliases; the verified monoid/group/ring kernel quotient natural-power addition, power-of-power, and one-power aliases; the verified group-kernel projected multiplication-cancellation aliases; the verified additive-group-kernel subtraction/cancellation and negation-involution aliases; the verified normal-subgroup inverse-cancellation, projection-identity/zero-fiber, projected multiplication-cancellation, related-representative operation-compatibility aliases, left projected-difference relation/membership aliases, and right projected-difference membership aliases; and the verified ring-kernel subtraction/negation/product simplification, representative addition/subtraction cancellation, and projection-facing cancellation aliases
-- [ ] Support transport of finiteness and order structure through quotients where natural
-- [ ] Record migration targets where current code hand-simulates quotient reasoning
+## Group A: First Erdos Congruence Core
+
+- [ ] Add further projection-facing principal-ideal or kernel-quotient aliases only when a concrete modular arithmetic proof needs them.
+- [ ] Record migration targets where first-cluster number-theory code still hand-simulates quotient reasoning.
+- [ ] Support transport of finiteness and order structure through quotients only if an active first-cluster target needs it.
+
+## Group B: Deferred Quotient Packaging
+
+- [ ] Define congruence relations for algebraic structures not needed by the first number-theory cluster.
+- [ ] Add bundled quotient monoid and quotient group instances after representative-level APIs are complete.
+- [ ] Package quotient rings by ideals using the verified ideal quotient relation.
+- [ ] Add bundled canonical projection morphisms and universal properties once quotient structures are packaged.
+- [ ] Package the first isomorphism theorem as a bundled isomorphism from the kernel quotient onto the image.
+  Note: the induced map now has the homomorphism property, injectivity on projections including iff characterizations against both image equality and projection equality, and surjectivity onto the image for every kernel quotient. Bundling needs a domain restricted to the projection image because `is_bijection_fn` over the whole `QuotientOver[T]` is wrong: `quotient_over_lift_to` ignores the carrier relation, so a quotient element built from a different relation can share a representative.
 
 Status:
 
+- Ideal quotient APIs now include principal-ideal modular arithmetic bridges: equality in the quotient by `(m)` is equivalent to the difference being a multiple of `m`, and the quotient-zero fiber is equivalent to being a multiple of `m`, with both one-way aliases.
 - Kernel quotient APIs now include commutativity lemmas for commutative monoid, additive commutative monoid, and additive commutative group homomorphism quotients.
 - Kernel quotient APIs now include primitive monoid/group power operations and zero/successor/projection identity lemmas.
 - Kernel quotient APIs now prove that powers of projected monoid and group representatives agree with projected powers.

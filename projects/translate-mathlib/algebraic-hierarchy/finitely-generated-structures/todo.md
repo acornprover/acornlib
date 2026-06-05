@@ -2,10 +2,12 @@
 
 Goal: support finite-generation statements that appear throughout algebra, number theory, and geometry.
 
-- [ ] Add finitely generated ideals and modules later on compatible definitions
-- [ ] Add closure lemmas for images and quotients of finitely generated objects
-- [ ] Connect finite generation with finite groups and finite sets already in the library
-- [ ] Add helper lemmas for choosing finite generating sets
+- [ ] Add closure lemmas for images and quotients of finitely generated objects when a concrete first-cluster proof needs them
 - [ ] Record later links to Noetherianity and finite-dimensionality
-- [ ] Refactor representative finite-generation arguments to the shared API
+- [ ] Refactor representative finite-generation arguments to the shared API after downstream examples exist
 - [ ] Add finite-generation predicates for future bundled subobjects once their closure APIs exist
+
+Status:
+
+- Ideals, subsemigroups, submonoids, subgroups, additive submonoids, additive subgroups, subrings, and submodules now have finite-generation predicates, finite-closure constructors, and finite-generator witness extractors; all except submodule also have same-carrier equality transport, and submodule already had carrier-aware equality transport.
+- `src/finite_group/base.ac` already connects finite groups and finite subgroups to finite generation, including finite subsemigroup/submonoid/subgroup generation and cyclic finite subgroup membership/generation helpers.
