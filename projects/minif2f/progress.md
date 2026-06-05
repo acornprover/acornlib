@@ -12,7 +12,7 @@
 - Added nearby rational helper lemmas for `1 + 1/2`, the reciprocal of `3/2`, `1 + 2/3`, and `5/3` in reduced form.
 - Verification status: `./acorn-0.1.84-linux-x64 verify --lib ./acornlib src/minif2f/valid/algebra.ac --timeout 20 --fail-fast` succeeded.
 - Strict replay status: `./acorn-0.1.84-linux-x64 check --lib ./acornlib --strict src/minif2f/valid/algebra.ac` succeeded with `0 searches performed`.
-- Attempted valid-split problem `mathd_numbertheory_81`; proof search could not verify the decimal arithmetic bridge `Nat.23 * Nat.3 + Nat.2 = Nat.71`, so the unverified source file was removed rather than leaving a failing theorem under `acornlib/src`.
+- Attempted valid-split problem `mathd_numbertheory_81`; the decimal arithmetic bridge `Nat.23 * Nat.3 + Nat.2 = Nat.71` is now tracked as `hard_problems/nat_decimal_arithmetic_bridge.ac`, so the unverified source file remains out of `acornlib/src`.
 - Attempted valid-split problem `mathd_algebra_190`; a direct Real translation using `from_nat[Real]` timed out, so it was not kept in `acornlib/src`.
 - Considered valid-split problem `mathd_algebra_182` from `miniF2F/lean/src/valid.lean`.
 - Translated and proved `mathd_algebra_182` in `acornlib/src/minif2f/valid/algebra.ac` over `Complex`, using `from_nat[Complex]` and existing small Nat multiplication facts.
