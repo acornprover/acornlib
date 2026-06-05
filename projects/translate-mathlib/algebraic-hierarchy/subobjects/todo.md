@@ -7,6 +7,8 @@ Goal: make subgroup-like constructions uniform across the algebraic hierarchy.
 
 Status:
 
+- `src/comm_ring_unit.ac` now connects unit reasoning with principal ideals: `principal_ideal_eq_unit_of_unit` and `unit_of_principal_ideal_eq_unit` characterize when a principal ideal is the whole ring in the directions needed by divisibility arguments.
+- Finite-generation APIs now have uniform witness and equality-transport helpers across ideals, subsemigroups, submonoids, subgroups, additive submonoids, additive subgroups, subrings, and submodules.
 - `src/ideal.ac` now has a bundled `Ideal` API with extensionality, underlying sets, zero/unit/principal ideals, containment, intersection, sum, closure from subsets, closure laws, and finite-generation predicates; principal, zero, and unit ideals are finitely generated.
 - `src/ideal.ac` now has principal-ideal multiple-membership and witnessing helpers (`principal_ideal_contains_multiple`, `principal_ideal_witness`, plus bundled counterparts), the unbundled minimality theorem `principal_ideal_subset_of_contains_generator`, and the bundled subset-iff-contains-generator characterization.
 - `src/ideal.ac` now has the contains-one-iff-unit characterization for ideals: `ideal_eq_unit_of_contains_one`, `ideal_contains_one_iff_eq_unit`, and bundled `bundled_ideal_eq_unit_of_contains_one` / `bundled_ideal_contains_one_iff_eq_unit`.
