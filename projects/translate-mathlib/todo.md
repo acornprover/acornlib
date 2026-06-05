@@ -10,11 +10,11 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Core Infrastructure
 
-- [ ] [Order theory and lattices](order-theory/todo.md)
-  Note: complete the reusable order API for extremal functions, intervals, monotone maps, lattices, and finite-search arguments.
-
 - [ ] [Algebraic hierarchy](algebraic-hierarchy/todo.md)
   Note: keep rings, semirings, groups, morphisms, products, quotients, and canonical instances strong enough for number theory and combinatorics.
+
+- [ ] [Order theory and lattices](order-theory/todo.md)
+  Note: the first-cluster comparison, interval/range, monotonicity, and least-witness baseline is in place; resume broad order theory only when a downstream proof exposes a concrete gap.
 
 ## Erdos-Facing Discrete And Elementary Mathematics
 
@@ -84,17 +84,17 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Suggested Execution Order
 
-1. [Order theory and lattices](order-theory/todo.md)
-2. [Algebraic hierarchy](algebraic-hierarchy/todo.md)
-3. [Number theory](number-theory/todo.md)
-4. [Combinatorics](combinatorics/todo.md)
-5. [Graph theory](graph-theory/todo.md)
-6. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
-7. [Linear algebra](linear-algebra/todo.md)
-8. [Real analysis](real-analysis/todo.md)
-9. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
-10. [Topology](topology/todo.md)
-11. [Special number systems](special-number-systems/todo.md)
+1. [Algebraic hierarchy](algebraic-hierarchy/todo.md)
+2. [Number theory](number-theory/todo.md)
+3. [Combinatorics](combinatorics/todo.md)
+4. [Graph theory](graph-theory/todo.md)
+5. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
+6. [Linear algebra](linear-algebra/todo.md)
+7. [Real analysis](real-analysis/todo.md)
+8. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
+9. [Topology](topology/todo.md)
+10. [Special number systems](special-number-systems/todo.md)
+11. [Order theory and lattices](order-theory/todo.md)
 12. [Probability theory](probability-theory/todo.md)
 13. [Measure theory](measure-theory/todo.md)
 14. [Commutative algebra](commutative-algebra/todo.md)
