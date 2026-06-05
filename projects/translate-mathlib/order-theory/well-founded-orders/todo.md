@@ -10,6 +10,7 @@ Goal: give order theory access to induction and recursion principles beyond the 
 
 Status:
 
+- `src/well_founded.ac` now packages the strict natural least-element principle as `is_least_nat_witness` and `is_least_nat_counterexample`, with existence theorems and `<=` comparison eliminators for any other witness or counterexample.
 - `src/well_founded.ac` defines `is_well_founded` via the minimal-element formulation, proves that well-founded relations are irreflexive, proves that pullback along any function and pushforward along a bijection preserve well-foundedness, includes descending-chain exclusion consequences for bijective pushforwards, and now includes subset/intersection preservation, well-founded induction, induction-at, and a `Nat`-indexed descending-chain exclusion theorem.
 - The descending-chain API now has existence and nonexistence predicates, well-foundedness contradiction lemmas, subrelation transfer, and pullback-chain mapping lemmas.
 - `src/well_founded.ac` now includes the strict natural order as a relation, proves the least-element principle for nonempty predicates on naturals, and adds pullback-controlled well-foundedness and descending-chain transfer lemmas for relations contained in pullbacks.
