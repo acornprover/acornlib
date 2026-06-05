@@ -4,9 +4,9 @@ Generated: 2026-06-05. Updated to optimize for an Acorn-assisted Erdos-problem s
 
 Source data: the Erdos Problems public database (`data/problems.yaml`) and the corresponding `https://www.erdosproblems.com/latex/<id>` statement pages. I treat `status.state == "open"` as the current unsolved set, giving 622 problems. The site FAQ warns that status is a work in progress, so these are research triage guesses rather than claims that the problems are truly still open.
 
-Scoring method: each problem has a single score from 100 to 0. The score combines near-term AI-likelihood, Acorn-readiness, and shared infrastructure value. Positive signals include an already formalized statement, no or low recorded prize, OEIS/computational hooks, short concrete statements, existing Acorn-adjacent prerequisites, and tags that would unlock many other Erdos targets. Negative signals include high prizes, famous early catalogue problems, deep analytic/set-theoretic/irrationality content, large Ramsey gaps, long continuous arguments, and areas where Acorn currently lacks the basic language.
+Scoring method: each problem has a single score from 100 to 0, and the list is one sequence sorted by it in non-increasing order. The score starts from a raw attackability heuristic — near-term AI-likelihood, Acorn-readiness, and shared infrastructure value. Positive signals include an already formalized statement, no or low recorded prize, OEIS/computational hooks, short concrete statements, existing Acorn-adjacent prerequisites, and tags that would unlock many other Erdos targets. Negative signals include high prizes, famous early catalogue problems, deep analytic/set-theoretic/irrationality content, large Ramsey gaps, long continuous arguments, and areas where Acorn currently lacks the basic language.
 
-The list is rank-normalized after computing the raw heuristic score, so it stays ordered by this one score and no score is shared by more than 7 problems. The score is not a probability of success; it is a queueing heuristic for what to attack after building the corresponding Acorn library infrastructure.
+First-cluster priority: the score then lifts the 42 number-theory problems that form the active queue (see `projects/translate-mathlib/number-theory/todo.md`) to the top, so they occupy ranks 1-42. The 24 other former top-band problems (additive combinatorics / Sidon, graph theory, geometry) follow at ranks 43-66, and the remaining 556 keep their original order below. The result is rank-normalized to 100..0, so the whole list reads as a single queue whose score never increases and is shared by no more than seven problems. The score is not a probability of success; it is a queueing heuristic for what to attack after building the corresponding Acorn library infrastructure.
 
 ## Ranked Open Problems
 
@@ -31,425 +31,425 @@ The list is rank-normalized after computing the raw heuristic score, so it stays
 - Statement: Is it true that for every $k$ there exists $n$ such that\[\prod_{0\leq i\leq k}(n-i) \mid \binom{2n}{n}?\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 4. Problem 155 - Score 100
-- Site: https://www.erdosproblems.com/155
-- Tags: additive combinatorics, sidon sets
-- Prize: no; formalized: yes; OEIS: A143824, A227590, A003022
-- Statement: Let $F(N)$ be the size of the largest Sidon subset of $\{1,\ldots,N\}$. Is it true that for every $k\geq 1$ we have\[F(N+k)\leq F(N)+1\]for all sufficiently large $N$?
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (additive combinatorics and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 5. Problem 849 - Score 99
+### 4. Problem 849 - Score 100
 - Site: https://www.erdosproblems.com/849
 - Tags: number theory, binomial coefficients
 - Prize: no; formalized: yes; OEIS: A003016, A003015, A059233, A098565, A090162, A180058, A182237
 - Statement: Is it true that, for every integer $t\geq 1$, there is some integer $a$ such that\[\binom{n}{k}=a\](with $1\leq k\leq n/2$) has exactly $t$ solutions?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. The page has OEIS links, exact bound/construction language, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 6. Problem 18 - Score 99
+### 5. Problem 18 - Score 99
 - Site: https://www.erdosproblems.com/18
 - Tags: number theory, divisors, factorials
 - Prize: no; formalized: yes; OEIS: A005153
 - Statement: We call $m$ practical if every integer $1\leq n<m$ is the sum of distinct divisors of $m$. If $m$ is practical then let $h(m)$ be such that $h(m)$ many divisors always suffice. Are there infinitely many practical $m$ such that\[h(m) < (\log\log m)^{O(1)}?\]Is it true that $h(n!)<n^{o(1)}$? Or...
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory, divisors, and factorials) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 7. Problem 386 - Score 99
+### 6. Problem 386 - Score 99
 - Site: https://www.erdosproblems.com/386
 - Tags: number theory, binomial coefficients
 - Prize: no; formalized: yes; OEIS: A280992
 - Statement: Let $2\leq k\leq n-2$. Can $\binom{n}{k}$ be the product of consecutive primes infinitely often? For example\[\binom{21}{2}=2\cdot 3\cdot 5\cdot 7.\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 8. Problem 1094 - Score 99
+### 7. Problem 1094 - Score 99
 - Site: https://www.erdosproblems.com/1094
 - Tags: number theory, binomial coefficients
 - Prize: no; formalized: yes; OEIS: none
 - Statement: For all $n\geq 2k$ the least prime factor of $\binom{n}{k}$ is $\leq \max(n/k,k)$, with only finitely many exceptions.
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 9. Problem 313 - Score 99
+### 8. Problem 313 - Score 99
 - Site: https://www.erdosproblems.com/313
 - Tags: number theory, unit fractions
 - Prize: no; formalized: yes; OEIS: A054377
 - Statement: Are there infinitely many solutions to\[\frac{1}{p_1}+\cdots+\frac{1}{p_k}=1-\frac{1}{m},\]where $m\geq 2$ is an integer and $p_1<\cdots<p_k$ are distinct primes?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 10. Problem 108 - Score 99
-- Site: https://www.erdosproblems.com/108
-- Tags: graph theory, chromatic number, cycles
-- Prize: no; formalized: yes; OEIS: possible
-- Statement: For every $r\geq 4$ and $k\geq 2$ is there some finite $f(k,r)$ such that every graph of chromatic number $\geq f(k,r)$ contains a subgraph of girth $\geq r$ and chromatic number $\geq k$?
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory, chromatic number, and cycles) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 11. Problem 14 - Score 98
-- Site: https://www.erdosproblems.com/14
-- Tags: number theory, sidon sets, additive combinatorics
-- Prize: no; formalized: yes; OEIS: A143824
-- Statement: Let $A\subseteq \mathbb{N}$. Let $B\subseteq \mathbb{N}$ be the set of integers which are representable in exactly one way as the sum of two elements from $A$. Is it true that for all $\epsilon>0$ and large $N$\[\lvert \{1,\ldots,N\}\backslash B\rvert \gg_\epsilon N^{1/2-\epsilon}?\]Is it possible...
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory, sidon sets, and additive combinatorics) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, finite search hooks, exact bound/construction language, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 12. Problem 340 - Score 98
-- Site: https://www.erdosproblems.com/340
-- Tags: number theory, additive combinatorics, sidon sets
-- Prize: no; formalized: yes; OEIS: A080200, A005282
-- Statement: Let $A=\{1,2,4,8,13,21,31,45,66,81,97,\ldots\}$ be the greedy Sidon sequence: we begin with $1$ and iteratively include the next smallest integer that preserves the Sidon property (i.e. there are no non-trivial solutions to $a+b=c+d$). What is the order of growth of $A$? Is it true that\[\lvert...
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory, additive combinatorics, and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 13. Problem 1095 - Score 98
+### 9. Problem 1095 - Score 99
 - Site: https://www.erdosproblems.com/1095
 - Tags: number theory, binomial coefficients
 - Prize: no; formalized: yes; OEIS: A003458
 - Statement: Let $g(k)>k+1$ be the smallest $n$ such that all prime factors of $\binom{n}{k}$ are $>k$. Estimate $g(k)$.
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 14. Problem 406 - Score 98
+### 10. Problem 406 - Score 99
 - Site: https://www.erdosproblems.com/406
 - Tags: number theory, base representations
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Is it true that there are only finitely many powers of $2$ which have only the digits $0$ and $1$ when written in base $3$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and base representations) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 15. Problem 727 - Score 98
+### 11. Problem 727 - Score 98
 - Site: https://www.erdosproblems.com/727
 - Tags: number theory, factorials
 - Prize: no; formalized: yes; OEIS: A002503, A343507, A389396
 - Statement: Let $k\geq 2$. Does\[(n+k)!^2 \mid (2n)!\]for infinitely many $n$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and factorials) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 16. Problem 387 - Score 98
+### 12. Problem 387 - Score 98
 - Site: https://www.erdosproblems.com/387
 - Tags: number theory, binomial coefficients
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Is there an absolute constant $c>0$ such that, for all $1\leq k< n$, the binomial coefficient $\binom{n}{k}$ has a divisor in $(cn,n]$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 17. Problem 274 - Score 97
+### 13. Problem 274 - Score 98
 - Site: https://www.erdosproblems.com/274
 - Tags: group theory, covering systems
 - Prize: no; formalized: yes; OEIS: none
 - Statement: If $G$ is a group then can there exist an exact covering of $G$ by more than one cosets of different sizes? (i.e. each element is contained in exactly one of the cosets)
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (group theory and covering systems) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, exact bound/construction language, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 18. Problem 469 - Score 97
+### 14. Problem 469 - Score 98
 - Site: https://www.erdosproblems.com/469
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: A006036, A119425
 - Statement: Let $A$ be the set of all $n$ such that $n=d_1+\cdots+d_k$ with $d_i$ distinct proper divisors of $n$, but this is not true for any $m\mid n$ with $m<n$. Does\[\sum_{n\in A}\frac{1}{n}\]converge?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 19. Problem 1054 - Score 97
+### 15. Problem 1054 - Score 98
 - Site: https://www.erdosproblems.com/1054
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: A167485
 - Statement: Let $f(n)$ be the minimal integer $m$ such that $n$ is the sum of the $k$ smallest divisors of $m$ for some $k\geq 1$. Is it true that $f(n)=o(n)$? Or is this true only for almost all $n$, and $\limsup f(n)/n=\infty$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 20. Problem 1145 - Score 97
-- Site: https://www.erdosproblems.com/1145
-- Tags: additive combinatorics, additive basis
-- Prize: no; formalized: yes; OEIS: none
-- Statement: Let $A=\{1\leq a_1<a_2<\cdots\}$ and $B=\{1\leq b_1<b_2<\cdots\}$ be sets of integers with $a_n/b_n\to 1$. If $A+B$ contains all sufficiently large positive integers then is it true that $\limsup 1_A\ast 1_B(n)=\infty$?
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (additive combinatorics and additive basis) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
-
-### 21. Problem 893 - Score 97
+### 16. Problem 893 - Score 98
 - Site: https://www.erdosproblems.com/893
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: A046801
 - Statement: If $\tau(n)$ counts the divisors of $n$ then let\[f(n)=\sum_{1\leq k\leq n}\tau(2^k-1).\]Does $f(2n)/f(n)$ tend to a limit?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 22. Problem 321 - Score 97
+### 17. Problem 321 - Score 97
 - Site: https://www.erdosproblems.com/321
 - Tags: number theory, unit fractions
 - Prize: no; formalized: yes; OEIS: A384927, A391592
 - Statement: What is the size of the largest $A\subseteq \{1,\ldots,N\}$ such that all sums $\sum_{n\in S}\frac{1}{n}$ are distinct for $S\subseteq A$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 23. Problem 886 - Score 96
+### 18. Problem 886 - Score 97
 - Site: https://www.erdosproblems.com/886
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Let $\epsilon>0$. Is it true that, for all large $n$, the number of divisors of $n$ in $(n^{1/2},n^{1/2}+n^{1/2-\epsilon})$ is $O_\epsilon(1)$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 24. Problem 390 - Score 96
+### 19. Problem 390 - Score 97
 - Site: https://www.erdosproblems.com/390
 - Tags: number theory, factorials
 - Prize: no; formalized: yes; OEIS: A193429
 - Statement: Let $f(n)$ be the minimal $m$ such that\[n! = a_1\cdots a_k\]with $n< a_1<\cdots <a_k=m$. Is there (and what is it) a constant $c$ such that\[f(n)-2n \sim c\frac{n}{\log n}?\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and factorials) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 25. Problem 44 - Score 96
-- Site: https://www.erdosproblems.com/44
-- Tags: number theory, sidon sets, additive combinatorics
-- Prize: no; formalized: yes; OEIS: none
-- Statement: Let $N\geq 1$ and $A\subset \{1,\ldots,N\}$ be a Sidon set. Is it true that, for any $\epsilon>0$, there exist $M$ and $B\subset \{N+1,\ldots,M\}$ (which may depend on $N,A,\epsilon$) such that $A\cup B\subset \{1,\ldots,M\}$ is a Sidon set of size at least $(1-\epsilon)M^{1/2}$?
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory, sidon sets, and additive combinatorics) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
-
-### 26. Problem 241 - Score 96
-- Site: https://www.erdosproblems.com/241
-- Tags: additive combinatorics, sidon sets
-- Prize: $100; formalized: yes; OEIS: A387704
-- Statement: Let $f(N)$ be the maximum size of $A\subseteq \{1,\ldots,N\}$ such that the sums $a+b+c$ with $a,b,c\in A$ are all distinct (aside from the trivial coincidences). Is it true that\[ f(N)\sim N^{1/3}?\]
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. The recorded prize ($100) is small, so it is only a mild difficulty signal. The tags (additive combinatorics and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 27. Problem 373 - Score 96
+### 20. Problem 373 - Score 97
 - Site: https://www.erdosproblems.com/373
 - Tags: number theory, factorials
 - Prize: no; formalized: yes; OEIS: A003135
 - Statement: Show that the equation\[n! = a_1!a_2!\cdots a_k!,\]with $n-1>a_1\geq a_2\geq \cdots \geq a_k\geq 2$, has only finitely many solutions.
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and factorials) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 28. Problem 887 - Score 96
+### 21. Problem 887 - Score 97
 - Site: https://www.erdosproblems.com/887
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Is there an absolute constant $K$ such that, for every $C>0$, if $n$ is sufficiently large then $n$ has at most $K$ divisors in $(n^{1/2},n^{1/2}+C n^{1/4})$.
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 29. Problem 288 - Score 95
+### 22. Problem 288 - Score 97
 - Site: https://www.erdosproblems.com/288
 - Tags: number theory, unit fractions
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Is it true that there are only finitely many pairs of intervals $I_1,I_2$ such that\[\sum_{n_1\in I_1}\frac{1}{n_1}+\sum_{n_2\in I_2}\frac{1}{n_2}\in \mathbb{N}?\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 30. Problem 170 - Score 95
-- Site: https://www.erdosproblems.com/170
-- Tags: additive combinatorics
-- Prize: no; formalized: yes; OEIS: A046693
-- Statement: Let $F(N)$ be the smallest possible size of $A\subset \{0,1,\ldots,N\}$ such that $\{0,1,\ldots,N\}\subset A-A$. Find the value of\[\lim_{N\to \infty}\frac{F(N)}{N^{1/2}}.\]
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (additive combinatorics) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 31. Problem 683 - Score 95
+### 23. Problem 683 - Score 96
 - Site: https://www.erdosproblems.com/683
 - Tags: number theory, primes, binomial coefficients
 - Prize: no; formalized: yes; OEIS: A006530, A074399, A121359
 - Statement: Is it true that for every $1\leq k\leq n$ the largest prime divisor of $\binom{n}{k}$, say $P(\binom{n}{k})$, satisfies\[P\left(\binom{n}{k}\right)\geq \min(n-k+1, k^{1+c})\]for some constant $c>0$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory, primes, and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. The page has OEIS links, equivalent formulation, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 32. Problem 1113 - Score 95
+### 24. Problem 1113 - Score 96
 - Site: https://www.erdosproblems.com/1113
 - Tags: number theory, covering systems
 - Prize: no; formalized: yes; OEIS: A076336
 - Statement: A positive odd integer $m$ such that none of $2^km+1$ are prime for $k\geq 0$ is called a Sierpinski number . We say that a set of primes $P$ is a covering set for $m$ if every $2^km+1$ is divisible by some $p\in P$. Are there Sierpinski numbers with no finite covering set of primes?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and covering systems) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 33. Problem 470 - Score 95
+### 25. Problem 470 - Score 96
 - Site: https://www.erdosproblems.com/470
 - Tags: number theory, divisors
 - Prize: $10; formalized: yes; OEIS: A006037, A002975
 - Statement: Call $n$ weird if $\sigma(n)\geq 2n$ and $n$ is not pseudoperfect, that is, it is not the sum of any set of its divisors. Are there any odd weird numbers? Are there infinitely many primitive weird numbers, i.e. those such that no proper divisor of $n$ is weird?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. The recorded prize ($10) is small, so it is only a mild difficulty signal. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 34. Problem 1104 - Score 95
-- Site: https://www.erdosproblems.com/1104
-- Tags: graph theory, chromatic number
-- Prize: no; formalized: yes; OEIS: A292528
-- Statement: Let $f(n)$ be the maximum possible chromatic number of a triangle-free graph on $n$ vertices. Estimate $f(n)$.
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory and chromatic number) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 35. Problem 912 - Score 95
+### 26. Problem 912 - Score 96
 - Site: https://www.erdosproblems.com/912
 - Tags: number theory, factorials
 - Prize: no; formalized: yes; OEIS: A071626
 - Statement: If\[n! = \prod_i p_i^{k_i}\]is the factorisation into distinct primes then let $h(n)$ count the number of distinct exponents $k_i$. Prove that there exists some $c>0$ such that\[h(n) \sim c \left(\frac{n}{\log n}\right)^{1/2}\]as $n\to \infty$.
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and factorials) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 36. Problem 975 - Score 94
+### 27. Problem 975 - Score 96
 - Site: https://www.erdosproblems.com/975
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: A147807
 - Statement: Let $f\in \mathbb{Z}[x]$ be an irreducible non-constant polynomial such that $f(n)\geq 1$ for all large $n\in\mathbb{N}$. Does there exist a constant $c=c(f)>0$ such that\[\sum_{n\leq X} \tau(f(n))\sim cX\log X,\]where $\tau$ is the divisor function?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 37. Problem 377 - Score 94
+### 28. Problem 377 - Score 96
 - Site: https://www.erdosproblems.com/377
 - Tags: number theory, binomial coefficients
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Is there some absolute constant $C>0$ such that\[\sum_{p\leq n}1_{p\nmid \binom{2n}{n}}\frac{1}{p}\leq C\]for all $n$ (where the summation is restricted to primes $p\leq n$)?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 38. Problem 757 - Score 94
-- Site: https://www.erdosproblems.com/757
-- Tags: geometry, distances, sidon sets
-- Prize: no; formalized: yes; OEIS: possible
-- Statement: Let $A\subset \mathbb{R}$ be a set of size $n$ such that every subset $B\subseteq A$ with $\lvert B\rvert =4$ has $\lvert B-B\rvert\geq 11$. Find the best constant $c>0$ such that $A$ must always contain a Sidon set of size $\geq cn$.
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (geometry, distances, and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has equivalent formulation, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 39. Problem 750 - Score 94
-- Site: https://www.erdosproblems.com/750
-- Tags: graph theory, chromatic number
-- Prize: no; formalized: yes; OEIS: none
-- Statement: Let $f(m)$ be some function such that $f(m)\to \infty$ as $m\to \infty$. Does there exist a graph $G$ of infinite chromatic number such that every subgraph on $m$ vertices contains an independent set of size at least $\frac{m}{2}-f(m)$?
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory and chromatic number) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 40. Problem 124 - Score 94
+### 29. Problem 124 - Score 95
 - Site: https://www.erdosproblems.com/124
 - Tags: number theory, base representations
 - Prize: no; formalized: yes; OEIS: none
 - Statement: For any $d\geq 1$ and $k\geq 0$ let $P(d,k)$ be the set of integers which are the sum of distinct powers $d^i$ with $i\geq k$. Let $3\leq d_1<d_2<\cdots <d_r$ be integers such that\[\sum_{1\leq i\leq r}\frac{1}{d_r-1}\geq 1.\]Can all sufficiently large integers be written as a sum of the shape...
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and base representations) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 41. Problem 184 - Score 94
-- Site: https://www.erdosproblems.com/184
-- Tags: graph theory, cycles
-- Prize: no; formalized: yes; OEIS: possible
-- Statement: Any graph on $n$ vertices can be decomposed into $O(n)$ many edge-disjoint cycles and edges.
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory and cycles) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
-
-### 42. Problem 295 - Score 93
+### 30. Problem 295 - Score 95
 - Site: https://www.erdosproblems.com/295
 - Tags: number theory, unit fractions
 - Prize: no; formalized: yes; OEIS: A192881
 - Statement: Let $N\geq 1$ and let $k(N)$ denote the smallest $k$ such that there exist $N\leq n_1<\cdots <n_k$ with\[1=\frac{1}{n_1}+\cdots+\frac{1}{n_k}.\]Is it true that\[\lim_{N\to \infty} k(N)-(e-1)N=\infty?\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 43. Problem 1108 - Score 93
+### 31. Problem 1108 - Score 95
 - Site: https://www.erdosproblems.com/1108
 - Tags: number theory, factorials
 - Prize: no; formalized: yes; OEIS: A051761, A115645, A025494
 - Statement: Let\[A = \left\{ \sum_{n\in S}n! : S\subset \mathbb{N}\textrm{ finite}\right\}.\]If $k\geq 2$, then does $A$ contain only finitely many $k$th powers? Does it contain only finitely many powerful numbers?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and factorials) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 44. Problem 885 - Score 93
+### 32. Problem 885 - Score 95
 - Site: https://www.erdosproblems.com/885
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: none
 - Statement: For integer $n\geq 1$ we define the factor difference set of $n$ by\[D(n) = \{\lvert a-b\rvert : n=ab\}.\]Is it true that, for every $k\geq 1$, there exist integers $N_1<\cdots<N_k$ such that\[\lvert \cap_i D(N_i)\rvert \geq k?\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 45. Problem 304 - Score 93
+### 33. Problem 304 - Score 95
 - Site: https://www.erdosproblems.com/304
 - Tags: number theory, unit fractions
 - Prize: no; formalized: yes; OEIS: A097847, A097849
 - Statement: For integers $1\leq a<b$ let $N(a,b)$ denote the minimal $k$ such that there exist integers $1<n_1<\cdots<n_k$ with\[\frac{a}{b}=\frac{1}{n_1}+\cdots+\frac{1}{n_k}.\]Estimate $N(b)=\max_{1\leq a<b}N(a,b)$. Is it true that $N(b) \ll \log\log b$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 46. Problem 312 - Score 93
+### 34. Problem 312 - Score 95
 - Site: https://www.erdosproblems.com/312
 - Tags: number theory, unit fractions
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Does there exist some $c>0$ such that, for any $K>1$, whenever $A$ is a sufficiently large finite multiset of positive integers with $\sum_{n\in A}\frac{1}{n}>K$ there exists some $S\subseteq A$ such that\[1-e^{-cK} < \sum_{n\in S}\frac{1}{n}\leq 1?\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 47. Problem 289 - Score 93
+### 35. Problem 289 - Score 95
 - Site: https://www.erdosproblems.com/289
 - Tags: number theory, unit fractions
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Is it true that, for all sufficiently large $k$, there exist finite intervals $I_1,\ldots,I_k\subset \mathbb{N}$, distinct, not overlapping or adjacent, with $\lvert I_i\rvert \geq 2$ for $1\leq i\leq k$ such that\[1=\sum_{i=1}^k \sum_{n\in I_i}\frac{1}{n}?\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 48. Problem 11 - Score 92
-- Site: https://www.erdosproblems.com/11
-- Tags: number theory, additive basis
-- Prize: no; formalized: yes; OEIS: A001220, A377587
-- Statement: Is every large odd integer $n$ the sum of a squarefree number and a power of 2?
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and additive basis) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 49. Problem 82 - Score 92
-- Site: https://www.erdosproblems.com/82
-- Tags: graph theory
-- Prize: no; formalized: yes; OEIS: A120414, A390256, A390257, A390919, A392636, A394400, A394462, A394539, A394563, A394564, A394573, A394574, A394930, A394933
-- Statement: Let $F(n)$ be maximal such that every graph on $n$ vertices contains a regular induced subgraph on at least $F(n)$ vertices. Prove that $F(n)/\log n\to \infty$.
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has OEIS links, equivalent formulation, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 50. Problem 153 - Score 92
-- Site: https://www.erdosproblems.com/153
-- Tags: sidon sets
-- Prize: no; formalized: yes; OEIS: none
-- Statement: Let $A$ be a finite Sidon set and $A+A=\{s_1<\cdots<s_t\}$. Is it true that\[\frac{1}{t}\sum_{1\leq i<t}(s_{i+1}-s_i)^2 \to \infty\]as $\lvert A\rvert\to \infty$?
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 51. Problem 276 - Score 92
+### 36. Problem 276 - Score 94
 - Site: https://www.erdosproblems.com/276
 - Tags: number theory, covering systems
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Is there an infinite Lucas sequence $a_0,a_1,\ldots$ where $a_{n+2}=a_{n+1}+a_n$ for $n\geq 0$ such that all $a_k$ are composite, and yet no integer has a common factor with every term of the sequence?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and covering systems) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 52. Problem 945 - Score 92
+### 37. Problem 945 - Score 94
 - Site: https://www.erdosproblems.com/945
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: A048892
 - Statement: Let $F(x)$ be the maximal $k$ such that there exist $n+1,\ldots,n+k\leq x$ with $\tau(n+1),\ldots,\tau(n+k)$ all distinct (where $\tau(m)$ counts the divisors of $m$). Estimate $F(x)$. In particular, is it true that\[F(x) \leq (\log x)^{O(1)}?\]In other words, is there a constant $C>0$ such that,...
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 53. Problem 273 - Score 92
+### 38. Problem 273 - Score 94
 - Site: https://www.erdosproblems.com/273
 - Tags: number theory, covering systems
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Is there a covering system all of whose moduli are of the form $p-1$ for some primes $p\geq 5$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and covering systems) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 54. Problem 1093 - Score 91
+### 39. Problem 1093 - Score 94
 - Site: https://www.erdosproblems.com/1093
 - Tags: number theory, binomial coefficients
 - Prize: no; formalized: yes; OEIS: none
 - Statement: For $n\geq 2k$ we define the deficiency of $\binom{n}{k}$ as follows. If $\binom{n}{k}$ is divisible by a prime $p\leq k$ then the deficiency is undefined. Otherwise, the deficiency is the number of $0\leq i 1$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and binomial coefficients) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This is especially attractive for the Acorn plan because binomial identities, modular arithmetic, divisibility, and finite base-expansion lemmas are already close to existing library strengths. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 55. Problem 859 - Score 91
+### 40. Problem 859 - Score 94
 - Site: https://www.erdosproblems.com/859
 - Tags: number theory, divisors
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Let $t\geq 1$ and let $d_t$ be the density of the set of integers $n\in\mathbb{N}$ for which $t$ can be represented as the sum of distinct divisors of $n$. Do there exist constants $c_1,c_2>0$ such that\[d_t \sim \frac{c_1}{(\log t)^{c_2}}\]as $t\to \infty$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and divisors) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 56. Problem 1194 - Score 91
-- Site: https://www.erdosproblems.com/1194
-- Tags: additive combinatorics, additive basis, sidon sets
-- Prize: no; formalized: no; OEIS: possible
-- Statement: Let $A\subset\mathbb{N}$ be such that every integer $n\geq 1$ can be written uniquely as $a_n-b_n$ for some $a_n,b_n\in A$. How fast must $a_n/n$ increase?
-- Assessment: The statement is not marked formalized, so the first task would be to disambiguate and formalize the statement before proof search becomes useful. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (additive combinatorics, additive basis, and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 57. Problem 36 - Score 91
-- Site: https://www.erdosproblems.com/36
-- Tags: number theory, additive combinatorics
-- Prize: no; formalized: yes; OEIS: A393584
-- Statement: Find the optimal constant $c>0$ such that the following holds. For all sufficiently large $N$, if $A\sqcup B=\{1,\ldots,2N\}$ is a partition into two equal parts, so that $\lvert A\rvert=\lvert B\rvert=N$, then there is some $x$ such that the number of solutions to $a-b=x$ with $a\in A$ and $b\in...
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and additive combinatorics) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
-
-### 58. Problem 306 - Score 91
+### 41. Problem 306 - Score 94
 - Site: https://www.erdosproblems.com/306
 - Tags: number theory, unit fractions
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Let $a/b\in \mathbb{Q}_{>0}$ with $b$ squarefree. Are there integers $1<n_1<\cdots<n_k$, each the product of two distinct primes, such that\[\frac{a}{b}=\frac{1}{n_1}+\cdots+\frac{1}{n_k}?\]
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 59. Problem 85 - Score 91
+### 42. Problem 282 - Score 93
+- Site: https://www.erdosproblems.com/282
+- Tags: number theory, unit fractions
+- Prize: no; formalized: yes; OEIS: none
+- Statement: Let $A\subseteq \mathbb{N}$ be an infinite set and consider the following greedy algorithm for a rational $x\in (0,1)$: choose the minimal $n\in A$ such that $n\geq 1/x$ and repeat with $x$ replaced by $x-\frac{1}{n}$. If this terminates after finitely many steps then this produces a representation...
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 43. Problem 155 - Score 93
+- Site: https://www.erdosproblems.com/155
+- Tags: additive combinatorics, sidon sets
+- Prize: no; formalized: yes; OEIS: A143824, A227590, A003022
+- Statement: Let $F(N)$ be the size of the largest Sidon subset of $\{1,\ldots,N\}$. Is it true that for every $k\geq 1$ we have\[F(N+k)\leq F(N)+1\]for all sufficiently large $N$?
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (additive combinatorics and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 44. Problem 108 - Score 93
+- Site: https://www.erdosproblems.com/108
+- Tags: graph theory, chromatic number, cycles
+- Prize: no; formalized: yes; OEIS: possible
+- Statement: For every $r\geq 4$ and $k\geq 2$ is there some finite $f(k,r)$ such that every graph of chromatic number $\geq f(k,r)$ contains a subgraph of girth $\geq r$ and chromatic number $\geq k$?
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory, chromatic number, and cycles) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 45. Problem 14 - Score 93
+- Site: https://www.erdosproblems.com/14
+- Tags: number theory, sidon sets, additive combinatorics
+- Prize: no; formalized: yes; OEIS: A143824
+- Statement: Let $A\subseteq \mathbb{N}$. Let $B\subseteq \mathbb{N}$ be the set of integers which are representable in exactly one way as the sum of two elements from $A$. Is it true that for all $\epsilon>0$ and large $N$\[\lvert \{1,\ldots,N\}\backslash B\rvert \gg_\epsilon N^{1/2-\epsilon}?\]Is it possible...
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory, sidon sets, and additive combinatorics) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, finite search hooks, exact bound/construction language, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 46. Problem 340 - Score 93
+- Site: https://www.erdosproblems.com/340
+- Tags: number theory, additive combinatorics, sidon sets
+- Prize: no; formalized: yes; OEIS: A080200, A005282
+- Statement: Let $A=\{1,2,4,8,13,21,31,45,66,81,97,\ldots\}$ be the greedy Sidon sequence: we begin with $1$ and iteratively include the next smallest integer that preserves the Sidon property (i.e. there are no non-trivial solutions to $a+b=c+d$). What is the order of growth of $A$? Is it true that\[\lvert...
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory, additive combinatorics, and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 47. Problem 1145 - Score 93
+- Site: https://www.erdosproblems.com/1145
+- Tags: additive combinatorics, additive basis
+- Prize: no; formalized: yes; OEIS: none
+- Statement: Let $A=\{1\leq a_1<a_2<\cdots\}$ and $B=\{1\leq b_1<b_2<\cdots\}$ be sets of integers with $a_n/b_n\to 1$. If $A+B$ contains all sufficiently large positive integers then is it true that $\limsup 1_A\ast 1_B(n)=\infty$?
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (additive combinatorics and additive basis) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
+
+### 48. Problem 44 - Score 92
+- Site: https://www.erdosproblems.com/44
+- Tags: number theory, sidon sets, additive combinatorics
+- Prize: no; formalized: yes; OEIS: none
+- Statement: Let $N\geq 1$ and $A\subset \{1,\ldots,N\}$ be a Sidon set. Is it true that, for any $\epsilon>0$, there exist $M$ and $B\subset \{N+1,\ldots,M\}$ (which may depend on $N,A,\epsilon$) such that $A\cup B\subset \{1,\ldots,M\}$ is a Sidon set of size at least $(1-\epsilon)M^{1/2}$?
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory, sidon sets, and additive combinatorics) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
+
+### 49. Problem 241 - Score 92
+- Site: https://www.erdosproblems.com/241
+- Tags: additive combinatorics, sidon sets
+- Prize: $100; formalized: yes; OEIS: A387704
+- Statement: Let $f(N)$ be the maximum size of $A\subseteq \{1,\ldots,N\}$ such that the sums $a+b+c$ with $a,b,c\in A$ are all distinct (aside from the trivial coincidences). Is it true that\[ f(N)\sim N^{1/3}?\]
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. The recorded prize ($100) is small, so it is only a mild difficulty signal. The tags (additive combinatorics and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 50. Problem 170 - Score 92
+- Site: https://www.erdosproblems.com/170
+- Tags: additive combinatorics
+- Prize: no; formalized: yes; OEIS: A046693
+- Statement: Let $F(N)$ be the smallest possible size of $A\subset \{0,1,\ldots,N\}$ such that $\{0,1,\ldots,N\}\subset A-A$. Find the value of\[\lim_{N\to \infty}\frac{F(N)}{N^{1/2}}.\]
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (additive combinatorics) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 51. Problem 1104 - Score 92
+- Site: https://www.erdosproblems.com/1104
+- Tags: graph theory, chromatic number
+- Prize: no; formalized: yes; OEIS: A292528
+- Statement: Let $f(n)$ be the maximum possible chromatic number of a triangle-free graph on $n$ vertices. Estimate $f(n)$.
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory and chromatic number) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 52. Problem 757 - Score 92
+- Site: https://www.erdosproblems.com/757
+- Tags: geometry, distances, sidon sets
+- Prize: no; formalized: yes; OEIS: possible
+- Statement: Let $A\subset \mathbb{R}$ be a set of size $n$ such that every subset $B\subseteq A$ with $\lvert B\rvert =4$ has $\lvert B-B\rvert\geq 11$. Find the best constant $c>0$ such that $A$ must always contain a Sidon set of size $\geq cn$.
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (geometry, distances, and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has equivalent formulation, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 53. Problem 750 - Score 92
+- Site: https://www.erdosproblems.com/750
+- Tags: graph theory, chromatic number
+- Prize: no; formalized: yes; OEIS: none
+- Statement: Let $f(m)$ be some function such that $f(m)\to \infty$ as $m\to \infty$. Does there exist a graph $G$ of infinite chromatic number such that every subgraph on $m$ vertices contains an independent set of size at least $\frac{m}{2}-f(m)$?
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory and chromatic number) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 54. Problem 184 - Score 91
+- Site: https://www.erdosproblems.com/184
+- Tags: graph theory, cycles
+- Prize: no; formalized: yes; OEIS: possible
+- Statement: Any graph on $n$ vertices can be decomposed into $O(n)$ many edge-disjoint cycles and edges.
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory and cycles) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
+
+### 55. Problem 11 - Score 91
+- Site: https://www.erdosproblems.com/11
+- Tags: number theory, additive basis
+- Prize: no; formalized: yes; OEIS: A001220, A377587
+- Statement: Is every large odd integer $n$ the sum of a squarefree number and a power of 2?
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and additive basis) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 56. Problem 82 - Score 91
+- Site: https://www.erdosproblems.com/82
+- Tags: graph theory
+- Prize: no; formalized: yes; OEIS: A120414, A390256, A390257, A390919, A392636, A394400, A394462, A394539, A394563, A394564, A394573, A394574, A394930, A394933
+- Statement: Let $F(n)$ be maximal such that every graph on $n$ vertices contains a regular induced subgraph on at least $F(n)$ vertices. Prove that $F(n)/\log n\to \infty$.
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has OEIS links, equivalent formulation, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 57. Problem 153 - Score 91
+- Site: https://www.erdosproblems.com/153
+- Tags: sidon sets
+- Prize: no; formalized: yes; OEIS: none
+- Statement: Let $A$ be a finite Sidon set and $A+A=\{s_1<\cdots<s_t\}$. Is it true that\[\frac{1}{t}\sum_{1\leq i<t}(s_{i+1}-s_i)^2 \to \infty\]as $\lvert A\rvert\to \infty$?
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 58. Problem 1194 - Score 91
+- Site: https://www.erdosproblems.com/1194
+- Tags: additive combinatorics, additive basis, sidon sets
+- Prize: no; formalized: no; OEIS: possible
+- Statement: Let $A\subset\mathbb{N}$ be such that every integer $n\geq 1$ can be written uniquely as $a_n-b_n$ for some $a_n,b_n\in A$. How fast must $a_n/n$ increase?
+- Assessment: The statement is not marked formalized, so the first task would be to disambiguate and formalize the statement before proof search becomes useful. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (additive combinatorics, additive basis, and sidon sets) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 59. Problem 36 - Score 91
+- Site: https://www.erdosproblems.com/36
+- Tags: number theory, additive combinatorics
+- Prize: no; formalized: yes; OEIS: A393584
+- Statement: Find the optimal constant $c>0$ such that the following holds. For all sufficiently large $N$, if $A\sqcup B=\{1,\ldots,2N\}$ is a partition into two equal parts, so that $\lvert A\rvert=\lvert B\rvert=N$, then there is some $x$ such that the number of solutions to $a-b=x$ with $a\in A$ and $b\in...
+- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and additive combinatorics) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
+
+### 60. Problem 85 - Score 90
 - Site: https://www.erdosproblems.com/85
 - Tags: graph theory
 - Prize: no; formalized: yes; OEIS: A006672
 - Statement: Let $n\geq 4$ and $f(n)$ be minimal such that every graph on $n$ vertices with minimal degree $\geq f(n)$ contains a $C_4$. Is it true that, for all large $n$, $f(n+1)\geq f(n)$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. The page has OEIS links, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
-### 60. Problem 920 - Score 90
+### 61. Problem 920 - Score 90
 - Site: https://www.erdosproblems.com/920
 - Tags: graph theory, chromatic number
 - Prize: no; formalized: yes; OEIS: possible
 - Statement: Let $f_k(n)$ be the maximum possible chromatic number of a graph with $n$ vertices which contains no $K_k$. Is it true that, for $k\geq 4$,\[f_k(n) \gg \frac{n^{1-\frac{1}{k-1}}}{(\log n)^{c_k}}\]for some constant $c_k>0$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory and chromatic number) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 61. Problem 944 - Score 90
+### 62. Problem 944 - Score 90
 - Site: https://www.erdosproblems.com/944
 - Tags: graph theory, chromatic number
 - Prize: no; formalized: yes; OEIS: none
 - Statement: A critical vertex, edge, or set of edges, is one whose deletion lowers the chromatic number. Let $k\geq 4$ and $r\geq 1$. Must there exist a graph $G$ with chromatic number $k$ such that every vertex is critical, yet every critical set of edges has size $>r$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (graph theory and chromatic number) have high shared value, but the score reflects that Acorn still needs colorings, cliques, cycles, girth, and extremal graph APIs before grinding can be effective. This would pay off across many Erdos targets, but first needs a stronger Acorn graph library: colorings, cliques, cycles, girth, Turan numbers, and induced subgraphs. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
 
-### 62. Problem 326 - Score 90
+### 63. Problem 326 - Score 90
 - Site: https://www.erdosproblems.com/326
 - Tags: number theory, additive basis
 - Prize: no; formalized: yes; OEIS: none
 - Statement: Does there exist $A=\{a_1<a_2<\cdots\}\subset \mathbb{N}$ which is a minimal basis of order $2$ (i.e. every large integer is the sum of $2$ elements from $A$, and no proper subset of $A$ has this property), such that\[\lim_{k\to \infty}\frac{a_k}{k^2}=c\]for some $c\neq 0$?
 - Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and additive basis) are valuable because the needed sumset/Sidon/finite-interval infrastructure would support a broad cluster of Erdos problems. This points toward a reusable finite-set/additive-combinatorics library: sumsets, difference sets, Sidon predicates, interval density, and extremal functions. I did not see obvious machine-search hooks in the scraped statement snippet, so the score relies more on the broad mathematical area than on a concrete automated tactic.
-
-### 63. Problem 282 - Score 90
-- Site: https://www.erdosproblems.com/282
-- Tags: number theory, unit fractions
-- Prize: no; formalized: yes; OEIS: none
-- Statement: Let $A\subseteq \mathbb{N}$ be an infinite set and consider the following greedy algorithm for a rational $x\in (0,1)$: choose the minimal $n\in A$ such that $n\geq 1/x$ and repeat with $x$ replaced by $x-\frac{1}{n}$. If this terminates after finitely many steps then this produces a representation...
-- Assessment: The statement is already marked formalized, which helps because the first layer of definitions has likely been made precise enough for proof assistants or formal proof search. No Erdos prize is recorded, so I treat it as less likely to be one of the famous high-resistance benchmark problems. The tags (number theory and unit fractions) are close to Acorn strengths: Nat/Int arithmetic, congruences, divisibility, finite lists, and searchable sequences. This sits near elementary number theory where Acorn already has gcd/lcm, congruences, factorisation, divisor sums, and finite-list infrastructure to build on. The page has finite search hooks, which improves the odds that an AI agent can connect the problem to existing literature or experiments.
 
 ### 64. Problem 10 - Score 90
 - Site: https://www.erdosproblems.com/10
