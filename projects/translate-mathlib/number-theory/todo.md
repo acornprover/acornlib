@@ -23,9 +23,10 @@ That is **42 of the top 66** — the first cluster this document targets. The ot
 
 Binomial-coefficient and factorial prime factorization (the largest slice — 11 binomial + 5 factorial of the top band):
 
-- [ ] Support the p-adic valuation `v_p` on `Nat` / `Int` (currently absent)
-- [ ] Extend the base-`b` digit machinery to general base-`b` expansions and digit sums `s_b(n)` — today `int_digit_sum` in `src/int_digits.ac` is specialized to the mod-3 test, and `binom` / `factorial` already exist to build on
-- [ ] Prove Legendre's formula `v_p(n!) = (n - s_p(n)) / (p - 1)` and Kummer's theorem that `v_p(binom(m + n, m))` counts the base-`p` carries in `m + n`
+- [x] The p-adic valuation `v_p` already exists as `count_prime_factor(p, n)` in `src/number_theory/factorisation.ac`, with additivity (`count_prime_factor_mul`), `v_p(p^k)=k` (`count_prime_factor_pow`), gcd/lcm valuations, and the divisibility bridge `prime_pow_divides_iff`. No separate `v_p` was introduced.
+- [x] Legendre's identity, additive form, and the binomial-coefficient valuation are proved in `src/number_theory/legendre.ac`: `legendre_factorial` (`v_p(n!) = Σ_{k=1}^n v_p(k)` via `prime_factor_count_upto`), `legendre_binom` (`v_p(binom(a+b,a)) + Σ..a + Σ..b = Σ..(a+b)`), plus the divisibility bridges `prime_divides_iff_count_ne_zero` and `prime_divides_binom_iff` (so coprimality of a binomial coefficient to a prime becomes valuation arithmetic — directly the shape of problem 376).
+- [ ] Extend the base-`b` digit machinery to general base-`b` expansions and digit sums `s_b(n)` — today `int_digit_sum` in `src/int_digits.ac` is specialized to the mod-3 test.
+- [ ] **(blocked on infrastructure)** Legendre's closed forms — the floor-sum `v_p(n!) = Σ_{i≥1} floor(n/p^i)` and the digit-sum `v_p(n!) = (n - s_p(n))/(p-1)` — and Kummer's theorem (`v_p(binom(m+n,m))` counts the base-`p` carries in `m+n`). These need a floor-division quotient `n/p^i` and a "number of multiples of `d` in `[1,n]` is `floor(n/d)`" counting lemma, neither of which exists yet (`src/nat` has `mod` and `divides` but no quotient function). Build that division/counting infrastructure first.
 
 Divisor functions (11 of the top band):
 
