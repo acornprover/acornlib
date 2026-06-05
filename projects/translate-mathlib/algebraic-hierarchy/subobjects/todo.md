@@ -2,6 +2,10 @@
 
 Goal: make subgroup-like constructions uniform across the algebraic hierarchy.
 
+No active subobject todos remain for the first Erdos cluster.
+
+## Deferred Work
+
 - [ ] Decide eventual bundled lattice structures after receiver design choices settle
 - [ ] Refactor remaining finite set code toward the shared subobject conventions after downstream needs are clearer
 

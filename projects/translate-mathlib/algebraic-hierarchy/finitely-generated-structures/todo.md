@@ -2,7 +2,11 @@
 
 Goal: support finite-generation statements that appear throughout algebra, number theory, and geometry.
 
-- [ ] Add closure lemmas for images and quotients of finitely generated objects when a concrete first-cluster proof needs them
+No active finite-generation todos remain for the first Erdos cluster.
+
+## Deferred Work
+
+- [ ] Add closure lemmas for images and quotients of finitely generated objects when a concrete proof needs them
 - [ ] Record later links to Noetherianity and finite-dimensionality
 - [ ] Refactor representative finite-generation arguments to the shared API after downstream examples exist
 - [ ] Add finite-generation predicates for future bundled subobjects once their closure APIs exist

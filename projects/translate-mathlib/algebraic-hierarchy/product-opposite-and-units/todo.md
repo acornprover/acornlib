@@ -2,12 +2,14 @@
 
 Goal: support standard derived algebraic constructions that recur throughout Mathlib.
 
+No active product/unit todos remain for the first Erdos cluster.
+
+## Deferred Work
+
 - [ ] Add bundled direct products of algebraic structures with standard instances
 - [ ] Design an indexed or finite-support product abstraction before adding any new product API that would otherwise need 4-ary-or-higher wrappers
 - [ ] Package the group of units as a `Group` instance once generic bundled instances are reliable
 - [ ] Add bundled homomorphism transport lemmas for product structures once bundled products are available
-- [ ] Add the remaining product-valued finite-supportedness wrappers for coordinate construction and pointwise addition after the existential-witness proofs are decomposed
-- [ ] Add a compact boolean `iff` wrapper for pointwise unit predicates once the directional lemmas are enough for reliable proof search
 - [ ] Refactor representative proofs to use product and unit APIs directly
 
 Progress: `src/product_algebra.ac` now provides unbundled componentwise operations on binary products (`pair_add`, `pair_mul`, `pair_zero`, `pair_one`, `pair_neg`, `pair_inverse`) with coordinate projection lemmas and associativity, commutativity, identity, inverse, semiring distributivity, zero-absorption, map-zero/map-one, swap-transport, and inverse-transport laws for the corresponding algebraic hypotheses.
@@ -24,9 +26,9 @@ Progress: `src/function_algebra.ac` now provides shared pointwise operations on 
 
 Progress: `src/function_product_algebra.ac` now specializes the shared function-level pointwise API to binary and ternary products of function spaces, with evaluation, coordinate, eta, pointwise operation, associativity, commutativity, identity, inverse, semiring distributivity, and zero-absorption laws. Existing quaternary and quinary helper layers should not be extended or used as a pattern for more fixed-arity APIs. Bundled product instances remain deferred until generic bundled instances are reliable.
 
-Progress: `src/product_units.ac` now connects bundled monoid units with unbundled componentwise product units, including value/inverse pairs, coordinate unit reflection, construction from component units, compact componentwise iff, identity, inverse-witness, multiplication-closure lemmas, group-pair unit construction, inverse-pair unit construction, and coordinate zero-kernel/cancellation lemmas for multiplication by pair units over rings. `src/units.ac` also exposes unbundled `is_monoid_unit` zero-kernel, nonzero, and cancellation lemmas. Whole-pair cancellation wrappers still need decomposed proofs; the verified directional and coordinate lemmas remain available.
+Progress: `src/product_units.ac` now connects bundled monoid units with unbundled componentwise product units, including value/inverse pairs, coordinate unit reflection, construction from component units, compact componentwise iff, identity, inverse-witness, multiplication-closure lemmas, group-pair unit construction, inverse-pair unit construction, and coordinate plus whole-pair zero-kernel/cancellation lemmas for multiplication by pair units over rings. `src/units.ac` also exposes unbundled `is_monoid_unit` zero-kernel, nonzero, and cancellation lemmas.
 
-Progress: `src/finite_support.ac` now provides unbundled finite-support predicates for zero-valued tails of functions, including zero-function support, closure under pointwise addition, negation, and multiplication by a supported factor, and corresponding finite-supportedness wrappers. Product-valued support now covers coordinate projection predicates, coordinate-to-product support transfer, coordinate finite-support reflection, product zero support, and pointwise product/negation finite-supportedness. The coordinate-construction and pointwise-addition finite-supportedness wrappers still need decomposed existential-witness proofs.
+Progress: `src/finite_support.ac` now provides unbundled finite-support predicates for zero-valued tails of functions, including zero-function support, closure under pointwise addition, negation, and multiplication by a supported factor, and corresponding finite-supportedness wrappers. Product-valued support now covers coordinate projection predicates, coordinate-to-product support transfer, coordinate finite-support reflection, product zero support, coordinate-to-product finite-supportedness (`pair_finitely_supported_of_coordinates`), and pointwise add/neg/mul finite-supportedness for product-valued functions.
 
 Progress: `src/function_units.ac` now provides unbundled pointwise-unit support for functions, including value/inverse functions from unit-valued functions, two-sided pointwise inverse laws, pointwise-unit construction, inverse-witness transport, pointwise reflection to ordinary monoid units, identity pointwise-unit, group pointwise-unit, closure of pointwise units under pointwise multiplication, and pointwise and whole-function zero-kernel/cancellation lemmas for multiplication by pointwise units over rings.
 

@@ -9,7 +9,7 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 ## Core Infrastructure
 
 - [ ] [Algebraic hierarchy](algebraic-hierarchy/todo.md)
-  Note: keep rings, semirings, groups, morphisms, products, quotients, and canonical instances strong enough for number theory and combinatorics.
+  Note: the first Erdos algebra baseline is complete; resume only when downstream number theory or combinatorics exposes a concrete missing algebra API.
 
 - [ ] [Order theory and lattices](order-theory/todo.md)
   Note: the first-cluster comparison, interval/range, monotonicity, and least-witness baseline is in place; resume broad order theory only when a downstream proof exposes a concrete gap.
@@ -82,17 +82,17 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Suggested Execution Order
 
-1. [Algebraic hierarchy](algebraic-hierarchy/todo.md)
-2. [Number theory](number-theory/todo.md)
-3. [Combinatorics](combinatorics/todo.md)
-4. [Graph theory](graph-theory/todo.md)
-5. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
-6. [Linear algebra](linear-algebra/todo.md)
-7. [Real analysis](real-analysis/todo.md)
-8. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
-9. [Topology](topology/todo.md)
-10. [Special number systems](special-number-systems/todo.md)
-11. [Order theory and lattices](order-theory/todo.md)
+1. [Number theory](number-theory/todo.md)
+2. [Combinatorics](combinatorics/todo.md)
+3. [Graph theory](graph-theory/todo.md)
+4. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
+5. [Linear algebra](linear-algebra/todo.md)
+6. [Real analysis](real-analysis/todo.md)
+7. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
+8. [Topology](topology/todo.md)
+9. [Special number systems](special-number-systems/todo.md)
+10. [Order theory and lattices](order-theory/todo.md)
+11. [Algebraic hierarchy](algebraic-hierarchy/todo.md)
 12. [Probability theory](probability-theory/todo.md)
 13. [Measure theory](measure-theory/todo.md)
 14. [Commutative algebra](commutative-algebra/todo.md)
