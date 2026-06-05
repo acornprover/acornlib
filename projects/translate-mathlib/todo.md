@@ -4,8 +4,6 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 ## Blockers
 
-- [ ] prover-limitation: topology/todo.md (connectedness, `via_clopen_imp_connected` reverse direction) - extracting a single conjunct from a disconnection over a higher-order openness predicate times out. Even the isolated minimal-premise lemma `is_disconnection[T](open, u, v) implies open(u)` (rewrite by `is_disconnection_iff`, take one conjunct) does not verify, because matching the higher-order application `open(u)` where `open` is a free `Set[T] -> Bool` parameter blows up proof search. The supporting set lemmas (`compl_eq_of_disjoint_cover` etc.) and the clopen-side construction are ready. Next action: revisit once Acorn handles applications of free higher-order predicate parameters more cheaply.
-
 - [ ] prover-limitation: topology/todo.md (product map continuity, `fan_out_preimage_box_open`) - the box step of fan-out continuity reduces to the basic fact `is_continuous(f) and Y.is_open(v) implies X.is_open(set_preimage(f, v))`, but its only proof route is the `is_continuous` define-unfold forall-instantiation, which times out (5s) when used outside `topological_space.ac`. Factoring it into a general lemma `continuous_open_preimage` beside the definition poisons the premise pool and breaks the previously-cached `continuous_imp_continuous_at` proof. The verified pieces (`fan_out_preimage_box`, projection-recovery, `open_inter`) are ready. Next action: revisit once Acorn instantiates a definitional `forall` (or exposes a cheap continuous-preimage-open lemma) without premise-pool blowup.
 
 ## Core Infrastructure
