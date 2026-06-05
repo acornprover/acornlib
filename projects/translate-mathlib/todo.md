@@ -1,6 +1,6 @@
 # Acornlib Math Roadmap
 
-Goal: over time, give Acornlib a reasonable analogue of each major area of mathematics covered in Lean Mathlib, with work ordered roughly by dependency.
+Goal: over time, give Acornlib a reasonable analogue of each major area of mathematics covered in Lean Mathlib, with the active priority optimized for attacking Erdos problems by AI-assisted formalization and proof grinding.
 
 ## Blockers
 
@@ -12,104 +12,102 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 ## Foundational And Core Infrastructure
 
 - [ ] [Foundations and set-theoretic infrastructure](foundations/todo.md)
-  Note: strengthen sets, relations, functions, quotients, finite/infinite constructions, and reusable proof infrastructure.
+  Note: strengthen finite sets, relations, functions, quotients, finite/infinite constructions, and reusable proof infrastructure needed by discrete Erdos problems.
 
 - [ ] [Order theory and lattices](order-theory/todo.md)
-  Note: complete the general API for partial orders, linear orders, lattices, complete lattices, monotone maps, and Galois connections.
+  Note: complete the reusable order API for extremal functions, intervals, monotone maps, lattices, and finite-search arguments.
 
 - [ ] [Algebraic hierarchy](algebraic-hierarchy/todo.md)
-  Note: continue building semigroups, monoids, groups, rings, fields, morphisms, subobjects, quotients, and canonical instances.
+  Note: keep rings, semirings, groups, morphisms, products, quotients, and canonical instances strong enough for number theory and combinatorics.
 
-- [ ] [Linear algebra](linear-algebra/todo.md)
-  Note: add modules, vector spaces, linear maps, bases, dimension theory, duality, matrices, determinants, and bilinear forms.
-
-- [ ] [Category theory](category-theory/todo.md)
-  Note: introduce categories, functors, natural transformations, limits, adjunctions, monads, and standard categorical abstractions used across Mathlib.
-
-## Algebra And Number Systems
-
-- [ ] [Commutative algebra](commutative-algebra/todo.md)
-  Note: add ideals, quotient rings, localization, Noetherianity, integral extensions, tensor products, and spectra-oriented infrastructure.
-
-- [ ] [Field theory and Galois theory](field-theory-and-galois-theory/todo.md)
-  Note: cover algebraic extensions, splitting fields, algebraic closures, finite fields, separability, and Galois correspondences.
-
-- [ ] [Representation theory and Lie algebra basics](representation-theory-and-lie-algebra/todo.md)
-  Note: support group representations, characters, module decompositions, Lie algebras, and basic Lie-theoretic constructions.
+## Erdos-Facing Discrete And Elementary Mathematics
 
 - [ ] [Number theory](number-theory/todo.md)
-  Note: expand elementary and algebraic number theory, including arithmetic functions, Diophantine results, local fields, and reciprocity-style theorems.
-
-- [ ] [Special number systems](special-number-systems/todo.md)
-  Note: extend support for complex numbers, extended reals, p-adics, and other standard completions and enriched scalar systems.
-
-## Topology, Analysis, And Measure
-
-- [ ] [Topology](topology/todo.md)
-  Note: add topological spaces, continuity, compactness, connectedness, separation axioms, product and quotient topologies, and dense embeddings.
-
-- [ ] [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
-  Note: add filters or a comparable abstraction for limits, uniform continuity, completions, and metric-space constructions.
-
-- [ ] [Measure theory](measure-theory/todo.md)
-  Note: develop sigma-algebras, measurable functions, measures, integration, product measures, and convergence theorems.
-
-- [ ] [Probability theory](probability-theory/todo.md)
-  Note: build probability measures, random variables, independence, expectation, convergence in law/probability, and core limit theorems.
-
-- [ ] [Real analysis](real-analysis/todo.md)
-  Note: keep extending sequences, series, continuity, differentiability, integration, asymptotics, and classical theorems on real functions.
-
-- [ ] [Functional analysis](functional-analysis/todo.md)
-  Note: add normed spaces, Banach and Hilbert spaces, bounded linear maps, operator theory, and dual spaces.
-
-- [ ] [Complex analysis](complex-analysis/todo.md)
-  Note: add holomorphic functions, power series, contour integration, residue theory, and complex-analytic standard library theorems.
-
-## Geometry And Higher Structure
-
-- [ ] [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
-  Note: support affine spaces, subspaces, spans, inner product spaces, orthogonality, angles, convexity, and polytopal constructions.
-
-- [ ] [Differential geometry and manifolds](differential-geometry-and-manifolds/todo.md)
-  Note: add smooth manifolds, tangent bundles, smooth maps, differential forms, Riemannian structures, and Lie groups.
-
-- [ ] [Algebraic geometry](algebraic-geometry/todo.md)
-  Note: develop prime spectra, Zariski topology, sheaves, locally ringed spaces, schemes, and standard scheme-theoretic constructions.
-
-## Discrete Mathematics And Dynamical Systems
+  Note: prioritize elementary and computational number theory for Erdos targets: divisibility, valuations, binomial coefficients, congruences, prime-factor counts, divisor functions, unit fractions, covering systems, and finite interval problems.
 
 - [ ] [Combinatorics](combinatorics/todo.md)
-  Note: cover counting arguments, extremal combinatorics, finite set systems, partitions, generating functions, and incidence structures.
+  Note: prioritize finite combinatorics that unlocks Erdos clusters: counting principles, finite set systems, sumsets/difference sets, Sidon predicates, additive bases, extremal set theory, inclusion-exclusion, and Ramsey basics.
 
 - [ ] [Graph theory](graph-theory/todo.md)
-  Note: add simple graphs, walks, connectivity, coloring, matchings, flows, adjacency matrices, and spectral graph basics.
+  Note: prioritize graph APIs needed by Erdos graph problems: colorings and chromatic number, cliques and independent sets, walks/cycles/girth, induced subgraphs, extremal graph functions, Turan/Ramsey preliminaries, and hypergraph basics.
+
+- [ ] [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
+  Note: build finite point-configuration infrastructure for distance problems: Euclidean distance, lines, circles, general position, convex position, isometries, and finite-dimensional coordinate arguments.
+
+## Supporting Analysis, Algebra, And Number Systems
+
+- [ ] [Linear algebra](linear-algebra/todo.md)
+  Note: develop only the linear algebra needed by geometry and graph methods first: finite-dimensional vector spaces, coordinates, matrices, bilinear/inner-product language, and basic dimension arguments.
+
+- [ ] [Real analysis](real-analysis/todo.md)
+  Note: prioritize asymptotics, sequences, limits, density, and sufficiently-large/eventual reasoning used in Erdos statements.
+
+- [ ] [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
+  Note: add metric-space language only as needed for finite Euclidean distance and limit/asymptotic statements.
+
+- [ ] [Topology](topology/todo.md)
+  Note: keep topology behind the discrete/Erdos queue except where density, compactness, connectedness, or continuity is directly needed by a target.
+
+- [ ] [Special number systems](special-number-systems/todo.md)
+  Note: extend complex numbers, extended reals, p-adics, and other completions when they support asymptotic, analytic, or modular Erdos targets.
+
+## General Mathlib Breadth
+
+- [ ] [Probability theory](probability-theory/todo.md)
+  Note: build probability only after the finite combinatorial core is usable; random graph and probabilistic-method lemmas should feed back into graph/combinatorics targets.
+
+- [ ] [Measure theory](measure-theory/todo.md)
+  Note: develop sigma-algebras, measurable functions, measures, integration, product measures, and convergence theorems after probability needs force them.
+
+- [ ] [Commutative algebra](commutative-algebra/todo.md)
+  Note: defer broad commutative algebra unless a number-theory target needs ideals, quotient rings, localization, Noetherianity, or integral extensions.
+
+- [ ] [Field theory and Galois theory](field-theory-and-galois-theory/todo.md)
+  Note: defer broad field theory unless finite fields, algebraic extensions, or Galois arguments are needed by an active Erdos target.
+
+- [ ] [Category theory](category-theory/todo.md)
+  Note: keep category theory low priority for the Erdos push; add categorical abstractions only when they simplify active library work.
+
+- [ ] [Complex analysis](complex-analysis/todo.md)
+  Note: defer broad complex analysis except for specific analytic-number-theory or approximation targets.
+
+- [ ] [Functional analysis](functional-analysis/todo.md)
+  Note: defer broad functional analysis except for specific analysis targets that survive the Erdos triage.
 
 - [ ] [Dynamical systems and ergodic ideas](dynamical-systems-and-ergodic-ideas/todo.md)
-  Note: support iterative dynamics, fixed and periodic points, omega-limit sets, invariant measures, and basic ergodic statements.
+  Note: support iterative dynamics and ergodic ideas after the discrete, number-theoretic, graph, and geometry clusters have usable baselines.
+
+- [ ] [Differential geometry and manifolds](differential-geometry-and-manifolds/todo.md)
+  Note: defer smooth manifolds and Riemannian structures; finite Euclidean geometry is the relevant Erdos-facing subset.
+
+- [ ] [Representation theory and Lie algebra basics](representation-theory-and-lie-algebra/todo.md)
+  Note: defer representation theory unless a specific graph, additive-combinatorics, or algebraic target requires it.
+
+- [ ] [Algebraic geometry](algebraic-geometry/todo.md)
+  Note: keep algebraic geometry at the end of this roadmap; it has little near-term leverage on the current Erdos target ranking.
 
 ## Suggested Execution Order
 
 1. [Foundations and set-theoretic infrastructure](foundations/todo.md)
 2. [Order theory and lattices](order-theory/todo.md)
 3. [Algebraic hierarchy](algebraic-hierarchy/todo.md)
-4. [Linear algebra](linear-algebra/todo.md)
-5. [Topology](topology/todo.md)
-6. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
-7. [Real analysis](real-analysis/todo.md)
-8. [Measure theory](measure-theory/todo.md)
-9. [Probability theory](probability-theory/todo.md)
-10. [Commutative algebra](commutative-algebra/todo.md)
-11. [Field theory and Galois theory](field-theory-and-galois-theory/todo.md)
-12. [Category theory](category-theory/todo.md)
-13. [Functional analysis](functional-analysis/todo.md)
-14. [Complex analysis](complex-analysis/todo.md)
-15. [Number theory](number-theory/todo.md)
-16. [Special number systems](special-number-systems/todo.md)
-17. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
-18. [Differential geometry and manifolds](differential-geometry-and-manifolds/todo.md)
-19. [Representation theory and Lie algebra basics](representation-theory-and-lie-algebra/todo.md)
-20. [Algebraic geometry](algebraic-geometry/todo.md)
-21. [Combinatorics](combinatorics/todo.md)
-22. [Graph theory](graph-theory/todo.md)
-23. [Dynamical systems and ergodic ideas](dynamical-systems-and-ergodic-ideas/todo.md)
+4. [Number theory](number-theory/todo.md)
+5. [Combinatorics](combinatorics/todo.md)
+6. [Graph theory](graph-theory/todo.md)
+7. [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
+8. [Linear algebra](linear-algebra/todo.md)
+9. [Real analysis](real-analysis/todo.md)
+10. [Uniform spaces and metric spaces](uniform-and-metric-spaces/todo.md)
+11. [Topology](topology/todo.md)
+12. [Special number systems](special-number-systems/todo.md)
+13. [Probability theory](probability-theory/todo.md)
+14. [Measure theory](measure-theory/todo.md)
+15. [Commutative algebra](commutative-algebra/todo.md)
+16. [Field theory and Galois theory](field-theory-and-galois-theory/todo.md)
+17. [Category theory](category-theory/todo.md)
+18. [Complex analysis](complex-analysis/todo.md)
+19. [Functional analysis](functional-analysis/todo.md)
+20. [Dynamical systems and ergodic ideas](dynamical-systems-and-ergodic-ideas/todo.md)
+21. [Differential geometry and manifolds](differential-geometry-and-manifolds/todo.md)
+22. [Representation theory and Lie algebra basics](representation-theory-and-lie-algebra/todo.md)
+23. [Algebraic geometry](algebraic-geometry/todo.md)
