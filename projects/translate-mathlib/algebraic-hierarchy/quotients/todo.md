@@ -2,13 +2,11 @@
 
 Goal: make quotient constructions systematic across groups, rings, and later modules.
 
-## Group A: First Erdos Congruence Core
+## Current Erdos Baseline
 
-- [ ] Add further projection-facing principal-ideal or kernel-quotient aliases only when a concrete modular arithmetic proof needs them.
-- [ ] Record migration targets where first-cluster number-theory code still hand-simulates quotient reasoning.
-- [ ] Support transport of finiteness and order structure through quotients only if an active first-cluster target needs it.
+No active quotient todos remain for the first Erdos cluster. Add further projection-facing principal-ideal or kernel-quotient aliases, migration targets, or quotient finiteness/order transport only when an active first-cluster proof exposes a concrete need.
 
-## Group B: Deferred Quotient Packaging
+## Deferred Quotient Packaging
 
 - [ ] Define congruence relations for algebraic structures not needed by the first number-theory cluster.
 - [ ] Add bundled quotient monoid and quotient group instances after representative-level APIs are complete.

@@ -8,10 +8,10 @@ The order-theory baseline for the first Erdos cluster is in place: generic compa
 
 Resume order-theory work only when a downstream binomial, divisibility, prime-factor, finite-range, or base-representation proof exposes a missing concrete lemma. The remaining broad order work is deferred below.
 
-## Group B: Deferred Until Later Clusters
+## Deferred Work
 
 - [ ] [Implement semilattices, lattices, and distributive lattices](lattices/todo.md)
-  Note: not needed for the first binomial/divisibility cluster except for min and max facts already covered by Group A.
+  Note: not needed for the first binomial/divisibility cluster except for min and max facts already covered by the current order baseline.
 
 - [ ] [Add complete lattices with `sup`, `inf`, `sSup`, and `sInf`](complete-lattices/todo.md)
   Note: useful for topology, fixed points, and abstract order theory, but not for the first elementary number-theory cluster.
@@ -26,7 +26,7 @@ Resume order-theory work only when a downstream binomial, divisibility, prime-fa
   Note: this is lattice-facing infrastructure and should wait until a later abstraction-heavy cluster needs it.
 
 - [ ] [Complete the broad well-founded order transfer API](well-founded-orders/todo.md)
-  Note: keep generalized transfer, product, lexicographic, and no-chain results behind the narrow Nat witness work in Group A.
+  Note: keep generalized transfer, product, lexicographic, and no-chain results behind the narrow Nat witness work already available.
 
 - [ ] [Build order-theoretic fixed point results](fixed-point-theory/todo.md)
   Note: fixed point theorems depend on complete-lattice style APIs and are not useful for the first Erdos cluster.
