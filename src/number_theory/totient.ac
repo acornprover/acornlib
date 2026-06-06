@@ -4,16 +4,20 @@ from number_theory.factorisation import prime_divisor_is_one_or_self, coprime_of
 from nat import divides_self, divides_zero, add_imp_sub, small_mod, mod_mod, add_mod,
     add_cancels_left, mod_by_zero, add_one_right, lte_ref, lte_trans,
     lt_cancel_mul, lte_mul, lt_diff, alt_add_zero, not_lt_zero, mul_one_left,
-    mod_lte
+    mod_lte, alt_induction
 from number_theory.crt import nat_coprime_combine, nat_congr_combine_coprime
 from number_theory.fermat import rsa_pow_congr
 from number_theory.modular_inverse import cancel_coprime, mod_inv, mod_inv_coprime, mod_inv_mul_congr_one
 from nat import exp_one, exp_add, exp_zero
 from number_theory.coprime import coprime_one_right, coprime_mod_iff
 from number_theory.congruence import congr_mod_refl, congr_mod_symm, congr_mod_trans, congr_mod_mul, congr_mod_add, mod_lt, mod_congr_mod_self, mod_add_mul, mod_add_eq
-from list import List, list_contains_implies_count_geq_one, list_not_contains_impl_count_zero, unique_implies_no_duplicate
+from list import List, list_contains_implies_count_geq_one, list_not_contains_impl_count_zero,
+    unique_implies_no_duplicate, singleton_unique, singleton_contains_imp_eq,
+    unique_list_sum
 from list import map, map_length, map_contains, map_contains_of_contains
 from list import is_permutation, permutation_preserves_product
+from list import length_range, range_contains_iff_lt, range_does_not_contain_geq
+from finite_fiber_partition import locally_injective_map_is_unique
 from list import product
 numerals Nat
 
@@ -3035,5 +3039,276 @@ theorem add_mul_mod_inj_below(m: Nat, n: Nat, r: Nat, x: Nat, y: Nat) {
         (m * x).mod(n) = (m * y).mod(n)
         mul_mod_inj_below(n, m, x, y)
         x = y
+    }
+}
+
+/// Top-level affine point function for full residue rows: `q ↦ (q*m+r) mod n`.
+/// Naming the function keeps map-based statements stable under certificate
+/// replay, matching the existing `mul_mod_fn` convention for unit rows.
+define add_mul_mod_fn(n: Nat, m: Nat, r: Nat) -> (Nat -> Nat) {
+    function(q: Nat) { (q * m + r).mod(n) }
+}
+
+/// The affine image of the full residue range `[0, n)`.
+define add_mul_mod_residues(n: Nat, m: Nat, r: Nat) -> List[Nat] {
+    map(n.range, add_mul_mod_fn(n, m, r))
+}
+
+/// The affine row map always lands below a positive modulus.
+theorem add_mul_mod_fn_below(n: Nat, m: Nat, r: Nat, q: Nat) {
+    n != Nat.0 implies add_mul_mod_fn(n, m, r)(q) < n
+} by {
+    if n != Nat.0 {
+        add_mul_mod_fn(n, m, r)(q) = (q * m + r).mod(n)
+        mod_lt(q * m + r, n)
+        (q * m + r).mod(n) < n
+    }
+}
+
+/// Surjectivity below `n` for the affine full-residue row
+/// `q ↦ (q*m+r) mod n`, when `m` is a unit modulo `n`.
+theorem add_mul_mod_surj_below(n: Nat, m: Nat, r: Nat, s: Nat) {
+    n != Nat.0 and m.coprime(n) and s < n implies exists(q: Nat) {
+        q < n and (q * m + r).mod(n) = s
+    }
+} by {
+    if n != Nat.0 and m.coprime(n) and s < n {
+        // Choose an additive complement `d` with r + d ≡ 0, then solve
+        // q*m ≡ s+d using q = (m^{-1}*(s+d)) mod n.
+        mod_complement_exists(r, n)
+        let d: Nat satisfy { (r + d).mod(n) = Nat.0 }
+        let b: Nat = mod_inv(m, n)
+        let q: Nat = (b * (s + d)).mod(n)
+        mod_lt(b * (s + d), n)
+        q < n
+
+        // q*m is congruent to s+d.
+        mod_congr_mod_self(b * (s + d), n)
+        q.congr_mod(b * (s + d), n)
+        congr_mod_refl(m, n)
+        m.congr_mod(m, n)
+        congr_mod_mul(q, m, b * (s + d), m, n)
+        (q * m).congr_mod((b * (s + d)) * m, n)
+        (b * (s + d)) * m = (m * b) * (s + d)
+        mod_inv_mul_congr_one(m, n)
+        (m * b).congr_mod(Nat.1, n)
+        scale_inv_by_x(m, b, s + d, n)
+        ((m * b) * (s + d)).congr_mod(s + d, n)
+        congr_mod_trans(q * m, (b * (s + d)) * m, s + d, n)
+        (q * m).congr_mod(s + d, n)
+
+        // Add r to both sides, then use r+d ≡ 0 to collapse the right side to s.
+        congr_mod_refl(r, n)
+        r.congr_mod(r, n)
+        congr_mod_add(q * m, r, s + d, r, n)
+        (q * m + r).congr_mod((s + d) + r, n)
+        (s + d) + r = s + (d + r)
+        d + r = r + d
+        (s + d) + r = s + (r + d)
+        mod_add_eq(s, r + d, n)
+        (s + (r + d)).mod(n) = (s.mod(n) + (r + d).mod(n)).mod(n)
+        small_mod(s, n)
+        s.mod(n) = s
+        (r + d).mod(n) = Nat.0
+        s.mod(n) + (r + d).mod(n) = s + Nat.0
+        s + Nat.0 = s
+        (s.mod(n) + (r + d).mod(n)).mod(n) = s.mod(n)
+        (s + (r + d)).mod(n) = s.mod(n)
+        (s + (r + d)).mod(n) = s
+        (q * m + r).mod(n) = ((s + d) + r).mod(n)
+        ((s + d) + r).mod(n) = (s + (r + d)).mod(n)
+        (q * m + r).mod(n) = s
+        q < n and (q * m + r).mod(n) = s
+        exists(q0: Nat) { q0 < n and (q0 * m + r).mod(n) = s }
+    }
+}
+
+/// Every element of the affine image list is below `n`.
+theorem add_mul_mod_residues_contains_imp_below(n: Nat, m: Nat, r: Nat, s: Nat) {
+    n != Nat.0 and add_mul_mod_residues(n, m, r).contains(s) implies s < n
+} by {
+    if n != Nat.0 and add_mul_mod_residues(n, m, r).contains(s) {
+        map(n.range, add_mul_mod_fn(n, m, r)).contains(s)
+        map_contains(n.range, add_mul_mod_fn(n, m, r), s)
+        let q: Nat satisfy {
+            n.range.contains(q) and add_mul_mod_fn(n, m, r)(q) = s
+        }
+        add_mul_mod_fn_below(n, m, r, q)
+        add_mul_mod_fn(n, m, r)(q) < n
+        s < n
+    }
+}
+
+/// Every `s < n` occurs in the affine image list.
+theorem add_mul_mod_residues_contains_intro(n: Nat, m: Nat, r: Nat, s: Nat) {
+    n != Nat.0 and m.coprime(n) and s < n
+        implies add_mul_mod_residues(n, m, r).contains(s)
+} by {
+    if n != Nat.0 and m.coprime(n) and s < n {
+        add_mul_mod_surj_below(n, m, r, s)
+        let q: Nat satisfy { q < n and (q * m + r).mod(n) = s }
+        range_contains_iff_lt(n, q)
+        n.range.contains(q) = (q < n)
+        n.range.contains(q)
+        add_mul_mod_fn(n, m, r)(q) = (q * m + r).mod(n)
+        add_mul_mod_fn(n, m, r)(q) = s
+        map_contains_of_contains(n.range, add_mul_mod_fn(n, m, r), q)
+        map(n.range, add_mul_mod_fn(n, m, r)).contains(add_mul_mod_fn(n, m, r)(q))
+        map(n.range, add_mul_mod_fn(n, m, r)).contains(s)
+    }
+}
+
+/// Forward half of the affine full-residue membership characterization.
+lemma add_mul_mod_residues_contains_only_below(n: Nat, m: Nat, r: Nat, s: Nat) {
+    n != Nat.0 and m.coprime(n) and add_mul_mod_residues(n, m, r).contains(s)
+        implies s < n
+} by {
+    if n != Nat.0 and m.coprime(n) and add_mul_mod_residues(n, m, r).contains(s) {
+        add_mul_mod_residues_contains_imp_below(n, m, r, s)
+    }
+}
+
+/// Backward half of the affine full-residue membership characterization.
+lemma add_mul_mod_residues_contains_all_below(n: Nat, m: Nat, r: Nat, s: Nat) {
+    n != Nat.0 and m.coprime(n) and s < n
+        implies add_mul_mod_residues(n, m, r).contains(s)
+} by {
+    if n != Nat.0 and m.coprime(n) and s < n {
+        add_mul_mod_residues_contains_intro(n, m, r, s)
+    }
+}
+
+/// Membership characterization for the affine full-residue image: under a
+/// positive modulus and unit stride, its elements are exactly `[0, n)`.
+theorem add_mul_mod_residues_contains_iff(n: Nat, m: Nat, r: Nat, s: Nat) {
+    n != Nat.0 and m.coprime(n)
+        implies add_mul_mod_residues(n, m, r).contains(s) = (s < n)
+} by {
+    if n != Nat.0 and m.coprime(n) {
+        if add_mul_mod_residues(n, m, r).contains(s) {
+            add_mul_mod_residues_contains_only_below(n, m, r, s)
+            s < n
+            add_mul_mod_residues(n, m, r).contains(s) = true
+            (s < n) = true
+            add_mul_mod_residues(n, m, r).contains(s) = (s < n)
+        }
+        if not add_mul_mod_residues(n, m, r).contains(s) {
+            if s < n {
+                add_mul_mod_residues_contains_all_below(n, m, r, s)
+                add_mul_mod_residues(n, m, r).contains(s)
+                false
+            }
+            not (s < n)
+            add_mul_mod_residues(n, m, r).contains(s) = false
+            (s < n) = false
+            add_mul_mod_residues(n, m, r).contains(s) = (s < n)
+        }
+    }
+}
+
+/// The affine row list has length `n`, because it maps over `n.range`.
+theorem add_mul_mod_residues_length(n: Nat, m: Nat, r: Nat) {
+    add_mul_mod_residues(n, m, r).length = n
+} by {
+    map_length(n.range, add_mul_mod_fn(n, m, r))
+    map(n.range, add_mul_mod_fn(n, m, r)).length = n.range.length
+    length_range(n)
+    n.range.length = n
+}
+
+/// Inductive step for local range uniqueness: appending a fresh maximum
+/// preserves uniqueness.
+lemma add_mul_nat_range_unique_suc(k: Nat) {
+    k.range.is_unique implies k.suc.range.is_unique
+} by {
+    if k.range.is_unique {
+        singleton_unique(k)
+        List.singleton(k).is_unique
+        range_does_not_contain_geq(k, k)
+        k >= k
+        not k.range.contains(k)
+        List.singleton(k) = List.cons(k, List.nil[Nat])
+        forall(y: Nat) {
+            if List.singleton(k).contains(y) {
+                List.cons(k, List.nil[Nat]).contains(y)
+                not List.nil[Nat].contains(y)
+                y = k
+                not k.range.contains(y)
+            }
+            not (k.range.contains(y) and List.singleton(k).contains(y))
+        }
+        unique_list_sum(k.range, List.singleton(k))
+        (k.range + List.singleton(k)).is_unique
+        k.suc.range = k.range.append(k)
+        k.range.append(k) = k.range + List.singleton(k)
+        k.suc.range.is_unique
+    }
+}
+
+/// Local copy of range uniqueness used by the affine row package.
+lemma add_mul_nat_range_unique(n: Nat) {
+    n.range.is_unique
+} by {
+    let p: Nat -> Bool = function(k: Nat) {
+        k.range.is_unique
+    }
+    Nat.0.range = List.nil[Nat]
+    List.nil[Nat].unique = List.nil[Nat]
+    List.nil[Nat].is_unique
+    p(Nat.0)
+    forall(k: Nat) {
+        if p(k) {
+            add_mul_nat_range_unique_suc(k)
+            p(k.suc)
+        }
+    }
+    forall(k: Nat) { p(k) implies p(k.suc) }
+    p(Nat.0) and forall(k: Nat) { p(k) implies p(k.suc) }
+    alt_induction(p)
+    forall(k: Nat) { p(k) }
+    p(n)
+}
+
+/// The affine row function is injective on `n.range` when the stride is a unit
+/// modulo the positive modulus `n`.
+theorem add_mul_mod_fn_locally_injective_on_range(n: Nat, m: Nat, r: Nat) {
+    n != Nat.0 and m.coprime(n) implies forall(x: Nat, y: Nat) {
+        n.range.contains(x) and n.range.contains(y) and
+            add_mul_mod_fn(n, m, r)(x) = add_mul_mod_fn(n, m, r)(y)
+            implies x = y
+    }
+} by {
+    if n != Nat.0 and m.coprime(n) {
+        forall(x: Nat, y: Nat) {
+            if n.range.contains(x) and n.range.contains(y) and
+                add_mul_mod_fn(n, m, r)(x) = add_mul_mod_fn(n, m, r)(y) {
+                range_contains_iff_lt(n, x)
+                n.range.contains(x) = (x < n)
+                x < n
+                range_contains_iff_lt(n, y)
+                n.range.contains(y) = (y < n)
+                y < n
+                add_mul_mod_fn(n, m, r)(x) = (x * m + r).mod(n)
+                add_mul_mod_fn(n, m, r)(y) = (y * m + r).mod(n)
+                (x * m + r).mod(n) = (y * m + r).mod(n)
+                add_mul_mod_inj_below(m, n, r, x, y)
+                x = y
+            }
+        }
+    }
+}
+
+/// The affine full-residue row has no duplicates when the stride is a unit.
+theorem add_mul_mod_residues_unique(n: Nat, m: Nat, r: Nat) {
+    n != Nat.0 and m.coprime(n) implies add_mul_mod_residues(n, m, r).is_unique
+} by {
+    if n != Nat.0 and m.coprime(n) {
+        add_mul_nat_range_unique(n)
+        n.range.is_unique
+        add_mul_mod_fn_locally_injective_on_range(n, m, r)
+        locally_injective_map_is_unique(n.range, add_mul_mod_fn(n, m, r))
+        map(n.range, add_mul_mod_fn(n, m, r)).is_unique
+        add_mul_mod_residues(n, m, r) = map(n.range, add_mul_mod_fn(n, m, r))
+        add_mul_mod_residues(n, m, r).is_unique
     }
 }
