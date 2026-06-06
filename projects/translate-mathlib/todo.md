@@ -6,7 +6,7 @@ The sections below are listed in priority order: work top to bottom.
 
 ## Blockers
 
-(none currently)
+No current blockers.
 
 ## Erdos-Facing Discrete And Elementary Mathematics
 
