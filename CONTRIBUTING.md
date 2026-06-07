@@ -19,6 +19,8 @@ Try to be stylistically consistent with the rest of the codebase.
 
 Try to keep pull requests to below 2000 lines of Acorn code.
 
+Pull requests should be opened ready for review unless there is an explicit reason to use a draft. PR branches from forks should allow maintainer edits. Before submitting, update the branch against the target base branch and make sure GitHub reports the PR as mergeable.
+
 Avoid extending fixed-size API or theorem families just by incrementing `n`. Having cases through `n = 3` is generally enough; do not add the `n = 4`, `n = 5`, `n = 6`, etc. variants, including fixed-arity wrappers or special theorems such as fourth-, fifth-, and sixth-power identities. Prefer a general theorem, indexed family, finite-support construction, or named abstraction. Exceptions should be narrow support for a named downstream theorem, and the pull request should identify that theorem and explain why a general form was not enough.
 
 Most pull requests will be AI-reviewed. Some areas will be escalated to human review:
