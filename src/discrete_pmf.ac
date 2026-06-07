@@ -1,12 +1,14 @@
-from finite_set import FiniteSet, fs_empty, fs_union, fs_intersection, fs_difference,
-    finite_set_ext, finite_set_intersection_union_difference_is_self,
-    finite_set_intersection_is_disjoint_difference
+from finite_set import FiniteSet, fs_empty, fs_from_list, fs_union, fs_intersection,
+    fs_difference, finite_set_ext, finite_set_intersection_union_difference_is_self,
+    finite_set_intersection_is_disjoint_difference, finite_set_has_unique_list
 from finite_set import finite_set_sum, finite_set_sum_empty, finite_set_sum_disjoint_union,
-    finite_set_sum_add, finite_set_sum_scalar_mul
+    finite_set_sum_add, finite_set_sum_scalar_mul, finite_set_sum_eq_list_sum
 from finite_set_sum_real import pointwise_le, finite_set_sum_le, finite_set_sum_nonneg
+from list import List, map, sum
 from real import Real
-from set import Set, union_with_difference_decomp_rev, intersection_comm,
-    intersection_with_superset_is_self
+from set import Set, list_set, list_set_contains_eq, union_with_difference_decomp_rev,
+    intersection_comm, intersection_with_superset_is_self, intersection_contains_right,
+    difference_contains_not_right
 from add_semigroup import add_fn
 from semigroup import mul_fn
 from ring import mul_neg_neg
@@ -14,6 +16,59 @@ from functions import function_extensionality
 from add_ordered_group import add_le_add_left
 from order import lt_imp_lte
 from ordered_field import zero_is_smaller_than_one
+
+/// Lists mapped by functions that agree on all contained elements are equal.
+lemma list_map_eq_of_contains[T, U](items: List[T], f: T -> U, g: T -> U) {
+    (forall(x: T) { items.contains(x) implies f(x) = g(x) }) implies map(items, f) = map(items, g)
+} by {
+    define p(xs: List[T]) -> Bool {
+        (forall(x: T) { xs.contains(x) implies f(x) = g(x) }) implies map(xs, f) = map(xs, g)
+    }
+
+    map[T, U](List.nil[T], f) = List.nil[U]
+    map[T, U](List.nil[T], g) = List.nil[U]
+    map[T, U](List.nil[T], f) = map[T, U](List.nil[T], g)
+    function(x0: List[T]) { (exists(k0: T) { k0 ∈ x0 and f(k0) != g(k0) } or map[T, U](x0, f) = map[T, U](x0, g)) = p(x0) }(List.nil[T])
+    p(List.nil[T])
+
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            if forall(x: T) { List.cons(head, tail).contains(x) implies f(x) = g(x) } {
+                List.cons(head, tail).contains(head)
+                f(head) = g(head)
+                forall(x: T) {
+                    if tail.contains(x) {
+                        List.cons(head, tail).contains(x)
+                        f(x) = g(x)
+                    }
+                }
+                forall(x: T) { tail.contains(x) implies f(x) = g(x) }
+                function(x0: List[T]) { (exists(k0: T) { k0 ∈ x0 and f(k0) != g(k0) } or map[T, U](x0, f) = map[T, U](x0, g)) = p(x0) }(tail)
+                function(x0: List[T]) { not (forall(x1: T) { not x1 ∈ x0 or f(x1) = g(x1) } and map[T, U](x0, f) != map[T, U](x0, g)) or not p(x0) }(tail)
+                function(x0: List[T]) { not forall(x1: T) { not x1 ∈ x0 or f(x1) = g(x1) } or not p(x0) or map[T, U](x0, g) = map[T, U](x0, f) }(tail)
+                map(tail, f) = map(tail, g)
+                map(List.cons(head, tail), f) = List.cons(f(head), map(tail, f))
+                map(List.cons(head, tail), g) = List.cons(g(head), map(tail, g))
+                map(List.cons(head, tail), f) = map(List.cons(head, tail), g)
+            }
+            function(x0: List[T]) { (exists(k0: T) { k0 ∈ x0 and f(k0) != g(k0) } or map[T, U](x0, f) = map[T, U](x0, g)) = p(x0) }(List.cons(head, tail))
+            p(List.cons(head, tail))
+        }
+    }
+
+    List.induction(function(xs: List[T]) {
+        p(xs)
+    })
+    function[T0](x0: List[T0] -> Bool, x1: List[T0]) {
+        not x0(List.nil[T0]) or exists(k0: T0, k1: List[T0]) {
+            x0(k1) and not x0(List.cons[T0](k0, k1))
+        } or x0(x1)
+    }[T](p, items)
+    p(items)
+    function(x0: List[T]) { (exists(k0: T) { k0 ∈ x0 and f(k0) != g(k0) } or map[T, U](x0, f) = map[T, U](x0, g)) = p(x0) }(items)
+    function(x0: List[T]) { not (forall(x1: T) { not x1 ∈ x0 or f(x1) = g(x1) } and map[T, U](x0, f) != map[T, U](x0, g)) }(items)
+    function(x0: List[T]) { not forall(x1: T) { not x1 ∈ x0 or f(x1) = g(x1) } or map[T, U](x0, g) = map[T, U](x0, f) }(items)
+}
 
 /// True if `mass` is nonnegative on every point of `T`, vanishes outside `support`,
 /// and sums to one over `support`.
@@ -263,6 +318,189 @@ theorem discrete_expectation_const[T](pmf: DiscretePMF[T], c: Real) {
 }
 
 
+/// On an event, the mass-weighted event indicator is the point mass.
+theorem mass_weighted_indicator_of_contains[T](pmf: DiscretePMF[T], event: FiniteSet[T], x: T) {
+    event.contains(x) implies mass_weighted_value(pmf.mass, finite_event_indicator(event), x) = pmf.mass(x)
+} by {
+    if event.contains(x) {
+        finite_event_indicator_one_of_contains(event, x)
+        finite_event_indicator(event, x) = Real.1
+        mass_weighted_value(pmf.mass, finite_event_indicator(event), x) =
+            pmf.mass(x) * finite_event_indicator(event, x)
+        mass_weighted_value(pmf.mass, finite_event_indicator(event), x) = pmf.mass(x) * Real.1
+        pmf.mass(x) * Real.1 = pmf.mass(x)
+        mass_weighted_value(pmf.mass, finite_event_indicator(event), x) = pmf.mass(x)
+    }
+    event.contains(x) implies mass_weighted_value(pmf.mass, finite_event_indicator(event), x) = pmf.mass(x)
+}
+
+/// Off an event, the mass-weighted event indicator is zero.
+theorem mass_weighted_indicator_of_not_contains[T](pmf: DiscretePMF[T], event: FiniteSet[T], x: T) {
+    not event.contains(x) implies mass_weighted_value(pmf.mass, finite_event_indicator(event), x) = Real.0
+} by {
+    if not event.contains(x) {
+        finite_event_indicator_zero_of_not_contains(event, x)
+        finite_event_indicator(event, x) = Real.0
+        mass_weighted_value(pmf.mass, finite_event_indicator(event), x) =
+            pmf.mass(x) * finite_event_indicator(event, x)
+        mass_weighted_value(pmf.mass, finite_event_indicator(event), x) = pmf.mass(x) * Real.0
+        pmf.mass(x) * Real.0 = Real.0
+        mass_weighted_value(pmf.mass, finite_event_indicator(event), x) = Real.0
+    }
+    not event.contains(x) implies mass_weighted_value(pmf.mass, finite_event_indicator(event), x) = Real.0
+}
+
+lemma list_sum_map_eq_of_contains[T](items: List[T], f: T -> Real, g: T -> Real) {
+    (forall(x: T) { items.contains(x) implies f(x) = g(x) }) implies
+        sum[Real](map(items, f)) = sum[Real](map(items, g))
+} by {
+    if forall(x: T) { items.contains(x) implies f(x) = g(x) } {
+        list_map_eq_of_contains[T, Real](items, f, g)
+        map(items, f) = map(items, g)
+        sum[Real](map(items, f)) = sum[Real](map(items, g))
+    }
+}
+
+lemma finite_set_sum_eq_of_contains_eq[T](s: FiniteSet[T], f: T -> Real, g: T -> Real) {
+    (forall(x: T) { s.contains(x) implies f(x) = g(x) }) implies
+        finite_set_sum(s, f) = finite_set_sum(s, g)
+} by {
+    if forall(x: T) { s.contains(x) implies f(x) = g(x) } {
+        finite_set_has_unique_list(s)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique
+        }
+        forall(x: T) {
+            if items.contains(x) {
+                fs_from_list(items).underlying_set = list_set(items)
+                list_set_contains_eq(items, x)
+                list_set(items).contains(x) = items.contains(x)
+                s.underlying_set.contains(x)
+                s.contains(x)
+                f(x) = g(x)
+            }
+        }
+        forall(x: T) { items.contains(x) implies f(x) = g(x) }
+        list_sum_map_eq_of_contains(items, f, g)
+        sum[Real](map(items, f)) = sum[Real](map(items, g))
+        finite_set_sum_eq_list_sum[T, Real](items, f)
+        finite_set_sum_eq_list_sum[T, Real](items, g)
+        finite_set_sum(s, f) = sum[Real](map(items, f))
+        finite_set_sum(s, g) = sum[Real](map(items, g))
+        finite_set_sum(s, f) = finite_set_sum(s, g)
+    }
+}
+
+lemma finite_set_sum_const_zero[T](s: FiniteSet[T]) {
+    finite_set_sum(s, const_real_fn[T](Real.0)) = Real.0
+} by {
+    let one_fn = const_real_fn[T](Real.1)
+    let zero_scaled = mul_fn(Real.0, one_fn)
+    finite_set_sum_scalar_mul[T, Real](Real.0, s, one_fn)
+    Real.0 * finite_set_sum(s, one_fn) = finite_set_sum(s, zero_scaled)
+    Real.0 * finite_set_sum(s, one_fn) = Real.0
+    finite_set_sum(s, zero_scaled) = Real.0
+    forall(x: T) {
+        zero_scaled(x) = Real.0 * one_fn(x)
+        one_fn(x) = Real.1
+        zero_scaled(x) = Real.0 * Real.1
+        Real.0 * Real.1 = Real.0
+        zero_scaled(x) = Real.0
+        const_real_fn[T](Real.0, x) = Real.0
+        zero_scaled(x) = const_real_fn[T](Real.0, x)
+    }
+    function_extensionality[T, Real](zero_scaled, const_real_fn[T](Real.0))
+    zero_scaled = const_real_fn[T](Real.0)
+    finite_set_sum(s, const_real_fn[T](Real.0)) = finite_set_sum(s, zero_scaled)
+    finite_set_sum(s, const_real_fn[T](Real.0)) = Real.0
+}
+
+lemma finite_set_sum_zero_of_contains[T](s: FiniteSet[T], f: T -> Real) {
+    (forall(x: T) { s.contains(x) implies f(x) = Real.0 }) implies finite_set_sum(s, f) = Real.0
+} by {
+    if forall(x: T) { s.contains(x) implies f(x) = Real.0 } {
+        finite_set_sum_eq_of_contains_eq(s, f, const_real_fn[T](Real.0))
+        finite_set_sum(s, f) = finite_set_sum(s, const_real_fn[T](Real.0))
+        finite_set_sum_const_zero(s)
+        finite_set_sum(s, const_real_fn[T](Real.0)) = Real.0
+        finite_set_sum(s, f) = Real.0
+    }
+}
+
+/// Summing mass over the support with an event indicator restricts to the support-event intersection.
+theorem finite_set_sum_mass_indicator_support_eq_intersection[T](pmf: DiscretePMF[T], event: FiniteSet[T]) {
+    finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, finite_event_indicator(event))) =
+        finite_set_sum(fs_intersection(pmf.support, event), pmf.mass)
+} by {
+    let indicator_mass = mass_weighted_value(pmf.mass, finite_event_indicator(event))
+    let inside = fs_intersection(pmf.support, event)
+    let outside = fs_difference(pmf.support, event)
+
+    finite_set_intersection_union_difference_is_self[T](pmf.support, event)
+    fs_union(inside, outside) = pmf.support
+    finite_set_intersection_is_disjoint_difference[T](pmf.support, event)
+    inside.is_disjoint(outside)
+    finite_set_sum_disjoint_union[T, Real](inside, outside, indicator_mass)
+    finite_set_sum(fs_union(inside, outside), indicator_mass) =
+        finite_set_sum(inside, indicator_mass) + finite_set_sum(outside, indicator_mass)
+    finite_set_sum(pmf.support, indicator_mass) =
+        finite_set_sum(inside, indicator_mass) + finite_set_sum(outside, indicator_mass)
+
+    forall(x: T) {
+        if inside.contains(x) {
+            inside.contains(x) = inside.underlying_set.contains(x)
+            inside.underlying_set.contains(x)
+            inside.underlying_set = fs_intersection(pmf.support, event).underlying_set
+            fs_intersection(pmf.support, event).underlying_set =
+                pmf.support.underlying_set.intersection(event.underlying_set)
+            inside.underlying_set = pmf.support.underlying_set.intersection(event.underlying_set)
+            pmf.support.underlying_set.intersection(event.underlying_set).contains(x)
+            intersection_contains_right(pmf.support.underlying_set, event.underlying_set, x)
+            event.underlying_set.contains(x)
+            event.contains(x) = event.underlying_set.contains(x)
+            event.contains(x)
+            mass_weighted_indicator_of_contains(pmf, event, x)
+            indicator_mass(x) = pmf.mass(x)
+        }
+    }
+    forall(x: T) { inside.contains(x) implies indicator_mass(x) = pmf.mass(x) }
+    finite_set_sum_eq_of_contains_eq(inside, indicator_mass, pmf.mass)
+    finite_set_sum(inside, indicator_mass) = finite_set_sum(inside, pmf.mass)
+
+    forall(x: T) {
+        if outside.contains(x) {
+            outside.contains(x) = outside.underlying_set.contains(x)
+            outside.underlying_set.contains(x)
+            outside.underlying_set = fs_difference(pmf.support, event).underlying_set
+            fs_difference(pmf.support, event).underlying_set =
+                pmf.support.underlying_set.difference(event.underlying_set)
+            outside.underlying_set = pmf.support.underlying_set.difference(event.underlying_set)
+            pmf.support.underlying_set.difference(event.underlying_set).contains(x)
+            difference_contains_not_right(pmf.support.underlying_set, event.underlying_set, x)
+            not event.underlying_set.contains(x)
+            event.contains(x) = event.underlying_set.contains(x)
+            not event.contains(x)
+            mass_weighted_indicator_of_not_contains(pmf, event, x)
+            indicator_mass(x) = Real.0
+        }
+    }
+    forall(x: T) { outside.contains(x) implies indicator_mass(x) = Real.0 }
+    finite_set_sum_zero_of_contains(outside, indicator_mass)
+    finite_set_sum(outside, indicator_mass) = Real.0
+
+    finite_set_sum(pmf.support, indicator_mass) = finite_set_sum(inside, pmf.mass) + Real.0
+    finite_set_sum(inside, pmf.mass) + Real.0 = finite_set_sum(inside, pmf.mass)
+    finite_set_sum(pmf.support, indicator_mass) = finite_set_sum(inside, pmf.mass)
+}
+
+/// The expectation of a finite-event indicator is the probability of the event restricted to the PMF support.
+theorem discrete_expectation_indicator_eq_event_prob_support_intersection[T](pmf: DiscretePMF[T], event: FiniteSet[T]) {
+    discrete_expectation(pmf, finite_event_indicator(event)) =
+        pmf_event_prob(pmf, fs_intersection(pmf.support, event))
+} by {
+    finite_set_sum_mass_indicator_support_eq_intersection(pmf, event)
+}
+
 /// The probability of the empty event is zero.
 theorem pmf_event_prob_empty[T](pmf: DiscretePMF[T]) {
     pmf_event_prob(pmf, fs_empty[T](Set[T].empty_set)) = Real.0
@@ -394,6 +632,39 @@ theorem discrete_expectation_nonneg[T](pmf: DiscretePMF[T], x: T -> Real) {
         const_le_discrete_expectation(pmf, x, Real.0)
         Real.0 <= discrete_expectation(pmf, x)
     }
+}
+
+/// The expectation of a finite-event indicator is nonnegative.
+theorem discrete_expectation_indicator_nonneg[T](pmf: DiscretePMF[T], event: FiniteSet[T]) {
+    Real.0 <= discrete_expectation(pmf, finite_event_indicator(event))
+} by {
+    forall(t: T) {
+        if pmf.support.contains(t) {
+            finite_event_indicator_nonneg(event, t)
+        }
+    }
+    discrete_expectation_nonneg(pmf, finite_event_indicator(event))
+}
+
+/// The expectation of a finite-event indicator is at most one.
+theorem discrete_expectation_indicator_le_one[T](pmf: DiscretePMF[T], event: FiniteSet[T]) {
+    discrete_expectation(pmf, finite_event_indicator(event)) <= Real.1
+} by {
+    forall(t: T) {
+        if pmf.support.contains(t) {
+            finite_event_indicator_le_one(event, t)
+        }
+    }
+    discrete_expectation_le_const(pmf, finite_event_indicator(event), Real.1)
+}
+
+/// The expectation of an event indicator lies between zero and one.
+theorem discrete_expectation_indicator_bounds[T](pmf: DiscretePMF[T], event: FiniteSet[T]) {
+    Real.0 <= discrete_expectation(pmf, finite_event_indicator(event)) and
+        discrete_expectation(pmf, finite_event_indicator(event)) <= Real.1
+} by {
+    discrete_expectation_indicator_nonneg(pmf, event)
+    discrete_expectation_indicator_le_one(pmf, event)
 }
 
 /// The probability of a disjoint union of events is the sum of their probabilities.
