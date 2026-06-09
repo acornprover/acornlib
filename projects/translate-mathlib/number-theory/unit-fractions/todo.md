@@ -3,8 +3,6 @@
 Goal: build finite sums of distinct reciprocals and enough denominator-control
 infrastructure to support Egyptian-fraction arguments.
 
-- [ ] Prove that a nonterminal iterated canonical greedy step has a strictly
-  larger next denominator.
 - [ ] Use numerator descent and lower-bound freshness to prove bounded finite
   Egyptian-fraction existence results.
 
@@ -64,6 +62,13 @@ Status:
   `unit_fraction_ceiling_step_remainder_positive`,
   `unit_fraction_ceiling_step_remainder_lt_self`, and
   `unit_fraction_ceiling_step_remainder_lt_one`.
+- `unit_fraction_pred_lte_double` proves `1/(n-1) <= 2/n` for `1 < n`, and
+  `unit_fraction_ceiling_step_remainder_lt_unit` uses it to show that a
+  below-one canonical step leaves a remainder below the chosen unit fraction.
+- `unit_fraction_ceiling_step_next_denominator_gt` proves that any next
+  canonical greedy denominator for the remainder is strictly larger than the
+  current denominator; `unit_fraction_ceiling_step_next_denominator_lower_bound`
+  gives the corresponding successor lower-bound form.
 - `egyptian_fraction_of_bounded_step_remainder` connects bounded-step induction
   to the existing fresh-denominator closure theorem: a fresh Egyptian
   representation of the remainder gives one for the original rational.
