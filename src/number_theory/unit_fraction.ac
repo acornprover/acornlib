@@ -3,9 +3,10 @@ from nat import Nat, from_nat, add_sub, lt_and_lte, lt_or_lte, lte_antisymm,
     is_min, is_min_apply, is_min_false_below, has_min, lt_suc, mul_two_left,
     lt_imp_lte_suc, true_below, true_below_apply, true_below_zero,
     true_below_suc_intro, zero_or_suc, lte_cancel_suc, alt_induction
-from int import Int, add_sub_lt_right_of_lt, from_nat_pos, mul_pos_pos,
-    sub_nonnegative_of_lte, zero_not_pos, lte_nonnegative_ints_implies_nats,
-    nonzero_pos_or_neg, lte_and_lt, neg_lt_nonneg, lt_not_ref
+from int import Int, abs, add_sub_lt_right_of_lt, from_nat_pos, mul_pos_pos,
+    sub_nonnegative_of_lte, zero_not_pos, nonzero_pos_or_neg,
+    lte_and_lt, neg_lt_nonneg, lt_not_ref,
+    lte_nonnegative_ints_implies_nats, member_abs_pos
 from rat import Rat, nat_lt_imp_rat_lt, zero_lt_imp_pos, pos_inverse, pos_ne_zero,
     recip_eq_one_div, lte_add_left, lte_add_right, lte_trans, pos_lte, cross_mul_lte,
     nat_lte_imp_rat_lte, mul_one_left, smaller_int_inverse,
@@ -23,8 +24,8 @@ from list import List, map, sum, sum_add, map_add, singleton_unique,
     upper_bound_add_iff, lower_bound_monotone, lower_bound_singleton_iff,
     list_lower_bound, list_upper_bound,
     list_lower_bound_imp_lower_bound, list_upper_bound_imp_upper_bound,
-    lower_bound_contains, upper_bound_contains, filter_contained_by_and,
-    cons_unique_of_tail_unique_not_contains, unique_list_sum
+    lower_bound_contains, upper_bound_contains,
+    filter_contained_by_and, cons_unique_of_tail_unique_not_contains, unique_list_sum
 from real import Real, add_from_rat, from_nat_is_from_rat, real_from_rat_inverse
 
 numerals Nat
@@ -95,6 +96,16 @@ define is_egyptian_fraction_with_lower_bound(q: Rat, bound: Nat) -> Bool {
     }
 }
 
+/// True if a rational has an Egyptian representation using only denominators
+/// at least `bound`.
+define is_lower_bounded_egyptian_fraction(q: Rat, bound: Nat) -> Bool {
+    exists(denominators: List[Nat]) {
+        egyptian_denominator_list(denominators) and
+        denominator_list_lower_bound(bound, denominators) and
+        q = unit_fraction_sum(denominators)
+    }
+}
+
 /// True if a denominator gives a unit-fraction subtraction step for `q`.
 define unit_fraction_greedy_step(q: Rat, n: Nat) -> Bool {
     Nat.0 < n and unit_fraction(n) < q and q - unit_fraction(n) < q
@@ -131,6 +142,22 @@ define unit_fraction_remainder_raw_num(q: Rat, n: Nat) -> Int {
 /// The unreduced denominator of the remainder after subtracting `1/n` from `q`.
 define unit_fraction_remainder_raw_denom(q: Rat, n: Nat) -> Int {
     q.denom * Int.from_nat(n)
+}
+
+/// The natural measure of a rational used by the greedy-step descent.
+define unit_fraction_num_measure(q: Rat) -> Nat {
+    abs(q.num)
+}
+
+/// The natural measure of the unreduced remainder numerator.
+define unit_fraction_remainder_raw_num_measure(q: Rat, n: Nat) -> Nat {
+    abs(unit_fraction_remainder_raw_num(q, n))
+}
+
+/// True when the raw numerator of the remainder is a positive strict descent.
+define unit_fraction_raw_num_descends(q: Rat, n: Nat) -> Bool {
+    unit_fraction_remainder_raw_num(q, n).is_positive and
+        unit_fraction_remainder_raw_num(q, n) < q.num
 }
 
 /// A positive denominator gives a positive unit fraction.
@@ -1159,6 +1186,76 @@ theorem unit_fraction_bounded_step_raw_num_positive(q: Rat, n: Nat) {
     }
 }
 
+lemma positive_int_lt_imp_abs_lt(a: Int, b: Int) {
+    a.is_positive and b.is_positive and a < b implies abs(a) < abs(b)
+} by {
+    if a.is_positive and b.is_positive and a < b {
+        member_abs_pos(a)
+        a.abs = a
+        Int.from_nat(abs(a)) = a
+        member_abs_pos(b)
+        b.abs = b
+        Int.from_nat(abs(b)) = b
+        Int.from_nat(abs(a)) < Int.from_nat(abs(b))
+        Int.from_nat(abs(a)) <= Int.from_nat(abs(b))
+        lte_nonnegative_ints_implies_nats(abs(a), abs(b))
+        abs(a) <= abs(b)
+        if abs(a) = abs(b) {
+            Int.from_nat(abs(a)) = Int.from_nat(abs(b))
+            a = b
+            false
+        }
+        abs(a) != abs(b)
+        abs(a) < abs(b)
+    }
+}
+
+/// A canonical bounded step below one gives strict descent of the raw numerator.
+theorem unit_fraction_ceiling_step_raw_num_descends(q: Rat, n: Nat) {
+    q.is_positive and q < Rat.1 and unit_fraction_ceiling_step(q, n) and
+        unit_fraction_bounded_step(q, n)
+        implies unit_fraction_raw_num_descends(q, n)
+} by {
+    if q.is_positive and q < Rat.1 and unit_fraction_ceiling_step(q, n) and
+        unit_fraction_bounded_step(q, n) {
+        unit_fraction_bounded_step_raw_num_positive(q, n)
+        unit_fraction_remainder_raw_num(q, n).is_positive
+        unit_fraction_ceiling_step_raw_num_lt_num(q, n)
+        unit_fraction_remainder_raw_num(q, n) < q.num
+        unit_fraction_raw_num_descends(q, n) =
+            (unit_fraction_remainder_raw_num(q, n).is_positive and
+                unit_fraction_remainder_raw_num(q, n) < q.num)
+        unit_fraction_raw_num_descends(q, n)
+    }
+}
+
+/// A canonical bounded step below one strictly decreases the natural numerator measure.
+theorem unit_fraction_ceiling_step_raw_num_measure_lt(q: Rat, n: Nat) {
+    q.is_positive and q < Rat.1 and unit_fraction_ceiling_step(q, n) and
+        unit_fraction_bounded_step(q, n)
+        implies unit_fraction_remainder_raw_num_measure(q, n) <
+            unit_fraction_num_measure(q)
+} by {
+    if q.is_positive and q < Rat.1 and unit_fraction_ceiling_step(q, n) and
+        unit_fraction_bounded_step(q, n) {
+        unit_fraction_ceiling_step_raw_num_descends(q, n)
+        unit_fraction_raw_num_descends(q, n)
+        unit_fraction_raw_num_descends(q, n) =
+            (unit_fraction_remainder_raw_num(q, n).is_positive and
+                unit_fraction_remainder_raw_num(q, n) < q.num)
+        unit_fraction_remainder_raw_num(q, n).is_positive
+        unit_fraction_remainder_raw_num(q, n) < q.num
+        q.is_positive = q.num.is_positive
+        q.num.is_positive
+        positive_int_lt_imp_abs_lt(unit_fraction_remainder_raw_num(q, n), q.num)
+        abs(unit_fraction_remainder_raw_num(q, n)) < abs(q.num)
+        unit_fraction_remainder_raw_num_measure(q, n) =
+            abs(unit_fraction_remainder_raw_num(q, n))
+        unit_fraction_num_measure(q) = abs(q.num)
+        unit_fraction_remainder_raw_num_measure(q, n) < unit_fraction_num_measure(q)
+    }
+}
+
 /// The empty unit-fraction sum is zero.
 theorem unit_fraction_sum_nil {
     unit_fraction_sum(List.nil[Nat]) = Rat.0
@@ -1387,6 +1484,34 @@ theorem denominator_list_lower_bound_monotone(bound: Nat, smaller: Nat,
         lower_bound_monotone[Nat](denominators, bound, smaller)
         is_lower_bound(denominators, smaller)
         denominator_list_lower_bound(smaller, denominators)
+    }
+}
+
+/// A tail bounded below by `n.suc` is also bounded below by `n`.
+theorem denominator_list_lower_bound_suc_imp_lower_bound(n: Nat,
+    denominators: List[Nat]) {
+    denominator_list_lower_bound(n.suc, denominators)
+        implies denominator_list_lower_bound(n, denominators)
+} by {
+    if denominator_list_lower_bound(n.suc, denominators) {
+        lt_suc(n)
+        n <= n.suc
+        lower_bound_monotone[Nat](denominators, n.suc, n)
+        denominator_list_lower_bound(n, denominators)
+    }
+}
+
+/// Consing `n` onto a tail bounded below by `n.suc` preserves lower bound `n`.
+theorem denominator_list_lower_bound_cons_self_of_suc(n: Nat,
+    denominators: List[Nat]) {
+    denominator_list_lower_bound(n.suc, denominators)
+        implies denominator_list_lower_bound(n, List.cons(n, denominators))
+} by {
+    if denominator_list_lower_bound(n.suc, denominators) {
+        denominator_list_lower_bound_suc_imp_lower_bound(n, denominators)
+        denominator_list_lower_bound(n, denominators)
+        denominator_list_lower_bound_cons(n, n, denominators)
+        denominator_list_lower_bound(n, List.cons(n, denominators))
     }
 }
 
@@ -1810,6 +1935,26 @@ theorem egyptian_denominator_list_singleton(n: Nat) {
     }
 }
 
+lemma egyptian_denominator_list_unique_part(denominators: List[Nat]) {
+    egyptian_denominator_list(denominators) implies denominators.is_unique
+} by {
+    if egyptian_denominator_list(denominators) {
+        egyptian_denominator_list(denominators) =
+            (denominators.is_unique and positive_denominator_list(denominators))
+        denominators.is_unique
+    }
+}
+
+lemma egyptian_denominator_list_positive_part(denominators: List[Nat]) {
+    egyptian_denominator_list(denominators) implies positive_denominator_list(denominators)
+} by {
+    if egyptian_denominator_list(denominators) {
+        egyptian_denominator_list(denominators) =
+            (denominators.is_unique and positive_denominator_list(denominators))
+        positive_denominator_list(denominators)
+    }
+}
+
 /// Consing a fresh positive denominator preserves Egyptian denominator lists.
 theorem egyptian_denominator_list_cons(n: Nat, denominators: List[Nat]) {
     Nat.0 < n and egyptian_denominator_list(denominators) and
@@ -2141,6 +2286,61 @@ theorem egyptian_fraction_of_lower_bound_remainder(q: Rat, n: Nat,
                 }
             }
         }
+    }
+}
+
+/// Adding a denominator below a represented lower-bound tail preserves a
+/// lower-bounded Egyptian representation at the current denominator.
+theorem lower_bounded_egyptian_fraction_add_lower_bound_unit(q: Rat, n: Nat,
+    denominators: List[Nat]) {
+    Nat.0 < n and egyptian_denominator_list(denominators) and
+        denominator_list_lower_bound(n.suc, denominators) and
+        q = unit_fraction_sum(denominators)
+        implies is_lower_bounded_egyptian_fraction(unit_fraction(n) + q, n)
+} by {
+    if Nat.0 < n and egyptian_denominator_list(denominators) and
+        denominator_list_lower_bound(n.suc, denominators) and
+        q = unit_fraction_sum(denominators) {
+        denominator_list_lower_bound_suc_not_contains(n, denominators)
+        not denominators.contains(n)
+        egyptian_denominator_list_cons(n, denominators)
+        egyptian_denominator_list(List.cons(n, denominators))
+        denominator_list_lower_bound_cons_self_of_suc(n, denominators)
+        denominator_list_lower_bound(n, List.cons(n, denominators))
+        unit_fraction_sum_cons(n, denominators)
+        unit_fraction_sum(List.cons(n, denominators)) =
+            unit_fraction(n) + unit_fraction_sum(denominators)
+        unit_fraction_sum(List.cons(n, denominators)) = unit_fraction(n) + q
+        unit_fraction(n) + q = unit_fraction_sum(List.cons(n, denominators))
+        exists(witness: List[Nat]) {
+            egyptian_denominator_list(witness) and
+            denominator_list_lower_bound(n, witness) and
+            unit_fraction(n) + q = unit_fraction_sum(witness)
+        }
+        is_lower_bounded_egyptian_fraction(unit_fraction(n) + q, n)
+    }
+}
+
+/// A lower-bounded Egyptian representation is in particular Egyptian.
+theorem lower_bounded_egyptian_fraction_is_egyptian(q: Rat, bound: Nat) {
+    is_lower_bounded_egyptian_fraction(q, bound) implies is_egyptian_fraction(q)
+} by {
+    if is_lower_bounded_egyptian_fraction(q, bound) {
+        is_lower_bounded_egyptian_fraction(q, bound) =
+            exists(denominators: List[Nat]) {
+                egyptian_denominator_list(denominators) and
+                denominator_list_lower_bound(bound, denominators) and
+                q = unit_fraction_sum(denominators)
+            }
+        let denominators: List[Nat] satisfy {
+            egyptian_denominator_list(denominators) and
+            denominator_list_lower_bound(bound, denominators) and
+            q = unit_fraction_sum(denominators)
+        }
+        exists(witness: List[Nat]) {
+            egyptian_denominator_list(witness) and q = unit_fraction_sum(witness)
+        }
+        is_egyptian_fraction(q)
     }
 }
 
