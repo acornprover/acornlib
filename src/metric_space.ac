@@ -1,10 +1,11 @@
 from nat import Nat
-from order import lte_trans, lte_lt_trans
+from order import lte_trans, lte_lt_trans, lt_lte_trans
+from real import lt_add_converse, lte_mul_nonneg_right, lte_mul_nonneg_left, exists_small_mul
 from real import Real
 from functions import compose, identity_fn, is_injective_fn, compose_injective_fn
-from real.real_seq import eps_lt_half, lt_imp_minus_pos
-from real.supremum import completeness, has_upper_bound, is_nonempty, is_set_supremum, is_set_upper_bound
-from set import Set
+from real import eps_lt_half, lt_imp_minus_pos
+from real import completeness, has_upper_bound, is_nonempty, is_set_supremum, is_set_upper_bound, supremum_subset_le
+from set import Set, subset_contains, set_eq_of_contains_at_eq, set_image, set_image_contains_witness
 numerals Real
 
 /// A metric space is a set equipped with a distance function that satisfies specific axioms.
@@ -423,12 +424,60 @@ theorem metric_tail_bound_at[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Rea
     }
 }
 
+/// Build a metric tail bound from a pointwise distance bound.
+theorem metric_tail_bound_from_distances[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real) {
+    (forall(i: Nat) {
+        n <= i implies q(i).distance(a) < eps
+    }) implies metric_tail_bound(q, a, n, eps)
+} by {
+    if forall(i: Nat) {
+        n <= i implies q(i).distance(a) < eps
+    } {
+        metric_tail_bound(q, a, n, eps) = forall(i: Nat) {
+            n <= i implies q(i).distance(a) < eps
+        }
+    }
+}
+
+/// Build a Cauchy metric bound from a pointwise distance bound.
+theorem cauchy_metric_bound_from_distances[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real) {
+    (forall(i: Nat, j: Nat) {
+        n <= i and n <= j implies q(i).distance(q(j)) < eps
+    }) implies cauchy_metric_bound(q, n, eps)
+} by {
+    if forall(i: Nat, j: Nat) {
+        n <= i and n <= j implies q(i).distance(q(j)) < eps
+    } {
+        cauchy_metric_bound(q, n, eps) = forall(i: Nat, j: Nat) {
+            n <= i and n <= j implies q(i).distance(q(j)) < eps
+        }
+    }
+}
+
 /// Unpacking `cauchy_metric_bound` at a specific pair of indices.
 theorem cauchy_metric_bound_at[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real, i: Nat, j: Nat) {
     cauchy_metric_bound(q, n, eps) and n <= i and n <= j implies q(i).distance(q(j)) < eps
 } by {
     cauchy_metric_bound(q, n, eps) = forall(a: Nat, b: Nat) {
         n <= a and n <= b implies q(a).distance(q(b)) < eps
+    }
+}
+
+/// Unpacking `is_cauchy_metric` at a specific positive `eps`.
+theorem is_cauchy_metric_bound[M: MetricSpace](q: Nat -> M, eps: Real) {
+    is_cauchy_metric(q) and eps.is_positive implies exists(n: Nat) {
+        cauchy_metric_bound(q, n, eps)
+    }
+} by {
+    if is_cauchy_metric(q) and eps.is_positive {
+        is_cauchy_metric(q) = forall(e: Real) {
+            e.is_positive implies exists(n: Nat) {
+                cauchy_metric_bound(q, n, e)
+            }
+        }
+        exists(n: Nat) {
+            cauchy_metric_bound(q, n, eps)
+        }
     }
 }
 
@@ -541,6 +590,11 @@ theorem distance_set_contains_distance[M: MetricSpace](s: Set[M], x: M, y: M) {
 /// True if `d` is the supremum of all pairwise distances in `s`.
 define is_diameter[M: MetricSpace](s: Set[M], d: Real) -> Bool {
     is_set_supremum(distance_set(s), d)
+}
+
+/// True if a set has a finite diameter: it is bounded and nonempty.
+define has_diameter[M: MetricSpace](s: Set[M]) -> Bool {
+    is_bounded(s) and exists(x: M) { s.contains(x) }
 }
 
 /// If `s` is bounded then `2 * r` is an upper bound on the pairwise distances,
@@ -728,6 +782,11 @@ define is_lipschitz[M: MetricSpace, N: MetricSpace](f: M -> N) -> Bool {
 /// A Lipschitz constant is non-negative.
 theorem lipschitz_with_constant_non_negative[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N) {
     is_lipschitz_with(k, f) implies not k.is_negative
+} by {
+    if is_lipschitz_with(k, f) {
+        is_lipschitz_with(k, f) = (not k.is_negative and lipschitz_bound(k, f))
+        not k.is_negative
+    }
 }
 
 /// A Lipschitz map satisfies its distance bound at each pair of points.
@@ -735,11 +794,29 @@ theorem lipschitz_with_distance[M: MetricSpace, N: MetricSpace](k: Real, f: M ->
     is_lipschitz_with(k, f) implies f(x).distance(f(y)) <= k * x.distance(y)
 } by {
     if is_lipschitz_with(k, f) {
+        is_lipschitz_with(k, f) = (not k.is_negative and lipschitz_bound(k, f))
         lipschitz_bound(k, f)
         lipschitz_bound(k, f) = forall(a: M, b: M) {
             f(a).distance(f(b)) <= k * a.distance(b)
         }
         f(x).distance(f(y)) <= k * x.distance(y)
+    }
+}
+
+/// A Lipschitz map with constant at most one is nonexpansive at each pair of points.
+theorem lipschitz_with_le_one_distance[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N, x: M, y: M) {
+    is_lipschitz_with(k, f) and k <= 1 implies f(x).distance(f(y)) <= x.distance(y)
+} by {
+    if is_lipschitz_with(k, f) and k <= 1 {
+        lipschitz_with_distance(k, f, x, y)
+        f(x).distance(f(y)) <= k * x.distance(y)
+        distance_non_negative(x, y)
+        not x.distance(y).is_negative
+        lte_mul_nonneg_right(k, 1, x.distance(y))
+        k * x.distance(y) <= 1 * x.distance(y)
+        Real.1 * x.distance(y) = x.distance(y)
+        lte_trans(f(x).distance(f(y)), k * x.distance(y), x.distance(y))
+        f(x).distance(f(y)) <= x.distance(y)
     }
 }
 
@@ -771,6 +848,12 @@ theorem identity_is_lipschitz_with_one[M: MetricSpace] {
         x.distance(y) <= x.distance(y)
         identity_fn[M](x).distance(identity_fn[M](y)) <= Real.1 * x.distance(y)
     }
+    lipschitz_bound_from_distances[M, M](Real.1, identity_fn[M])
+    lipschitz_bound(Real.1, identity_fn[M])
+    not Real.1.is_negative and lipschitz_bound(Real.1, identity_fn[M])
+    is_lipschitz_with(Real.1, identity_fn[M]) =
+        (not Real.1.is_negative and lipschitz_bound(Real.1, identity_fn[M]))
+    is_lipschitz_with(1, identity_fn[M])
 }
 
 /// The identity map is Lipschitz.
@@ -924,6 +1007,10 @@ theorem isometry_is_lipschitz_with_one[M: MetricSpace, N: MetricSpace](f: M -> N
             x.distance(y) <= x.distance(y)
             f(x).distance(f(y)) <= Real.1 * x.distance(y)
         }
+        lipschitz_bound_from_distances[M, N](Real.1, f)
+        lipschitz_bound(Real.1, f)
+        not Real.1.is_negative and lipschitz_bound(Real.1, f)
+        is_lipschitz_with(Real.1, f) = (not Real.1.is_negative and lipschitz_bound(Real.1, f))
         is_lipschitz_with(1, f)
     }
 }
@@ -936,6 +1023,101 @@ theorem isometry_is_lipschitz[M: MetricSpace, N: MetricSpace](f: M -> N) {
         isometry_is_lipschitz_with_one(f)
         is_lipschitz_with(1, f)
         is_lipschitz(f)
+    }
+}
+
+/// A Lipschitz map sends a source closed-ball containment to an explicit image closed-ball containment.
+theorem lipschitz_with_closed_ball_image_subset[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, s: Set[M], c: M, r: Real
+) {
+    is_lipschitz_with(k, f) and s.subset(closed_ball(c, r)) and not r.is_negative implies
+    set_image(s, f).subset(closed_ball(f(c), k * r))
+} by {
+    if is_lipschitz_with(k, f) and s.subset(closed_ball(c, r)) and not r.is_negative {
+        not k.is_negative
+        forall(y: N) {
+            if set_image(s, f).contains(y) {
+                set_image_contains_witness(s, f, y)
+                let x: M satisfy {
+                    s.contains(x) and y = f(x)
+                }
+                subset_contains(s, closed_ball(c, r), x)
+                closed_ball(c, r).contains(x)
+                closed_ball(c, r).contains(x) = (x.distance(c) <= r)
+                x.distance(c) <= r
+                lipschitz_with_distance(k, f, x, c)
+                f(x).distance(f(c)) <= k * x.distance(c)
+                k * x.distance(c) <= k * r
+                lte_trans(f(x).distance(f(c)), k * x.distance(c), k * r)
+                f(x).distance(f(c)) <= k * r
+                y.distance(f(c)) <= k * r
+                closed_ball(f(c), k * r).contains(y) = (y.distance(f(c)) <= k * r)
+                closed_ball(f(c), k * r).contains(y)
+            }
+        }
+    }
+}
+
+/// A Lipschitz map sends every nonempty bounded set to a bounded image set.
+theorem lipschitz_with_bounded_nonempty_image_is_bounded[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, s: Set[M]
+) {
+    is_lipschitz_with(k, f) and is_bounded(s) and exists(x: M) { s.contains(x) } implies
+    is_bounded(set_image(s, f))
+} by {
+    if is_lipschitz_with(k, f) and is_bounded(s) and exists(x: M) { s.contains(x) } {
+        let c: M satisfy {
+            exists(r: Real) { s.subset(closed_ball(c, r)) }
+        }
+        let r: Real satisfy {
+            s.subset(closed_ball(c, r))
+        }
+        let x: M satisfy {
+            s.contains(x)
+        }
+        subset_contains(s, closed_ball(c, r), x)
+        closed_ball(c, r).contains(x)
+        closed_ball(c, r).contains(x) = (x.distance(c) <= r)
+        x.distance(c) <= r
+        distance_non_negative(x, c)
+        not x.distance(c).is_negative
+        Real.0 <= x.distance(c)
+        lte_trans(Real.0, x.distance(c), r)
+        Real.0 <= r
+        not r.is_negative
+        lipschitz_with_closed_ball_image_subset(k, f, s, c, r)
+        set_image(s, f).subset(closed_ball(f(c), k * r))
+        exists(center: N, radius: Real) {
+            set_image(s, f).subset(closed_ball(center, radius))
+        }
+        is_bounded(set_image(s, f))
+    }
+}
+
+/// A Lipschitz map sends every nonempty bounded set to a bounded image set.
+theorem lipschitz_bounded_nonempty_image_is_bounded[M: MetricSpace, N: MetricSpace](f: M -> N, s: Set[M]) {
+    is_lipschitz(f) and is_bounded(s) and exists(x: M) { s.contains(x) } implies
+    is_bounded(set_image(s, f))
+} by {
+    if is_lipschitz(f) and is_bounded(s) and exists(x: M) { s.contains(x) } {
+        let k: Real satisfy {
+            is_lipschitz_with(k, f)
+        }
+        lipschitz_with_bounded_nonempty_image_is_bounded(k, f, s)
+        is_bounded(set_image(s, f))
+    }
+}
+
+/// An isometry sends every nonempty bounded set to a bounded image set.
+theorem isometry_bounded_nonempty_image_is_bounded[M: MetricSpace, N: MetricSpace](f: M -> N, s: Set[M]) {
+    is_isometry(f) and is_bounded(s) and exists(x: M) { s.contains(x) } implies
+    is_bounded(set_image(s, f))
+} by {
+    if is_isometry(f) and is_bounded(s) and exists(x: M) { s.contains(x) } {
+        isometry_is_lipschitz_with_one(f)
+        is_lipschitz_with(1, f)
+        lipschitz_with_bounded_nonempty_image_is_bounded(1, f, s)
+        is_bounded(set_image(s, f))
     }
 }
 
@@ -1292,6 +1474,69 @@ theorem universal_set_is_closed_metric[M: MetricSpace] {
     empty_set_is_open_metric[M]
 }
 
+/// If `y` is outside the closed ball at `xc` of radius `rad`, then any point within
+/// distance `y.distance(xc) - rad` of `y` is also outside the closed ball.
+theorem closed_ball_complement_inner[M: MetricSpace](xc: M, rad: Real, y: M, z: M) {
+    rad < y.distance(xc) and z.distance(y) < y.distance(xc) - rad
+        implies rad < z.distance(xc)
+} by {
+    if rad < y.distance(xc) and z.distance(y) < y.distance(xc) - rad {
+        // Step 1: z.distance(y) + rad < y.distance(xc).
+        y.distance(xc) - rad + rad = y.distance(xc)
+        z.distance(y) + rad < (y.distance(xc) - rad) + rad
+        z.distance(y) + rad < y.distance(xc)
+        // Step 2: y.distance(xc) <= z.distance(y) + z.distance(xc) by triangle.
+        y.distance(xc) <= y.distance(z) + z.distance(xc)
+        y.distance(z) = z.distance(y)
+        y.distance(xc) <= z.distance(y) + z.distance(xc)
+        // Combine: z.distance(y) + rad < z.distance(y) + z.distance(xc), then cancel.
+        lt_lte_trans(z.distance(y) + rad, y.distance(xc), z.distance(y) + z.distance(xc))
+        z.distance(y) + rad < z.distance(y) + z.distance(xc)
+        rad + z.distance(y) < z.distance(xc) + z.distance(y)
+        lt_add_converse(rad, z.distance(xc), z.distance(y))
+        rad < z.distance(xc)
+    }
+}
+
+/// If `y` is outside the closed ball at `xc` of radius `rad`, then the open ball
+/// around `y` of radius `y.distance(xc) - rad` lies in the complement.
+theorem closed_ball_complement_open_ball_subset[M: MetricSpace](xc: M, rad: Real, y: M) {
+    rad < y.distance(xc) implies
+        open_ball(y, y.distance(xc) - rad).subset(closed_ball(xc, rad).c)
+} by {
+    if rad < y.distance(xc) {
+        forall(z: M) {
+            if open_ball(y, y.distance(xc) - rad).contains(z) {
+                z.distance(y) < y.distance(xc) - rad
+                closed_ball_complement_inner(xc, rad, y, z)
+                rad < z.distance(xc)
+                not (z.distance(xc) <= rad)
+                not closed_ball(xc, rad).contains(z)
+                closed_ball(xc, rad).c.contains(z)
+            }
+        }
+    }
+}
+
+/// Each point outside a closed ball has a positive-radius open ball around it
+/// contained in the complement.
+theorem closed_ball_complement_has_open_neighborhood[M: MetricSpace](xc: M, rad: Real, y: M) {
+    closed_ball(xc, rad).c.contains(y) implies exists(r: Real) {
+        r.is_positive and open_ball(y, r).subset(closed_ball(xc, rad).c)
+    }
+} by {
+    if closed_ball(xc, rad).c.contains(y) {
+        not closed_ball(xc, rad).contains(y)
+        not (y.distance(xc) <= rad)
+        rad < y.distance(xc)
+        lt_imp_minus_pos(rad, y.distance(xc))
+        (y.distance(xc) - rad).is_positive
+        closed_ball_complement_open_ball_subset(xc, rad, y)
+        open_ball(y, y.distance(xc) - rad).subset(closed_ball(xc, rad).c)
+        (y.distance(xc) - rad).is_positive and open_ball(y, y.distance(xc) - rad).subset(closed_ball(xc, rad).c)
+    }
+}
+
 /// An isometry preserves the tail-bound form of metric Cauchy sequences.
 theorem isometry_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](f: M -> N, q: Nat -> M) {
     is_isometry(f) and is_cauchy_metric(q) implies forall(eps: Real) {
@@ -1326,5 +1571,803 @@ theorem isometry_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
                 exists(m: Nat) { cauchy_metric_bound(compose(f, q), m, eps) }
             }
         }
+    }
+}
+
+/// An isometry preserves metric convergence.
+theorem isometry_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, a: M
+) {
+    is_isometry(f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
+} by {
+    if is_isometry(f) and tendsto_metric(q, a) {
+        isometry_preserves_tendsto_metric_bounds(f, q, a)
+        tendsto_metric_from_tail_bounds(compose(f, q), f(a))
+        tendsto_metric(compose(f, q), f(a))
+    }
+}
+
+/// An isometry preserves metric Cauchy sequences.
+theorem isometry_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M
+) {
+    is_isometry(f) and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
+} by {
+    if is_isometry(f) and is_cauchy_metric(q) {
+        isometry_preserves_cauchy_metric_bounds(f, q)
+        is_cauchy_metric_from_bounds(compose(f, q))
+        is_cauchy_metric(compose(f, q))
+    }
+}
+
+/// A one-Lipschitz map preserves a concrete metric tail bound.
+theorem lipschitz_with_one_preserves_metric_tail_bound[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, a: M, n: Nat, eps: Real
+) {
+    is_lipschitz_with(1, f) and metric_tail_bound(q, a, n, eps)
+        implies metric_tail_bound(compose(f, q), f(a), n, eps)
+} by {
+    if is_lipschitz_with(1, f) and metric_tail_bound(q, a, n, eps) {
+        forall(i: Nat) {
+            if n <= i {
+                metric_tail_bound_at(q, a, n, eps, i)
+                q(i).distance(a) < eps
+                lipschitz_with_distance(1, f, q(i), a)
+                f(q(i)).distance(f(a)) <= 1 * q(i).distance(a)
+                Real.1 * q(i).distance(a) = q(i).distance(a)
+                f(q(i)).distance(f(a)) <= q(i).distance(a)
+                lte_lt_trans(f(q(i)).distance(f(a)), q(i).distance(a), eps)
+                f(q(i)).distance(f(a)) < eps
+                compose(f, q, i) = f(q(i))
+                compose(f, q)(i).distance(f(a)) < eps
+            }
+        }
+        metric_tail_bound_from_distances(compose(f, q), f(a), n, eps)
+        metric_tail_bound(compose(f, q), f(a), n, eps)
+    }
+}
+
+/// A one-Lipschitz map preserves the tail-bound form of metric convergence.
+theorem lipschitz_with_one_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, a: M
+) {
+    is_lipschitz_with(1, f) and tendsto_metric(q, a) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            metric_tail_bound(compose(f, q), f(a), n, eps)
+        }
+    }
+} by {
+    if is_lipschitz_with(1, f) and tendsto_metric(q, a) {
+        forall(eps: Real) {
+            if eps.is_positive {
+                tendsto_metric_tail_bound(q, a, eps)
+                let n: Nat satisfy {
+                    metric_tail_bound(q, a, n, eps)
+                }
+                lipschitz_with_one_preserves_metric_tail_bound(f, q, a, n, eps)
+                metric_tail_bound(compose(f, q), f(a), n, eps)
+                exists(m: Nat) { metric_tail_bound(compose(f, q), f(a), m, eps) }
+            }
+        }
+    }
+}
+
+/// A one-Lipschitz map preserves metric convergence.
+theorem lipschitz_with_one_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, a: M
+) {
+    is_lipschitz_with(1, f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
+} by {
+    if is_lipschitz_with(1, f) and tendsto_metric(q, a) {
+        lipschitz_with_one_preserves_tendsto_metric_bounds(f, q, a)
+        tendsto_metric_from_tail_bounds(compose(f, q), f(a))
+        tendsto_metric(compose(f, q), f(a))
+    }
+}
+
+/// A one-Lipschitz map preserves a concrete Cauchy metric bound.
+theorem lipschitz_with_one_preserves_cauchy_metric_bound[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, n: Nat, eps: Real
+) {
+    is_lipschitz_with(1, f) and cauchy_metric_bound(q, n, eps)
+        implies cauchy_metric_bound(compose(f, q), n, eps)
+} by {
+    if is_lipschitz_with(1, f) and cauchy_metric_bound(q, n, eps) {
+        let p = compose(f, q)
+        forall(i: Nat, j: Nat) {
+            if n <= i and n <= j {
+                cauchy_metric_bound_at(q, n, eps, i, j)
+                q(i).distance(q(j)) < eps
+                lipschitz_with_distance(1, f, q(i), q(j))
+                f(q(i)).distance(f(q(j))) <= 1 * q(i).distance(q(j))
+                Real.1 * q(i).distance(q(j)) = q(i).distance(q(j))
+                f(q(i)).distance(f(q(j))) <= q(i).distance(q(j))
+                lte_lt_trans(f(q(i)).distance(f(q(j))), q(i).distance(q(j)), eps)
+                f(q(i)).distance(f(q(j))) < eps
+                p(i) = f(q(i))
+                p(j) = f(q(j))
+                p(i).distance(p(j)) < eps
+            }
+        }
+        if not cauchy_metric_bound(p, n, eps) {
+            cauchy_metric_bound(p, n, eps) = forall(i: Nat, j: Nat) {
+                n <= i and n <= j implies p(i).distance(p(j)) < eps
+            }
+            let i: Nat satisfy {
+                exists(j: Nat) {
+                    n <= i and n <= j and not p(i).distance(p(j)) < eps
+                }
+            }
+            let j: Nat satisfy {
+                n <= i and n <= j and not p(i).distance(p(j)) < eps
+            }
+            n <= i and n <= j
+            p(i).distance(p(j)) < eps
+            false
+        }
+        cauchy_metric_bound(p, n, eps)
+        cauchy_metric_bound(compose(f, q), n, eps)
+    }
+}
+
+/// A one-Lipschitz map preserves the tail-bound form of metric Cauchy sequences.
+theorem lipschitz_with_one_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M
+) {
+    is_lipschitz_with(1, f) and is_cauchy_metric(q) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_metric_bound(compose(f, q), n, eps)
+        }
+    }
+} by {
+    if is_lipschitz_with(1, f) and is_cauchy_metric(q) {
+        forall(eps: Real) {
+            if eps.is_positive {
+                is_cauchy_metric_bound(q, eps)
+                let n: Nat satisfy {
+                    cauchy_metric_bound(q, n, eps)
+                }
+                lipschitz_with_one_preserves_cauchy_metric_bound(f, q, n, eps)
+                cauchy_metric_bound(compose(f, q), n, eps)
+                exists(m: Nat) { cauchy_metric_bound(compose(f, q), m, eps) }
+            }
+        }
+    }
+}
+
+/// A one-Lipschitz map preserves metric Cauchy sequences.
+theorem lipschitz_with_one_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M
+) {
+    is_lipschitz_with(1, f) and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
+} by {
+    if is_lipschitz_with(1, f) and is_cauchy_metric(q) {
+        lipschitz_with_one_preserves_cauchy_metric_bounds(f, q)
+        is_cauchy_metric_from_bounds(compose(f, q))
+        is_cauchy_metric(compose(f, q))
+    }
+}
+
+/// A Lipschitz map with constant at most one preserves a concrete metric tail bound.
+theorem lipschitz_with_le_one_preserves_metric_tail_bound[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M, a: M, n: Nat, eps: Real
+) {
+    is_lipschitz_with(k, f) and k <= 1 and metric_tail_bound(q, a, n, eps)
+        implies metric_tail_bound(compose(f, q), f(a), n, eps)
+} by {
+    if is_lipschitz_with(k, f) and k <= 1 and metric_tail_bound(q, a, n, eps) {
+        forall(i: Nat) {
+            if n <= i {
+                metric_tail_bound_at(q, a, n, eps, i)
+                q(i).distance(a) < eps
+                lipschitz_with_le_one_distance(k, f, q(i), a)
+                f(q(i)).distance(f(a)) <= q(i).distance(a)
+                lte_lt_trans(f(q(i)).distance(f(a)), q(i).distance(a), eps)
+                f(q(i)).distance(f(a)) < eps
+                compose(f, q, i) = f(q(i))
+                compose(f, q)(i).distance(f(a)) < eps
+            }
+        }
+        metric_tail_bound_from_distances(compose(f, q), f(a), n, eps)
+        metric_tail_bound(compose(f, q), f(a), n, eps)
+    }
+}
+
+/// A Lipschitz map with constant at most one preserves the tail-bound form of metric convergence.
+theorem lipschitz_with_le_one_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M, a: M
+) {
+    is_lipschitz_with(k, f) and k <= 1 and tendsto_metric(q, a) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            metric_tail_bound(compose(f, q), f(a), n, eps)
+        }
+    }
+} by {
+    if is_lipschitz_with(k, f) and k <= 1 and tendsto_metric(q, a) {
+        forall(eps: Real) {
+            if eps.is_positive {
+                tendsto_metric_tail_bound(q, a, eps)
+                let n: Nat satisfy {
+                    metric_tail_bound(q, a, n, eps)
+                }
+                lipschitz_with_le_one_preserves_metric_tail_bound(k, f, q, a, n, eps)
+                metric_tail_bound(compose(f, q), f(a), n, eps)
+                exists(m: Nat) { metric_tail_bound(compose(f, q), f(a), m, eps) }
+            }
+        }
+    }
+}
+
+/// A Lipschitz map with constant at most one preserves metric convergence.
+theorem lipschitz_with_le_one_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M, a: M
+) {
+    is_lipschitz_with(k, f) and k <= 1 and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
+} by {
+    if is_lipschitz_with(k, f) and k <= 1 and tendsto_metric(q, a) {
+        lipschitz_with_le_one_preserves_tendsto_metric_bounds(k, f, q, a)
+        tendsto_metric_from_tail_bounds(compose(f, q), f(a))
+        tendsto_metric(compose(f, q), f(a))
+    }
+}
+
+/// A Lipschitz map with constant at most one preserves a concrete Cauchy metric bound.
+theorem lipschitz_with_le_one_preserves_cauchy_metric_bound[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M, n: Nat, eps: Real
+) {
+    is_lipschitz_with(k, f) and k <= 1 and cauchy_metric_bound(q, n, eps)
+        implies cauchy_metric_bound(compose(f, q), n, eps)
+} by {
+    if is_lipschitz_with(k, f) and k <= 1 and cauchy_metric_bound(q, n, eps) {
+        let p = compose(f, q)
+        forall(i: Nat, j: Nat) {
+            if n <= i and n <= j {
+                cauchy_metric_bound_at(q, n, eps, i, j)
+                q(i).distance(q(j)) < eps
+                lipschitz_with_le_one_distance(k, f, q(i), q(j))
+                f(q(i)).distance(f(q(j))) <= q(i).distance(q(j))
+                lte_lt_trans(f(q(i)).distance(f(q(j))), q(i).distance(q(j)), eps)
+                f(q(i)).distance(f(q(j))) < eps
+                p(i) = f(q(i))
+                p(j) = f(q(j))
+                p(i).distance(p(j)) < eps
+            }
+        }
+        if not cauchy_metric_bound(p, n, eps) {
+            cauchy_metric_bound(p, n, eps) = forall(i: Nat, j: Nat) {
+                n <= i and n <= j implies p(i).distance(p(j)) < eps
+            }
+            let i: Nat satisfy {
+                exists(j: Nat) {
+                    n <= i and n <= j and not p(i).distance(p(j)) < eps
+                }
+            }
+            let j: Nat satisfy {
+                n <= i and n <= j and not p(i).distance(p(j)) < eps
+            }
+            n <= i and n <= j
+            p(i).distance(p(j)) < eps
+            false
+        }
+        cauchy_metric_bound(p, n, eps)
+        cauchy_metric_bound(compose(f, q), n, eps)
+    }
+}
+
+/// A Lipschitz map with constant at most one preserves the tail-bound form of metric Cauchy sequences.
+theorem lipschitz_with_le_one_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M
+) {
+    is_lipschitz_with(k, f) and k <= 1 and is_cauchy_metric(q) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_metric_bound(compose(f, q), n, eps)
+        }
+    }
+} by {
+    if is_lipschitz_with(k, f) and k <= 1 and is_cauchy_metric(q) {
+        forall(eps: Real) {
+            if eps.is_positive {
+                is_cauchy_metric_bound(q, eps)
+                let n: Nat satisfy {
+                    cauchy_metric_bound(q, n, eps)
+                }
+                lipschitz_with_le_one_preserves_cauchy_metric_bound(k, f, q, n, eps)
+                cauchy_metric_bound(compose(f, q), n, eps)
+                exists(m: Nat) { cauchy_metric_bound(compose(f, q), m, eps) }
+            }
+        }
+    }
+}
+
+/// A Lipschitz map with constant at most one preserves metric Cauchy sequences.
+theorem lipschitz_with_le_one_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M
+) {
+    is_lipschitz_with(k, f) and k <= 1 and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
+} by {
+    if is_lipschitz_with(k, f) and k <= 1 and is_cauchy_metric(q) {
+        lipschitz_with_le_one_preserves_cauchy_metric_bounds(k, f, q)
+        is_cauchy_metric_from_bounds(compose(f, q))
+        is_cauchy_metric(compose(f, q))
+    }
+}
+
+/// A Lipschitz map turns a tail bound at `delta` into a tail bound at `eps` when `k * delta < eps`.
+theorem lipschitz_with_preserves_metric_tail_bound_of_mul_lt[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M, a: M, n: Nat, delta: Real, eps: Real
+) {
+    is_lipschitz_with(k, f) and k * delta < eps and metric_tail_bound(q, a, n, delta)
+        implies metric_tail_bound(compose(f, q), f(a), n, eps)
+} by {
+    if is_lipschitz_with(k, f) and k * delta < eps and metric_tail_bound(q, a, n, delta) {
+        lipschitz_with_constant_non_negative(k, f)
+        not k.is_negative
+        forall(i: Nat) {
+            if n <= i {
+                metric_tail_bound_at(q, a, n, delta, i)
+                q(i).distance(a) < delta
+                q(i).distance(a) <= delta
+                lipschitz_with_distance(k, f, q(i), a)
+                f(q(i)).distance(f(a)) <= k * q(i).distance(a)
+                lte_mul_nonneg_left(q(i).distance(a), delta, k)
+                k * q(i).distance(a) <= k * delta
+                lte_trans(f(q(i)).distance(f(a)), k * q(i).distance(a), k * delta)
+                f(q(i)).distance(f(a)) <= k * delta
+                lte_lt_trans(f(q(i)).distance(f(a)), k * delta, eps)
+                f(q(i)).distance(f(a)) < eps
+                compose(f, q, i) = f(q(i))
+                compose(f, q)(i).distance(f(a)) < eps
+            }
+        }
+        metric_tail_bound_from_distances(compose(f, q), f(a), n, eps)
+        metric_tail_bound(compose(f, q), f(a), n, eps)
+    }
+}
+
+/// A Lipschitz map preserves the tail-bound form of metric convergence.
+theorem lipschitz_with_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M, a: M
+) {
+    is_lipschitz_with(k, f) and tendsto_metric(q, a) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            metric_tail_bound(compose(f, q), f(a), n, eps)
+        }
+    }
+} by {
+    if is_lipschitz_with(k, f) and tendsto_metric(q, a) {
+        lipschitz_with_constant_non_negative(k, f)
+        not k.is_negative
+        forall(eps: Real) {
+            if eps.is_positive {
+                exists_small_mul(k, eps)
+                let delta: Real satisfy {
+                    delta.is_positive and k * delta < eps
+                }
+                tendsto_metric_tail_bound(q, a, delta)
+                let n: Nat satisfy {
+                    metric_tail_bound(q, a, n, delta)
+                }
+                lipschitz_with_preserves_metric_tail_bound_of_mul_lt(k, f, q, a, n, delta, eps)
+                metric_tail_bound(compose(f, q), f(a), n, eps)
+                exists(m: Nat) { metric_tail_bound(compose(f, q), f(a), m, eps) }
+            }
+        }
+    }
+}
+
+/// A Lipschitz map preserves metric convergence.
+theorem lipschitz_with_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M, a: M
+) {
+    is_lipschitz_with(k, f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
+} by {
+    if is_lipschitz_with(k, f) and tendsto_metric(q, a) {
+        lipschitz_with_preserves_tendsto_metric_bounds(k, f, q, a)
+        tendsto_metric_from_tail_bounds(compose(f, q), f(a))
+        tendsto_metric(compose(f, q), f(a))
+    }
+}
+
+/// A Lipschitz map turns a Cauchy bound at `delta` into a Cauchy bound at `eps` when `k * delta < eps`.
+theorem lipschitz_with_preserves_cauchy_metric_bound_of_mul_lt[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M, n: Nat, delta: Real, eps: Real
+) {
+    is_lipschitz_with(k, f) and k * delta < eps and cauchy_metric_bound(q, n, delta)
+        implies cauchy_metric_bound(compose(f, q), n, eps)
+} by {
+    if is_lipschitz_with(k, f) and k * delta < eps and cauchy_metric_bound(q, n, delta) {
+        let p = compose(f, q)
+        lipschitz_with_constant_non_negative(k, f)
+        not k.is_negative
+        forall(i: Nat, j: Nat) {
+            if n <= i and n <= j {
+                cauchy_metric_bound_at(q, n, delta, i, j)
+                q(i).distance(q(j)) < delta
+                q(i).distance(q(j)) <= delta
+                lipschitz_with_distance(k, f, q(i), q(j))
+                f(q(i)).distance(f(q(j))) <= k * q(i).distance(q(j))
+                lte_mul_nonneg_left(q(i).distance(q(j)), delta, k)
+                k * q(i).distance(q(j)) <= k * delta
+                lte_trans(f(q(i)).distance(f(q(j))), k * q(i).distance(q(j)), k * delta)
+                f(q(i)).distance(f(q(j))) <= k * delta
+                lte_lt_trans(f(q(i)).distance(f(q(j))), k * delta, eps)
+                f(q(i)).distance(f(q(j))) < eps
+                p(i) = f(q(i))
+                p(j) = f(q(j))
+                p(i).distance(p(j)) < eps
+            }
+        }
+        if not cauchy_metric_bound(p, n, eps) {
+            cauchy_metric_bound(p, n, eps) = forall(i: Nat, j: Nat) {
+                n <= i and n <= j implies p(i).distance(p(j)) < eps
+            }
+            let i: Nat satisfy {
+                exists(j: Nat) {
+                    n <= i and n <= j and not p(i).distance(p(j)) < eps
+                }
+            }
+            let j: Nat satisfy {
+                n <= i and n <= j and not p(i).distance(p(j)) < eps
+            }
+            n <= i and n <= j
+            p(i).distance(p(j)) < eps
+            false
+        }
+        cauchy_metric_bound(p, n, eps)
+        cauchy_metric_bound(compose(f, q), n, eps)
+    }
+}
+
+/// A Lipschitz map preserves the tail-bound form of metric Cauchy sequences.
+theorem lipschitz_with_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M
+) {
+    is_lipschitz_with(k, f) and is_cauchy_metric(q) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_metric_bound(compose(f, q), n, eps)
+        }
+    }
+} by {
+    if is_lipschitz_with(k, f) and is_cauchy_metric(q) {
+        lipschitz_with_constant_non_negative(k, f)
+        not k.is_negative
+        forall(eps: Real) {
+            if eps.is_positive {
+                exists_small_mul(k, eps)
+                let delta: Real satisfy {
+                    delta.is_positive and k * delta < eps
+                }
+                is_cauchy_metric_bound(q, delta)
+                let n: Nat satisfy {
+                    cauchy_metric_bound(q, n, delta)
+                }
+                lipschitz_with_preserves_cauchy_metric_bound_of_mul_lt(k, f, q, n, delta, eps)
+                cauchy_metric_bound(compose(f, q), n, eps)
+                exists(m: Nat) { cauchy_metric_bound(compose(f, q), m, eps) }
+            }
+        }
+    }
+}
+
+/// A Lipschitz map preserves metric Cauchy sequences.
+theorem lipschitz_with_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
+    k: Real, f: M -> N, q: Nat -> M
+) {
+    is_lipschitz_with(k, f) and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
+} by {
+    if is_lipschitz_with(k, f) and is_cauchy_metric(q) {
+        lipschitz_with_preserves_cauchy_metric_bounds(k, f, q)
+        is_cauchy_metric_from_bounds(compose(f, q))
+        is_cauchy_metric(compose(f, q))
+    }
+}
+
+/// The diameter of a set, defined as the supremum of pairwise distances when
+/// the set is bounded and nonempty, and zero otherwise.
+let diameter[M: MetricSpace](s: Set[M]) -> d: Real satisfy {
+    if has_diameter(s) {
+        is_diameter(s, d)
+    } else {
+        d = 0
+    }
+} by {
+    if has_diameter(s) {
+        has_diameter(s) = (is_bounded(s) and exists(x: M) { s.contains(x) })
+        diameter_exists(s)
+        let d0: Real satisfy { is_diameter(s, d0) }
+        if has_diameter(s) {
+            is_diameter(s, d0)
+        } else {
+            false
+        }
+        exists(d: Real) {
+            if has_diameter(s) {
+                is_diameter(s, d)
+            } else {
+                d = 0
+            }
+        }
+    } else {
+        let d0: Real = 0
+        if has_diameter(s) {
+            false
+        } else {
+            d0 = 0
+        }
+        exists(d: Real) {
+            if has_diameter(s) {
+                is_diameter(s, d)
+            } else {
+                d = 0
+            }
+        }
+    }
+}
+
+/// When a set is bounded and nonempty, `diameter(s)` satisfies `is_diameter`.
+theorem diameter_is_diameter[M: MetricSpace](s: Set[M]) {
+    has_diameter(s) implies is_diameter(s, diameter(s))
+}
+
+/// When a set is not bounded or empty, `diameter(s)` is zero.
+theorem diameter_default[M: MetricSpace](s: Set[M]) {
+    not has_diameter(s) implies diameter(s) = 0
+}
+
+/// Any pairwise distance in a set with finite diameter is at most the diameter.
+theorem distance_le_diameter_fn[M: MetricSpace](s: Set[M], x: M, y: M) {
+    has_diameter(s) and s.contains(x) and s.contains(y) implies x.distance(y) <= diameter(s)
+} by {
+    if has_diameter(s) and s.contains(x) and s.contains(y) {
+        diameter_is_diameter(s)
+        is_diameter(s, diameter(s))
+        distance_le_diameter(s, diameter(s), x, y)
+    }
+}
+
+/// The diameter of a set is non-negative.
+theorem diameter_non_negative_fn[M: MetricSpace](s: Set[M]) {
+    not diameter(s).is_negative
+} by {
+    if has_diameter(s) {
+        has_diameter(s) = (is_bounded(s) and exists(x: M) { s.contains(x) })
+        exists(x: M) { s.contains(x) }
+        let x0: M satisfy { s.contains(x0) }
+        diameter_is_diameter(s)
+        is_diameter(s, diameter(s))
+        diameter_non_negative(s, diameter(s), x0)
+        0 <= diameter(s)
+        not diameter(s).is_negative
+    } else {
+        diameter_default(s)
+        diameter(s) = 0
+        not diameter(s).is_negative
+    }
+}
+
+/// The diameter of the empty set is zero.
+theorem diameter_empty[M: MetricSpace] {
+    diameter(Set[M].empty_set) = 0
+} by {
+    if has_diameter(Set[M].empty_set) {
+        has_diameter(Set[M].empty_set) = (is_bounded(Set[M].empty_set) and
+            exists(x: M) { (Set[M].empty_set).contains(x) })
+        exists(x: M) { (Set[M].empty_set).contains(x) }
+        let x: M satisfy { (Set[M].empty_set).contains(x) }
+        false
+    }
+    not has_diameter(Set[M].empty_set)
+    diameter_default(Set[M].empty_set)
+}
+
+/// A set of reals containing one of its upper bounds has that value as supremum.
+theorem set_supremum_of_max(t: Set[Real], m: Real) {
+    t.contains(m) and is_set_upper_bound(t, m) implies is_set_supremum(t, m)
+} by {
+    if t.contains(m) and is_set_upper_bound(t, m) {
+        forall(c: Real) {
+            if is_set_upper_bound(t, c) {
+                is_set_upper_bound(t, c) = forall(z: Real) {
+                    t.contains(z) implies z <= c
+                }
+                t.contains(m)
+                m <= c
+            }
+        }
+        is_set_upper_bound(t, m) and
+            forall(c: Real) { is_set_upper_bound(t, c) implies m <= c }
+        is_set_supremum(t, m)
+    }
+}
+
+/// Zero is the diameter of a singleton set.
+theorem is_diameter_singleton[M: MetricSpace](x: M) {
+    is_diameter(Set[M].singleton(x), 0)
+} by {
+    let s: Set[M] = Set[M].singleton(x)
+    forall(r: Real) {
+        if distance_set(s).contains(r) {
+            distance_set_contains(s, r)
+            let a: M satisfy {
+                exists(b: M) { s.contains(a) and s.contains(b) and r = a.distance(b) }
+            }
+            let b: M satisfy {
+                s.contains(a) and s.contains(b) and r = a.distance(b)
+            }
+            s.contains(a) = (x = a)
+            s.contains(b) = (x = b)
+            x = a
+            x = b
+            a.distance(b) = x.distance(x)
+            x.distance(x) = 0
+            r = 0
+            r <= 0
+        }
+    }
+    is_set_upper_bound(distance_set(s), 0) = forall(z: Real) {
+        distance_set(s).contains(z) implies z <= 0
+    }
+    is_set_upper_bound(distance_set(s), 0)
+    s.contains(x) = (x = x)
+    s.contains(x)
+    distance_set_contains_distance(s, x, x)
+    distance_set(s).contains(x.distance(x))
+    x.distance(x) = 0
+    distance_set(s).contains(0)
+    set_supremum_of_max(distance_set(s), 0)
+    is_set_supremum(distance_set(s), 0)
+}
+
+/// The diameter of a singleton set is zero.
+theorem diameter_singleton[M: MetricSpace](x: M) {
+    diameter(Set[M].singleton(x)) = 0
+} by {
+    singleton_is_bounded(x)
+    (Set[M].singleton(x)).contains(x)
+    has_diameter(Set[M].singleton(x)) = (is_bounded(Set[M].singleton(x)) and
+        exists(y: M) { (Set[M].singleton(x)).contains(y) })
+    has_diameter(Set[M].singleton(x))
+    diameter_is_diameter(Set[M].singleton(x))
+    is_diameter(Set[M].singleton(x), diameter(Set[M].singleton(x)))
+    is_diameter_singleton(x)
+    diameter_unique(Set[M].singleton(x), diameter(Set[M].singleton(x)), 0)
+}
+
+/// Pairwise-distance sets are monotone with respect to set inclusion.
+theorem distance_set_subset_of_subset[M: MetricSpace](s: Set[M], t: Set[M]) {
+    s.subset(t) implies distance_set(s).subset(distance_set(t))
+} by {
+    if s.subset(t) {
+        forall(r: Real) {
+            if distance_set(s).contains(r) {
+                distance_set_contains(s, r)
+                let x: M satisfy {
+                    exists(y: M) { s.contains(x) and s.contains(y) and r = x.distance(y) }
+                }
+                let y: M satisfy {
+                    s.contains(x) and s.contains(y) and r = x.distance(y)
+                }
+                subset_contains(s, t, x)
+                subset_contains(s, t, y)
+                t.contains(x)
+                t.contains(y)
+                distance_set_contains_distance(t, x, y)
+                distance_set(t).contains(x.distance(y))
+                r = x.distance(y)
+                distance_set(t).contains(r)
+            }
+        }
+    }
+}
+
+/// The diameter is monotone with respect to set inclusion.
+theorem diameter_le_of_subset[M: MetricSpace](s: Set[M], t: Set[M]) {
+    s.subset(t) and has_diameter(s) and has_diameter(t)
+    implies diameter(s) <= diameter(t)
+} by {
+    if s.subset(t) and has_diameter(s) and has_diameter(t) {
+        diameter_is_diameter(s)
+        diameter_is_diameter(t)
+        is_set_supremum(distance_set(s), diameter(s))
+        is_set_supremum(distance_set(t), diameter(t))
+        distance_set_subset_of_subset(s, t)
+        distance_set(s).subset(distance_set(t))
+        supremum_subset_le(distance_set(s), distance_set(t), diameter(s), diameter(t))
+        diameter(s) <= diameter(t)
+    }
+}
+
+
+/// De Morgan: the complement of a union equals the intersection of complements.
+theorem union_complement_eq_intersection_of_complements[M: MetricSpace](s: Set[M], t: Set[M]) {
+    s.union(t).c = s.c.intersection(t.c)
+} by {
+    forall(x: M) {
+        if s.union(t).c.contains(x) {
+            not s.union(t).contains(x)
+            not s.contains(x)
+            not t.contains(x)
+            s.c.contains(x)
+            t.c.contains(x)
+            s.c.intersection(t.c).contains(x)
+        }
+        if s.c.intersection(t.c).contains(x) {
+            s.c.contains(x)
+            t.c.contains(x)
+            not s.contains(x)
+            not t.contains(x)
+            not s.union(t).contains(x)
+            s.union(t).c.contains(x)
+        }
+        s.union(t).c.contains(x) = s.c.intersection(t.c).contains(x)
+    }
+    set_eq_of_contains_at_eq(s.union(t).c, s.c.intersection(t.c))
+}
+
+/// De Morgan: the complement of an intersection equals the union of complements.
+theorem intersection_complement_eq_union_of_complements[M: MetricSpace](s: Set[M], t: Set[M]) {
+    s.intersection(t).c = s.c.union(t.c)
+} by {
+    forall(x: M) {
+        if s.intersection(t).c.contains(x) {
+            not s.intersection(t).contains(x)
+            not (s.contains(x) and t.contains(x))
+            not s.contains(x) or not t.contains(x)
+            if not s.contains(x) {
+                s.c.contains(x)
+                s.c.union(t.c).contains(x)
+            } else {
+                not t.contains(x)
+                t.c.contains(x)
+                s.c.union(t.c).contains(x)
+            }
+        }
+        if s.c.union(t.c).contains(x) {
+            s.c.contains(x) or t.c.contains(x)
+            if s.c.contains(x) {
+                not s.contains(x)
+                not s.intersection(t).contains(x)
+                s.intersection(t).c.contains(x)
+            } else {
+                t.c.contains(x)
+                not t.contains(x)
+                not s.intersection(t).contains(x)
+                s.intersection(t).c.contains(x)
+            }
+        }
+        s.intersection(t).c.contains(x) = s.c.union(t.c).contains(x)
+    }
+    set_eq_of_contains_at_eq(s.intersection(t).c, s.c.union(t.c))
+}
+
+/// The intersection of two closed sets is closed.
+theorem intersection_of_closed_metric_is_closed[M: MetricSpace](s: Set[M], t: Set[M]) {
+    is_closed_metric(s) and is_closed_metric(t) implies is_closed_metric(s.intersection(t))
+} by {
+    if is_closed_metric(s) and is_closed_metric(t) {
+        is_closed_metric(s) = is_open_metric(s.c)
+        is_closed_metric(t) = is_open_metric(t.c)
+        union_of_open_metric_is_open(s.c, t.c)
+        is_open_metric(s.c.union(t.c))
+        intersection_complement_eq_union_of_complements(s, t)
+        is_open_metric(s.intersection(t).c)
+        is_closed_metric(s.intersection(t)) = is_open_metric(s.intersection(t).c)
+        is_closed_metric(s.intersection(t))
+    }
+}
+
+/// The union of two closed sets is closed.
+theorem union_of_closed_metric_is_closed[M: MetricSpace](s: Set[M], t: Set[M]) {
+    is_closed_metric(s) and is_closed_metric(t) implies is_closed_metric(s.union(t))
+} by {
+    if is_closed_metric(s) and is_closed_metric(t) {
+        is_closed_metric(s) = is_open_metric(s.c)
+        is_closed_metric(t) = is_open_metric(t.c)
+        intersection_of_open_metric_is_open(s.c, t.c)
+        is_open_metric(s.c.intersection(t.c))
+        union_complement_eq_intersection_of_complements(s, t)
+        is_open_metric(s.union(t).c)
+        is_closed_metric(s.union(t)) = is_open_metric(s.union(t).c)
+        is_closed_metric(s.union(t))
     }
 }

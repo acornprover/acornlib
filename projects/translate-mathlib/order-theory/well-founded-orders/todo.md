@@ -10,6 +10,7 @@ Goal: give order theory access to induction and recursion principles beyond the 
 
 Status:
 
+- `src/well_founded.ac` now packages the strict natural least-element principle as `is_least_nat_witness` and `is_least_nat_counterexample`, with existence theorems and `<=` comparison eliminators for any other witness or counterexample.
 - `src/well_founded.ac` defines `is_well_founded` via the minimal-element formulation, proves that well-founded relations are irreflexive, proves that pullback along any function and pushforward along a bijection preserve well-foundedness, includes descending-chain exclusion consequences for bijective pushforwards, and now includes subset/intersection preservation, well-founded induction, induction-at, and a `Nat`-indexed descending-chain exclusion theorem.
 - The descending-chain API now has existence and nonexistence predicates, well-foundedness contradiction lemmas, subrelation transfer, and pullback-chain mapping lemmas.
 - `src/well_founded.ac` now includes the strict natural order as a relation, proves the least-element principle for nonempty predicates on naturals, and adds pullback-controlled well-foundedness and descending-chain transfer lemmas for relations contained in pullbacks.
@@ -25,4 +26,4 @@ Status:
 - The Noetherian relation API now includes subrelation/intersection/mutual-inclusion transfer for Noetherianity, plus relation-inclusion transfer for ascending chains and absence of ascending chains.
 - The Noetherian transfer API now mirrors the well-founded pullback/pushforward transport layer: arbitrary pullbacks preserve Noetherianity, relations controlled by pullbacks inherit Noetherianity, surjective pullbacks reflect it and give an iff, injective and bijective pushforwards preserve it, bundled bijections transport it, and pushforwards reflect Noetherianity back to the source.
 - The ascending-chain transfer API now includes pullback projection, pullback no-chain inheritance, and pullback-controlled relation transfer wrappers.
-- Noetherian coordinate-product transfer now covers first-coordinate and second-coordinate product relations, no-ascending-chain inheritance for those coordinate products, and strict-check-stable lexicographic Noetherian transfer with the corresponding no-ascending-chain consequence.
+- Noetherian coordinate-product transfer now covers first-coordinate and second-coordinate product relations, no-ascending-chain inheritance for those coordinate products, and lexicographic Noetherian transfer with the corresponding no-ascending-chain consequence.

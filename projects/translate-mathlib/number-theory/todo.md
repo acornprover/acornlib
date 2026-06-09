@@ -2,13 +2,54 @@
 
 Goal: push beyond the current arithmetic core into the standard theories that Mathlib treats as number theory.
 
-- [ ] Prove `tau` and `sigma` are multiplicative on coprime arguments
-- [ ] Define Dirichlet convolution `dirichlet_convolve(f, g)(n) = sum_{d | n} f(d) * g(n / d)` and prove it is associative with identity `nat_dirichlet_unit_fn`
-- [ ] Prove multiplicativity for standard number-theoretic functions such as totient where supporting lemmas are available
+Work Group A before Group B. Group A is the number theory that directly unlocks the **first cluster** of Erdos targets (defined below); Group B is the rest of the standard Mathlib number-theory breadth, built once the Group A baseline is in place or a concrete target needs it.
+
+## The first cluster
+
+`notes/erdos.md` ranks the 622 open problems by a single attackability score. That score is a smooth queue — about six or seven problems per value, no gap — so the cluster boundary is set by *shared infrastructure*, not by a score cliff. Taking the top band (score ≥ 90, the top ~10% = 66 problems) and classifying each problem by the infrastructure it needs:
+
+| Infrastructure (Group A item) | top-band problems | example problem ids |
+| --- | --- | --- |
+| binomial-coefficient `v_p` (Kummer / Legendre) | 11 | 376, 730, 396, 849, 386 |
+| divisor functions `tau` / `sigma` | 11 | 18, 469, 1054, 893, 886 |
+| unit / Egyptian fractions | 9 | 313, 321, 288, 295, 304 |
+| factorial `v_p` (Legendre) | 5 | 727, 390, 373, 912, 1108 |
+| covering systems | 4 | 1113, 276, 273, 274 |
+| base-`b` representations / digit sums | 2 | 406, 124 |
+
+That is **42 of the top 66** — the first cluster this document targets. The other 24 of the top band are additive-combinatorics / Sidon (14, owned by the [combinatorics](../combinatorics/todo.md) project), graph theory (9), and geometry (1). So number theory is the largest single slice of the first cluster, and Group A below is ordered to unlock it. (The count is robust to where the band is drawn: widening to score ≥ 80, ~120 problems, keeps number theory the plurality at 66.)
+
+## Group A — Erdos-facing (ordered by first-cluster leverage)
+
+Binomial-coefficient and factorial prime factorization (the largest slice — 11 binomial + 5 factorial of the top band):
+
+- [x] The p-adic valuation `v_p` already exists as `count_prime_factor(p, n)` in `src/number_theory/factorisation.ac`, with additivity (`count_prime_factor_mul`), `v_p(p^k)=k` (`count_prime_factor_pow`), gcd/lcm valuations, and the divisibility bridge `prime_pow_divides_iff`. No separate `v_p` was introduced.
+- [x] Legendre's identity, additive form, and the binomial-coefficient valuation are proved in `src/number_theory/legendre.ac`: `legendre_factorial` (`v_p(n!) = Σ_{k=1}^n v_p(k)` via `prime_factor_count_upto`), `legendre_binom` (`v_p(binom(a+b,a)) + Σ..a + Σ..b = Σ..(a+b)`), plus the divisibility bridges `prime_divides_iff_count_ne_zero` and `prime_divides_binom_iff` (so coprimality of a binomial coefficient to a prime becomes valuation arithmetic — directly the shape of problem 376).
+- [x] Floor-division infrastructure: `nat_div` / `Nat.div` with decomposition and uniqueness in `src/nat/division.ac`, and the division recurrence `(n+1) div d = n div d + [d | n+1]` with `count_multiples(d, n) = n div d` in `src/nat/count_multiples.ac` (both exposed through the `nat` interface).
+- [x] Legendre's formula in computable recurrence form: `legendre_recurrence` in `src/number_theory/legendre_recurrence.ac` proves `Σ_{k≤n} v_p(k) = (n div p) + Σ_{k≤(n div p)} v_p(k)` for prime `p`; `legendre_factorial_recurrence` states this directly as `v_p(n!) = n div p + v_p((n div p)!)`. With `legendre_factorial`, `legendre_binom`, and `legendre_binom_factorial`, this makes `v_p(n!)` and `v_p(binom)` computable by repeated division.
+- [x] Base-`p` digit machinery: `digit_sum(p, n)` (sum of base-`p` digits, via a fuel-bounded recursion) with `div_lt`, `digit_sum_fuel_step`, `digit_sum_step`, `digit_sum_fuel_large`, `digit_sum_recurrence`, `digit_sum_fuel_at_zero`, and `digit_sum_zero` in `src/nat/digit_sum.ac`, exposed through the `nat` interface.
+- [x] Kummer's algebraic reduction from digit-sum Legendre to the binomial-coefficient identity is proved in `src/number_theory/kummer.ac`: `legendre_digit_sum_at` packages the digit-sum Legendre identity at one input, and `kummer_digit_sum_of_legendre_digit_sum` proves that the identities at `a`, `b`, and `a+b` imply the Kummer digit-sum identity for `binom(a+b,a)`. The hard-problem file remains unchanged as a record of the direct stuck attempt.
+- [x] The digit-sum master identity is proved as `legendre_digit_sum` in `src/number_theory/kummer.ac`: for prime `p`, `p * v_p(n!) + s_p(n) = n + v_p(n!)`. The proof uses strong induction with `digit_sum_recurrence`, `legendre_factorial_recurrence`, and `div_mod_decomp`.
+
+Divisor functions (11 of the top band):
+
+- [x] Prove `tau` and `sigma` are multiplicative on coprime arguments
+- [x] Prove Euler totient multiplicativity on coprime arguments from the existing row-count infrastructure
+- [x] Prove Dirichlet convolution of multiplicative arithmetic functions is multiplicative
+
+Unit fractions (9 of the top band):
+
+- [ ] Egyptian / unit-fraction infrastructure: finite sums of distinct reciprocals `1/n`, denominator bounds, and existence / greedy results — see [unit-fractions/todo.md](unit-fractions/todo.md)
+
+Covering systems (4 of the top band):
+
+- [ ] A covering-system predicate — a finite set of congruences whose union is all of `Z` — on top of the existing congruence / CRT infrastructure
+
+## Group B — Other standard number theory
+
 - [ ] Add continued fractions and their approximation theory
 - [ ] Develop quadratic residues and quadratic reciprocity
 - [ ] Add Pell equations and related Diophantine techniques
-- [ ] Support valuations and valuation-theoretic number theory
 - [ ] Build infrastructure for Bernoulli numbers and classical arithmetic sequences
 - [ ] Add analytic-number-theory preliminaries where they naturally fit
 
@@ -19,5 +60,10 @@ Status:
 - Euler's theorem in general form is proved: `euler(n, a)` in `src/nat/nat_totient.ac` establishes `a^φ(n) ≡ 1 (mod n)` whenever `n != 0` and `a.coprime(n)`. The proof goes through `mul_mod_residues_is_permutation` (already present), the new list-product helper `product_map_mul_mod` (`product(map(L, x -> (a*x).mod(n))) ≡ a^|L| * product(L) (mod n)` by induction), the specialisation `product_mul_mod_residues_congr` to `coprime_residues(n)`, the combined congruence `euler_product_setup`, and `cancel_coprime` against `product_coprime_residues_coprime`.
 - The modular-arithmetic and congruences branch is complete. The lightweight `Nat.congr_mod` / `Int.congr_mod` predicates with full equivalence/addition/multiplication/power preservation live in `src/nat/nat_congruence.ac` and `src/int/int_congruence.ac`. Bridges to the existing `Zmod[n]` infrastructure (`int_mod_rel` from `src/zmod.ac`) are in `src/nat/nat_congr_int.ac`. Modular inverse (`int_modular_inverse_exists`, `nat_modular_inverse_exists`) lives in `src/nat/nat_modular_inverse.ac`. Two-modulus, three-modulus, and `List`-indexed CRT (`nat_crt_two_moduli`, `nat_crt_three_moduli`, `nat_crt_list`) plus uniqueness are in `src/nat/nat_crt.ac` and `src/nat/nat_crt_list.ac`. The Int-to-Nat residue extraction `int_has_nat_residue` lives in `src/int/int_residue.ac`. `Nat` is now a `CommSemigroup`/`CommMonoid` instance and a generic `list_product` helper is added in `src/list/list_product.ac`.
 - The divisor-list helper and divisor-sum operator live in `src/nat/nat_divisor_sum.ac`: `divisors_up_to(n, k)` enumerates positive divisors of `n` bounded by `k` (descending), `divisor_list(n) = divisors_up_to(n, n)`, and `divisor_sum_fn(f)(n) = sum(map(divisor_list(n), f))` with the `suc_yes` / `suc_no` / `zero` recurrences. Base values `divisor_sum_fn(f)(0) = 0`, `divisor_sum_fn(f)(1) = f(1)`, and the prime-argument value `divisor_sum_fn(f)(p) = f(p) + f(1)` are proved (`divisor_sum_fn_at_zero`, `divisor_sum_fn_at_one`, `divisor_sum_fn_at_prime`), as is additivity in the argument: `divisor_sum_fn(f + g)(n) = divisor_sum_fn(f)(n) + divisor_sum_fn(g)(n)` (`divisor_sum_fn_add`), via the bridge lemma `arithmetic_fn_add_eq_add_fn` to the generic `add_fn`. The bridge `divisor_sum_fn_nat_one_arithmetic_fn_eq_tau` now identifies `tau` with `divisor_sum_fn(nat_one_arithmetic_fn)`, using `sum_map_nat_one_arithmetic_fn_eq_length`.
-- The arithmetic-functions scaffold is started in `src/nat/nat_arithmetic_functions.ac`. It defines the constant-zero, constant-one, identity, natural-power, Dirichlet-identity (`nat_dirichlet_unit_fn`), pointwise-sum (`arithmetic_fn_add`), and pointwise-product arithmetic functions; the predicates `is_multiplicative_nat_fn` and `is_completely_multiplicative_nat_fn`; application lemmas and commutativity for `arithmetic_fn_add`/`arithmetic_fn_mul`; complete-multiplicativity of the standard examples `1`, `id`, `n ↦ n^k`, and the Dirichlet identity; and pointwise-product closure for multiplicative and completely multiplicative arithmetic functions (`arithmetic_fn_mul_multiplicative`, `arithmetic_fn_mul_completely_multiplicative`). Associativity (`arithmetic_fn_add_assoc`, `arithmetic_fn_mul_assoc`), zero/one identities (`arithmetic_fn_add_zero_left`/`right`, `arithmetic_fn_mul_one_left`/`right`), zero annihilators (`arithmetic_fn_mul_zero_left`/`right`), pointwise-application lemmas for the constants, the `is_multiplicative_nat_fn` corollaries for `1`, `id`, `n ↦ n^k`, and the `positive_on_positive` predicate with closure under pointwise product all live in the same file.
+- The divisor-sum / `nat_sigma` identification `divisor_sum_fn_nat_identity_arithmetic_fn_eq_sigma` in `src/nat/nat_divisor_sum.ac` shows `divisor_sum_fn(nat_identity_arithmetic_fn) = nat_sigma`, via the list helper `sum_map_nat_identity_arithmetic_fn_eq_sum`. The constant-zero analogue `divisor_sum_fn_nat_zero_arithmetic_fn` (with helper `sum_map_nat_zero_arithmetic_fn_eq_zero`) records that the divisor sum of the zero arithmetic function is again zero.
+- `tau` and `sigma` multiplicativity on coprime arguments is proved in `src/number_theory/dirichlet.ac` as `nat_tau_multiplicative` and `nat_sigma_multiplicative`, with positive-argument forms `nat_tau_mul_coprime_positive` and `nat_sigma_mul_coprime_positive`. The proof uses divisor-pair product values, a permutation with `divisor_list(a * b)` for positive coprime `a` and `b`, and a rectangular sum factorization for `sigma`.
+- Euler totient multiplicativity on coprime arguments is proved in `src/number_theory/totient.ac` as `nat_totient_mul_coprime`, with the positive-argument attribute form `totient_mul_coprime_positive`. The proof turns the existing row-count lemmas into a rectangle count over `m.range × n.range`, then sums row contributions with `sum_filter_indicator_value`.
+- Dirichlet convolution preserves multiplicativity in `src/number_theory/dirichlet.ac` as `dirichlet_convolve_multiplicative`, with the positive coprime form `dirichlet_convolve_mul_coprime_positive`. The proof splits the product-divisor summand with `dirichlet_term_mul_of_coprime_divisors`, rewrites the product divisor list through `divisor_pair_product_values`, and factors the rectangular mapped sum via `sum_map_of_pointwise` plus `list_pair_product_map_mul_sum`.
+- The unit-fraction foundation is started in `src/number_theory/unit_fraction.ac`, exposed through the number-theory interface. It defines `unit_fraction(n) = Rat.from_nat(n).inverse`, finite sums `unit_fraction_sum`, positive/distinct denominator predicates, and the Egyptian-fraction predicate `is_egyptian_fraction`, with base constructors for zero and single positive unit fractions.
+- The arithmetic-functions scaffold is started in `src/nat/nat_arithmetic_functions.ac`. It defines the constant-zero, constant-one, identity, natural-power, Dirichlet-identity (`nat_dirichlet_unit_fn`), pointwise-sum (`arithmetic_fn_add`), and pointwise-product arithmetic functions; the predicates `is_multiplicative_nat_fn` and `is_completely_multiplicative_nat_fn`; application lemmas and commutativity for `arithmetic_fn_add`/`arithmetic_fn_mul`; complete-multiplicativity of the standard examples `1`, `id`, `n ↦ n^k`, and the Dirichlet identity; and pointwise-product closure for multiplicative and completely multiplicative arithmetic functions (`arithmetic_fn_mul_multiplicative`, `arithmetic_fn_mul_completely_multiplicative`). Associativity (`arithmetic_fn_add_assoc`, `arithmetic_fn_mul_assoc`), zero/one identities (`arithmetic_fn_add_zero_left`/`right`, `arithmetic_fn_mul_one_left`/`right`), zero annihilators (`arithmetic_fn_mul_zero_left`/`right`), pointwise-application lemmas for the constants, the `is_multiplicative_nat_fn` corollaries for `1`, `id`, `n ↦ n^k`, and the `positive_on_positive` predicate with closure under pointwise product all live in the same file. The natural-power arithmetic function is also positive on positive arguments (`nat_power_arithmetic_fn_positive_on_positive`). The value at one of any multiplicative or completely multiplicative arithmetic function is one (`is_multiplicative_nat_fn_at_one`, `is_completely_multiplicative_nat_fn_at_one`), and pointwise sum with a summand positive on positive arguments is again positive on positive arguments (`arithmetic_fn_add_positive_on_positive_left`, `arithmetic_fn_add_positive_on_positive_right`).
 - `tau` and `sigma` are defined in `src/nat/nat_divisor_sum.ac` as `nat_tau(n) = divisor_list(n).length` and `nat_sigma(n) = sum(divisor_list(n))`, with base values `nat_tau(0) = 0`, `nat_tau(1) = 1`, `nat_sigma(0) = 0`, `nat_sigma(1) = 1` and the divisor-list base cases `divisor_list(0) = []`, `divisor_list(1) = [1]`. The prime-argument values `divisor_list_prime(p) = [p, 1]`, `nat_tau_prime(p) = 2`, and `nat_sigma_prime(p) = p + 1` are proved in the same file (with helper `divisors_up_to_prime_at`).

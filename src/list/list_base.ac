@@ -1,4 +1,5 @@
-from nat.lattice import Nat
+from functions import identity_fn
+from nat import Nat, alt_induction, lt_not_ref, lte_trans, suc_ne, lt_suc, lt_imp_lt_suc
 numerals Nat
 
 /// A generic list data structure that can hold elements of any type.
@@ -109,6 +110,22 @@ theorem not_contains_add[T](left: List[T], right: List[T], item: T) {
     }
 }
 
+/// Converse of `not_contains_add`: membership in a concatenation comes from
+/// membership in one of the parts.
+theorem add_contains_or[T](left: List[T], right: List[T], item: T) {
+    (left + right).contains(item) implies left.contains(item) or right.contains(item)
+} by {
+    if (left + right).contains(item) {
+        if not (left.contains(item) or right.contains(item)) {
+            not left.contains(item)
+            not right.contains(item)
+            not_contains_add(left, right, item)
+            not (left + right).contains(item)
+            false
+        }
+    }
+}
+
 attributes List[T] {
     /// True if this list contains every element of type T.
     define contains_every(self) -> Bool {
@@ -170,6 +187,23 @@ attributes List[T] {
     /// True if all elements in the list are distinct.
     define is_unique(self) -> Bool {
         self.unique = self
+    }
+}
+
+/// Membership in a singleton list determines equality with its element.
+theorem singleton_contains_imp_eq[T](item: T, x: T) {
+    List.singleton(item).contains(x) implies x = item
+} by {
+    if List.singleton(item).contains(x) {
+        if item = x {
+            x = item
+        } else {
+            List.singleton(item) = List.cons(item, List.nil[T])
+            not List.nil[T].contains(x)
+            not List.cons(item, List.nil[T]).contains(x)
+            not List.singleton(item).contains(x)
+            false
+        }
     }
 }
 
@@ -642,7 +676,6 @@ attributes List[T] {
     }
 
     /// Remove all instances of an element from the list.
-    // TODO: prove that this matches filter in the expected case
     define remove_elem(self, elem: T) -> List[T] {
         match self {
             List.nil {
@@ -774,6 +807,73 @@ theorem filter_equivalent_to_and[T](list: List[T], f: T -> Bool, item: T) {
     (list.contains(item) and f(item)) = list.filter(f).contains(item)
 } by {
     list.filter(f).contains(item) implies (list.contains(item) and f(item))
+}
+
+/// Removing an element is the same as filtering for elements unequal to it.
+theorem remove_elem_eq_filter[T](list: List[T], elem: T) {
+    list.remove_elem(elem) = list.filter(function(x: T) { x != elem })
+} by {
+    define p(l: List[T]) -> Bool {
+        l.remove_elem(elem) = l.filter(function(x: T) { x != elem })
+    }
+
+    p(List.nil[T])
+
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            if head != elem {
+                List.cons(head, tail).remove_elem(elem) = List.cons(head, tail.remove_elem(elem))
+                List.cons(head, tail).filter(function(x: T) { x != elem }) =
+                    List.cons(head, tail.filter(function(x: T) { x != elem }))
+                tail.remove_elem(elem) = tail.filter(function(x: T) { x != elem })
+                List.cons(head, tail).remove_elem(elem) =
+                    List.cons(head, tail).filter(function(x: T) { x != elem })
+            } else {
+                List.cons(head, tail).remove_elem(elem) = tail.remove_elem(elem)
+                List.cons(head, tail).filter(function(x: T) { x != elem }) =
+                    tail.filter(function(x: T) { x != elem })
+                tail.remove_elem(elem) = tail.filter(function(x: T) { x != elem })
+                List.cons(head, tail).remove_elem(elem) =
+                    List.cons(head, tail).filter(function(x: T) { x != elem })
+            }
+            p(List.cons(head, tail))
+        }
+    }
+
+    List.induction(function(l: List[T]) {
+        p(l)
+    })
+    forall(l: List[T]) {
+        p(l)
+    }
+    p(list)
+}
+
+/// Removing an element never increases the length of a list.
+theorem remove_elem_length_le[T](list: List[T], elem: T) {
+    list.remove_elem(elem).length <= list.length
+} by {
+    remove_elem_eq_filter(list, elem)
+    filter_only_removes_elems(list, function(x: T) { x != elem })
+}
+
+/// Removing an element preserves exactly the other elements of the list.
+theorem remove_elem_contains_iff[T](list: List[T], elem: T, item: T) {
+    list.remove_elem(elem).contains(item) = (list.contains(item) and item != elem)
+} by {
+    remove_elem_eq_filter(list, elem)
+    filter_equivalent_to_and(list, function(x: T) { x != elem }, item)
+}
+
+/// Removing an element leaves no occurrence of that element in the list.
+theorem remove_elem_not_contains_elem[T](list: List[T], elem: T) {
+    not list.remove_elem(elem).contains(elem)
+} by {
+    remove_elem_contains_iff(list, elem, elem)
+    if list.remove_elem(elem).contains(elem) {
+        list.contains(elem) and elem != elem
+        false
+    }
 }
 
 theorem filter_of_super_is_self[T](list: List[T], filter: T -> Bool) {
@@ -940,6 +1040,76 @@ theorem range_does_not_contain_geq(m: Nat, n: Nat) {
     }
 }
 
+/// Any member of `n.range` is strictly below `n`.
+theorem lt_of_range_contains(n: Nat, x: Nat) {
+    n.range.contains(x) implies x < n
+} by {
+    define p(m: Nat) -> Bool {
+        forall(y: Nat) {
+            m.range.contains(y) implies y < m
+        }
+    }
+
+    p(Nat.0)
+
+    forall(m: Nat) {
+        if p(m) {
+            m.suc.range = m.range.append(m)
+            m.range.append(m) = m.range + List.singleton(m)
+
+            forall(y: Nat) {
+                if m.suc.range.contains(y) {
+                    (m.range + List.singleton(m)).contains(y)
+                    add_contains_or(m.range, List.singleton(m), y)
+                    m.range.contains(y) or List.singleton(m).contains(y)
+                    if m.range.contains(y) {
+                        y < m
+                        y < m.suc
+                    } else {
+                        List.singleton(m).contains(y)
+                        singleton_contains_imp_eq[Nat](m, y)
+                        m < m.suc
+                        y < m.suc
+                    }
+                    y < m.suc
+                }
+            }
+            p(m.suc)
+        }
+    }
+
+    forall(m: Nat) { p(m) }
+    p(n)
+    if n.range.contains(x) {
+        x < n
+    }
+}
+
+/// Every natural number strictly below `n` belongs to `n.range`.
+theorem range_contains_of_lt(n: Nat, x: Nat) {
+    x < n implies n.range.contains(x)
+} by {
+    if x < n {
+        range_contains_all_leq(n)
+        n.range.contains(x)
+    }
+}
+
+/// Membership in `n.range` is exactly strict boundedness by `n`.
+theorem range_contains_iff_lt(n: Nat, x: Nat) {
+    n.range.contains(x) = (x < n)
+} by {
+    if n.range.contains(x) {
+        lt_of_range_contains(n, x)
+        x < n
+    }
+    if x < n {
+        range_contains_of_lt(n, x)
+        n.range.contains(x)
+    }
+    n.range.contains(x) = (x < n)
+}
+
 // If a list does not contain an element, removing it does not change the list.
 theorem remove_element_not_in_list[T](list: List[T], item: T) {
     not list.contains(item) implies list.remove_elem(item) = list
@@ -975,6 +1145,14 @@ theorem remove_element_not_in_list[T](list: List[T], item: T) {
     List.induction(function (l: List[T]) {
         p(l, item)
     })
+}
+
+/// Removing the same element twice is the same as removing it once.
+theorem remove_elem_idempotent[T](list: List[T], elem: T) {
+    list.remove_elem(elem).remove_elem(elem) = list.remove_elem(elem)
+} by {
+    remove_elem_not_contains_elem(list, elem)
+    remove_element_not_in_list(list.remove_elem(elem), elem)
 }
 
 // Calling `remove_element(item)` on a list containing `item` actually does
@@ -1354,6 +1532,58 @@ theorem unique_list_sum_length[T](list1: List[T], list2: List[T]) {
     } implies (list1 + list2).unique.length = list1.length + list2.length
 }
 
+/// Inductive step for `range_is_unique`: appending a fresh maximum preserves
+/// uniqueness, since the new element is not yet present.
+theorem range_is_unique_suc(x: Nat) {
+    x.range.is_unique implies x.suc.range.is_unique
+} by {
+    if x.range.is_unique {
+        singleton_unique(x)
+        List.singleton(x).is_unique
+        range_does_not_contain_geq(x, x)
+        x >= x
+        not x.range.contains(x)
+        List.singleton(x) = List.cons(x, List.nil[Nat])
+        forall(y: Nat) {
+            if List.singleton(x).contains(y) {
+                List.cons(x, List.nil[Nat]).contains(y)
+                not List.nil[Nat].contains(y)
+                y = x
+                not x.range.contains(y)
+            }
+            not (x.range.contains(y) and List.singleton(x).contains(y))
+        }
+        unique_list_sum(x.range, List.singleton(x))
+        (x.range + List.singleton(x)).is_unique
+        x.suc.range = x.range.append(x)
+        x.range.append(x) = x.range + List.singleton(x)
+        x.suc.range.is_unique
+    }
+}
+
+/// Every range list `n.range` has no duplicates.
+theorem range_is_unique(n: Nat) {
+    n.range.is_unique
+} by {
+    define p(x: Nat) -> Bool {
+        x.range.is_unique
+    }
+    Nat.0.range = List.nil[Nat]
+    List.nil[Nat].is_unique
+    p(Nat.0)
+    forall(x: Nat) {
+        if p(x) {
+            range_is_unique_suc(x)
+            p(x.suc)
+        }
+    }
+    forall(x: Nat) { p(x) implies p(x.suc) }
+    p(Nat.0) and forall(x: Nat) { p(x) implies p(x.suc) }
+    alt_induction(p)
+    forall(x: Nat) { p(x) }
+    p(n)
+}
+
 /// Applies a function to each element of a list, creating a new list of results.
 attributes List[T] {
     define map[U](self, f: T -> U) -> List[U] {
@@ -1410,4 +1640,28 @@ theorem map_equivalence[T, U] {
             ts.map(f) = map(ts, f)
         }
     }
+}
+
+/// Mapping the identity function over a list leaves the list unchanged.
+theorem map_identity[T](items: List[T]) {
+    map[T, T](items, identity_fn[T]) = items
+} by {
+    define p(xs: List[T]) -> Bool {
+        map[T, T](xs, identity_fn[T]) = xs
+    }
+    map[T, T](List.nil[T], identity_fn[T]) = List.nil[T]
+    p(List.nil[T])
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            map[T, T](tail, identity_fn[T]) = tail
+            identity_fn[T](head) = head
+            map[T, T](List.cons(head, tail), identity_fn[T]) =
+                List.cons(head, map[T, T](tail, identity_fn[T]))
+            map[T, T](List.cons(head, tail), identity_fn[T]) = List.cons(head, tail)
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(function(xs: List[T]) { p(xs) })
+    forall(xs: List[T]) { p(xs) }
+    p(items)
 }

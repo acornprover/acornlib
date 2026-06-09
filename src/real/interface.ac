@@ -1,0 +1,1985 @@
+/// Public interface for real numbers.
+
+from add import Add
+from lte import LTE
+from nat import Nat, from_nat, pow_zero, semiring_zero_pow, alt_induction, from_nat_zero,
+    from_nat_add
+from neg import Neg
+from int import Int, abs
+from rat import Rat, iop, finite_seq_abs_bounded, no_greatest
+from zero import Zero
+from relation_basic import is_reflexive, is_transitive, is_antisymmetric
+from order import PartialOrder, LinearOrder, min_eq_left_of_lt, min_eq_right_of_not_lt,
+    max_eq_left_of_gt, max_eq_right_of_not_gt, lt_min_iff, max_lt_iff, lte_min_of_bounds,
+    lte_max_left, lte_max_right, max_lte_of_upper_bounds, min_max_distrib_left,
+    max_min_distrib_left, lt_of_lte_of_lt, lte_antisymm, lt_of_lt_of_lte, max_imp_gte
+from lattice import Meet, Join, MeetSemilattice, JoinSemilattice, Lattice, DistribLattice
+from one import One
+from add_semigroup import AddSemigroup, add_fn
+from add_comm_semigroup import AddCommSemigroup
+from add_monoid import AddMonoid
+from add_comm_monoid import AddCommMonoid
+from add_group import AddGroup
+from add_comm_group import AddCommGroup
+from add_ordered_group import AddLeftOrderedGroup, AddOrderedGroup
+from functions import compose, flip
+from logic import eq_true_intro, eq_true_elim
+from mul import Mul
+from semigroup import Semigroup, mul_fn
+from monoid import Monoid
+from semiring import Semiring
+from ring import Ring
+from comm_semigroup import CommSemigroup
+from comm_monoid import CommMonoid
+from comm_ring import CommRing, binomial_term, binomial
+from list import partial, sum, map, List, map_add, sum_add, partial_scalar_mul, partial_add,
+    partial_pointwise_eq
+from order import is_monotone, is_antitone, monotone_from_forall, antitone_from_forall
+from inverse import Inverse
+from field import Field, mul_not_zero
+from integral_domain import IntegralDomain
+from ordered_field import OrderedField, mul_le_mul_of_nonneg_right, mul_le_mul_of_nonneg_left,
+    mul_lt_mul_of_pos_right, inverse_on_positive_flips_inequality
+from combinatorics import binom
+from set import Set, image_contains, set_image, set_image_compose, set_image_contains_witness,
+    maps_into_set_image, universal_set_contains_eq
+from witness import choose_or_default, choose_or_default_spec, choose_or_default_unique_eq,
+    exists_unique, exists_unique_intro
+
+// real_base.ac
+// This file contains the initial definition of real numbers, based on Dedekind cuts.
+// It handles addition, negation, subtraction, and ordering.
+
+/// True if a function on rationals partitions them into two non-empty sets.
+define is_cut(f: Rat -> Bool) -> Bool {
+    exists(x: Rat) {
+        f(x)
+    } and exists(x: Rat) {
+        not f(x)
+    }
+}
+
+/// True if a set is downward-closed (contains all smaller elements).
+define is_lower(f: Rat -> Bool) -> Bool {
+    forall(x: Rat, y: Rat) {
+        f(y) and x < y implies f(x)
+    }
+}
+
+theorem lower_contains_smaller(f: Rat -> Bool, x: Rat, y: Rat) {
+    is_lower(f) and f(y) and x < y implies f(x)
+}
+
+/// True if x is the greatest element in the set defined by f.
+define is_greatest(f: Rat -> Bool, x: Rat) -> Bool {
+    f(x) and forall(y: Rat) {
+        f(y) implies y <= x
+    }
+}
+
+/// True if the set defined by f has a greatest element.
+define has_greatest(f: Rat -> Bool) -> Bool {
+    exists(x: Rat) {
+        is_greatest(f, x)
+    }
+}
+
+/// True if a function represents a valid Dedekind cut defining a real number.
+define is_dedekind_cut(f: Rat -> Bool) -> Bool {
+    is_cut(f) and is_lower(f) and not has_greatest(f)
+}
+
+// "All numbers y such that x is greater then y" is the cut that embeds x.
+
+theorem gt_is_cut(r: Rat) {
+    is_cut(r.gt)
+}
+
+theorem gt_is_lower(r: Rat) {
+    is_lower(r.gt)
+}
+
+theorem gt_has_no_greatest(r: Rat) {
+    not has_greatest(r.gt)
+}
+
+theorem gt_is_dedekind_cut(r: Rat) {
+    is_dedekind_cut(r.gt)
+}
+
+/// Real numbers are defined by a Dedekind cut. Specifically, using the `gt_rat` function which
+/// specifies which rationals they are greater than.
+structure Real {
+    /// True if this real number is greater than the given rational number.
+    gt_rat: Rat -> Bool
+} constraint {
+    is_dedekind_cut(gt_rat)
+}
+
+let real_from_rat(r: Rat) -> a: Real satisfy {
+    Real.new(r.gt) = Option.some(a)
+}
+
+/// Real extensionality: two real numbers are equal when they have the same cut.
+theorem real_ext(a: Real, b: Real) {
+    (forall(r: Rat) { a.gt_rat(r) = b.gt_rat(r) }) implies a = b
+}
+
+attributes Real {
+    /// Converts a rational number to a real number.
+    let from_rat = real_from_rat
+
+    /// Real extensionality from pointwise equality of the cut.
+    let ext = real_ext
+}
+
+instance Real: Zero {
+    let 0: Real = Real.from_rat(Rat.0)
+}
+
+attributes Real {
+    /// True if this real number is positive (greater than zero).
+    define is_positive(self) -> Bool {
+        self.gt_rat(Rat.0)
+    }
+
+    /// True if this real number is negative (less than zero).
+    define is_negative(self) -> Bool {
+        self != Real.0 and not self.is_positive
+    }
+}
+
+/// The less-than-or-equal-to relation for real numbers.
+instance Real: LTE {
+    define lte(self, other: Real) -> Bool {
+        forall(r: Rat) {
+            self.gt_rat(r) implies other.gt_rat(r)
+        }
+    }
+}
+
+theorem lte_self(r: Real) {
+    r <= r
+}
+
+theorem lte_trans(a: Real, b: Real, c: Real) {
+    a <= b and b <= c implies a <= c
+}
+
+/// Transitivity with equality: if a <= b and b = c, then a <= c.
+theorem lte_trans_eq(a: Real, b: Real, c: Real) {
+    a <= b and b = c implies a <= c
+}
+
+theorem gt_rat_sorts(z: Real, r1: Rat, r2: Rat) {
+    z.gt_rat(r1) and not z.gt_rat(r2) implies r1 <= r2
+}
+
+theorem lte_or_gte(a: Real, b: Real) {
+    a <= b or b <= a
+}
+
+theorem lte_both_ways_imp_eq(a: Real, b: Real) {
+    a <= b and b <= a implies a = b
+}
+
+// The real numbers form a total order.
+
+
+theorem real_is_reflexive {
+    is_reflexive(Real.lte)
+}
+
+theorem real_is_transitive {
+    is_transitive(Real.lte)
+}
+
+theorem real_is_antisymmetric {
+    is_antisymmetric(Real.lte)
+}
+
+instance Real: PartialOrder
+
+instance Real: LinearOrder
+
+theorem gt_imp_from_rat_gt(r1: Rat, r2: Rat) {
+    r1 > r2 implies Real.from_rat(r1).gt_rat(r2)
+}
+
+theorem from_rat_gt_imp_gt(r1: Rat, r2: Rat) {
+    Real.from_rat(r1).gt_rat(r2) implies r1 > r2
+}
+
+theorem not_gt_rat_self(r: Rat) {
+    not Real.from_rat(r).gt_rat(r)
+}
+
+theorem zero_not_positive {
+    not Real.0.is_positive
+}
+
+theorem gte_self(r: Real) {
+    r >= r
+}
+
+theorem gt_rat_imp_gt_from_rat(a: Real, r: Rat) {
+    a.gt_rat(r) implies a > Real.from_rat(r)
+}
+
+theorem gt_from_rat_imp_gt_rat(a: Real, r: Rat) {
+    a > Real.from_rat(r) implies a.gt_rat(r)
+}
+
+theorem pos_gt_zero(a: Real) {
+    a.is_positive implies a > Real.0
+}
+
+theorem gt_zero_imp_pos(a: Real) {
+    a > Real.0 implies a.is_positive
+}
+
+theorem neg_lt_zero(a: Real) {
+    a.is_negative implies a < Real.0
+}
+
+theorem lt_zero_imp_neg(a: Real) {
+    a < Real.0 implies a.is_negative
+}
+
+// Informally, z1 + z2 > r.
+define add_gt(z1: Real, z2: Real, r: Rat) -> Bool {
+    exists(r1: Rat, r2: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and r = r1 + r2
+    }
+}
+
+theorem add_gt_symm(z1: Real, z2: Real, r: Rat) {
+    add_gt(z1, z2, r) implies add_gt(z2, z1, r)
+}
+
+theorem exists_lesser_rat(z: Real) {
+    exists(r: Rat) {
+        z.gt_rat(r)
+    }
+}
+
+theorem exists_gte_rat(z: Real) {
+    exists(r: Rat) {
+        not z.gt_rat(r)
+    }
+}
+
+theorem add_gt_is_cut(z1: Real, z2: Real) {
+    is_cut(add_gt(z1, z2))
+}
+
+theorem add_gt_is_lower(z1: Real, z2: Real) {
+    is_lower(add_gt(z1, z2))
+}
+
+theorem add_gt_has_no_greatest(z1: Real, z2: Real) {
+    not has_greatest(add_gt(z1, z2))
+}
+
+theorem add_gt_is_dedekind_cut(z1: Real, z2: Real) {
+    is_dedekind_cut(add_gt(z1, z2))
+}
+
+let add(a: Real, b: Real) -> c: Real satisfy {
+    Real.new(add_gt(a, b)) = Option.some(c)
+}
+
+/// The sum of two real numbers.
+instance Real: Add {
+    let add = add
+}
+
+theorem add_gt_rat(z1: Real, z2: Real, r1: Rat, r2: Rat) {
+    z1.gt_rat(r1) and z2.gt_rat(r2) implies (z1 + z2).gt_rat(r1 + r2)
+}
+
+theorem add_comm(a: Real, b: Real) {
+    a + b = b + a
+}
+
+theorem gt_rat_adding_three(z1: Real, z2: Real, z3: Real, q: Rat) {
+    (z1 + z2 + z3).gt_rat(q) implies exists(r1: Rat, r2: Rat, r3: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and z3.gt_rat(r3) and q = r1 + r2 + r3
+    }
+}
+
+theorem gt_rat_adding_three_converse(z1: Real, z2: Real, z3: Real, q: Rat) {
+    exists(r1: Rat, r2: Rat, r3: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and z3.gt_rat(r3) and q = r1 + r2 + r3
+    } implies (z1 + z2 + z3).gt_rat(q)
+}
+
+theorem add_assoc(a: Real, b: Real, c: Real) {
+    a + b + c = a + (b + c)
+}
+
+theorem gt_imp_not_lte(a: Real, b: Real) {
+    a > b implies not a <= b
+}
+
+theorem not_lte_imp_gt(a: Real, b: Real) {
+    not a <= b implies a > b
+}
+
+theorem gte_imp_not_lt(a: Real, b: Real) {
+    a >= b implies not a < b
+}
+
+theorem not_lt_imp_gte(a: Real, b: Real) {
+    not a < b implies a >= b
+}
+
+theorem rat_separating(a: Real, b: Real) {
+    a < b implies exists(r: Rat) {
+        b.gt_rat(r) and not a.gt_rat(r)
+    }
+}
+
+theorem rat_between_rat_and_real(z: Real, r1: Rat) {
+    z.gt_rat(r1) implies exists(r2: Rat) {
+        z.gt_rat(r2) and r1 < r2
+    }
+}
+
+// Strict version of rat_separating.
+theorem rat_between_reals(a: Real, b: Real) {
+    a < b implies exists(r: Rat) {
+        a < Real.from_rat(r) and Real.from_rat(r) < b
+    }
+}
+
+theorem rat_between_reals_gt(a: Real, b: Real) {
+    a > b implies
+    exists(r: Rat) {
+        a > Real.from_rat(r) and Real.from_rat(r) > b
+    }
+}
+
+theorem add_gt_trans(z1: Real, z2: Real, r1: Rat, r2: Rat) {
+    add_gt(z1, z2, r1) and r1 > r2 implies add_gt(z1, z2, r2)
+}
+
+theorem add_gt_imp_gt_from_rat(z1: Real, z2: Real, r: Rat) {
+    add_gt(z1, z2, r) implies z1 + z2 > Real.from_rat(r)
+}
+
+theorem gt_from_rat_imp_add_gt(z1: Real, z2: Real, r: Rat) {
+    z1 + z2 > Real.from_rat(r) implies add_gt(z1, z2, r)
+}
+
+theorem lt_lte_trans(a: Real, b: Real, c: Real) {
+    a < b and b <= c implies a < c
+}
+
+theorem lte_lt_trans(a: Real, b: Real, c: Real) {
+    a <= b and b < c implies a < c
+}
+
+theorem lt_trans(a: Real, b: Real, c: Real) {
+    a < b and b < c implies a < c
+}
+
+theorem add_gt_from_rat_imp_rat_add_gt(p: Rat, q: Rat, r: Rat) {
+    add_gt(Real.from_rat(p), Real.from_rat(q), r) implies p + q > r
+}
+
+theorem rat_add_gt_imp_add_gt_from_rat(p: Rat, q: Rat, r: Rat) {
+    p + q > r implies add_gt(Real.from_rat(p), Real.from_rat(q), r)
+}
+
+theorem add_from_rat(p: Rat, q: Rat) {
+    Real.from_rat(p) + Real.from_rat(q) = Real.from_rat(p + q)
+}
+
+theorem lte_add_right(a: Real, b: Real, c: Real) {
+    a <= b implies a + c <= b + c
+}
+
+theorem lte_add_left(a: Real, b: Real, c: Real) {
+    a <= b implies c + a <= c + b
+}
+
+/// Adding two inequalities preserves the inequality.
+theorem add_lte_add(a: Real, b: Real, c: Real, d: Real) {
+    a <= b and c <= d implies a + c <= b + d
+}
+
+theorem lt_add_converse(a: Real, b: Real, c: Real) {
+    a + c < b + c implies a < b
+}
+
+theorem add_from_rat_zero(r: Rat) {
+    Real.from_rat(r) + Real.0 = Real.from_rat(r)
+}
+
+theorem add_zero_right(a: Real) {
+    a + Real.0 = a
+}
+
+theorem add_zero_left(a: Real) {
+    Real.0 + a = a
+}
+
+theorem from_rat_maintains_lt(p: Rat, q: Rat) {
+    p < q implies Real.from_rat(p) < Real.from_rat(q)
+}
+
+theorem add_lt_lt(a: Real, b: Real, c: Real, d: Real) {
+    a < b and c < d implies a + c < b + d
+}
+
+theorem lte_some_rat(a: Real) {
+    exists(r: Rat) {
+        a <= Real.from_rat(r)
+    }
+}
+
+theorem lt_some_rat(a: Real) {
+    exists(r: Rat) {
+        a < Real.from_rat(r)
+    }
+}
+
+theorem gt_some_rat(a: Real) {
+    exists(r: Rat) {
+        a > Real.from_rat(r)
+    }
+}
+
+attributes Real {
+    /// Converts an integer to a real number.
+    let from_int = function(n: Int) {
+        Real.from_rat(Rat.from_int(n))
+    }
+}
+
+theorem from_rat_maintains_lte(p: Rat, q: Rat) {
+    p <= q implies Real.from_rat(p) <= Real.from_rat(q)
+}
+
+theorem gt_some_int(a: Real) {
+    exists(n: Int) {
+        a > Real.from_int(n)
+    }
+}
+
+theorem lt_some_int(a: Real) {
+    exists(n: Int) {
+        a < Real.from_int(n)
+    }
+}
+
+theorem real_neg_imp_rat_neg(r: Rat) {
+    Real.from_rat(r).is_negative implies r.is_negative
+}
+
+theorem lt_some_int_cancel(m: Int, n: Int) {
+    Real.from_int(m) < Real.from_int(n) implies m < n
+}
+
+theorem floor_exists(a: Real) {
+    exists(n: Int) {
+        Real.from_int(n) <= a and a < Real.from_int(n + Int.1)
+    }
+}
+
+let floor(a: Real) -> n: Int satisfy {
+    Real.from_int(n) <= a and a < Real.from_int(n + Int.1)
+}
+
+instance Real: One {
+    let 1: Real = Real.from_rat(Rat.1)
+}
+
+attributes Real {
+    /// One half (1/2).
+    let one_half: Real = Real.from_rat(Rat.2.inverse)
+}
+
+theorem one_half_positive {
+    Real.0 < Real.one_half
+}
+
+theorem one_half_plus_one_half {
+    Real.one_half + Real.one_half = Real.1
+}
+
+theorem add_from_int(m: Int, n: Int) {
+    Real.from_int(m) + Real.from_int(n) = Real.from_int(m + n)
+}
+
+theorem lt_add_one(a: Real) {
+    a < a + Real.1
+}
+
+theorem lt_add_pos_int(a: Real, n: Int) {
+    n.is_positive implies a < a + Real.from_int(n)
+}
+
+theorem lt_add_pos_rat(a: Real, r: Rat) {
+    r.is_positive implies a < a + Real.from_rat(r)
+}
+
+theorem lt_add_pos(a: Real, b: Real) {
+    b.is_positive implies a < a + b
+}
+
+theorem lt_add_rat_right(a: Real, b: Real, r: Rat) {
+    a < b implies a + Real.from_rat(r) < b + Real.from_rat(r)
+}
+
+theorem lt_add_rat_left(a: Real, b: Real, r: Rat) {
+    a < b implies Real.from_rat(r) + a < Real.from_rat(r) + b
+}
+
+theorem add_rat_eps_between(a: Real, b: Real) {
+    a < b implies exists(eps: Rat) {
+        eps.is_positive and a + Real.from_rat(eps) < b
+    }
+}
+
+theorem lt_add_right(a: Real, b: Real, c: Real) {
+    a < b implies a + c < b + c
+}
+
+theorem lt_add_left(a: Real, b: Real, c: Real) {
+    a < b implies c + a < c + b
+}
+
+theorem lt_add_cancel_right(a: Real, b: Real, c: Real) {
+    a + c = b + c implies a = b
+}
+
+theorem lt_add_cancel_left(a: Real, b: Real, c: Real) {
+    c + a = c + b implies a = b
+}
+
+// Whether -a > r. Which is just a < -r.
+define neg_gt(a: Real, r: Rat) -> Bool {
+    a < Real.from_rat(-r)
+}
+
+theorem lower_rat(a: Real) {
+    exists(r: Rat) {
+        Real.from_rat(r) < a
+    }
+}
+
+theorem neg_gt_is_cut(a: Real) {
+    is_cut(neg_gt(a))
+}
+
+theorem neg_gt_is_lower(a: Real) {
+    is_lower(neg_gt(a))
+}
+
+theorem neg_gt_has_no_greatest(a: Real) {
+    not has_greatest(neg_gt(a))
+}
+
+theorem neg_gt_is_dedekind_cut(a: Real) {
+    is_dedekind_cut(neg_gt(a))
+}
+
+let neg(a: Real) -> b: Real satisfy {
+    Real.new(neg_gt((a))) = Option.some(b)
+}
+
+/// The negative of this real number.
+instance Real: Neg {
+    let neg = neg
+}
+
+theorem lt_rat_neg(a: Real, r: Rat) {
+    a < Real.from_rat(-r) implies -a > Real.from_rat(r)
+}
+
+theorem neg_from_rat(r: Rat) {
+    -Real.from_rat(r) = Real.from_rat(-r)
+}
+
+theorem neg_gt_rat(a: Real, r: Rat) {
+    -a > Real.from_rat(r) implies a < Real.from_rat(-r)
+}
+
+theorem gt_rat_neg(a: Real, r: Rat) {
+    a > Real.from_rat(-r) implies -a < Real.from_rat(r)
+}
+
+theorem neg_lt_rat(a: Real, r: Rat) {
+    -a < Real.from_rat(r) implies a > Real.from_rat(-r)
+}
+
+theorem lt_swap_neg(a: Real, b: Real) {
+    a < b implies -b < -a
+}
+
+theorem lt_neg_swap_neg(a: Real, b: Real) {
+    a < -b implies b < -a
+}
+
+theorem neg_neg(a: Real) {
+    -(-a) = a
+}
+
+theorem neg_lt_swap_neg(a: Real, b: Real) {
+    -a < b implies -b < a
+}
+
+theorem neg_lt_neg_swap_neg(a: Real, b: Real) {
+    -a < -b implies b < a
+}
+
+theorem neg_zero {
+    -Real.0 = Real.0
+}
+
+theorem neg_pos_is_neg(a: Real) {
+    a.is_positive implies (-a).is_negative
+}
+
+theorem neg_neg_is_pos(a: Real) {
+    (-a).is_negative implies a.is_positive
+}
+
+theorem gt_add_neg(a: Real, b: Real) {
+    b.is_negative implies a > a + b
+}
+
+theorem rat_window(a: Real, eps: Rat) {
+    eps.is_positive implies exists(r: Rat) {
+        Real.from_rat(r) < a and a < Real.from_rat(r + eps)
+    }
+}
+
+theorem add_neg_lte_zero(a: Real) {
+    a + -a <= Real.0
+}
+
+theorem add_neg_gte_zero(a: Real) {
+    a + -a >= Real.0
+}
+
+theorem add_neg_eq_zero(a: Real) {
+    a + -a = Real.0
+}
+
+theorem neg_distrib(a: Real, b: Real) {
+    -(a + b) = -a + -b
+}
+
+// Additive algebraic structure.
+
+
+instance Real: AddSemigroup
+
+instance Real: AddCommSemigroup
+
+instance Real: AddMonoid
+
+instance Real: AddCommMonoid
+
+instance Real: AddGroup
+
+instance Real: AddCommGroup
+
+instance Real: AddLeftOrderedGroup
+
+instance Real: AddOrderedGroup
+
+attributes Real {
+    /// The absolute value of this real number.
+    define abs(self) -> Real {
+        if self.is_negative {
+            -self
+        } else {
+            self
+        }
+    }
+
+    /// The sign of this real number as a unit value (`-1` for negative, `1` for non-negative).
+    define unit_sign(self) -> Real {
+        if self.is_negative {
+            -Real.1
+        } else {
+            Real.1
+        }
+    }
+}
+
+theorem pos_imp_eq_abs(a: Real) {
+    a.is_positive implies a = a.abs
+}
+
+theorem sub_cancels(a: Real, b: Real) {
+    a + b - b = a
+}
+
+theorem sub_moves_sides(a: Real, b: Real, c: Real) {
+    a + b = c implies a = c - b
+}
+
+theorem lte_abs(a: Real) {
+    a <= a.abs
+}
+
+theorem abs_neg(a: Real) {
+    (-a).abs = a.abs
+}
+
+theorem abs_not_neg(a: Real) {
+    not a.abs.is_negative
+}
+
+theorem min_pos_pos(a: Real, b: Real) {
+    a.is_positive and b.is_positive
+    implies
+    a.min(b).is_positive
+}
+
+theorem max_pos_pos(a: Real, b: Real) {
+    a.is_positive and b.is_positive
+    implies
+    a.max(b).is_positive
+}
+
+theorem min_lte_left(a: Real, b: Real) {
+    a.min(b) <= a
+}
+
+theorem max_gte_left(a: Real, b: Real) {
+    a.max(b) >= a
+}
+
+theorem min_lte_right(a: Real, b: Real) {
+    a.min(b) <= b
+}
+
+theorem max_gte_right(a: Real, b: Real) {
+    a.max(b) >= b
+}
+
+theorem lt_both_imp_lt_min(a: Real, b: Real, c: Real) {
+    a < b and a < c implies a < b.min(c)
+}
+
+theorem lt_min_imp_lt_left(a: Real, b: Real, c: Real) {
+    a < b.min(c) implies a < b
+}
+
+theorem lt_min_imp_lt_right(a: Real, b: Real, c: Real) {
+    a < b.min(c) implies a < c
+}
+
+theorem gt_both_imp_gt_max(a: Real, b: Real, c: Real) {
+    a > b and a > c implies a > b.max(c)
+}
+
+theorem gt_max_imp_gt_left(a: Real, b: Real, c: Real) {
+    a > b.max(c) implies a > b
+}
+
+theorem gt_max_imp_gt_right(a: Real, b: Real, c: Real) {
+    a > b.max(c) implies a > c
+}
+
+instance Real: Meet {
+    define meet(self, other: Real) -> Real {
+        self.min(other)
+    }
+}
+
+instance Real: Join {
+    define join(self, other: Real) -> Real {
+        self.max(other)
+    }
+}
+
+theorem real_meet_lte_left(a: Real, b: Real) {
+    a.meet(b) <= a
+}
+
+theorem real_meet_lte_right(a: Real, b: Real) {
+    a.meet(b) <= b
+}
+
+theorem real_lte_meet_of_bounds(c: Real, a: Real, b: Real) {
+    c <= a and c <= b implies c <= a.meet(b)
+}
+
+instance Real: MeetSemilattice
+
+theorem real_lte_join_left(a: Real, b: Real) {
+    a <= a.join(b)
+}
+
+theorem real_lte_join_right(a: Real, b: Real) {
+    b <= a.join(b)
+}
+
+theorem real_join_lte_of_bounds(a: Real, b: Real, c: Real) {
+    a <= c and b <= c implies a.join(b) <= c
+}
+
+instance Real: JoinSemilattice
+
+instance Real: Lattice
+
+theorem real_meet_join_distrib_left(a: Real, b: Real, c: Real) {
+    a.meet(b.join(c)) = a.meet(b).join(a.meet(c))
+}
+
+theorem real_join_meet_distrib_left(a: Real, b: Real, c: Real) {
+    a.join(b.meet(c)) = a.join(b).meet(a.join(c))
+}
+
+instance Real: DistribLattice
+
+theorem rat_dual_upper_bound(a: Real, b: Real) {
+    exists(r: Rat) {
+        a < Real.from_rat(r) and b < Real.from_rat(r)
+    }
+}
+
+theorem abs_gte_zero(a: Real) {
+    a.abs >= Real.0
+}
+
+theorem abs_from_rat(p: Rat) {
+    Real.from_rat(p).abs = Real.from_rat(p.abs)
+}
+
+attributes Real {
+    /// True if this real number is within `eps` of the other real number.
+    define is_close(self, other: Real, eps: Real) -> Bool {
+        (self - other).abs < eps
+    }
+}
+
+theorem close_imp_eps_pos(a: Real, b: Real, eps: Real) {
+    a.is_close(b, eps) implies eps.is_positive
+}
+
+theorem close_comm(a: Real, b: Real, eps: Real) {
+    a.is_close(b, eps) implies b.is_close(a, eps)
+}
+
+theorem close_imp_bounds(a: Real, b: Real, eps: Real) {
+    a.is_close(b, eps) implies b - eps < a and a < b + eps and a > b - eps and b < a + eps
+}
+
+theorem bounds_imp_close(a: Real, b: Real, eps: Real) {
+    b - eps < a and a < b + eps implies a.is_close(b, eps)
+}
+
+theorem sum_bounds_imp_close(a: Real, b: Real, eps: Real) {
+    b < a + eps and a < b + eps implies a.is_close(b, eps)
+}
+
+theorem self_close(a: Real, eps: Real) {
+    eps.is_positive implies a.is_close(a, eps)
+}
+
+// Closeness is preserved in the real<->rat conversion.
+theorem close_rats_imp_close_reals(q: Rat, r: Rat, eps: Rat) {
+    q.is_close(r, eps) implies Real.from_rat(q).is_close(Real.from_rat(r), Real.from_rat(eps))
+}
+
+theorem close_reals_imp_close_rats(q: Rat, r: Rat, eps: Rat) {
+    Real.from_rat(q).is_close(Real.from_rat(r), Real.from_rat(eps))
+    implies q.is_close(r, eps)
+}
+
+// Every real can be approximated by a rational.
+theorem rat_approx_exists(x: Real, eps: Rat) {
+    eps.is_positive implies exists(r: Rat) {
+        x.is_close(Real.from_rat(r), Real.from_rat(eps))
+    }
+}
+
+// Every real has a rational that is a distant upper bound.
+theorem rat_upper(x: Real, eps: Rat) {
+    eps.is_positive implies exists(r: Rat) {
+        not x.is_close(Real.from_rat(r), Real.from_rat(eps)) and x < Real.from_rat(r)
+    }
+}
+
+// Every real has a rational that is a distant lower bound.
+theorem rat_lower(x: Real, eps: Rat) {
+    eps.is_positive implies exists(r: Rat) {
+        not x.is_close(Real.from_rat(r), Real.from_rat(eps)) and Real.from_rat(r) < x
+    }
+}
+
+// Every intersecting pair of intervals has a rational number in it.
+theorem rat_intersect(a: Real, b: Real, c: Real, d: Real, e: Real) {
+    a.is_close(b, c) and a.is_close(d, e)
+    implies
+    exists(r: Rat) {
+        Real.from_rat(r).is_close(b, c) and Real.from_rat(r).is_close(d, e)
+    }
+}
+
+theorem swap_minus_plus(a: Real, b: Real, c: Real) {
+    a + b - c = a - c + b
+}
+
+// real_seq.ac
+/// The bound on the end of a sequence that's part of the Cauchy convergence condition.
+/// Separating it out like this makes convergence a bit clearer to prove.
+define cauchy_bound(q: Nat -> Real, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat, j: Nat) {
+        n <= i and n <= j implies q(i).is_close(q(j), eps)
+    }
+}
+
+/// The Cauchy condition for the convergence of a sequence.
+define converges(q: Nat -> Real) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_bound(q, n, eps)
+        }
+    }
+}
+
+/// lb is eventually a lower bound of this sequence.
+define eventual_lb(q: Nat -> Real, lb: Real) -> Bool {
+    exists(n: Nat) {
+        forall(i: Nat) {
+            n <= i implies lb <= q(i)
+        }
+    }
+}
+
+/// For demonstrating the equivalent of Cauchy sequences and Dedekind cuts.
+define cauchy_gt_rat(q: Nat -> Real, r: Rat) -> Bool {
+    exists(lb: Real) {
+        lb > Real.from_rat(r) and eventual_lb(q, lb)
+    }
+}
+
+/// limit is defined with a "default" so that it's zero for things that don't converge.
+let limit(q: Nat -> Real) -> lim: Real satisfy {
+    if converges(q) {
+        Real.new(cauchy_gt_rat(q)) = Option.some(lim)
+    } else {
+        lim = Real.0
+    }
+}
+
+// The other direction of the lower bound.
+// We can prove basically the same stuff here.
+define eventual_ub(q: Nat -> Real, ub: Real) -> Bool {
+    exists(n: Nat) {
+        forall(i: Nat) {
+            n <= i implies q(i) <= ub
+        }
+    }
+}
+
+define eventual_eq(q: Nat -> Real, a: Real) -> Bool {
+    exists(n: Nat) {
+        forall(i: Nat) {
+            n <= i implies q(i) = a
+        }
+    }
+}
+
+theorem lt_imp_minus_pos(a: Real, b: Real) {
+    a < b implies (b - a).is_positive
+}
+
+theorem from_rat_pos(r: Rat) {
+    r.is_positive implies Real.from_rat(r).is_positive
+}
+
+// The bound on the end of a sequence that's part of the Weierstress convergence definition.
+// Separating it out like this makes convergence a bit clearer to prove.
+define tail_bound(q: Nat -> Real, a: Real, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat) {
+        n <= i implies q(i).is_close(a, eps)
+    }
+}
+
+theorem tail_bound_implies_is_close(q: Nat -> Real, a: Real, n: Nat, eps: Real, i: Nat) {
+    tail_bound(q, a, n, eps) and n <= i implies q(i).is_close(a, eps)
+}
+
+// converges_to is the Weierstrass definition.
+define converges_to(q: Nat -> Real, a: Real) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            tail_bound(q, a, n, eps)
+        }
+    }
+}
+
+theorem eps_lt_half(a: Real) {
+    a.is_positive implies exists(b: Real) {
+        b.is_positive and b + b < a
+    }
+}
+
+// Prove our two definitions of convergence are equivalent.
+
+theorem converges_to_imp_converges(q: Nat -> Real, a: Real) {
+    converges_to(q, a) implies converges(q)
+}
+
+theorem converges_imp_converges_to(q: Nat -> Real) {
+    converges(q) implies converges_to(q, limit(q))
+}
+
+theorem converges_to_unique(q: Nat -> Real, a: Real, b: Real) {
+    converges_to(q, a) and converges_to(q, b) implies a = b
+}
+
+// Lifting a sequence of rationals to a sequence of reals
+define lift_seq(q: Nat -> Rat) -> Nat -> Real {
+    compose(Real.from_rat, q)
+}
+
+let rat_approx(x: Real, eps: Rat) -> r: Rat satisfy {
+    eps.is_positive implies
+    x.is_close(Real.from_rat(r), Real.from_rat(eps))
+}
+
+// A sequence of rationals that approximates a real number.
+// Chosen to be easy to calculate with.
+define rat_seq(x: Real, n: Nat) -> Rat {
+    rat_approx(x, iop(n))
+}
+
+define add_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
+    a(n) + b(n)
+}
+
+theorem add_close(a1: Real, b1: Real, a2: Real, b2: Real, a_eps: Real, b_eps: Real) {
+    a1.is_close(a2, a_eps) and b1.is_close(b2, b_eps)
+    implies
+    (a1 + b1).is_close(a2 + b2, a_eps + b_eps)
+}
+
+// When two sequences get close to each other eventually.
+define seq_close(a: Nat -> Real, b: Nat -> Real, eps: Real) -> Bool {
+    exists(n: Nat) {
+        forall(i: Nat) {
+            n <= i implies a(i).is_close(b(i), eps)
+        }
+    }
+}
+
+theorem only_abs_zero_eq_zero(x: Real) {
+    x.abs = Real.0 implies x = Real.0
+}
+
+theorem close_and_lt_imp_close(x: Real, y: Real, eps1: Real, eps2: Real) {
+    x.is_close(y, eps1) and eps1 < eps2 implies x.is_close(y, eps2)
+}
+
+theorem sub_either_order(a: Real, b: Real, c: Real) {
+    a - b - c = a - c - b
+}
+
+theorem sub_both_eq_sub_add(a: Real, b: Real, c: Real) {
+    a - b - c = a - (b + c)
+}
+
+theorem sub_zero_imp_eq(x: Real, y: Real) {
+    x - y = Real.0 implies x = y
+}
+
+theorem diff_pos_imp_lt(a: Real, b: Real) {
+    (b - a).is_positive implies a < b
+}
+
+define limit_rat(a: Nat -> Rat) -> Real {
+    limit(lift_seq(a))
+}
+
+// Equivalence classes between Cauchy sequences.
+define eq_seq(a: Nat -> Rat, b: Nat -> Rat) -> Bool {
+    converges(lift_seq(a)) and converges_to(lift_seq(b), limit_rat(a))
+}
+
+define add_rat_seq(a: Nat -> Rat, b: Nat -> Rat, n: Nat) -> Rat {
+    a(n) + b(n)
+}
+
+define mul_rat_seq(a: Nat -> Rat, b: Nat -> Rat, n: Nat) -> Rat {
+    a(n) * b(n)
+}
+
+define neg_rat_seq(a: Nat -> Rat, n: Nat) -> Rat {
+    -a(n)
+}
+
+theorem neg_is_close(x: Real, y: Real, eps: Real) {
+    x.is_close(y, eps) implies
+    (-x).is_close(-y, eps)
+}
+
+define sub_rat_seq(a: Nat -> Rat, b: Nat -> Rat, n: Nat) -> Rat {
+    a(n) - b(n)
+}
+
+define const_rat_seq(a: Rat, n: Nat) -> Rat {
+    a
+}
+
+let zero_rat_seq = const_rat_seq(Rat.0)
+
+// cauchy_criterion.ac
+/// The Cauchy criterion for real-valued sequences.
+
+/// The Cauchy tail condition at a fixed tolerance.
+define is_cauchy_seq_at(a: Nat -> Real, eps: Real) -> Bool {
+    eps.is_positive implies exists(n: Nat) {
+        forall(i: Nat, j: Nat) {
+            n <= i and n <= j implies a(i).is_close(a(j), eps)
+        }
+    }
+}
+
+/// True if a is a Cauchy sequence: for every positive epsilon, terms past
+/// some index are within epsilon of one another.
+define is_cauchy_seq(a: Nat -> Real) -> Bool {
+    forall(eps: Real) {
+        is_cauchy_seq_at(a, eps)
+    }
+}
+
+/// A Cauchy real sequence converges to its limit.
+theorem cauchy_imp_converges_to_limit(a: Nat -> Real) {
+    is_cauchy_seq(a) implies converges_to(a, limit(a))
+}
+
+/// A Cauchy real sequence has some real limit.
+theorem cauchy_imp_exists_limit(a: Nat -> Real) {
+    is_cauchy_seq(a) implies exists(x: Real) {
+        converges_to(a, x)
+    }
+}
+
+// real_ring.ac
+/// The product of two real numbers.
+instance Real: Mul {
+    define mul(self, other: Real) -> Real {
+        limit_rat(mul_rat_seq(rat_seq(self), rat_seq(other)))
+    }
+}
+
+theorem real_mul_comm(x: Real, y: Real) {
+    x * y = y * x
+}
+
+theorem mul3_as_seq(x: Real, y: Real, z: Real) {
+    x * y * z = limit_rat(mul_rat_seq(mul_rat_seq(rat_seq(x), rat_seq(y)), rat_seq(z)))
+}
+
+theorem mul_seq_assoc(a: Nat -> Rat, b: Nat -> Rat, c: Nat -> Rat) {
+    mul_rat_seq(mul_rat_seq(a, b), c) = mul_rat_seq(a, mul_rat_seq(b, c))
+}
+
+theorem mul_assoc(x: Real, y: Real, z: Real) {
+    x * (y * z) = (x * y) * z
+}
+
+theorem limit_rat_rat_seq(x: Real) {
+    x = limit_rat(rat_seq(x))
+}
+
+theorem limit_definition_of_add(x: Real, y: Real) {
+    x + y = limit_rat(add_rat_seq(rat_seq(x), rat_seq(y)))
+}
+
+theorem eq_seq_rat_seq_limit(a: Nat -> Rat) {
+    converges(lift_seq(a)) implies
+    eq_seq(a, rat_seq(limit_rat(a)))
+}
+
+theorem eq_seq_imp_limit_rat_eq(a: Nat -> Rat, b: Nat -> Rat) {
+    eq_seq(a, b) implies
+    limit_rat(a) = limit_rat(b)
+}
+
+theorem limit_rat_add(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b))
+    implies
+    limit_rat(add_rat_seq(a, b)) = limit_rat(a) + limit_rat(b)
+}
+
+theorem mul_distrib_right(x: Real, y: Real, z: Real) {
+    x * (y + z) = x * y + x * z
+}
+
+theorem mul_distrib_left(x: Real, y: Real, z: Real) {
+    (x + y) * z = x * z + y * z
+}
+
+theorem limit_rat_mul_rat_seq(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b))
+    implies
+    limit_rat(mul_rat_seq(a, b)) = limit_rat(a) * limit_rat(b)
+}
+
+theorem limit_rat_const_rat_seq(r: Rat) {
+    limit_rat(const_rat_seq(r)) = Real.from_rat(r)
+}
+
+theorem mul_one_right(x: Real) {
+    x * Real.1 = x
+}
+
+theorem mul_one_left(x: Real) {
+    Real.1 * x = x
+}
+
+theorem mul_zero_right(x: Real) {
+    x * Real.0 = Real.0
+}
+
+theorem mul_zero_left(x: Real) {
+    Real.0 * x = Real.0
+}
+
+theorem mul_neg_one_left(x: Real) {
+    -Real.1 * x = -x
+}
+
+theorem mul_neg_one_right(x: Real) {
+    x * -Real.1 = -x
+}
+
+theorem mul_neg_left(x: Real, y: Real) {
+    -x * y = -(x * y)
+}
+
+theorem mul_neg_right(x: Real, y: Real) {
+    x * -y = -(x * y)
+}
+
+theorem mul_sub_distrib_right(x: Real, y: Real, z: Real) {
+    x * (y - z) = x * y - x * z
+}
+
+theorem mul_sub_distrib_left(x: Real, y: Real, z: Real) {
+    (x - y) * z = x * z - y * z
+}
+
+theorem real_lte_imp_rat_lte(p: Rat, q: Rat) {
+    Real.from_rat(p) <= Real.from_rat(q) implies
+    p <= q
+}
+
+theorem pos_lte_imp_pos(x: Real, y: Real) {
+    x.is_positive and x <= y implies
+    y.is_positive
+}
+
+theorem mul_pos_pos(x: Real, y: Real) {
+    x.is_positive and y.is_positive
+    implies
+    (x * y).is_positive
+}
+
+theorem mul_neg_pos(x: Real, y: Real) {
+    x.is_negative and y.is_positive
+    implies
+    (x * y).is_negative
+}
+
+theorem mul_pos_neg(x: Real, y: Real) {
+    x.is_positive and y.is_negative
+    implies
+    (x * y).is_negative
+}
+
+theorem mul_neg_neg(x: Real, y: Real) {
+    x.is_negative and y.is_negative
+    implies
+    (x * y).is_positive
+}
+
+theorem mul_nonneg_nonneg(x: Real, y: Real) {
+    not x.is_negative and not y.is_negative
+    implies
+    not (x * y).is_negative
+}
+
+/// Product of nonnegative numbers is nonnegative.
+theorem mul_nonneg(a: Real, b: Real) {
+    a >= Real.0 and b >= Real.0 implies a * b >= Real.0
+}
+
+theorem square_nonneg(x: Real) {
+    x * x >= Real.0
+}
+
+theorem lt_mul_pos_right(x: Real, y: Real, z: Real) {
+    z.is_positive and x < y implies
+    x * z < y * z
+}
+
+theorem lt_mul_pos_left(x: Real, y: Real, z: Real) {
+    z.is_positive and x < y implies
+    z * x < z * y
+}
+
+theorem lte_mul_nonneg_right(x: Real, y: Real, z: Real) {
+    not z.is_negative and x <= y implies
+    x * z <= y * z
+}
+
+theorem lte_mul_nonneg_left(x: Real, y: Real, z: Real) {
+    not z.is_negative and x <= y implies
+    z * x <= z * y
+}
+
+/// Multiplication is monotone for nonnegative reals.
+theorem mul_le_mul_nonneg(a: Real, b: Real, c: Real, d: Real) {
+    a >= Real.0 and b >= Real.0 and c >= Real.0 and d >= Real.0 and a <= c and b <= d
+    implies
+    a * b <= c * d
+}
+
+theorem lt_mul_neg_right(x: Real, y: Real, z: Real) {
+    z.is_negative and x < y implies
+    y * z < x * z
+}
+
+theorem lt_mul_neg_left(x: Real, y: Real, z: Real) {
+    z.is_negative and x < y implies
+    z * y < z * x
+}
+
+theorem add_neg_neg(x: Real, y: Real) {
+    x.is_negative and y.is_negative implies (x + y).is_negative
+}
+
+theorem zero_lte_imp_non_neg(x: Real) {
+    Real.0 <= x implies not x.is_negative
+}
+
+theorem non_neg_imp_zero_lte(x: Real) {
+    not x.is_negative implies Real.0 <= x
+}
+
+theorem mul_from_rat(a: Rat, b: Rat) {
+    Real.from_rat(a) * Real.from_rat(b) = Real.from_rat(a * b)
+}
+
+theorem gt_pos_is_pos(a: Real, b: Real) {
+    a.is_positive and a < b implies b.is_positive
+}
+
+theorem exists_small_mul(a: Real, b: Real) {
+    not a.is_negative and b.is_positive implies
+    exists(c: Real) {
+        c.is_positive and a * c < b
+    }
+}
+
+theorem exists_small_mul_variant(a: Real, b: Real) {
+    b.is_positive implies
+    exists(c: Real) {
+        c.is_positive and a.abs * c < b
+    }
+}
+
+theorem exists_small_mul_variant_2(a: Real, b: Real) {
+    a.is_positive and b.is_positive implies
+    exists(c: Real) {
+        c.is_positive and c * a < b
+    }
+}
+
+theorem mul_abs(a: Real, b: Real) {
+    a.abs * b.abs = (a * b).abs
+}
+
+theorem square_zero_imp_zero(a: Real) {
+    a * a = Real.0 implies a = Real.0
+}
+
+// Multiplicative algebraic structure.
+
+
+instance Real: Semigroup
+
+instance Real: Monoid
+
+instance Real: Semiring
+
+instance Real: Ring
+
+instance Real: CommSemigroup
+
+instance Real: CommMonoid
+
+instance Real: CommRing
+
+// Relationship between from_nat and from_rat
+
+
+/// Rat.from_nat preserves addition.
+theorem rat_from_nat_add(m: Nat, n: Nat) {
+    Rat.from_nat(m + n) = Rat.from_nat(m) + Rat.from_nat(n)
+}
+
+/// The embedding of natural numbers into reals via from_nat equals the composition
+/// of Rat.from_nat and Real.from_rat.
+theorem from_nat_is_from_rat(n: Nat) {
+    from_nat[Real](n) = Real.from_rat(Rat.from_nat(n))
+}
+
+// real_series.ac
+numerals Real
+
+// seq_lte is whether every element of the sequence is lte.
+define seq_lte(a: Nat -> Real, b: Nat -> Real) -> Bool {
+    forall(n: Nat) {
+        a(n) <= b(n)
+    }
+}
+
+/// Product function for double sums.
+/// Creates the outer product of two sequences: prod_fn(a, b)(i, j) = a(i) * b(j).
+define prod_fn(a: Nat -> Real, b: Nat -> Real) -> ((Nat, Nat) -> Real) {
+    function(i: Nat, j: Nat) { a(i) * b(j) }
+}
+
+theorem partial_suc(a: Nat -> Real, n: Nat) {
+    partial(a, n.suc) = partial(a, n) + a(n)
+}
+
+// Theorem: If seq_lte(a, b), then their partials also obey seq_lte.
+theorem partial_seq_lte(a: Nat -> Real, b: Nat -> Real) {
+    seq_lte(a, b) implies seq_lte(partial(a), partial(b))
+}
+
+define is_upper_bound(a: Nat -> Real, b: Real) -> Bool {
+    forall(n: Nat) {
+        a(n) <= b
+    }
+}
+
+define is_lower_bound(a: Nat -> Real, b: Real) -> Bool {
+    forall(n: Nat) {
+        b <= a(n)
+    }
+}
+
+theorem triangle_ineq(a: Real, b: Real) {
+    (a + b).abs <= a.abs + b.abs
+}
+
+/// Partial sums of nonnegative sequences are nonnegative.
+theorem partial_nonneg(f: Nat -> Real, n: Nat) {
+    is_lower_bound(f, Real.0) implies partial(f, n) >= Real.0
+}
+
+define mul_seq(a: Real, b: Nat -> Real, n: Nat) -> Real {
+    a * b(n)
+}
+
+theorem mul_seq_one(a: Nat -> Real) {
+    mul_seq(Real.1, a) = a
+}
+
+// real_field.ac
+// This file defines real division and proves theorems about it.
+
+define recip_rat_seq(a: Nat -> Rat, n: Nat) -> Rat {
+    a(n).inverse
+}
+
+theorem neg_recip_rat_seq(a: Nat -> Rat) {
+    neg_rat_seq(recip_rat_seq(a)) = recip_rat_seq(neg_rat_seq(a))
+}
+
+// Division works for positive reals
+theorem recip_rat_seq_pos_converges(a: Nat -> Rat, b: Real) {
+    converges_to(lift_seq(a), b) and b.is_positive
+    implies converges(lift_seq(recip_rat_seq(a)))
+}
+
+// Division works for all nonzero reals
+theorem recip_rat_seq_converges(a: Nat -> Rat, b: Real) {
+    converges_to(lift_seq(a), b) and b != Real.0
+    implies converges(lift_seq(recip_rat_seq(a)))
+}
+
+/// The inverse of this real number (`1/x`). For zero, returns zero.
+instance Real: Inverse {
+    define inverse(self) -> Real {
+        if self = Real.0 {
+            Real.0
+        } else {
+            limit_rat(recip_rat_seq(rat_seq(self)))
+        }
+    }
+}
+
+define eventually_nonzero(a: Nat -> Real) -> Bool {
+    exists(n: Nat) {
+        forall(i: Nat) {
+            n <= i implies a(i) != Real.0
+        }
+    }
+}
+
+theorem pos_imp_eventually_nonzero(a: Nat -> Real) {
+    converges(a) and limit(a).is_positive
+    implies eventually_nonzero(a)
+}
+
+theorem nonzero_imp_eventually_nonzero(a: Nat -> Real) {
+    converges(a) and limit(a) != Real.0
+    implies eventually_nonzero(a)
+}
+
+theorem mul_inverse(a: Real) {
+    a != Real.0 implies a * a.inverse = Real.1
+}
+
+theorem zero_inverse {
+    Real.0.inverse = Real.0
+}
+
+/// The rational-to-real embedding preserves nonzero inverses.
+theorem real_from_rat_inverse(p: Rat) {
+    p != Rat.0 implies Real.from_rat(p.inverse) = Real.from_rat(p).inverse
+}
+
+theorem zero_is_different_than_one {
+    Real.0 != Real.1
+}
+
+instance Real: Field
+
+theorem real_no_zero_divisors(a: Real, b: Real) {
+    a * b = Real.0 implies a = Real.0 or b = Real.0
+}
+
+instance Real: IntegralDomain
+
+instance Real: OrderedField
+
+attributes Real {
+    /// The quotient of two real numbers (`self/other`).
+    define div(self, other: Real) -> Real {
+        self * other.inverse
+    }
+}
+
+theorem mul_left_cancel(a: Real, b: Real, c: Real) {
+    a = b * c and b != Real.0 implies a / b = c
+}
+
+/// If a * b <= c and b > 0, then a <= c / b.
+theorem div_le_of_mul_le(a: Real, b: Real, c: Real) {
+    a * b <= c and b > Real.0
+    implies
+    a <= c / b
+}
+
+/// If a <= b and c > 0, then a * c <= b * c.
+theorem mul_le_mul_pos_right(a: Real, b: Real, c: Real) {
+    a <= b and c > Real.0
+    implies
+    a * c <= b * c
+}
+
+/// If a <= b and c > 0, then c * a <= c * b.
+theorem mul_le_mul_pos_left(a: Real, b: Real, c: Real) {
+    a <= b and c > Real.0
+    implies
+    c * a <= c * b
+}
+
+/// If a / b < c and b > 0, then a < b * c.
+theorem div_lt_mul_pos(a: Real, b: Real, c: Real) {
+    a / b < c and b > Real.0
+    implies
+    a < b * c
+}
+
+/// If c > 0, then c * (b / c) = b.
+theorem mul_div_cancel(b: Real, c: Real) {
+    c != Real.0
+    implies
+    c * (b / c) = b
+}
+
+/// Multiplication with inverse commutes: a * (b * c) = b * (a * c).
+theorem mul_inverse_comm(a: Real, b: Real, c: Real) {
+    a * (b * c) = b * (a * c)
+}
+
+/// Division by product: a / (b * c) = (a / b) / c when b, c != 0.
+/// This follows from inverse_dist and associativity.
+// theorem div_mul_assoc(a: Real, b: Real, c: Real) {
+//     b != Real.0 and c != Real.0
+//     implies
+//     a / (b * c) = (a / b) / c
+// }
+
+/// Cancellation: a / (b * a) = 1 / b when a, b != 0.
+theorem div_mul_cancel_right(a: Real, b: Real) {
+    a != Real.0 and b != Real.0
+    implies
+    a / (b * a) = Real.1 / b
+}
+
+/// Cancellation (left): (a * b) / a = b when a != 0.
+theorem div_mul_cancel_left(a: Real, b: Real) {
+    a != Real.0
+    implies
+    (a * b) / a = b
+}
+
+/// Bilateral cancellation: (a * b) / (c * b) = a / c when b, c != 0.
+theorem div_cancel_common(a: Real, b: Real, c: Real) {
+    b != Real.0 and c != Real.0
+    implies
+    (a * b) / (c * b) = a / c
+}
+
+/// Convert product equality to division equality.
+/// If a * b = c * d, then a / d = c / b (when b, d != 0).
+theorem prod_eq_to_div_eq(a: Real, b: Real, c: Real, d: Real) {
+    a * b = c * d and b != Real.0 and d != Real.0
+    implies
+    a / d = c / b
+}
+
+/// Reciprocal of a division: (a/b).inverse = b/a when a, b != 0.
+theorem inverse_div(a: Real, b: Real) {
+    a != Real.0 and b != Real.0
+    implies
+    (a / b).inverse = b / a
+}
+
+/// Multiplication of fractions: (a/b) * (c/d) = (a*c) / (b*d) when b, d != 0.
+theorem mul_div(a: Real, b: Real, c: Real, d: Real) {
+    b != Real.0 and d != Real.0
+    implies
+    (a / b) * (c / d) = (a * c) / (b * d)
+}
+
+/// Division of fractions: (a/b) / (c/d) = (a*d) / (b*c) when b, c, d != 0.
+theorem div_div(a: Real, b: Real, c: Real, d: Real) {
+    b != Real.0 and c != Real.0 and d != Real.0
+    implies
+    (a / b) / (c / d) = (a * d) / (b * c)
+}
+
+/// Specific cancellation pattern: [(a*b)/(c*d)] / [b/d] = a/c when b, c, d != 0.
+/// This is a direct consequence of div_div and simplification.
+/// Currently commented out due to timeout on rearrangement steps.
+// theorem div_cancel_pattern(a: Real, b: Real, c: Real, d: Real) {
+//     b != Real.0 and c != Real.0 and d != Real.0
+//     implies
+//     ((a * b) / (c * d)) / (b / d) = a / c
+// }
+
+theorem geom_series(r: Real) {
+    r.abs < 1 implies
+    limit(partial(r.pow)) = 1 / (1 - r)
+}
+
+// rectangular_sum.ac
+numerals Nat
+
+/// Convert a natural number to a real number.
+define nat_to_real(n: Nat) -> Real {
+    match n {
+        Nat.zero {
+            Real.0
+        }
+        Nat.suc(pred) {
+            nat_to_real(pred) + Real.1
+        }
+    }
+}
+
+/// Constant two-argument function.
+define const_fn_2(c: Real, i: Nat, j: Nat) -> Real {
+    c
+}
+
+/// Helper function to compute the sum over row i.
+define row_sum(f: (Nat, Nat) -> Real, m: Nat, i: Nat) -> Real {
+    partial(f(i), m)
+}
+
+/// The sum of f over an m x n rectangle.
+define rectangular_sum(f: (Nat, Nat) -> Real, m: Nat, n: Nat) -> Real {
+    partial(row_sum(f, n), m)
+}
+
+/// The sum over an empty rectangle with no rows is zero.
+theorem rectangular_sum_zero_rows(f: (Nat, Nat) -> Real, n: Nat) {
+    rectangular_sum(f, Nat.0, n) = Real.0
+}
+
+/// The sum over an empty rectangle with no columns is zero.
+theorem rectangular_sum_zero_cols(f: (Nat, Nat) -> Real, m: Nat) {
+    rectangular_sum(f, m, Nat.0) = Real.0
+}
+
+/// Rectangular sum of a constant equals the product of the area and the constant.
+theorem rectangular_sum_const(c: Real, m: Nat, n: Nat) {
+    rectangular_sum(const_fn_2(c), m, n) = nat_to_real(m) * nat_to_real(n) * c
+}
+
+/// Rectangular sum of ones counts the number of lattice points.
+theorem rectangular_sum_const_one(m: Nat, n: Nat) {
+    rectangular_sum(const_fn_2(Real.1), m, n) = nat_to_real(m) * nat_to_real(n)
+}
+
+// cauchy_schwarz.ac
+/// The pointwise product of two real sequences.
+define pointwise_product(a: Nat -> Real, b: Nat -> Real, i: Nat) -> Real {
+    a(i) * b(i)
+}
+
+/// The pointwise square of a real sequence.
+define pointwise_square(a: Nat -> Real, i: Nat) -> Real {
+    a(i) * a(i)
+}
+
+/// The finite dot product of two real sequences over the first `n` terms.
+define finite_dot(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
+    partial(pointwise_product(a, b), n)
+}
+
+/// The finite sum of squares of a real sequence over the first `n` terms.
+define finite_square_sum(a: Nat -> Real, n: Nat) -> Real {
+    partial(pointwise_square(a), n)
+}
+
+/// The square of a sum, with the two cross terms written separately.
+theorem real_square_add_expanded(x: Real, y: Real) {
+    (x + y) * (x + y) = x * x + x * y + (x * y + y * y)
+}
+
+/// Products of two products can be regrouped by their left and right factors.
+theorem product_pair_square_rearrange(x: Real, y: Real) {
+    (x * y) * (x * y) = (x * x) * (y * y)
+}
+
+/// The finite real Cauchy-Schwarz inequality in squared form.
+theorem finite_cauchy_schwarz(a: Nat -> Real, b: Nat -> Real, n: Nat) {
+    finite_dot(a, b, n) * finite_dot(a, b, n) <= finite_square_sum(a, n) * finite_square_sum(b, n)
+}
+
+// exp.ac
+/// The nth term in the Taylor series expansion of e^x.
+/// For a real number x and natural number n, this returns x^n / n!
+define exp_term(x: Real, n: Nat) -> Real {
+    x.pow(n) / Real.from_rat(Rat.from_nat(n.factorial))
+}
+
+/// n.suc converted to Real is positive.
+theorem suc_pos(n: Nat) {
+    Real.from_rat(Rat.from_nat(n.suc)) > Real.0
+}
+
+let two = Real.1 + Real.1
+
+/// Two is not zero.
+theorem two_nonzero {
+    two != Real.0
+}
+
+/// The exponential function exp(x) = e^x.
+/// Defined as the limit of the partial sums of the Taylor series.
+define exp(x: Real) -> Real {
+    limit(partial(exp_term(x)))
+}
+
+/// Micro-lemma: a * (1 / b) = a / b
+theorem mul_one_over(a: Real, b: Real) {
+    b != Real.0 implies a * (Real.1 / b) = a / b
+}
+
+// harmonic.ac
+/// The denominator of a harmonic-series term is positive.
+theorem from_nat_suc_pos_real(n: Nat) {
+    from_nat[Real](n.suc) > Real.0
+}
+
+/// The kth harmonic-series term, indexed from zero.
+define harmonic(k: Nat) -> Real {
+    Real.1 / from_nat[Real](k.suc)
+}
+
+/// Harmonic-series terms are positive.
+theorem harmonic_pos(k: Nat) {
+    harmonic(k) > Real.0
+}
+
+/// Harmonic-series terms are nonnegative.
+theorem harmonic_nonnegative(k: Nat) {
+    harmonic(k) >= Real.0
+}
+
+/// Each harmonic term in the dyadic block `[n, 2n)` is bounded below by `1 / (2n)`.
+theorem harmonic_block_term_lower(n: Nat, k: Nat) {
+    n > Nat.0 and k < n implies harmonic(n + k) >= Real.1 / from_nat[Real](n + n)
+}
+
+// derivative_linear.ac
+/// A scalar factor in the numerator may be pulled outside a quotient.
+theorem mul_div_left(c: Real, a: Real, b: Real) {
+    (c * a) / b = c * (a / b)
+}
+
+// supremum.ac
+// This file defines supremum-related concepts for sets of real numbers.
+
+/// True if the set s is nonempty.
+define is_nonempty(s: Set[Real]) -> Bool {
+    exists(x: Real) {
+        s.contains(x)
+    }
+}
+
+/// True if b is an upper bound for the set s.
+define is_set_upper_bound(s: Set[Real], b: Real) -> Bool {
+    forall(x: Real) {
+        s.contains(x) implies x <= b
+    }
+}
+
+/// True if the set s has an upper bound.
+define has_upper_bound(s: Set[Real]) -> Bool {
+    exists(b: Real) {
+        is_set_upper_bound(s, b)
+    }
+}
+
+/// True if sup is the supremum (least upper bound) of the set s.
+define is_set_supremum(s: Set[Real], sup: Real) -> Bool {
+    is_set_upper_bound(s, sup) and
+    forall(b: Real) {
+        is_set_upper_bound(s, b) implies sup <= b
+    }
+}
+
+/// Every nonempty set of real numbers that is bounded above has a supremum.
+/// This is the completeness property of the real numbers.
+theorem completeness(s: Set[Real]) {
+    is_nonempty(s) and has_upper_bound(s)
+    implies
+    exists(sup: Real) {
+        is_set_supremum(s, sup)
+    }
+}
+
+/// If S ⊆ T, then sup S ≤ sup T.
+theorem supremum_subset_le(s: Set[Real], t: Set[Real], sup_s: Real, sup_t: Real) {
+    s.subset(t) and is_set_supremum(s, sup_s) and is_set_supremum(t, sup_t)
+    implies
+    sup_s <= sup_t
+}
+
+// log.ac
+/// True if `y` is a logarithm of `x` with respect to the real exponential.
+define is_log(x: Real, y: Real) -> Bool {
+    exp(y) = x
+}
+
+/// The logarithm value, defaulting to zero outside the positive real domain.
+define log_or_zero(x: Real) -> Real {
+    choose_or_default(is_log(x), Real.0)
+}
+
+/// The real logarithm, defined exactly on positive reals.
+define log(x: Real) -> Option[Real] {
+    if x > Real.0 {
+        Option.some(log_or_zero(x))
+    } else {
+        Option.none[Real]
+    }
+}
+
+/// Real exponentiation where it is defined over the reals.
+/// Positive bases use `exp(exponent * base.log_or_zero)`; `0^0 = 1`; and `0^x = 0` for positive `x`.
+define rpow(base: Real, exponent: Real) -> Option[Real] {
+    if base > Real.0 {
+        Option.some(exp(exponent * log_or_zero(base)))
+    } else {
+        if base = Real.0 {
+            if exponent = Real.0 {
+                Option.some(Real.1)
+            } else {
+                if exponent > Real.0 {
+                    Option.some(Real.0)
+                } else {
+                    Option.none[Real]
+                }
+            }
+        } else {
+            Option.none[Real]
+        }
+    }
+}
+
+// prod_seq.ac
+/// This file defines the pointwise product of sequences and proves convergence properties.
+
+/// The pointwise product of two sequences of real numbers.
+define prod_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
+    a(n) * b(n)
+}
+
+// =============================================================================
+// MAIN CONVERGENCE THEOREM
+// =============================================================================
+
+/// The product of two convergent sequences converges to the product of their limits.
+theorem limit_prod_seq(a: Nat -> Real, b: Nat -> Real) {
+    converges(a) and converges(b)
+    implies
+    converges_to(prod_seq(a, b), limit(a) * limit(b))
+}
+
+// sequence_limit_points.ac
+/// A convergent sequence has a tail bound for every positive epsilon.
+theorem converges_to_has_tail_bound(a: Nat -> Real, u: Real, eps: Real) {
+    converges_to(a, u) and eps.is_positive implies exists(n: Nat) {
+        tail_bound(a, u, n, eps)
+    }
+}
+
+// sqrt.ac
+/// The nonnegative square root, defined on nonnegative reals.
+define sqrt(x: Real) -> Option[Real] {
+    rpow(x, Real.one_half)
+}
+
+/// The square of the square root of a nonnegative real is the original number.
+theorem sqrt_mul_self(x: Real) {
+    x >= Real.0 implies exists(y: Real) {
+        sqrt(x) = Option.some(y) and y * y = x
+    }
+}
+
+// sqrt_inequalities.ac
+/// Squaring is order-reflecting on nonnegative reals.
+theorem square_le_square_of_nonneg(a: Real, b: Real) {
+    a >= Real.0 and b >= Real.0 and a * a <= b * b implies a <= b
+}
+
+/// A returned square-root value is nonnegative for nonnegative inputs.
+theorem sqrt_value_nonneg(x: Real, y: Real) {
+    x >= Real.0 and sqrt(x) = Option.some(y) implies y >= Real.0
+}

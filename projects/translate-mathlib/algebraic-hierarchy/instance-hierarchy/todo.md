@@ -2,13 +2,25 @@
 
 Goal: keep algebraic instances coherent so downstream code can rely on predictable inheritance.
 
-- [ ] Audit the current semigroup-to-field inheritance chain
-- [ ] Remove duplicated theorem proofs that should follow from parent instances
-- [ ] Standardize additive and multiplicative parallel hierarchies
-- [ ] Add missing intermediate classes where they reduce duplication
-- [ ] Ensure `Nat`, `Int`, `Rat`, `Real`, and `Complex` expose the intended instances
-- [ ] Add ordered variants cleanly on top of algebraic classes
-- [ ] Add canonical numerals/coercions behavior throughout the hierarchy
-- [ ] Centralize theorem naming for inherited structure lemmas
-- [ ] Record known pain points in instance search or coercion behavior
-- [ ] Refactor one representative tower end-to-end after the audit
+## Current Erdos Baseline
+
+No active instance-hierarchy todos remain for the first Erdos cluster. Add `Nat`/`Int`/`Rat`/`Real` numeral or coercion bridges only when a first-cluster statement exposes a concrete manual conversion gap, and record inherited-theorem pain points only after a target proof produces them.
+
+## Deferred Hierarchy Cleanup
+
+- [ ] Review the current semigroup-to-field inheritance chain.
+- [ ] Remove duplicated theorem proofs that should follow from parent instances.
+- [ ] Standardize additive and multiplicative parallel hierarchies.
+- [ ] Add missing intermediate classes where they reduce duplication.
+- [ ] Add ordered variants cleanly on top of algebraic classes.
+- [ ] Centralize theorem naming for inherited structure lemmas.
+- [ ] Refactor one representative tower end-to-end after the hierarchy review.
+
+Status:
+
+- `src/algebraic_instance_smoke.ac` now gives concrete inherited-instance smoke lemmas for `Nat`, `Int`, `Rat`, and `Real`, covering semiring zero powers, ring negation multiplication, field zero-product facts, unit/nonzero facts, nonzero powers, ordered-field nonnegative multiplication, ordered-field nonnegative and positive powers, and ordered-field nonnegative and positive inverses.
+- `src/comm_ring_unit.ac` no longer defines duplicate `Field.is_unit` / `Field.is_non_unit` attributes; fields now use the inherited `CommRing` unit predicate, which removes concrete `Rat`/`Real` attribute ambiguity.
+- `src/comm_ring_unit.ac` now has the field-specific unit/nonzero bridge for the commutative-ring unit predicate: `field_unit_is_nonzero`, `field_is_unit_iff_nonzero`, and `field_zero_is_non_unit`.
+- `src/units.ac` and `src/comm_ring_unit.ac` now have power/unit bridges: monoid-unit multiplication and natural-power closure, commutative-ring `is_unit` natural-power closure, and `field_nonzero_pow_is_unit`.
+- `src/field.ac` now has zero-product bridge lemmas matching the integral-domain API: `field_mul_eq_zero` and `field_mul_eq_zero_of_factor`.
+- `src/integral_domain.ac` now has verified zero-product and nonzero-power bridges: `integral_domain_mul_eq_zero`, `integral_domain_mul_eq_zero_of_factor`, `integral_domain_mul_nonzero`, `integral_domain_pow_suc_nonzero`, and `integral_domain_pow_nonzero`.

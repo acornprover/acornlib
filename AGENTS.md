@@ -16,6 +16,15 @@ Make sure to run the verifier before you tell the user you're finished. If you h
 
 Before submitting a pull request, read CONTRIBUTING.md to learn the expected format and understand the process.
 
+## Pull Request Readiness
+
+When creating or updating a pull request:
+
+- Do not create draft PRs unless explicitly requested.
+- Allow maintainer edits on PR branches from forks.
+- Before reporting that a PR is ready, fetch the target base branch, merge or rebase it into the PR branch, resolve any conflicts, run `acorn` and `acorn check`, push the updated branch, and verify the PR reports as mergeable.
+- If GitHub reports that a PR is not mergeable, fix that before saying the PR is ready.
+
 ## Documentation Style
 
 Every type, typeclass, and attribute should have a doc comment, starting with `///`.
