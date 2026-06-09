@@ -3,10 +3,9 @@
 Goal: build finite sums of distinct reciprocals and enough denominator-control
 infrastructure to support Egyptian-fraction arguments.
 
-- [ ] Lift the raw numerator bounds through rational reduction to prove actual
-  numerator descent for nonterminal canonical greedy remainders.
-- [ ] Prove denominator freshness or monotonicity for iterated greedy steps.
-- [ ] Use the descent and freshness lemmas to prove bounded finite
+- [ ] Prove that a nonterminal iterated canonical greedy step has a strictly
+  larger next denominator.
+- [ ] Use numerator descent and lower-bound freshness to prove bounded finite
   Egyptian-fraction existence results.
 
 Status:
@@ -56,12 +55,24 @@ Status:
   steps have denominator greater than one, and
   `unit_fraction_ceiling_step_raw_num_lt_num` proves the strict raw numerator
   descent `q.num * n - q.denom < q.num` for canonical ceiling steps below one.
+- `reduce_num_lte_raw_of_positive` in `src/rat/rat_props.ac` lifts positive
+  raw rational reductions to a numerator bound, and
+  `unit_fraction_ceiling_step_remainder_num_lt_num` uses it to prove strict
+  reduced-numerator descent for nonterminal canonical greedy remainders below
+  one.
+- Nonterminal canonical remainders are now exposed through
+  `unit_fraction_ceiling_step_remainder_positive`,
+  `unit_fraction_ceiling_step_remainder_lt_self`, and
+  `unit_fraction_ceiling_step_remainder_lt_one`.
 - `egyptian_fraction_of_bounded_step_remainder` connects bounded-step induction
   to the existing fresh-denominator closure theorem: a fresh Egyptian
   representation of the remainder gives one for the original rational.
 - `denominator_list_lower_bound` and `denominator_list_upper_bound` define
   recursive lower/upper bounds for denominator lists, with nil, cons, head, and
   tail lemmas for both predicates.
+- `denominator_list_lower_bound_monotone` weakens denominator lower bounds, and
+  `denominator_list_lower_bound_suc_not_contains` turns a strict lower bound
+  into freshness for the previous denominator.
 - `denominator_list_lower_bound_append`, `denominator_list_upper_bound_append`,
   `denominator_list_lower_bound_filter`, and `denominator_list_upper_bound_filter`
   prove that denominator bounds are preserved by append and filtering.
@@ -73,3 +84,10 @@ Status:
   lists append to an Egyptian denominator list, and
   `egyptian_fraction_add_disjoint` gives the corresponding closure theorem for
   adding two represented rational sums.
+- `is_egyptian_fraction_with_lower_bound` records representations whose
+  denominators are all above a bound. The API includes zero and singleton
+  constructors, lower-bound weakening, construction from a bounded denominator
+  list, disjoint addition preserving a bound, and
+  `egyptian_fraction_with_lower_bound_of_remainder`, which extends a
+  representation of `q - 1/n` with denominators at least `n.suc` to one for
+  `q` with denominators at least `n`.
