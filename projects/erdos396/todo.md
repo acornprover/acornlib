@@ -14,7 +14,7 @@ No current blockers.
 
 ### Tier 1: general foundations
 
-- [ ] Relate Kummer's binomial valuation to the recursive carry-count object, likely via uniqueness of the digit-sum carry-count predicate.
+- [ ] Use the carry-count valuation bridge to state reusable divisibility criteria comparing falling-product valuation sums with central-binomial carry counts.
 - [ ] Extend falling-product facts only when they can be stated without problem-specific witness predicates.
 - [ ] Strengthen finite interval sums and products, including partial sums over residue classes.
 - [ ] Extend the modular-arithmetic API for normalized residues, units, affine maps, and finite CRT systems.
