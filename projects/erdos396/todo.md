@@ -10,13 +10,9 @@ No current blockers.
 
 ## Roadmap
 
-- [ ] Add the basic problem-facing definitions in `src/number_theory/erdos396.ac`: `central_binom(n)`, `falling_product(n, k)`, and `erdos396_witness(k, n)`.
-- [ ] Prove the basic falling-product API: `falling_product_zero`, `falling_product_suc`, and `falling_product_nonzero`.
-- [ ] Prove prefix and divisibility facts for falling products, including `falling_product_prefix_divides` and `erdos396_witness_prefix`.
-- [ ] Prove the valuation bridge `erdos396_witness_of_prime_valuation_bounds` using `divides_iff_count_prime_factor_le`.
-- [ ] Specialize Legendre's binomial valuation to central binomial coefficients as `central_binom_legendre`.
-- [ ] Specialize the Kummer digit-sum identity to central binomial coefficients as `central_binom_kummer_digit_sum`.
-- [ ] Prove the product valuation formula `count_prime_factor_falling_product`.
-- [ ] Add base-shift digit-sum support such as `digit_sum_mul_base` and the binary specialization needed to simplify the Kummer central-binomial identity.
-- [ ] Add small checked witness examples for low `k` once the witness predicate and falling-product API are in place.
-- [ ] Keep problem-specific definitions in a narrow module and move only reusable facts, such as falling-product or central-binomial API, into broader files when downstream use justifies it.
+- [ ] Prove additional checked witness examples beyond `erdos396_witness_zero_one`, starting with the `k = 1` case.
+- [ ] Add concrete central-binomial values for small `n`, especially `central_binom(Nat.2)`, to support checked witness examples.
+- [ ] Develop odd-prime consequences of `central_binom_kummer_digit_sum`, analogous to the binary valuation bound.
+- [ ] Formalize the carry-count interpretation of Kummer's theorem when the needed digit/carry API is available.
+- [ ] Strengthen the falling-product list API if downstream work needs permutation, prefix-list, or interval-list variants.
+- [ ] Move reusable facts out of `src/number_theory/erdos396.ac` only when another module has a concrete use for them.
