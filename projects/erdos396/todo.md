@@ -15,7 +15,8 @@ No current blockers.
 ### Tier 1: general foundations
 
 - [ ] Formalize the carry-count interpretation of Kummer's theorem.
-- [ ] Add the general digit/carry API needed to state the carry-count form cleanly.
+- [ ] Connect the recursive finite carry count to the digit-sum carry-count predicate once the high state has vanished.
+- [ ] Add eventual-vanishing bounds for repeated division in bases greater than one.
 - [ ] Extend falling-product facts only when they can be stated without problem-specific witness predicates.
 - [ ] Strengthen finite interval sums and products, including partial sums over residue classes.
 - [ ] Extend the modular-arithmetic API for normalized residues, units, affine maps, and finite CRT systems.
