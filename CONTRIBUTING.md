@@ -8,7 +8,6 @@ Contributions are welcome. The goal of acornlib is to be a repository of all kno
 We expect most of the library to be AI-generated. In general, most pull requests are *not* expected to be reviewed by a human. Unsupervised AI work is allowed in the directories:
 
 * `src` for the Acorn source code
-* `build` for the prover-generated artifacts
 * `projects` for keeping notes on progress
 * `hard_problems` for recording theorem goals that should train future provers
 
@@ -17,7 +16,7 @@ Try to be stylistically consistent with the rest of the codebase.
 
 ## Pull Requests
 
-Try to keep pull requests to below 2000 lines of Acorn code.
+Try to keep pull requests to below 2000 lines of Acorn code. This isn't a strict rule; pull requests over 2000 lines will be reviewed like any other, but they will require human signoff before merging.
 
 Be sure that `acorn check --strict` works on your pull request.
 
