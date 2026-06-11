@@ -14,7 +14,7 @@ No current blockers.
 
 ### Tier 1: general foundations
 
-- [ ] Relate falling-product central-binomial divisibility criteria to interval and residue-class valuation sums.
+- [ ] Relate falling-product central-binomial divisibility criteria to residue-class valuation sums.
 - [ ] Strengthen finite interval sums and products, including partial sums over residue classes.
 - [ ] Extend the modular-arithmetic API for normalized residues, units, affine maps, and finite CRT systems.
 - [ ] Add a finite Fourier API on cyclic residue groups: additive characters, orthogonality, convolution, and Parseval-type identities.
