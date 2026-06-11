@@ -14,8 +14,8 @@ No current blockers.
 
 ### Tier 1: general foundations
 
-- [ ] Use the carry-count valuation bridge to state reusable divisibility criteria comparing falling-product valuation sums with central-binomial carry counts.
 - [ ] Extend falling-product facts only when they can be stated without problem-specific witness predicates.
+- [ ] Relate falling-product central-binomial divisibility criteria to interval and residue-class valuation sums.
 - [ ] Strengthen finite interval sums and products, including partial sums over residue classes.
 - [ ] Extend the modular-arithmetic API for normalized residues, units, affine maps, and finite CRT systems.
 - [ ] Add a finite Fourier API on cyclic residue groups: additive characters, orthogonality, convolution, and Parseval-type identities.
