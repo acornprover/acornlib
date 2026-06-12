@@ -2,8 +2,7 @@
 
 - [ ] Prove list-induction closure for convergent-state first/second projection predicates
 - [ ] Derive arbitrary-prefix convergent numerator/denominator projection facts from the projection predicates
-- [ ] Prove continuant-state positivity by list induction
-- [ ] Extend denominator positivity and nonzero facts from singleton/pair/triple cases to arbitrary valid coefficient lists
+- [ ] Lift denominator positivity and nonzero facts from coefficient lists to arbitrary convergent prefixes
 - [ ] Relate finite continued-fraction values to continuant ratios
 - [ ] Define convergent sequences and prove their adjacent determinant identity
 - [ ] Prove alternating upper/lower bounds for convergents
