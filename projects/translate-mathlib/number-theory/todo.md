@@ -26,7 +26,7 @@ Group A is complete and no longer tracked as an active checklist.
 ## Group B — Other standard number theory
 
 - [ ] [Add continued fractions and their approximation theory](continued-fractions/todo.md)
-- [ ] Develop quadratic residues and quadratic reciprocity
+- [ ] [Develop quadratic residues and quadratic reciprocity](quadratic-residues/todo.md)
 - [ ] Add Pell equations and related Diophantine techniques
 - [ ] Build infrastructure for Bernoulli numbers and classical arithmetic sequences
 - [ ] Add analytic-number-theory preliminaries where they naturally fit
