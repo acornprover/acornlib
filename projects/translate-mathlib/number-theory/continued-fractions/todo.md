@@ -1,6 +1,7 @@
 # Continued Fractions
 
-- [ ] Extend convergent recurrence projection facts from singleton/pair to arbitrary prefixes
+- [ ] Prove list-induction closure for convergent-state first/second projection predicates
+- [ ] Derive arbitrary-prefix convergent numerator/denominator projection facts from the projection predicates
 - [ ] Prove continuant-state positivity by list induction
 - [ ] Extend denominator positivity and nonzero facts from singleton/pair/triple cases to arbitrary valid coefficient lists
 - [ ] Relate finite continued-fraction values to continuant ratios
