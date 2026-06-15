@@ -1,7 +1,6 @@
 # Continued Fractions
 
 - [ ] Generalize the remaining explicit finite-value facts to arbitrary coefficient lists
-- [ ] Define coefficient-list prefixes/convergent prefixes and lift numerator/denominator positivity and nonzero facts to them
 - [ ] Relate finite continued-fraction values to continuant ratios
 - [ ] Define convergent sequences and prove their adjacent determinant identity
 - [ ] Prove alternating upper/lower bounds for convergents
