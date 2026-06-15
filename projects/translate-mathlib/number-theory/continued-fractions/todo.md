@@ -1,9 +1,7 @@
 # Continued Fractions
 
-- [ ] Prove list-induction closure for convergent-state first/second projection predicates
-- [ ] Derive arbitrary-prefix convergent numerator/denominator projection facts from the projection predicates
-- [ ] Generalize the explicit finite-convergent facts to arbitrary coefficient lists
-- [ ] Lift denominator positivity and nonzero facts from coefficient lists to arbitrary convergent prefixes
+- [ ] Generalize the remaining explicit finite-value facts to arbitrary coefficient lists
+- [ ] Define coefficient-list prefixes/convergent prefixes and lift numerator/denominator positivity and nonzero facts to them
 - [ ] Relate finite continued-fraction values to continuant ratios
 - [ ] Define convergent sequences and prove their adjacent determinant identity
 - [ ] Prove alternating upper/lower bounds for convergents
