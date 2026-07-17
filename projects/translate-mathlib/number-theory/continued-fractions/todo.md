@@ -1,6 +1,5 @@
 # Continued Fractions
 
-- [ ] Relate finite continued-fraction values to continuant ratios
 - [ ] Define convergent sequences and prove their adjacent determinant identity
 - [ ] Prove alternating upper/lower bounds for convergents
 - [ ] Prove the basic best-approximation inequality for convergents
