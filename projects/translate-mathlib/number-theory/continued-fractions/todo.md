@@ -1,6 +1,5 @@
 # Continued Fractions
 
-- [ ] Define convergent sequences and prove their adjacent determinant identity
 - [ ] Prove alternating upper/lower bounds for convergents
 - [ ] Prove the basic best-approximation inequality for convergents
 - [ ] Add the Euclidean algorithm expansion for rational continued fractions
