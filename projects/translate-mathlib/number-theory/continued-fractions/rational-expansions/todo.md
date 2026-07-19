@@ -1,6 +1,5 @@
 # Rational Continued-Fraction Expansions
 
-- [ ] Prove denominator fuel suffices for termination
 - [ ] Relate expansion tails to swapped denominator-remainder states
 - [ ] Prove reconstruction across one quotient-remainder step
 - [ ] Prove exact numerator-denominator reconstruction
