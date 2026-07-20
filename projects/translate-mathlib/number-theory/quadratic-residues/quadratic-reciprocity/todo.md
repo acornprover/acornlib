@@ -5,7 +5,7 @@ successor image of a range or by filtering the nonzero residues, and represent
 the upper-half count either as a filtered-list length or a recursive count.
 Defer this API choice until the theorem scaffolding fixes its consumers.
 
-- [ ] Prove the signed representatives form the positive half-system
+- [ ] Show the chosen signed-representative list is a permutation of the positive half-system
 - [ ] Derive the product congruence underlying Gauss's lemma
 - [ ] Prove Gauss's lemma as a Legendre-symbol sign formula
 - [ ] Express the Gauss count through a floor-sum parity
