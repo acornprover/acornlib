@@ -1,7 +1,10 @@
 # Quadratic Reciprocity For Odd Primes
 
-- [ ] Define the positive half-system and its upper-half multiplication count
-- [ ] Prove multiplication by a unit is injective on nonzero prime residues
+Design note: represent the positive half-system either directly as the
+successor image of a range or by filtering the nonzero residues, and represent
+the upper-half count either as a filtered-list length or a recursive count.
+Defer this API choice until the theorem scaffolding fixes its consumers.
+
 - [ ] Separate multiplied half-system residues into signed lower representatives
 - [ ] Prove the signed representatives form the positive half-system
 - [ ] Derive the product congruence underlying Gauss's lemma
@@ -11,3 +14,4 @@
 - [ ] Relate the two exchanged floor sums modulo two
 - [ ] Prove quadratic reciprocity for distinct odd primes
 - [ ] Package reciprocity in Legendre-symbol and residue-predicate forms
+- [ ] Define the positive half-system and its upper-half multiplication count
