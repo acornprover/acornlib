@@ -1,7 +1,8 @@
 # Odd-Prime Primitive-Root Existence
 
-- [ ] Connect polynomial roots modulo a prime to roots over its residue field
 - [ ] Bound the roots of a nonzero polynomial over a field by its degree
+- [ ] Equip prime residue classes with a field structure and a canonical coefficient homomorphism
+- [ ] Specialize homomorphic polynomial root transport to roots modulo a prime
 - [ ] Show some unit escapes each proper prime-power exponent bound
 - [ ] Obtain a unit carrying each prime-power factor of `p - 1` in its order
 - [ ] Combine the prime-power witnesses into an element of order `p - 1`
