@@ -1,6 +1,6 @@
 # Odd-Prime Primitive-Root Existence
 
-- [ ] Split two positive orders into coprime divisors whose product is their lcm
+- [ ] Use selected prime-factor products to split two orders into coprime lcm factors
 - [ ] Assemble an lcm-order element from the coprime divisor orders
 - [ ] Connect polynomial roots modulo a prime to roots over its residue field
 - [ ] Bound the roots of a nonzero polynomial over a field by its degree
