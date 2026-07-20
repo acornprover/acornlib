@@ -1,7 +1,5 @@
 # Odd-Prime Primitive-Root Existence
 
-- [ ] Show powers below full selected order are pairwise incongruent
-- [ ] Package full order and power coverage as an order-double unit generator
 - [ ] Prove the selected order of a power using the exponent gcd
 - [ ] Prove products of elements with coprime orders have product order
 - [ ] Assemble element orders by least common multiples
