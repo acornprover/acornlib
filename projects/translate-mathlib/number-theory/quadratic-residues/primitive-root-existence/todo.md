@@ -1,6 +1,5 @@
 # Odd-Prime Primitive-Root Existence
 
-- [ ] Bound a unique list of roots by a nonzero polynomial's support bound
 - [ ] Equip prime residue classes with a field structure and a canonical coefficient homomorphism
 - [ ] Specialize homomorphic polynomial root transport to roots modulo a prime
 - [ ] Show some unit escapes each proper prime-power exponent bound
