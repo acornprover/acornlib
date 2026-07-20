@@ -1,6 +1,7 @@
 # Odd-Prime Primitive-Root Existence
 
-- [ ] Bound the roots of a nonzero polynomial over a field by its degree
+- [ ] Show the synthetic quotient of a nonzero rooted polynomial remains nonzero
+- [ ] Bound a unique list of roots by a nonzero polynomial's support bound
 - [ ] Equip prime residue classes with a field structure and a canonical coefficient homomorphism
 - [ ] Specialize homomorphic polynomial root transport to roots modulo a prime
 - [ ] Show some unit escapes each proper prime-power exponent bound
@@ -9,3 +10,5 @@
 - [ ] Prove the resulting full-order element covers every unit modulo `p`
 - [ ] Construct an order-`p - 1` unit generator for every odd prime
 - [ ] Remove the explicit generator hypothesis from Euler's criterion
+- [ ] Choose an option-valued or zero-default polynomial degree convention
+- [ ] Restate the support-bound root theorem in terms of polynomial degree
