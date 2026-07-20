@@ -1,7 +1,5 @@
 # Odd-Prime Primitive-Root Existence
 
-- [x] Prove the selected order of a power using the exponent gcd
-- [ ] Prove products of elements with coprime orders have product order
 - [ ] Assemble element orders by least common multiples
 - [ ] Connect polynomial roots modulo a prime to roots over its residue field
 - [ ] Bound the roots of a nonzero polynomial over a field by its degree
