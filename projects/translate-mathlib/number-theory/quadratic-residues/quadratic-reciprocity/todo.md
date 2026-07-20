@@ -5,7 +5,6 @@ successor image of a range or by filtering the nonzero residues, and represent
 the upper-half count either as a filtered-list length or a recursive count.
 Defer this API choice until the theorem scaffolding fixes its consumers.
 
-- [ ] Separate multiplied half-system residues into signed lower representatives
 - [ ] Prove the signed representatives form the positive half-system
 - [ ] Derive the product congruence underlying Gauss's lemma
 - [ ] Prove Gauss's lemma as a Legendre-symbol sign formula
