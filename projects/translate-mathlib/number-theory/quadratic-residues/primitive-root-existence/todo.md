@@ -1,6 +1,5 @@
 # Odd-Prime Primitive-Root Existence
 
-- [ ] Show the synthetic quotient of a nonzero rooted polynomial remains nonzero
 - [ ] Bound a unique list of roots by a nonzero polynomial's support bound
 - [ ] Equip prime residue classes with a field structure and a canonical coefficient homomorphism
 - [ ] Specialize homomorphic polynomial root transport to roots modulo a prime
