@@ -1,6 +1,5 @@
 # Odd-Prime Primitive-Root Existence
 
-- [ ] Assemble an lcm-order element from the coprime divisor orders
 - [ ] Connect polynomial roots modulo a prime to roots over its residue field
 - [ ] Bound the roots of a nonzero polynomial over a field by its degree
 - [ ] Show some unit escapes each proper prime-power exponent bound
