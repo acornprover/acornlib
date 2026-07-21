@@ -3,7 +3,7 @@
 Goal: cover the finite and enumerative mathematics that Mathlib collects under combinatorics.
 
 - [ ] Finish counting principles and bijective-combinatorics lemmas
-  - [ ] Prove the hockey-stick identity for binomial coefficients
+  - [ ] Prove a finite-list pigeonhole principle for maps into a shorter unique list
 - [ ] Develop more binomial identities and basic generating-function tools
 - [ ] Support inclusion-exclusion and Mobius inversion
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects
