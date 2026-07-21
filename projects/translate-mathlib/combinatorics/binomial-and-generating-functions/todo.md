@@ -1,6 +1,5 @@
 # Binomial Identities And Generating Functions
 
-- [ ] Prove equality of the even- and odd-index binomial row sums
 - [ ] Prove the alternating partial-row identity
 - [ ] Prove the weighted two-variable binomial derivative identity
 - [ ] Package finite coefficient lists for ordinary generating functions
