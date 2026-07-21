@@ -10,9 +10,6 @@ No current blockers.
 
 ## Erdos-Facing Discrete And Elementary Mathematics
 
-- [ ] [Number theory](number-theory/todo.md)
-  Note: prioritize elementary and computational number theory for Erdos targets: divisibility, valuations, binomial coefficients, congruences, prime-factor counts, divisor functions, unit fractions, covering systems, and finite interval problems.
-
 - [ ] [Combinatorics](combinatorics/todo.md)
   Note: prioritize finite combinatorics that unlocks Erdos clusters: counting principles, finite set systems, sumsets/difference sets, Sidon predicates, additive bases, extremal set theory, inclusion-exclusion, and Ramsey basics.
 
@@ -21,6 +18,9 @@ No current blockers.
 
 - [ ] [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
   Note: build finite point-configuration infrastructure for distance problems: Euclidean distance, lines, circles, general position, convex position, isometries, and finite-dimensional coordinate arguments.
+
+- [ ] [Number theory](number-theory/todo.md)
+  Note: the Erdos-facing baseline is complete; remaining branches are deferred until their foundational representations or concrete downstream requirements are chosen.
 
 ## Supporting Analysis, Algebra, And Number Systems
 

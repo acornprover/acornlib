@@ -3,7 +3,7 @@
 Goal: cover the finite and enumerative mathematics that Mathlib collects under combinatorics.
 
 - [ ] Finish counting principles and bijective-combinatorics lemmas
-  - [ ] Vandermonde's identity (definitions, m=0 base case, and inductive step `vandermonde_step` are in place; final assembly via induction on m is open)
+  - [ ] Prove the hockey-stick identity for binomial coefficients
 - [ ] Develop more binomial identities and basic generating-function tools
 - [ ] Support inclusion-exclusion and Mobius inversion
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects
