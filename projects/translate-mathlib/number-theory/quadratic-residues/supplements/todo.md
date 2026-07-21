@@ -1,6 +1,5 @@
 # Quadratic-Residue Supplements
 
-- [ ] Relate half-exponent parity to the prime modulo four
 - [ ] Split the Wilson factorial into paired positive-half factors
 - [ ] Compute the sign contributed by the paired upper half
 - [ ] Derive the half-factorial square congruence from Wilson's theorem
