@@ -1,6 +1,5 @@
 # Binomial Identities And Generating Functions
 
-- [ ] Prove the second falling-factorial binomial moment identity
 - [ ] Prove the alternating binomial row sum over commutative rings
 - [ ] Prove equality of the even- and odd-index binomial row sums
 - [ ] Prove the alternating partial-row identity
