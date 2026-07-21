@@ -1,6 +1,5 @@
 # Quadratic-Residue Supplements
 
-- [ ] Compute the sign contributed by the paired upper half
 - [ ] Derive the half-factorial square congruence from Wilson's theorem
 - [ ] Construct a square root of `-1` for an even half-exponent
 - [ ] Rule out a square root of `-1` for an odd half-exponent
