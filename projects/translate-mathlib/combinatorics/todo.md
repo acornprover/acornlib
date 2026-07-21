@@ -2,7 +2,7 @@
 
 Goal: cover the finite and enumerative mathematics that Mathlib collects under combinatorics.
 
-- [ ] Develop more binomial identities and basic generating-function tools
+- [ ] [Binomial identities and generating functions](binomial-and-generating-functions/todo.md)
 - [ ] Support inclusion-exclusion and Mobius inversion
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects
 - [ ] Develop posets, chains, and antichain theorems
