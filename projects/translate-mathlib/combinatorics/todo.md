@@ -2,8 +2,6 @@
 
 Goal: cover the finite and enumerative mathematics that Mathlib collects under combinatorics.
 
-- [ ] Finish counting principles and bijective-combinatorics lemmas
-  - [ ] Prove that a map between equal-length unique lists is surjective when it is injective on the source and maps into the target
 - [ ] Develop more binomial identities and basic generating-function tools
 - [ ] Support inclusion-exclusion and Mobius inversion
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects
