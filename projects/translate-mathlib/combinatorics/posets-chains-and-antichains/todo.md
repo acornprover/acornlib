@@ -1,7 +1,7 @@
 # Posets, Chains, And Antichains
 
-- [ ] Prove a least element lies below a greatest element in a nonempty finite order
 - [ ] Compare least and greatest elements of finite-set unions with those of each operand
+- [ ] Prove a finite set with equal least and greatest elements is a singleton
 - [ ] Define chains as finite sets of pairwise comparable elements
 - [ ] Define antichains as finite sets of pairwise incomparable elements
 - [ ] Prove subsets of chains are chains
