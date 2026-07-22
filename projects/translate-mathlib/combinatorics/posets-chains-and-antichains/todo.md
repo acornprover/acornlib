@@ -1,7 +1,7 @@
 # Posets, Chains, And Antichains
 
-- [ ] Compare least and greatest elements of finite-set unions with those of each operand
 - [ ] Prove a finite set with equal least and greatest elements is a singleton
+- [ ] Characterize union extrema as the minimum and maximum of operand extrema in linear orders
 - [ ] Define chains as finite sets of pairwise comparable elements
 - [ ] Define antichains as finite sets of pairwise incomparable elements
 - [ ] Prove subsets of chains are chains
