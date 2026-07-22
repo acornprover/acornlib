@@ -1,7 +1,7 @@
 # Posets, Chains, And Antichains
 
-- [ ] Characterize singleton finite sets by coincident least and greatest elements
 - [ ] Extend extrema formulas from binary unions to finite families of finite sets
+- [ ] Relate singleton extrema characterizations to exact cardinality one
 - [ ] Define chains as finite sets of pairwise comparable elements
 - [ ] Define antichains as finite sets of pairwise incomparable elements
 - [ ] Prove subsets of chains are chains
