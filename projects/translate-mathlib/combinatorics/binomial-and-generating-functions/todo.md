@@ -1,6 +1,5 @@
 # Binomial Identities And Generating Functions
 
-- [ ] Prove the weighted two-variable binomial derivative identity
 - [ ] Package finite coefficient lists for ordinary generating functions
 - [ ] Prove the Cauchy-product coefficient formula for finite coefficient lists
 - [ ] Prove the finite geometric-series generating identity
