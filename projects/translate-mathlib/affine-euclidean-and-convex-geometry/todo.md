@@ -2,8 +2,8 @@
 
 Goal: support the geometric language used in linear algebra, optimization, and classical geometry.
 
-- [ ] Add product `AffineSpace` instances componentwise on `Pair[P, Q]`
 - [ ] Add affine maps (structure, identity, constant, extensionality, preservation lemma, composition, preimage and image of subspaces done; still need barycentric coordinates and affine combinations)
+- [ ] Prove that the coordinate projections from a product affine space are affine maps
 - [ ] Develop affine span, independence, and parallelism (span monotonicity, empty/univ
       span lemmas done; still need affine independence, parallelism, and finite-source
       span characterizations)
