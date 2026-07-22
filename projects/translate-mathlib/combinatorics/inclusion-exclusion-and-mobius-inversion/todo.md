@@ -1,12 +1,12 @@
 # Inclusion-Exclusion And Mobius Inversion
 
-- [ ] Prove inclusion-exclusion for a disjoint finite family
-- [ ] Define alternating weights on finite subsets
-- [ ] Prove finite-family inclusion-exclusion by induction
-- [ ] Prove the first Bonferroni upper bound
 - [ ] Prove the first Bonferroni lower bound
 - [ ] Define interval sums on finite posets
 - [ ] Define the Mobius function on a finite poset
 - [ ] Prove the left Mobius inversion identity
 - [ ] Prove the right Mobius inversion identity
 - [ ] Specialize Mobius inversion to the Boolean lattice
+- [ ] Choose alternating-weight representation: signed integer weights or parity-split natural sums
+- [ ] Define alternating weights on finite subsets
+- [ ] Prove alternating weights are determined by subset-cardinality parity
+- [ ] Prove finite-family inclusion-exclusion by induction
