@@ -2,9 +2,7 @@
 
 Goal: support the geometric language used in linear algebra, optimization, and classical geometry.
 
-- [ ] Develop affine span, independence, and parallelism (span monotonicity, empty/univ
-      span lemmas done; still need affine independence, parallelism, and finite-source
-      span characterizations)
+- [ ] [Affine span, independence, and parallelism](affine-span-independence-and-parallelism/todo.md)
 - [ ] Add product affine subspaces and coordinate membership lemmas
 - [ ] Add Euclidean geometry of points, lines, and planes
 - [ ] Support inner product spaces and orthogonal projection geometry
