@@ -1,6 +1,5 @@
 # Inclusion-Exclusion And Mobius Inversion
 
-- [ ] Prove the first Bonferroni lower bound
 - [ ] Define interval sums on finite posets
 - [ ] Define the Mobius function on a finite poset
 - [ ] Prove the left Mobius inversion identity
@@ -10,3 +9,4 @@
 - [ ] Define alternating weights on finite subsets
 - [ ] Prove alternating weights are determined by subset-cardinality parity
 - [ ] Prove finite-family inclusion-exclusion by induction
+- [ ] Generalize Bonferroni bounds to arbitrary truncation levels
