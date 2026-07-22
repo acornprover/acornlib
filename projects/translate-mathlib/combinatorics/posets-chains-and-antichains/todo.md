@@ -1,7 +1,7 @@
 # Posets, Chains, And Antichains
 
-- [ ] Prove nonempty finite linear-order sets have greatest elements
 - [ ] Prove least and greatest elements are unique
+- [ ] Compare least and greatest elements under finite-set inclusion
 - [ ] Define chains as finite sets of pairwise comparable elements
 - [ ] Define antichains as finite sets of pairwise incomparable elements
 - [ ] Prove subsets of chains are chains
