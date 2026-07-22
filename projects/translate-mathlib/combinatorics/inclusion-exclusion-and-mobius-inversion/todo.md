@@ -1,5 +1,6 @@
 # Inclusion-Exclusion And Mobius Inversion
 
+- [ ] Choose interval-sum representation: filtered finite sets or enumerated order intervals
 - [ ] Define interval sums on finite posets
 - [ ] Define the Mobius function on a finite poset
 - [ ] Prove the left Mobius inversion identity
