@@ -2,7 +2,7 @@
 
 Goal: support the geometric language used in linear algebra, optimization, and classical geometry.
 
-- [ ] Bundle componentwise products of affine maps
+- [ ] Prove product affine maps preserve identities and composition
 - [ ] Develop affine span, independence, and parallelism (span monotonicity, empty/univ
       span lemmas done; still need affine independence, parallelism, and finite-source
       span characterizations)
