@@ -1,10 +1,10 @@
 # Posets, Chains, And Antichains
 
-- [ ] Prove distinct least and greatest elements force cardinality at least two
 - [ ] Define chains as finite sets of pairwise comparable elements
 - [ ] Define antichains as finite sets of pairwise incomparable elements
 - [ ] Prove subsets of chains are chains
 - [ ] Prove subsets of antichains are antichains
+- [ ] Prove finite intervals in linear orders are chains
 - [ ] Define maximal chains and maximal antichains
 - [ ] Prove maximal-element existence for nonempty finite posets
 - [ ] Prove minimal-element existence for nonempty finite posets
