@@ -2,7 +2,7 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove commutativity and associativity laws for affine-span intersection sources
+- [ ] Prove idempotence and absorption laws for affine-span intersection sources
 - [ ] Add finite-list source predicates for affine spans
 - [ ] Prove insertion and deletion lemmas for finite affine spans
 - [ ] Characterize the affine span of two points by affine combinations
