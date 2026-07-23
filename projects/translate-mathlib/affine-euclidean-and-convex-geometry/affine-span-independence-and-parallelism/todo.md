@@ -2,8 +2,8 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Characterize affine-span containment by its least-subspace property
 - [ ] Prove affine spans agree for pointwise equivalent source predicates
+- [ ] Characterize equality of affine spans by mutual source containment
 - [ ] Develop affine spans of unions of source predicates
 - [ ] Add finite-list source predicates for affine spans
 - [ ] Prove insertion and deletion lemmas for finite affine spans
