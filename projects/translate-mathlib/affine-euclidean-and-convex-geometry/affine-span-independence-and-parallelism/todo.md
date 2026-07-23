@@ -2,8 +2,8 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove insertion and deletion lemmas for finite affine spans
 - [ ] Prove permutation invariance of finite affine spans
+- [ ] Prove affine-span invariance under duplicate removal
 - [ ] Characterize the affine span of two points by affine combinations
 - [ ] Define affine independence for finite lists of points
 - [ ] Prove basic affine-independence insertion and deletion lemmas
