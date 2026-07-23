@@ -2,9 +2,9 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove affine-span closure is idempotent on arbitrary source predicates
 - [ ] Characterize the predicates fixed by affine-span closure
 - [ ] Develop affine spans of unions of source predicates
+- [ ] Prove replacing either side of a union by its affine-span closure leaves the union's affine span unchanged
 - [ ] Add finite-list source predicates for affine spans
 - [ ] Prove insertion and deletion lemmas for finite affine spans
 - [ ] Characterize the affine span of two points by affine combinations
