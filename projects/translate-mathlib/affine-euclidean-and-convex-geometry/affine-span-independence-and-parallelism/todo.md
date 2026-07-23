@@ -2,8 +2,8 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove replacing either side of a union by its affine-span closure leaves the union's affine span unchanged
 - [ ] Define binary joins of affine subspaces through affine spans of unions
+- [ ] Prove commutativity and associativity laws for affine spans of unions
 - [ ] Prove intersections of affine-span-closed predicates are affine-span-closed
 - [ ] Add finite-list source predicates for affine spans
 - [ ] Prove insertion and deletion lemmas for finite affine spans
