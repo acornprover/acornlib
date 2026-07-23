@@ -2,8 +2,8 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Characterize equality of affine-subspace joins through containment of their summands
 - [ ] Prove finite-list affine-subspace join laws
+- [ ] Characterize finite-list affine-subspace joins as least upper bounds
 - [ ] Prove intersections of affine-span-closed predicates are affine-span-closed
 - [ ] Add finite-list source predicates for affine spans
 - [ ] Prove insertion and deletion lemmas for finite affine spans
