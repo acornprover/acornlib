@@ -2,7 +2,7 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove commutativity and associativity laws for affine spans of unions
+- [ ] Prove commutativity and associativity for affine-subspace joins over a common ambient space
 - [ ] Prove idempotence and absorption laws for affine-subspace joins
 - [ ] Prove intersections of affine-span-closed predicates are affine-span-closed
 - [ ] Add finite-list source predicates for affine spans
