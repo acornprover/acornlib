@@ -2,7 +2,7 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove affine-span invariance under union-source idempotence
+- [ ] Prove affine-span invariance under source absorption laws
 - [ ] Prove finite-list affine-subspace join laws after choosing its empty-list API
 - [ ] Characterize finite-list affine-subspace joins as least upper bounds
 - [ ] Prove affine-span invariance under reordering finite list-block families after choosing a flattening API
