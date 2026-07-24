@@ -2,7 +2,7 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Characterize equality between an intersection-source affine span and a component span
+- [ ] Characterize equality of intersection-source affine spans from mutual source containment
 - [ ] Prove finite-list affine-subspace join laws after choosing its empty-list API
 - [ ] Characterize finite-list affine-subspace joins as least upper bounds
 - [ ] Prove affine-span invariance under reordering finite list-block families after choosing a flattening API
