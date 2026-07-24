@@ -2,8 +2,8 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Characterize when a finite-list span equals a target affine subspace
 - [ ] Characterize when a concatenated-list span equals its right component span
+- [ ] Prove finite spans are unchanged by adjoining points already in the target span
 - [ ] Characterize the affine span of two points by affine combinations
 - [ ] Define affine independence for finite lists of points
 - [ ] Prove basic affine-independence insertion and deletion lemmas
