@@ -2,8 +2,8 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove affine-span invariance when replacing an internal sublist by an equal-span list
 - [ ] Prove affine-span invariance under reordering finite families of list blocks
+- [ ] Prove affine-span congruence for finite families of pairwise equal-span list blocks
 - [ ] Characterize the affine span of two points by affine combinations
 - [ ] Define affine independence for finite lists of points
 - [ ] Prove basic affine-independence insertion and deletion lemmas
