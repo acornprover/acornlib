@@ -2,8 +2,8 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove equality of finite affine spans under mutual list-membership inclusion
 - [ ] Characterize containment of a concatenated-list span by its two parts
+- [ ] Characterize containment of a finite-list span by its generating points
 - [ ] Characterize the affine span of two points by affine combinations
 - [ ] Define affine independence for finite lists of points
 - [ ] Prove basic affine-independence insertion and deletion lemmas
