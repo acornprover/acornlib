@@ -2,7 +2,7 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Prove the common ambient-space law for nonempty finite-list affine-subspace joins
+- [ ] Prove head and tail-member containment in nonempty finite-list affine-subspace joins
 - [ ] Prove finite-list affine-subspace join laws after choosing its empty-list API
 - [ ] Characterize finite-list affine-subspace joins as least upper bounds
 - [ ] Prove affine-span invariance under reordering finite list-block families after choosing a flattening API
