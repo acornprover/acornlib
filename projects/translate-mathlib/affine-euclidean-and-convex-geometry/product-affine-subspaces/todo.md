@@ -2,9 +2,9 @@
 
 Goal: develop coordinatewise affine-subspace constructions over product affine spaces.
 
-- [ ] Characterize nonemptiness of product affine subspaces
 - [ ] Characterize equality of product affine subspaces with inhabited factors
 - [ ] Prove products with empty affine subspaces are empty
+- [ ] Characterize when a product affine subspace is empty
 - [ ] Prove the product of universal affine subspaces is universal
 - [ ] Prove products commute with affine-subspace intersections
 - [ ] Characterize products of singleton affine subspaces
