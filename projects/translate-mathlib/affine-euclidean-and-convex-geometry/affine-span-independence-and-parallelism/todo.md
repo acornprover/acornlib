@@ -2,7 +2,6 @@
 
 Goal: develop finite affine generation, independence, and parallel affine geometry.
 
-- [ ] Characterize nonempty finite-list affine-subspace joins as least upper bounds
 - [ ] Prove finite-list affine-subspace join laws after choosing its empty-list API
 - [ ] Characterize finite-list affine-subspace joins as least upper bounds
 - [ ] Prove affine-span invariance under reordering finite list-block families after choosing a flattening API
