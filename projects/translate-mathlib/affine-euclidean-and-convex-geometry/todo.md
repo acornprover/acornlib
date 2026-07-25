@@ -2,8 +2,7 @@
 
 Goal: support the geometric language used in linear algebra, optimization, and classical geometry.
 
-- [ ] [Affine span, independence, and parallelism](affine-span-independence-and-parallelism/todo.md)
-- [ ] Add product affine subspaces and coordinate membership lemmas
+- [ ] [Product affine subspaces](product-affine-subspaces/todo.md)
 - [ ] Add Euclidean geometry of points, lines, and planes
 - [ ] Support inner product spaces and orthogonal projection geometry
 - [ ] Develop distances, angles, and isometries
@@ -12,3 +11,4 @@ Goal: support the geometric language used in linear algebra, optimization, and c
 - [ ] Add simplices, polytopes, and finite-dimensional convex geometry
 - [ ] Support classical convexity inequalities and lemmas
 - [ ] Extend affine maps with barycentric coordinates and affine combinations
+- [ ] [Affine span, independence, and parallelism](affine-span-independence-and-parallelism/todo.md)

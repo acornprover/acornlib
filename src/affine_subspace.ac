@@ -1,11 +1,14 @@
 from add_comm_group import AddCommGroup
 from affine_space import AffineSpace, affine_zero_vadd, affine_add_vadd,
-    affine_vsub_vadd, affine_vadd_vsub, affine_vsub_self
+    affine_vsub_vadd, affine_vadd_vsub, affine_vsub_self,
+    affine_space_product, affine_space_product_vadd_apply,
+    affine_space_product_vsub_apply
 from list import List, add_assoc, add_contains_left, add_contains_or, fold_right,
     add_contains_right, is_permutation, list_contains_implies_count_geq_one,
     list_not_contains_impl_count_zero, unique_preserves_contains
 from logic import and_assoc, and_comm, and_or_distrib_left, and_self,
     or_and_distrib_left, or_assoc, or_comm, or_self
+from pair import Pair, pair_new_first, pair_new_second
 
 /// True if a subset of an affine space is closed under the operation
 /// `(p, q, r) |-> vadd(vsub(p, q), r)`, the affine combination
@@ -28,6 +31,21 @@ structure AffineSubspace[V: AddCommGroup, P] {
     contains: P -> Bool
 } constraint {
     affine_subspace_constraint(space, contains)
+}
+
+/// Membership in an affine subspace constructed from a specified predicate.
+theorem affine_subspace_new_contains_apply[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    contains: P -> Bool,
+    s: AffineSubspace[V, P],
+    p: P
+) {
+    AffineSubspace[V, P].new(a, contains) = Option.some(s) implies
+        s.contains(p) = contains(p)
+} by {
+    if AffineSubspace[V, P].new(a, contains) = Option.some(s) {
+        s.contains(p) = contains(p)
+    }
 }
 
 /// Affine subspace extensionality.
@@ -117,6 +135,136 @@ theorem affine_subspace_univ_contains_all[V: AddCommGroup, P](
     affine_subspace_univ(a).contains(p)
 } by {
     affine_subspace_univ(a).contains = affine_subspace_univ_contains[P]
+}
+
+/// Coordinatewise membership in the product of two affine subspaces.
+define affine_subspace_product_contains[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    p: Pair[P, Q]
+) -> Bool {
+    a.contains(p.first) and b.contains(p.second)
+}
+
+/// Coordinatewise product membership is closed under affine combinations in
+/// the product affine space.
+theorem affine_subspace_product_constraint[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q]
+) {
+    affine_subspace_constraint(
+        affine_space_product(a.space, b.space),
+        affine_subspace_product_contains(a, b))
+} by {
+    let product_space = affine_space_product(a.space, b.space)
+    affine_subspace_constraint(
+        product_space, affine_subspace_product_contains(a, b)) =
+        forall(p: Pair[P, Q], q: Pair[P, Q], r: Pair[P, Q]) {
+            affine_subspace_product_contains(a, b, p)
+            and affine_subspace_product_contains(a, b, q)
+            and affine_subspace_product_contains(a, b, r) implies
+                affine_subspace_product_contains(
+                    a, b,
+                    product_space.vadd(product_space.vsub(p, q), r))
+        }
+    forall(p: Pair[P, Q], q: Pair[P, Q], r: Pair[P, Q]) {
+        if affine_subspace_product_contains(a, b, p)
+            and affine_subspace_product_contains(a, b, q)
+            and affine_subspace_product_contains(a, b, r) {
+            affine_subspace_product_contains(a, b, p) =
+                (a.contains(p.first) and b.contains(p.second))
+            affine_subspace_product_contains(a, b, q) =
+                (a.contains(q.first) and b.contains(q.second))
+            affine_subspace_product_contains(a, b, r) =
+                (a.contains(r.first) and b.contains(r.second))
+
+            affine_subspace_closed(a, p.first, q.first, r.first)
+            affine_subspace_closed(b, p.second, q.second, r.second)
+
+            affine_space_product_vsub_apply(a.space, b.space, p, q)
+            let difference = product_space.vsub(p, q)
+            difference = Pair.new(
+                a.space.vsub(p.first, q.first),
+                b.space.vsub(p.second, q.second))
+            pair_new_first(
+                a.space.vsub(p.first, q.first),
+                b.space.vsub(p.second, q.second))
+            pair_new_second(
+                a.space.vsub(p.first, q.first),
+                b.space.vsub(p.second, q.second))
+            difference.first = a.space.vsub(p.first, q.first)
+            difference.second = b.space.vsub(p.second, q.second)
+
+            affine_space_product_vadd_apply(
+                a.space, b.space, difference, r)
+            let translated = product_space.vadd(difference, r)
+            translated = Pair.new(
+                a.space.vadd(difference.first, r.first),
+                b.space.vadd(difference.second, r.second))
+            pair_new_first(
+                a.space.vadd(difference.first, r.first),
+                b.space.vadd(difference.second, r.second))
+            pair_new_second(
+                a.space.vadd(difference.first, r.first),
+                b.space.vadd(difference.second, r.second))
+            translated.first =
+                a.space.vadd(a.space.vsub(p.first, q.first), r.first)
+            translated.second =
+                b.space.vadd(b.space.vsub(p.second, q.second), r.second)
+            a.contains(translated.first)
+            b.contains(translated.second)
+            affine_subspace_product_contains(a, b, translated)
+            affine_subspace_product_contains(
+                a, b,
+                product_space.vadd(product_space.vsub(p, q), r))
+        }
+    }
+    affine_subspace_constraint(
+        product_space, affine_subspace_product_contains(a, b))
+}
+
+/// The product of two affine subspaces, with membership defined
+/// coordinatewise.
+let affine_subspace_product[V: AddCommGroup, W: AddCommGroup, P, Q](a: AffineSubspace[V, P], b: AffineSubspace[W, Q]) -> result: AffineSubspace[Pair[V, W], Pair[P, Q]] satisfy {
+    AffineSubspace[Pair[V, W], Pair[P, Q]].new(
+        affine_space_product(a.space, b.space),
+        affine_subspace_product_contains(a, b)) = Option.some(result)
+} by {
+    affine_subspace_product_constraint(a, b)
+}
+
+/// The ambient affine space of a product affine subspace is the product of
+/// the two ambient affine spaces.
+theorem affine_subspace_product_space[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q]
+) {
+    affine_subspace_product(a, b).space =
+        affine_space_product(a.space, b.space)
+}
+
+/// Membership in a product affine subspace is membership in both coordinates.
+theorem affine_subspace_product_contains_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    p: Pair[P, Q]
+) {
+    affine_subspace_product(a, b).contains(p) =
+        (a.contains(p.first) and b.contains(p.second))
+} by {
+    AffineSubspace[Pair[V, W], Pair[P, Q]].new(
+        affine_space_product(a.space, b.space),
+        affine_subspace_product_contains(a, b)) =
+        Option.some(affine_subspace_product(a, b))
+    affine_subspace_new_contains_apply(
+        affine_space_product(a.space, b.space),
+        affine_subspace_product_contains(a, b),
+        affine_subspace_product(a, b),
+        p)
+    affine_subspace_product(a, b).contains(p) =
+        affine_subspace_product_contains(a, b, p)
+    affine_subspace_product_contains(a, b, p) =
+        (a.contains(p.first) and b.contains(p.second))
 }
 
 /// The common membership predicate of two affine subspaces.
