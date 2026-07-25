@@ -2,7 +2,6 @@
 
 Goal: develop coordinatewise affine-subspace constructions over product affine spaces.
 
-- [ ] Prove products with empty affine subspaces are empty
 - [ ] Characterize when a product affine subspace is empty
 - [ ] Prove the product of universal affine subspaces is universal
 - [ ] Prove products commute with affine-subspace intersections
@@ -12,3 +11,4 @@ Goal: develop coordinatewise affine-subspace constructions over product affine s
 - [ ] Characterize coordinate-projection preimages as products with universal subspaces
 - [ ] Prove affine-span containment for products of source predicates
 - [ ] Prove left and right cancellation for products with an inhabited fixed factor
+- [ ] Prove products commute with affine-subspace joins for inhabited fixed factors
