@@ -2,7 +2,6 @@
 
 Goal: develop coordinatewise affine-subspace constructions over product affine spaces.
 
-- [ ] Prove products commute with affine-subspace intersections
 - [ ] Characterize products of singleton affine subspaces
 - [ ] Prove compatibility with swapping product coordinates
 - [ ] Prove compatibility with reassociating nested product coordinates
@@ -12,3 +11,4 @@ Goal: develop coordinatewise affine-subspace constructions over product affine s
 - [ ] Prove products commute with affine-subspace joins for inhabited fixed factors
 - [ ] Reflect strict containment from one coordinate with an inhabited other factor
 - [ ] Characterize when a product affine subspace is universal
+- [ ] Prove products commute with finite affine-subspace intersections
