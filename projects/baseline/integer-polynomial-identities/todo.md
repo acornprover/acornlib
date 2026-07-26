@@ -12,5 +12,4 @@ way to conclude that a family is infinite.
 - [ ] Prove a nonconstant integer polynomial in one variable has infinite image.
 - [ ] Prove a nonconstant integer polynomial takes each value finitely often.
 - [ ] Add the parametric-solution pattern: a tuple of polynomials satisfying an equation identically gives infinitely many solutions.
-- [ ] Add Pell equations and related Diophantine techniques.
 - [ ] Support integer-root and rational-root tests for small-degree cases.

@@ -1,8 +1,5 @@
 # Continued Fractions
 
-- [ ] Prove alternating upper/lower bounds for convergents
-- [ ] Prove the basic best-approximation inequality for convergents
-- [ ] Add the Euclidean algorithm expansion for rational continued fractions
-- [ ] Prove termination and reconstruction for rational continued fractions
-- [ ] Add eventually periodic continued fractions for quadratic irrational patterns
+- [ ] Choose an infinite continued-fraction representation (extend the finite type
+      or add a separate prefix-period type), then add quadratic irrational patterns
 - [ ] Connect continued fractions to Pell-equation infrastructure when available

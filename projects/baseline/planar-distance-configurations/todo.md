@@ -11,6 +11,4 @@ counting distinct distances and the general-position vocabulary.
 - [ ] Prove concyclicity is invariant under permuting the four points.
 - [ ] Define the no-four-concyclic condition on a finite set, and prove it passes to subsets.
 - [ ] Define collinearity-based general position, and relate it to the orientation API.
-- [ ] Add Euclidean geometry of points, lines, and planes.
-- [ ] Develop distances, angles, and isometries.
 - [ ] Prove distance counts are invariant under isometries.

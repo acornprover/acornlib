@@ -1,6 +1,6 @@
 ---
 name: work-on-project
-description: Keep named project roadmaps under `projects/PROJECT/` updated as structured execution queues, execute roadmap work, and run projects continuously through hourly PR-aware scheduled cycles. Use when the user asks to plan or update a project roadmap, add roadmap items, maintain long-term mathematical project plans, explicitly asks to "work on a project", or asks to work on a project "in continuous mode". The default current project is `translate-mathlib`.
+description: Keep named project roadmaps under `projects/PROJECT/` updated as structured execution queues, execute roadmap work, and run projects continuously through recurring PR-aware cycles. Use when the user asks to plan or update a project roadmap, add roadmap items, maintain long-term mathematical project plans, explicitly asks to "work on a project", or asks to work on a project "in continuous mode". The default current project is `translate-mathlib`.
 ---
 
 # Work On A Project
@@ -11,7 +11,7 @@ This skill has three modes:
 
 - Project planning mode: update or reorganize one project's roadmap tree.
 - Project execution mode: when the user asks to "work on a project", use that project's roadmap tree to choose the next implementation task and then do the code work.
-- Continuous mode: execute project work autonomously across recurring hourly runs while keeping at most one submitted pull request outstanding.
+- Continuous mode: execute project work autonomously across recurring runs while keeping at most one submitted pull request outstanding.
 
 ## Project Selection
 
@@ -136,32 +136,44 @@ Default scope:
 
 Enter continuous mode when the user says to work on a project "in continuous mode" or otherwise explicitly requests recurring autonomous project work.
 
-Continuous mode is execution mode plus a recurring PR lifecycle. It requires a scheduling capability that can return to the current chat. A persistent goal, a sleeping shell process, repeated polling, or an ordinary reminder is not a substitute for a scheduled task.
+Continuous mode is execution mode plus a recurring PR lifecycle. It requires a real recurring trigger that comes back to this session. Keeping one turn alive, sleeping in a shell, or promising to check later is not a substitute.
 
 ### Initialize Continuous Mode
 
-1. Resolve the project and repository normally.
-2. Check for an existing scheduled task for this chat and project. Update it rather than creating a duplicate.
-3. If no task exists, create one recurring scheduled task that:
-   - returns to the current chat with its existing context;
-   - runs once per hour;
-   - uses the same local project when local repository access is required;
-   - invokes this skill and identifies itself as the recurring run, so it does not create another schedule;
-   - remains active while a pull request merely awaits CI, review, or merge.
-4. Confirm from the scheduling tool result that the task was actually created or updated. Do not claim continuous operation from prompt text or intent alone.
-5. Execute one continuous cycle immediately unless another cycle is already operating on the same checkout.
+Two kinds of recurring trigger can drive this. Pick one; do not run both against the same checkout.
 
-Use a durable scheduled-task prompt equivalent to:
+**Scheduled task (default).** A recurring task that fires on its own schedule and survives closing the session. Each run starts with fresh context, which is correct here: every cycle re-derives state from the repository and GitHub anyway. It needs local repository access, so use a local scheduled task rather than a cloud-only routine.
+
+1. Resolve the project and repository normally.
+2. List existing scheduled tasks. If one already covers this project, update it rather than creating a duplicate.
+3. Create one hourly task whose prompt is durable on its own, because the next run will not have this conversation:
 
 ```text
-Use $work-on-project to continue <project> in continuous mode. This is the
-recurring hourly run for the existing chat; do not create another schedule.
-Execute exactly one continuous cycle from current repository and GitHub state.
-Keep at most one submitted pull request outstanding. If it is merely waiting,
-end this run without polling; the next scheduled run will check again.
+Use the work-on-project skill to continue <project> in continuous mode in
+<absolute repo path>. This is the recurring hourly run; do not create another
+schedule. Execute exactly one continuous cycle from current repository and
+GitHub state. Keep at most one submitted pull request outstanding. If it is
+merely waiting on CI, review, or merge, end this run without polling; the next
+run will check again.
 ```
 
-If the current surface exposes no scheduling capability, perform at most one ordinary execution cycle and state plainly that continuous scheduling was not established. Do not emulate an hourly schedule by keeping the turn alive, starting an unobserved background sleep, or creating a persistent goal. The user must start continuous mode from a scheduling-capable surface.
+4. Confirm from the tool result that the task was actually created or updated. Do not claim continuous operation from intent alone.
+5. Execute one continuous cycle immediately unless another cycle is already operating on the same checkout.
+6. Tell the user how to stop: ask to cancel the scheduled task, or delete it from the scheduled-task list.
+
+**In-session loop.** Use when the user wants to watch it work in this conversation. A loop re-fires a prompt into the current session on an interval, keeping context between runs, but it stops when the session closes. In Claude Code this is `/loop`, which is user-invocable: hand the user the exact line to paste, and do not claim it is running until loop-driven turns arrive.
+
+```text
+/loop 60m Use the work-on-project skill to continue <project> in continuous mode.
+This is the recurring hourly run; do not start another loop or schedule. Execute
+exactly one continuous cycle from current repository and GitHub state.
+```
+
+State the interval explicitly. `/loop` defaults to 10 minutes, which is too short for PR-sized Acorn work. To resume after closing the session, run `claude --resume <session-id>` and re-issue the command.
+
+On every later run under either mechanism, recognize the recurring prompt, treat it as one cycle, and do not re-initialize.
+
+If neither mechanism is available on the current surface, perform at most one ordinary execution cycle and say plainly that continuous scheduling was not established. A cron or `launchd` job that starts one headless run per cycle, or a cron-scheduled GitHub Actions workflow, are acceptable substitutes the user can set up. Never emulate a schedule by keeping a turn alive or sleeping in a background shell.
 
 ### Execute One Continuous Cycle
 
@@ -173,10 +185,10 @@ Treat the repository, project roadmaps, and pull-request state as authoritative 
    - fix actionable failures or feedback autonomously, verify, commit, and push;
    - bring the branch up to date with its target branch before reporting it ready;
    - submit no other pull request while it remains open;
-   - if it is only awaiting an external event, end the cycle immediately without polling or pausing the schedule.
+   - if it is only awaiting an external event, end the cycle immediately without polling or stopping the loop.
 3. If the previous pull request merged or closed, synchronize the target branch and begin the next work from the updated base.
 4. If no project pull request is outstanding, follow execution mode through one coherent verified PR-sized roadmap item. Commit, push, and open one ready pull request when repository policy permits it.
-5. After submitting or updating a pull request, verify its remote configuration and mergeability. Then end the cycle; let the hourly schedule provide the next check.
+5. After submitting or updating a pull request, verify its remote configuration and mergeability. Then end the cycle; let the next loop run provide the next check.
 
 Never submit more than one pull request in a cycle. Never submit a new pull request while an earlier project pull request is unresolved. Local exploratory work may continue only when it cannot contaminate the outstanding branch or create a dependent PR stack.
 
@@ -185,9 +197,10 @@ Never submit more than one pull request in a cycle. Never submit a new pull requ
 - Make routine implementation, proof, naming, branch, commit, and pull-request decisions without asking for confirmation.
 - When a definition or design question would normally require discussion, record the options in the roadmap, defer that item, and continue with the next unrelated project item. Do not classify it as an external blocker.
 - Skip a branch affected by a recorded external blocker and continue elsewhere in the project.
-- Keep the hourly task active while GitHub state is unchanged; unchanged state is expected, not a blocked goal.
-- Stop or pause the scheduled task only when the user requests it, the project roadmap is complete, or every remaining branch requires unavailable authorization or an external dependency. Report the concrete reason when stopping.
-- If authentication, permissions, local-project availability, or scheduling fails, report the exact failure. Never claim the continuous loop is active without tool evidence.
+- Keep the loop running while GitHub state is unchanged; unchanged state is expected, not a blocked goal.
+- Keep each run short when there is nothing to do. Ending a run early is correct; it does not end the loop.
+- Stop looping only when the user requests it, the project roadmap is complete, or every remaining branch requires unavailable authorization or an external dependency. Report the concrete reason when stopping.
+- If authentication, permissions, repository availability, or the loop setup fails, report the exact failure. Never claim the continuous loop is active without evidence that loop-driven turns are arriving.
 
 ## Design Questions
 
