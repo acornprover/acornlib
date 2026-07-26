@@ -2,8 +2,8 @@
 
 Goal: add the standard discrete graph library used in combinatorics, linear algebra, and algorithms.
 
-Degree, edges, and domination moved to [baseline/graph-theory-core](../baseline/graph-theory-core/todo.md),
-where two verify-ai-claims targets claim them. What stays here is the part no target needs yet.
+Degree, edges, and domination moved to [baseline/graph-theory-core](../../baseline/graph-theory-core/todo.md).
+What stays here is the rest of the standard graph library.
 
 - [ ] Add cycles, girth, bridges, and the bridgeless condition
 - [ ] Develop trees, forests, and spanning-tree theory

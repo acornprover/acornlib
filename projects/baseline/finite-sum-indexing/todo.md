@@ -1,7 +1,5 @@
 # Finite Sum Indexing
 
-Claimant: [Fubini-number sum identity](../../../verify-ai-claims/fubini-number-sum/todo.md).
-
 `src/finite_set/sum.ac` and `src/real/rectangular_sum.ac` cover sums over finite sets. Identities
 indexed by a binary range need range splitting and digit-indexed summands.
 

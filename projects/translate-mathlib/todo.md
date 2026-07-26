@@ -4,14 +4,13 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 The sections below are listed in priority order: work top to bottom.
 
+The [baseline](../baseline/todo.md) project comes before all of it. That project goes deep in the few
+areas that carry the most weight for checking real proofs, and where the two overlap it holds the
+item; this roadmap covers the rest.
+
 ## Blockers
 
 No current blockers.
-
-## Baseline
-
-- [ ] [Baseline](baseline/todo.md)
-  Note: the subset of this roadmap that a [verify-ai-claims](../verify-ai-claims/todo.md) target actually names. Every item traces to a specific claim we are trying to machine-check, so this branch comes before everything below. Items move here when a target claims them and move back out when no target does.
 
 ## Erdos-Facing Discrete And Elementary Mathematics
 

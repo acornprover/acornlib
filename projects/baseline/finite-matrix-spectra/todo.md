@@ -1,7 +1,5 @@
 # Finite Matrix Spectra
 
-Claimant: [Ran-Teng Conjecture 20](../../../verify-ai-claims/ran-teng-spectral-region/todo.md).
-
 `src/fin_matrix.ac` and `src/fin_matrix_det.ac` supply finite matrices and determinants, and the
 complex library is in place. The gap is the characteristic polynomial and everything downstream of
 it, which is the smallest new area any target here needs.

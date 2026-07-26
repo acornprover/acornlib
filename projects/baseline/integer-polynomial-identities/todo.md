@@ -1,7 +1,5 @@
 # Integer Polynomial Identities
 
-Claimant: [parametric Diophantine families](../../../verify-ai-claims/diophantine-parametric-families/todo.md).
-
 `src/polynomial/` has `base.ac`, `eval.ac`, `eval_mul.ac`, `eval_hom.ac`, and `global_factor.ac`, all
 single-variable. Checking a claimed parametric solution family needs multivariate evaluation and a
 way to conclude that a family is infinite.

@@ -1,7 +1,5 @@
 # Reduced Residue Sums
 
-Claimant: [generalized totient divisibility](../../../verify-ai-claims/generalized-totient-divisibility/todo.md).
-
 `src/number_theory/totient.ac` has `count_coprime_to`, `nat_totient`, and the inclusion-exclusion
 machinery; `wilson.ac` and `multiplicative_order.ac` use a `coprime_residues` list. What is missing
 is summing an arbitrary function over those residues.

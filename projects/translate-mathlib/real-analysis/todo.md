@@ -3,8 +3,7 @@
 Goal: extend the current real library into the standard theorem toolkit used across undergraduate and graduate analysis.
 
 Limsup/liminf and asymptotic notation moved to
-[baseline/asymptotic-density](../baseline/asymptotic-density/todo.md), which verify-ai-claims targets
-now claim.
+[baseline/asymptotic-density](../../baseline/asymptotic-density/todo.md).
 
 - [ ] Add continuity theorems on intervals and subsets
 - [ ] Develop one-variable differentiation
