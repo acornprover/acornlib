@@ -4,6 +4,10 @@ Goal: over time, give Acornlib a reasonable analogue of each major area of mathe
 
 The sections below are listed in priority order: work top to bottom.
 
+The [baseline](../baseline/todo.md) project comes before all of it. That project goes deep in the few
+areas that carry the most weight for checking real proofs, and where the two overlap it holds the
+item; this roadmap covers the rest.
+
 ## Blockers
 
 No current blockers.
