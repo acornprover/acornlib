@@ -31,3 +31,46 @@ and analytic preliminaries to [baseline/asymptotic-density](../baseline/asymptot
 - [ ] [Add continued fractions and their approximation theory](continued-fractions/todo.md)
 - [ ] [Develop quadratic residues and quadratic reciprocity](quadratic-residues/todo.md)
 - [ ] Build infrastructure for Bernoulli numbers and classical arithmetic sequences
+
+Returned from the baseline when their verify-ai-claims targets were dropped for failing the
+admission test. Kept because the mathematics is still worth having, but nothing claims it now.
+
+### Residue class systems
+
+- [ ] Define pairwise disjointness of a residue-class system.
+- [ ] Prove `a mod m` and `b mod n` are disjoint iff `gcd(m, n)` does not divide `a - b`.
+- [ ] Prove disjointness is preserved under dropping a class.
+- [ ] Define the distinct-moduli condition on a system.
+- [ ] Define the all-odd and all-greater-than-one conditions on the moduli.
+- [ ] Define the density of a residue-class system as a sum of reciprocals of moduli.
+- [ ] Prove a covering system has density at least one.
+- [ ] Prove a disjoint system has density at most one.
+- [ ] Prove the density of a system bounded by `N` is attained by an explicit construction.
+- [ ] Add the least common modulus of a system and the periodicity it induces.
+- [ ] State the Erdos-Selfridge odd covering question without axioms, for `hard_problems/`.
+
+### Binomial coefficients and falling products
+
+- [ ] Prove the prime factors of a falling product are the union of those of its factors.
+- [ ] Relate the `p`-adic valuation of `binom(2n, n)` to carries, completing the Kummer bridge.
+- [ ] Prove `binom(2n, n)` is divisible by every prime in the interval `(n, 2n]`.
+- [ ] Add a least-witness API for the smallest natural failing a decidable predicate.
+- [ ] Prove the least non-divisor of any natural is a prime power.
+- [ ] Relate falling-product divisibility to central-binomial divisibility.
+- [ ] Strengthen finite interval sums and products, including partial sums over residue classes.
+- [ ] Add smooth-number definitions and closure facts for divisors, products, and cofactors.
+- [ ] Prove Bertrand's postulate, or the existence of a prime in `(k, 2k)`.
+- [ ] Add valuation sums over residue classes, the tool shared by these two targets.
+
+### Multiplicative predicates
+
+- [ ] Add a perfect-square predicate on the naturals.
+- [ ] Prove a product of coprime squares is a square, and the converse.
+- [ ] Define the squarefree part and the square part of a natural.
+- [ ] Prove every natural factors uniquely as a square times a squarefree number.
+- [ ] Prove a product is a square iff the squarefree parts multiply to a square.
+- [ ] Add a squarefree predicate and relate it to the valuation being at most one.
+- [ ] Define the set of prime factors of a natural lying in a given interval.
+- [ ] Prove that predicate is multiplicative over coprime factors.
+- [ ] Define smooth and rough numbers relative to a bound.
+- [ ] Add the greatest prime factor function and its basic properties.

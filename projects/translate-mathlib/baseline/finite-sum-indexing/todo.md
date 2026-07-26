@@ -1,7 +1,6 @@
 # Finite Sum Indexing
 
-Claimants: [Fubini-number sum identity](../../../verify-ai-claims/fubini-number-sum/todo.md),
-[square-product quadruples](../../../verify-ai-claims/square-product-quadruples/todo.md).
+Claimant: [Fubini-number sum identity](../../../verify-ai-claims/fubini-number-sum/todo.md).
 
 `src/finite_set/sum.ac` and `src/real/rectangular_sum.ac` cover sums over finite sets. Identities
 indexed by a binary range need range splitting and digit-indexed summands.
@@ -17,4 +16,3 @@ indexed by a binary range need range splitting and digit-indexed summands.
 - [ ] Support inclusion-exclusion and Mobius inversion.
 - [ ] Add partitions, compositions, and Ferrers-diagram style objects.
 - [ ] Add ordered set partitions and the surjection count defining the Fubini numbers.
-- [ ] Add maximum size over the qualifying subsets of a finite interval.

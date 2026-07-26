@@ -1,85 +1,80 @@
 # Verify AI Claims
 
-Goal: pick published AI-assisted mathematical claims that nobody has machine-checked, state them in Acorn, and check them. Each target names the general mathematics it needs; that demand is what drives
-[the translate-mathlib baseline](../translate-mathlib/baseline/todo.md).
+Goal: take a published AI-assisted proof that nobody has machine-checked, and check the whole thing.
+Either it verifies, which is a real contribution, or it does not, and we have found an error. Nothing
+in between counts.
 
-Note the axis: this project ranks *existing claims* by how much a machine check would be worth, not open problems by how attackable they are.
+Each target names the general mathematics it needs; that demand is what drives
+[the translate-mathlib baseline](../translate-mathlib/baseline/todo.md).
 
 ## Blockers
 
 No current blockers.
 
+## Admission test
+
+A claim belongs here only if all four hold. Three of the four are checks on the *source*, not on us,
+and they are the ones that are easy to skip.
+
+1. **A complete proof document exists in public.** A preprint, a solution note, or a proof note with
+   certificates. A problem-page record, a forum thread, or a "site confirmed" entry is not a proof;
+   there is nothing to check. Read the publication description before admitting a claim.
+2. **Nobody has machine-checked it.** No Lean or other proof-assistant artifact.
+3. **Human verification is weak.** Author-checked, not externally refereed, or review pending. This
+   is what makes an error plausible, and finding one is half the point.
+4. **The whole proof is plausibly formalizable in Acorn**, allowing for baseline work first. Not the
+   statement — the proof.
+
+Two failure modes to refuse explicitly, because the first pass of this project fell into both:
+
+- **Do not admit a target in order to state it.** If the plan ends in "state it and put it in
+  `hard_problems/`", the claim does not belong here. `hard_problems/` is for goals we tried and could
+  not prove, not a parking space for work we never intended to finish.
+- **Do not admit half a claim.** Proving the easy direction of a two-directional claim verifies
+  nothing. If only half is reachable, the target is not ready.
+
+An open problem whose *resolution* is claimed is admissible; an open problem is not.
+
 ## Survey
 
-Source: `https://aimath.robertj1.com/`, read 26 July 2026. 239 claims.
+Source: `https://aimath.robertj1.com/`, read 26 July 2026. 239 claims. 138 record some Lean checking,
+101 do not, and roughly 94 of those 101 link to some artifact. But the artifact is often a problem
+record rather than a proof, which is what test 1 exists to catch.
 
-- By status: 121 resolved, 60 formalized, 44 partial, 11 variant, 3 retracted.
-- By field: number theory 85, combinatorics 67, geometry/topology 33, analysis 25, algorithms 11, probability 10, algebra 7, theoretical CS 1.
-- 138 record some Lean checking; **101 do not**. The 101 are this project's pool.
-
-Ranking combines three factors: how open the truth of the claim still is, how plausibly Acorn can state and check it today, and how much the result matters.
-
-One slice of the pool is excluded outright: algebraic geometry, knot theory, moduli spaces, PDE,
-stochastic analysis, and profinite Galois claims are far outside current `src/` reach.
-
-Graph-theoretic claims are roughly 20 of the 101, and they are *deferred, not excluded*. `src/` has
-about 4,400 lines of graph theory already — `SimpleGraph[V]`, cliques, independent sets, induced
-subgraphs, homomorphisms, embeddings, isomorphisms, walks, paths, reachability, and components. What
-blocks these claims is a short list of missing invariants, headed by vertex degree. Three of them sit
-at the end of the queue below precisely to drive
-[baseline/graph-theory-core](../translate-mathlib/baseline/graph-theory-core/todo.md).
+Excluded outright: algebraic geometry, knot theory, moduli spaces, PDE, stochastic analysis, and
+profinite Galois claims are far outside current `src/` reach.
 
 ## Queue
 
-Ordered by value. Work top to bottom.
+Ordered by value: how likely we are to either complete a real verification or find an error.
 
 - [ ] [Parametric families for two Diophantine equations](diophantine-parametric-families/todo.md)
-  Note: reduces to a polynomial identity over the integers; the fastest end-to-end check available, chosen to open the pipeline.
-
-- [ ] [Divisibility set for a generalized Euler totient](generalized-totient-divisibility/todo.md)
-  Note: elementary and finite-flavoured, and `src/number_theory/totient.ac` already carries most of the API.
+  Six-page solution note; the proof reduces to a polynomial identity. Complete verification is realistic now.
 
 - [ ] [Kurkov's Fubini-number sum identity](fubini-number-sum/todo.md)
-  Note: a finite-sum identity with no asymptotics; not externally refereed.
+  Proof note plus checker, not externally refereed. A finite identity, so the whole proof is in reach.
 
-- [ ] [Disjoint residue classes, Erdos #202](disjoint-residue-classes/todo.md)
-  Note: `src/number_theory/covering_system.ac` already models residue-class systems.
+- [ ] [Divisibility set for a generalized Euler totient](generalized-totient-divisibility/todo.md)
+  Complete arXiv proof, author-checked only. Both directions or nothing.
 
-- [ ] [Odd covering systems, Erdos #7](odd-covering-systems/todo.md)
-  Note: a retracted formalization that left sieve steps as axioms; the deliverable is a faithful statement and an audit, not a proof.
-
-- [ ] [Least non-divisor of a central binomial coefficient, Erdos #731](binomial-least-nondivisor/todo.md)
-
-- [ ] [Blocks avoiding middle-sized prime factors, Erdos #451](middle-prime-factor-blocks/todo.md)
-  Note: absorbs the falling-product work formerly tracked as the `erdos396` project.
-
-- [ ] [Quadruples with square product, Erdos #888](square-product-quadruples/todo.md)
-
-- [ ] [Primitive sets and reciprocal sums, Erdos #1196](primitive-set-reciprocal-sum/todo.md)
+- [ ] [Ran-Teng Conjecture 20](ran-teng-spectral-region/todo.md)
+  Detailed preprint, no formal artifact located. A finite matrix family, and `src/fin_matrix.ac` exists.
 
 - [ ] [Binary digits of the Erdos-Borwein constant](erdos-borwein-binary-digits/todo.md)
+  Complete arXiv proof, author-checked only. Needs real-number digit expansions first.
 
-- [ ] [Totient preimages and least primes, Erdos #456](totient-preimage-least-prime/todo.md)
-
-- [ ] [Distinct distances with no four concyclic, Erdos #654](distinct-distances-no-four-concyclic/todo.md)
-
-Deferred: the graph-theoretic targets below are blocked on
-[baseline/graph-theory-core](../translate-mathlib/baseline/graph-theory-core/todo.md). They are kept
-in the queue because they are what makes that baseline branch demand-driven rather than speculative,
-and they are ordered by how much library each one needs.
-
-- [ ] [Clique transversal number, Erdos #610](clique-transversal-number/todo.md)
-  Note: nearest to reach; `src/simple_graph.ac` already has cliques and `simple_graph_clique_transport.ac` exists.
-
-- [ ] [Cycle double cover conjecture](cycle-double-cover/todo.md)
-  Note: needs cycles and bridges but no numeric invariants, and it is the most important open problem in the pool.
+- [ ] [Koch-Narayan Conjecture 1](koch-narayan-edge-bound/todo.md)
+  Certificates and frozen source, not externally refereed. Blocked on graph invariants.
 
 - [ ] [Zero forcing and domination, TxGraffiti-Davila 9](zero-forcing-domination/todo.md)
-  Note: furthest out; needs two invariants that Mathlib does not have either, so this is original work.
+  Certificates and frozen source, not externally refereed. Blocked on the most graph baseline of any target.
 
 ## Conventions
 
-- `src/` gets general mathematics only. No predicate, theorem name, or example may be specific to a claim being checked. These files are where the motivation lives.
-- When a statement is writable but the proof is out of reach, put the goal in `hard_problems/` and say so in the target's todo.
-- Record the outcome honestly in the target's todo: checked, refuted, or statement not faithfully expressible.
-- A claim that cannot be stated without inventing mathematics the source left implicit is itself a finding. Record what was ambiguous.
+- `src/` gets general mathematics only. No predicate, theorem name, or example may be specific to a
+  claim being checked. These files are where the motivation lives.
+- Record the outcome honestly: verified, refuted, or abandoned with the reason. An abandoned target
+  should be deleted from this queue, not left as a stub.
+- If the published proof has a gap, that is the result. Write down exactly which step fails.
+- A claim that cannot be stated without inventing mathematics the source left implicit is also a
+  finding, and it usually means the source was less complete than it appeared.

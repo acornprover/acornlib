@@ -1,26 +1,29 @@
 # Divisibility Set for a Generalized Euler Totient
 
 Source: aimath `Number theory-02`, 1 Jun 2026. https://arxiv.org/abs/2606.01633
-Status: resolved. Verification: author-checked preprint only, no external review, no formal certificate.
-Value: feasibility high, uncertainty high, importance medium.
+Document: complete arXiv proof, submitted for publication.
+Verification: author-checked only. No external review, no formal certificate.
 
 Claim: for `phi_k(n) = sum of a^k over 1 <= a <= n with gcd(a, n) = 1`, the set
 `D_1 = { k >= 1 : phi_1(n) divides phi_k(n) for every n }` is exactly `{1, 3, 15}`.
 
-The claim splits into two very different halves. Membership (`k = 1, 3, 15` always divide) is a
-universally quantified divisibility statement and is the realistic first target. Exclusion (no other
-`k` works) needs a counterexample `n` for each remaining `k`, which is a search obligation.
+Deliverable: the whole equality. Membership alone verifies nothing, since the content of the claim is
+that no other `k` works. If the exclusion direction turns out to be unreachable, this target is not
+ready and should be removed rather than half-done.
 
 ## Todo
 
+- [ ] Read the preprint and record its proof structure, both directions, before writing any Acorn.
+- [ ] Confirm the exclusion argument is a general one rather than a finite check; if it is a finite check, record the bound it needs.
 - [ ] Define `phi_k(n)` as a sum of `k`th powers over the reduced residues below `n`.
-- [ ] Connect it to the existing reduced-residue machinery so `phi_0` agrees with `totient`.
-- [ ] Prove `phi_1(n) = n * totient(n) / 2` for `n > 1`, the standard closed form.
-- [ ] Prove `phi_1(n)` divides `phi_3(n)` for every `n`.
-- [ ] Prove `phi_1(n)` divides `phi_15(n)` for every `n`.
-- [ ] State the exclusion half: for every other `k >= 1` some `n` fails.
-- [ ] Check whether exclusion is provable, or belongs in `hard_problems/`.
-- [ ] Record the outcome.
+- [ ] Prove `phi_0` agrees with `totient`.
+- [ ] Prove the closed form `phi_1(n) = n * totient(n) / 2` for `n > 1`.
+- [ ] Prove `phi_k` is multiplicative across coprime factors.
+- [ ] Membership: prove `phi_1(n)` divides `phi_3(n)` for every `n`.
+- [ ] Membership: prove `phi_1(n)` divides `phi_15(n)` for every `n`.
+- [ ] Exclusion: follow the preprint to rule out every other `k >= 1`.
+- [ ] Assemble the set equality `D_1 = {1, 3, 15}`.
+- [ ] Record the outcome, including any step of the preprint that did not survive formalization.
 
 ## Library demand
 

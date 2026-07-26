@@ -1,65 +1,56 @@
 # Graph Theory Core
 
-Claimants: [clique transversal number](../../../verify-ai-claims/clique-transversal-number/todo.md),
-[cycle double cover](../../../verify-ai-claims/cycle-double-cover/todo.md),
+Claimants: [Koch-Narayan Conjecture 1](../../../verify-ai-claims/koch-narayan-edge-bound/todo.md),
 [zero forcing and domination](../../../verify-ai-claims/zero-forcing-domination/todo.md).
 
 `src/` already has about 4,400 lines: `simple_graph.ac` (the `SimpleGraph[V]` structure, empty and
 complete graphs, complement, union, intersection, cliques, independent sets, induced subgraphs,
 homomorphisms, embeddings, isomorphisms), plus `simple_graph_walks.ac`, `simple_graph_connectivity.ac`,
-`simple_graph_boolean_algebra.ac`, and `simple_graph_clique_transport.ac`. `fin_matrix.ac` and
-`fin_matrix_det.ac` supply matrices.
+`simple_graph_boolean_algebra.ac`, and `simple_graph_clique_transport.ac`.
 
 The gap is not the graph type. It is that almost no *invariant* exists yet — there is no vertex
-degree, and everything numeric depends on it. Order the work accordingly: degree and edges first,
-since every claimant needs them; spectra last, since only the deferred Graffiti claims do.
+degree, and everything numeric depends on it. Both claimants need degree and domination; only one
+needs zero forcing. Nothing here needs cycles, colourings, or spectra, so those stayed in
+[the graph theory topic](../../graph-theory/todo.md) rather than moving into the baseline.
 
-Coverage note: Mathlib has most of the first three groups below (`DegreeSum`, `Coloring`, `Girth`,
-`Acyclic`, `Matching`, `Extremal.Turan`, `AdjMatrix`, `LapMatrix`), so those are genuine translation
-targets. It has no domination number and no zero forcing number, and its spectral graph theory stops
-at the adjacency and Laplacian matrices themselves. Those parts are original work, not translation.
+Coverage note: Mathlib has degree (`DegreeSum`) and the surrounding standard material, so that part
+is translation. Mathlib has **no domination number and no zero forcing number**, so those are
+original work either way.
 
 ## Degree and edges
 
+Both claimants need all of this.
+
 - [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
+- [ ] Define the edge count of a finite graph.
 - [ ] Define vertex degree, and prove it is the size of the neighbourhood.
 - [ ] Prove the handshake lemma: the degree sum is twice the edge count.
 - [ ] Define minimum and maximum degree, and the regular and cubic conditions.
 - [ ] Prove degree is invariant under graph isomorphism.
 
-## Cycles and structure
+## Domination
 
-- [ ] Define cycles, distinguished from the existing closed walks by requiring distinct interior vertices.
-- [ ] Define girth, and prove it is infinite exactly for acyclic graphs.
-- [ ] Define bridges and the bridgeless condition, connecting to the existing component API.
-- [ ] Prove a bridge lies on no cycle.
-- [ ] Add walks, paths, cycles, and connectedness beyond the current predicates.
-- [ ] Develop trees, forests, and spanning-tree theory.
-- [ ] Add edge multiplicity across a list of subgraphs.
+Both claimants need all of this.
 
-## Vertex-set invariants
+- [ ] Define dominating sets.
+- [ ] Prove the whole vertex set is dominating, so the domination number is well defined.
+- [ ] Define the domination number `gamma(G)`.
+- [ ] Define uniqueness of a minimum dominating set.
+- [ ] Compute `gamma` for complete, empty, and small cubic graphs.
 
-- [ ] Define maximal cliques and the clique number.
-- [ ] Define the independence number from the existing independent-set predicate.
-- [ ] Define dominating sets and the domination number.
-- [ ] Define clique transversals and the clique transversal number.
-- [ ] Define vertex covers, and relate them to independent sets.
-- [ ] Add iterated closure of a vertex set under a monotone rule, with termination on finite graphs.
-- [ ] Define zero forcing sets and the zero forcing number.
+## Bipartite structure
+
+Claimed by Koch-Narayan only.
+
+- [ ] Define bipartiteness, and the no-isolated-vertices condition.
+- [ ] Prove bipartiteness passes to induced subgraphs.
+
+## Zero forcing
+
+Claimed by TxGraffiti-Davila 9 only. The most speculative part of this branch; do it last.
+
+- [ ] Define the diamond graph and the diamond-free condition via induced subgraphs.
 - [ ] Add forbidden induced subgraph conditions, stated once and reused.
-
-## Colourings and extremal functions
-
-- [ ] Add colorings and chromatic invariants.
-- [ ] Support matchings and Hall-style theorems.
-- [ ] Add extremal graph functions and Turan-style preliminaries.
-- [ ] Add Ramsey numbers as a defined function.
-
-## Matrices and spectra
-
-Deferred until a claimant needs it; only the Graffiti-style conjectures do.
-
-- [ ] Add adjacency matrices, Laplacians, and graph operators.
-- [ ] Add the distance matrix, building on graph distance.
-- [ ] Develop spectral graph theory basics, including eigenvalues of the adjacency matrix.
-- [ ] Add random-graph and extremal-graph preliminaries.
+- [ ] Define the zero forcing colour-change rule on a vertex subset.
+- [ ] Define the closure of a subset under repeated forcing, and prove it terminates on a finite graph.
+- [ ] Define zero forcing sets and the zero forcing number `Z(G)`.
