@@ -17,8 +17,14 @@ translation. It has **no domination number and no zero forcing number**, so thos
 
 Everything numeric depends on degree, so this comes first.
 
+`src/finite_set_card.ac` now supplies `fs_card`, the `Nat`-valued cardinality of a finite set, with
+`fs_card_eq_of_cardinality_is` for converting from the `cardinality_is` predicate. Before it there
+was no numeric cardinality at all, only the predicate, so nothing countable could be defined. Every
+counting item below builds on it.
+
+- [ ] Add cardinality lemmas for `fs_card` under insert, remove, union, and subset.
 - [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
-- [ ] Define the edge count of a finite graph.
+- [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
 - [ ] Define vertex degree, and prove it is the size of the neighbourhood.
 - [ ] Prove the handshake lemma: the degree sum is twice the edge count.
 - [ ] Define minimum and maximum degree, and the regular and cubic conditions.
