@@ -10,17 +10,17 @@ No current blockers.
 
 ## Erdos-Facing Discrete And Elementary Mathematics
 
-- [ ] [Number theory](number-theory/todo.md)
-  Note: prioritize elementary and computational number theory for Erdos targets: divisibility, valuations, binomial coefficients, congruences, prime-factor counts, divisor functions, unit fractions, covering systems, and finite interval problems.
-
-- [ ] [Combinatorics](combinatorics/todo.md)
-  Note: prioritize finite combinatorics that unlocks Erdos clusters: counting principles, finite set systems, sumsets/difference sets, Sidon predicates, additive bases, extremal set theory, inclusion-exclusion, and Ramsey basics.
-
-- [ ] [Graph theory](graph-theory/todo.md)
-  Note: prioritize graph APIs needed by Erdos graph problems: colorings and chromatic number, cliques and independent sets, walks/cycles/girth, induced subgraphs, extremal graph functions, Turan/Ramsey preliminaries, and hypergraph basics.
-
 - [ ] [Affine, Euclidean, and convex geometry](affine-euclidean-and-convex-geometry/todo.md)
   Note: build finite point-configuration infrastructure for distance problems: Euclidean distance, lines, circles, general position, convex position, isometries, and finite-dimensional coordinate arguments.
+
+- [ ] [Number theory](number-theory/todo.md)
+  Note: the Erdos-facing baseline is complete; remaining branches are deferred until their foundational representations or concrete downstream requirements are chosen.
+
+- [ ] [Combinatorics](combinatorics/todo.md)
+  Note: remaining active branches require representation choices for chains, finite families, generating functions, Mobius inversion, or partitions.
+
+- [ ] [Graph theory](graph-theory/todo.md)
+  Note: the next branches require foundational choices for walks, paths, matchings, colorings, or graph operators.
 
 ## Supporting Analysis, Algebra, And Number Systems
 
