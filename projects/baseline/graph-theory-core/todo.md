@@ -30,18 +30,17 @@ counting item below builds on it.
 - [ ] Add `fs_card` lemmas for union, intersection, difference, and subset monotonicity.
 - [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
 - [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
-- [ ] Define vertex degree, and prove it is the size of the neighbourhood.
 - [ ] Prove the handshake lemma: the degree sum is twice the edge count.
-- [ ] Define minimum and maximum degree, and the regular and cubic conditions.
+
 - [ ] Prove degree is invariant under graph isomorphism.
 
 ## Domination
 
-No Mathlib counterpart.
+No Mathlib counterpart. `src/simple_graph_domination.ac` has `is_dominated`, `is_dominating_set`,
+their `_apply`/`_intro` lemmas, the witness lemmas for `has_neighbor_in`, and monotonicity in both
+the dominating set and the ambient set.
 
-- [ ] Define dominating sets.
-- [ ] Prove the whole vertex set is dominating, so the domination number is well defined.
-- [ ] Define the domination number `gamma(G)`.
+- [ ] Define the domination number `gamma(G)` as the least `fs_card` over dominating subsets.
 - [ ] Define uniqueness of a minimum dominating set.
 - [ ] Compute `gamma` for complete, empty, path, and cycle graphs.
 

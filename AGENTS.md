@@ -73,7 +73,7 @@ Never clean the build directory.
 
 **Prover capabilities:**
 - Rarely need to import theorems (prover is powerful)
-- Rarely need explicit theorem names in same file
+- Rarely need explicit theorem names in same file, for small steps. Once a step times out, cite explicitly and state the conclusion — see "Fixing Proofs" below
 - Write natural expressions (`n + 1` not `n.suc`)
 
 **Bounded induction pattern:** When inducting over bounded ranges with external constraints, induct on the _distance_ to enable automatic induction.
@@ -88,3 +88,16 @@ When a statement could not be verified, there are two possibilities.
 Possibility 1 is that the statement is false. Rewrite the proof so that it does not use false statements.
 
 Possibility 2 is that the statement is too big of a logical leap from the previous statement. Fix this by filling in the missing steps of reasoning, rather than rewriting the entire proof.
+
+**Cite the theorem, then state its conclusion.** Acorn gives you a one-step use of an explicitly cited theorem, but the conclusion still has to appear as its own line. Citing a theorem and stopping leaves its conclusion for proof search to rediscover, which is where searches usually time out.
+
+```acorn
+// Times out: the conclusion is never stated.
+max_degree_at_most_intro(g, s, k)
+
+// Verifies: cite, then state what the citation gives you.
+max_degree_at_most_intro(g, s, k)
+max_degree_at_most(g, s, k)
+```
+
+The same applies to a `define`d predicate: unfolding is not automatic. To use one, first state its defining equation (`p(args) = forall(x) { ... }`), then instantiate. Give each such predicate an `_apply` lemma (predicate plus a member yields the instance) and an `_intro` lemma (the pointwise form yields the predicate), and cite those downstream instead of unfolding again. `src/number_theory/covering_system.ac` and `src/simple_graph_regular.ac` both follow this shape.
