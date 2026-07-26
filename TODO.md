@@ -32,6 +32,7 @@
 - [x] Verified eleventh simplification micro-batch: `src/monoid.ac` and `src/add_monoid.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100929/100929 OK`, `0 searches performed`.
 - [x] Verified twelfth simplification micro-batch: `src/add_comm_monoid.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100911/100911 OK`, `0 searches performed`.
 - [x] Verified thirteenth simplification micro-batch: `src/group.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100881/100881 OK`, `0 searches performed`.
+- [x] Verified fourteenth simplification micro-batch: `src/add_group.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100844/100844 OK`, `0 searches performed`.
 - [ ] Deferred tested simplification: `src/algebraic_instance_smoke.ac` was reverted because the upstream deletion caused a Real ordered-field search timeout at `Real.0 <= a * b`.
 - [ ] Deferred tested simplification: the full upstream deletion set for `src/complex_metric.ac` was narrowed because removing the convergence proof-local steps caused a timeout at `z(i).distance(w) < eps`.
 - [ ] Deferred tested simplification: the broad compactness batch was narrowed because upstream `src/compact_image.ac` timed out at `list_union_of_sets[Y](items_y).contains(f(x))`.
