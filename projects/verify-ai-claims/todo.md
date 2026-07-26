@@ -19,10 +19,15 @@ Source: `https://aimath.robertj1.com/`, read 26 July 2026. 239 claims.
 
 Ranking combines three factors: how open the truth of the claim still is, how plausibly Acorn can state and check it today, and how much the result matters.
 
-Two whole slices of the pool are excluded for now, and should be revisited only when the library moves:
+One slice of the pool is excluded outright: algebraic geometry, knot theory, moduli spaces, PDE,
+stochastic analysis, and profinite Galois claims are far outside current `src/` reach.
 
-- Graph-theoretic claims (Graffiti, TxGraffiti, Ramsey, domination, chromatic — roughly 20 of the 101). `src/` has no graph type at all, so these need a graph library before a statement is even writable.
-- Algebraic geometry, knot theory, moduli spaces, PDE, stochastic analysis, and profinite Galois claims. These are far outside current `src/` reach.
+Graph-theoretic claims are roughly 20 of the 101, and they are *deferred, not excluded*. `src/` has
+about 4,400 lines of graph theory already — `SimpleGraph[V]`, cliques, independent sets, induced
+subgraphs, homomorphisms, embeddings, isomorphisms, walks, paths, reachability, and components. What
+blocks these claims is a short list of missing invariants, headed by vertex degree. Three of them sit
+at the end of the queue below precisely to drive
+[baseline/graph-theory-core](../translate-mathlib/baseline/graph-theory-core/todo.md).
 
 ## Queue
 
@@ -57,6 +62,20 @@ Ordered by value. Work top to bottom.
 - [ ] [Totient preimages and least primes, Erdos #456](totient-preimage-least-prime/todo.md)
 
 - [ ] [Distinct distances with no four concyclic, Erdos #654](distinct-distances-no-four-concyclic/todo.md)
+
+Deferred: the graph-theoretic targets below are blocked on
+[baseline/graph-theory-core](../translate-mathlib/baseline/graph-theory-core/todo.md). They are kept
+in the queue because they are what makes that baseline branch demand-driven rather than speculative,
+and they are ordered by how much library each one needs.
+
+- [ ] [Clique transversal number, Erdos #610](clique-transversal-number/todo.md)
+  Note: nearest to reach; `src/simple_graph.ac` already has cliques and `simple_graph_clique_transport.ac` exists.
+
+- [ ] [Cycle double cover conjecture](cycle-double-cover/todo.md)
+  Note: needs cycles and bridges but no numeric invariants, and it is the most important open problem in the pool.
+
+- [ ] [Zero forcing and domination, TxGraffiti-Davila 9](zero-forcing-domination/todo.md)
+  Note: furthest out; needs two invariants that Mathlib does not have either, so this is original work.
 
 ## Conventions
 

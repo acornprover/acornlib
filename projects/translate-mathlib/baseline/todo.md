@@ -34,3 +34,8 @@ unblocks targets in the order they are ranked.
 
 - [ ] [Planar distance configurations](planar-distance-configurations/todo.md)
   Claimants: distinct distances with no four concyclic (Erdos #654).
+
+- [ ] [Graph theory core](graph-theory-core/todo.md)
+  Claimants: clique transversal number (Erdos #610); cycle double cover; zero forcing and domination.
+  Note: the largest branch by far, and the one gating the most claims. `src/` already has the graph
+  type and connectivity; what is missing is vertex degree and everything numeric built on it.
