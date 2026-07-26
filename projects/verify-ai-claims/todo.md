@@ -35,6 +35,12 @@ Two failure modes to refuse explicitly, because the first pass of this project f
 
 An open problem whose *resolution* is claimed is admissible; an open problem is not.
 
+Check which way a claim points before writing the target. A large share of these results are
+**refutations by explicit counterexample**, not proofs of the stated conjecture. Those are the best
+targets in the pool: every obligation is a finite computation on one fixed object, so verification is
+certificate checking rather than theorem proving. They are also where a shared modelling error
+between two hand-written checkers can hide, which is the most likely place to find a real mistake.
+
 ## Survey
 
 Source: `https://aimath.robertj1.com/`, read 26 July 2026. 239 claims. 138 record some Lean checking,
@@ -64,10 +70,10 @@ Ordered by value: how likely we are to either complete a real verification or fi
   Complete arXiv proof, author-checked only. Needs real-number digit expansions first.
 
 - [ ] [Koch-Narayan Conjecture 1](koch-narayan-edge-bound/todo.md)
-  Certificates and frozen source, not externally refereed. Blocked on graph invariants.
+  Refutation by explicit graph; two clean-room checkers, unrefereed. Certificate checking, not theorem proving.
 
 - [ ] [Zero forcing and domination, TxGraffiti-Davila 9](zero-forcing-domination/todo.md)
-  Certificates and frozen source, not externally refereed. Blocked on the most graph baseline of any target.
+  Refutation by explicit graph. Same shape, but needs the zero forcing closure as well as domination.
 
 ## Conventions
 
