@@ -30,9 +30,15 @@ counting item below builds on it.
 - [ ] Add `fs_card` lemmas for union, intersection, difference, and subset monotonicity.
 - [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
 - [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
-- [ ] Define vertex degree, and prove it is the size of the neighbourhood.
+- [ ] Prove the derived degree-bound facts: regular implies both bounds, matching bounds imply
+      regular, and monotonicity of each bound. `src/simple_graph_regular.ac` has the predicates and
+      their `_apply`/`_intro` lemmas verified; the derived facts time out on the step that turns a
+      proved `forall` block into the implication form `_intro` consumes. Needs a different
+      decomposition, not more citations.
+- [ ] Add dominating sets and the domination number. A first attempt hit the same `forall`
+      instantiation limit; do it after the pattern above is solved, so it can reuse the fix.
 - [ ] Prove the handshake lemma: the degree sum is twice the edge count.
-- [ ] Define minimum and maximum degree, and the regular and cubic conditions.
+
 - [ ] Prove degree is invariant under graph isomorphism.
 
 ## Domination
