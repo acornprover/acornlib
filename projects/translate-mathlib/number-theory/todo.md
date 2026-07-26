@@ -6,7 +6,7 @@ The Erdos-facing Group A baseline is complete. The active number-theory queue is
 
 ## The first cluster
 
-`notes/erdos.md` ranks the 622 open problems by a single attackability score. That score is a smooth queue — about six or seven problems per value, no gap — so the cluster boundary is set by *shared infrastructure*, not by a score cliff. Taking the top band (score ≥ 90, the top ~10% = 66 problems) and classifying each problem by the infrastructure it needs:
+A previous triage scored the 622 open Erdos problems by attackability. That score was a smooth queue — about six or seven problems per value, no gap — so the cluster boundary is set by *shared infrastructure*, not by a score cliff. Taking the top band (the top ~10% = 66 problems) and classifying each problem by the infrastructure it needs:
 
 | Infrastructure (Group A item) | top-band problems | example problem ids |
 | --- | --- | --- |
@@ -17,7 +17,7 @@ The Erdos-facing Group A baseline is complete. The active number-theory queue is
 | covering systems | 4 | 1113, 276, 273, 274 |
 | base-`b` representations / digit sums | 2 | 406, 124 |
 
-That is **42 of the top 66** — the first cluster this document targets. The other 24 of the top band are additive-combinatorics / Sidon (14, owned by the [combinatorics](../combinatorics/todo.md) project), graph theory (9), and geometry (1). So number theory is the largest single slice of the first cluster, and the completed Group A baseline was ordered to unlock it. (The count is robust to where the band is drawn: widening to score ≥ 80, ~120 problems, keeps number theory the plurality at 66.)
+That is **42 of the top 66** — the first cluster this document targets. The other 24 of the top band are additive-combinatorics / Sidon (14, owned by the [combinatorics](../combinatorics/todo.md) project), graph theory (9), and geometry (1). So number theory is the largest single slice of the first cluster, and the completed Group A baseline was ordered to unlock it. (The count is robust to where the band is drawn: widening to ~120 problems keeps number theory the plurality at 66.)
 
 ## Group A — Erdos-facing
 
@@ -25,8 +25,9 @@ Group A is complete and no longer tracked as an active checklist.
 
 ## Group B — Other standard number theory
 
+Pell equations moved to [baseline/integer-polynomial-identities](../baseline/integer-polynomial-identities/todo.md)
+and analytic preliminaries to [baseline/asymptotic-density](../baseline/asymptotic-density/todo.md).
+
 - [ ] [Add continued fractions and their approximation theory](continued-fractions/todo.md)
 - [ ] [Develop quadratic residues and quadratic reciprocity](quadratic-residues/todo.md)
-- [ ] Add Pell equations and related Diophantine techniques
 - [ ] Build infrastructure for Bernoulli numbers and classical arithmetic sequences
-- [ ] Add analytic-number-theory preliminaries where they naturally fit

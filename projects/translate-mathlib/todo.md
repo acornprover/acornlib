@@ -8,6 +8,11 @@ The sections below are listed in priority order: work top to bottom.
 
 No current blockers.
 
+## Baseline
+
+- [ ] [Baseline](baseline/todo.md)
+  Note: the subset of this roadmap that a [verify-ai-claims](../verify-ai-claims/todo.md) target actually names. Every item traces to a specific claim we are trying to machine-check, so this branch comes before everything below. Items move here when a target claims them and move back out when no target does.
+
 ## Erdos-Facing Discrete And Elementary Mathematics
 
 - [ ] [Number theory](number-theory/todo.md)
