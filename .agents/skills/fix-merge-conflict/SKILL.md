@@ -20,7 +20,7 @@ Use this skill for merge conflicts in the Acornlib repository, especially PRs wh
 
 ## Workflow
 
-1. If the user gave a PR number or URL, use the GitHub app or `gh` to find the PR head branch, head repository, and base branch. Fetch the base branch, then check out the PR head branch with push rights.
+1. If the user gave a PR number or URL, use `gh` to find the PR head branch, head repository, and base branch. Fetch the base branch, then check out the PR head branch with push rights.
 
 ```bash
 git fetch origin master
