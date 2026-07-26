@@ -42,10 +42,12 @@
 - [x] Verified twenty-first simplification micro-batch: `src/finitely_supported_function.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100455/100455 OK`, `0 searches performed`.
 - [x] Verified twenty-second simplification micro-batch: `src/complete_metric_isometry.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100425/100425 OK`, `0 searches performed`.
 - [x] Verified twenty-third simplification micro-batch: `src/diameter_le.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100400/100400 OK`, `0 searches performed`.
+- [x] Verified twenty-fourth simplification micro-batch: `src/generated_topology.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100376/100376 OK`, `0 searches performed`.
 - [ ] Deferred tested simplification: `src/algebraic_instance_smoke.ac` was reverted because the upstream deletion caused a Real ordered-field search timeout at `Real.0 <= a * b`.
 - [ ] Deferred tested simplification: the full upstream deletion set for `src/complex_metric.ac` was narrowed because removing the convergence proof-local steps caused a timeout at `z(i).distance(w) < eps`.
 - [ ] Deferred tested simplification: the broad compactness batch was narrowed because upstream `src/compact_image.ac` timed out at `list_union_of_sets[Y](items_y).contains(f(x))`.
 - [ ] Deferred tested simplification: the finite-set support batch was narrowed because upstream `src/finite_set_product.ac` timed out at `product.contains(p) = false`.
+- [ ] Deferred tested simplification: upstream `src/continuous_at_compose.ac` timed out at the neighborhood-preimage implication for `v`.
 - [ ] Continue the simplification base as micro-slices instead of one broad patch. A blind source-only replay of commits `279ec69c`, `edf594c4`, `7df4882d`, and `0cfaf5c5` was rejected because verification timed out across category/natural-transformation, lattice/galois, affine, nat/carry, list/order/sum/permutation, int/lattice, combinatorics/binomial, finite-set, ideal/field/module, topology, and related files.
 
 ## Upstream Split Merge Plan
