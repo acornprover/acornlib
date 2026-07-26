@@ -43,6 +43,7 @@
 - [x] Verified twenty-second simplification micro-batch: `src/complete_metric_isometry.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100425/100425 OK`, `0 searches performed`.
 - [x] Verified twenty-third simplification micro-batch: `src/diameter_le.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100400/100400 OK`, `0 searches performed`.
 - [x] Verified twenty-fourth simplification micro-batch: `src/generated_topology.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100376/100376 OK`, `0 searches performed`.
+- [x] Verified twenty-fifth simplification micro-batch: `src/algebraic_congruence.ac` and `src/add_representation.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100316/100316 OK`, `0 searches performed`.
 - [ ] Deferred tested simplification: `src/algebraic_instance_smoke.ac` was reverted because the upstream deletion caused a Real ordered-field search timeout at `Real.0 <= a * b`.
 - [ ] Deferred tested simplification: the full upstream deletion set for `src/complex_metric.ac` was narrowed because removing the convergence proof-local steps caused a timeout at `z(i).distance(w) < eps`.
 - [ ] Deferred tested simplification: the broad compactness batch was narrowed because upstream `src/compact_image.ac` timed out at `list_union_of_sets[Y](items_y).contains(f(x))`.
