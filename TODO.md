@@ -28,8 +28,10 @@
 - [x] Verified seventh simplification micro-batch: `src/geometry/point2_polygon.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `101133/101133 OK`, `0 searches performed`.
 - [x] Verified eighth simplification micro-batch: `src/complex_conj_hom.ac`, `src/complex_conj_linear.ac`, `src/complex_conj_module_hom.ac`, `src/complex_conj_field_hom.ac`, `src/complex_conj_field_hom_abs.ac`, and `src/complex_re_im_linear.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `101006/101006 OK`, `0 searches performed`.
 - [x] Verified ninth simplification micro-batch: minimal `src/complex_metric.ac` proof cleanup for `complex_distance_eq_modulus_sub` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `101003/101003 OK`, `0 searches performed`.
+- [x] Verified tenth simplification micro-batch: `src/compact_transport.ac` with matching certificates/manifests; full `verify` and full `./scripts/acorn-check-strict.sh` passed with `100981/100981 OK`, `0 searches performed`.
 - [ ] Deferred tested simplification: `src/algebraic_instance_smoke.ac` was reverted because the upstream deletion caused a Real ordered-field search timeout at `Real.0 <= a * b`.
 - [ ] Deferred tested simplification: the full upstream deletion set for `src/complex_metric.ac` was narrowed because removing the convergence proof-local steps caused a timeout at `z(i).distance(w) < eps`.
+- [ ] Deferred tested simplification: the broad compactness batch was narrowed because upstream `src/compact_image.ac` timed out at `list_union_of_sets[Y](items_y).contains(f(x))`.
 - [ ] Continue the simplification base as micro-slices instead of one broad patch. A blind source-only replay of commits `279ec69c`, `edf594c4`, `7df4882d`, and `0cfaf5c5` was rejected because verification timed out across category/natural-transformation, lattice/galois, affine, nat/carry, list/order/sum/permutation, int/lattice, combinatorics/binomial, finite-set, ideal/field/module, topology, and related files.
 
 ## Upstream Split Merge Plan
