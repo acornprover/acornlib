@@ -22,7 +22,12 @@ Everything numeric depends on degree, so this comes first.
 was no numeric cardinality at all, only the predicate, so nothing countable could be defined. Every
 counting item below builds on it.
 
-- [ ] Add cardinality lemmas for `fs_card` under insert, remove, union, and subset.
+- [ ] Prove `fs_card(s) = fs_card(s.remove(item)) + 1` when `s` contains `item`, and the positivity
+      corollary. `finite_set_remove_insert_cardinality_is_suc_of_contains` supplies the
+      `cardinality_is` step, but search times out assembling it with the `fs_card` bridge; it needs a
+      smaller decomposition, not more citations. Insert and remove-of-absent are done in
+      `src/finite_set_card_ops.ac`.
+- [ ] Add `fs_card` lemmas for union, intersection, difference, and subset monotonicity.
 - [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
 - [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
 - [ ] Define vertex degree, and prove it is the size of the neighbourhood.
