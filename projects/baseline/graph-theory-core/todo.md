@@ -25,9 +25,11 @@ counting item below builds on it.
 - [ ] Prove the handshake lemma: the degree sum equals the directed edge count.
       `src/simple_graph_edges_from_card.ac` proves the per-vertex half: a vertex has exactly as many
       outgoing directed edges as neighbors. What remains is summing that over the vertex set, which
-      needs a sum-over-fibers lemma. `src/finite_fiber_partition.ac` has the covering and pairwise
-      disjointness of fibers, but indexed by a `List` of values and over `Set` rather than
-      `FiniteSet`, so the bridge to `finite_set_sum` has to be built.
+      needs a sum-over-fibers lemma. `src/finite_set_induction.ac` now supplies the transfer
+      principle - a property holding of every unique-list representation holds of every finite set -
+      so the remaining route is list induction over that representation. Note that induction on the
+      vertex set directly is invalid here: `degree` is relative to the ambient set, so inserting a
+      vertex changes the degrees of the vertices already counted.
 
 - [ ] Prove degree is invariant under graph isomorphism.
 
