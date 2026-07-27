@@ -100,4 +100,6 @@ max_degree_at_most_intro(g, s, k)
 max_degree_at_most(g, s, k)
 ```
 
+**Do not bind a cited theorem's arguments with a local `let`.** Writing `let n: Nat = f(x)` and then citing a theorem at `n` can stop the prover matching the citation against the goal, even though every line looks right. Repeat the full term in the citation and in the conclusion instead. This turned a theorem that timed out for three attempts into a one-line fix.
+
 The same applies to a `define`d predicate: unfolding is not automatic. To use one, first state its defining equation (`p(args) = forall(x) { ... }`), then instantiate. Give each such predicate an `_apply` lemma (predicate plus a member yields the instance) and an `_intro` lemma (the pointwise form yields the predicate), and cite those downstream instead of unfolding again. `src/number_theory/covering_system.ac` and `src/simple_graph_regular.ac` both follow this shape.
