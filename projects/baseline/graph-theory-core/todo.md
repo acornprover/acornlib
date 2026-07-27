@@ -15,6 +15,10 @@ translation. It has **no domination number and no zero forcing number**, so thos
 
 ## Degree and edges
 
+The handshake lemma is proved in `src/simple_graph_handshake.ac`: the degree sum equals the number
+of ordered adjacent pairs. Getting there required finite-set induction, which did not exist; see
+`src/finite_set_induction_principle.ac` and `src/finite_set_unique_induction.ac`.
+
 Everything numeric depends on degree, so this comes first.
 
 `src/finite_set_card.ac` now supplies `fs_card`, the `Nat`-valued cardinality of a finite set, with
