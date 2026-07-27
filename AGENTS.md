@@ -102,8 +102,6 @@ max_degree_at_most(g, s, k)
 
 **Do not bind a cited theorem's arguments with a local `let`.** Writing `let n: Nat = f(x)` and then citing a theorem at `n` can stop the prover matching the citation against the goal, even though every line looks right. Repeat the full term in the citation and in the conclusion instead. This turned a theorem that timed out for three attempts into a one-line fix.
 
-**Boolean steps need explicit lemmas from `logic.ac`.** Mutual implication does not give equality: proving `a implies b` and `b implies a` leaves `a = b` unproved until you cite `iff_bool_imp_eq`. The same holds for associativity, distributivity, and the rest — the library's own set-equality proofs always cite `and_assoc`, `and_or_distrib_right`, and friends rather than leaving the boolean algebra to search. When a proof stalls on what looks like trivial logic, look for the lemma instead of restructuring.
-
 **Case-split on `Bool` yourself.** Proof search does not try both values of a boolean. Deriving `not p(x) != not p(y)` from `p(x) != p(y)`, or a contradiction from three pairwise-different booleans, times out until you write `if p(x) { ... }` and `if not p(x) { ... }` explicitly. This comes up wherever a two-colouring or a negated predicate appears.
 
 The same applies to a `define`d predicate: unfolding is not automatic. To use one, first state its defining equation (`p(args) = forall(x) { ... }`), then instantiate. Give each such predicate an `_apply` lemma (predicate plus a member yields the instance) and an `_intro` lemma (the pointwise form yields the predicate), and cite those downstream instead of unfolding again. `src/number_theory/covering_system.ac` and `src/simple_graph_regular.ac` both follow this shape.
