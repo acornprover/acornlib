@@ -22,10 +22,6 @@ Everything numeric depends on degree, so this comes first.
 was no numeric cardinality at all, only the predicate, so nothing countable could be defined. Every
 counting item below builds on it.
 
-- [ ] Add `fs_card` lemmas for intersection and difference. Union, filter, and the monotonicity
-      corollaries are done in `src/finite_set_card_bounds.ac`; the intersection and difference cases
-      need `fs_intersection(a, b).subset_eq(a)`, which the `FiniteSet` interface does not expose and
-      `Set.subset` provides no introduction lemma for.
 - [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
 - [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
 - [ ] Prove the handshake lemma: the degree sum is twice the edge count.
