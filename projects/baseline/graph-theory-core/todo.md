@@ -27,9 +27,10 @@ counting item below builds on it.
       outgoing directed edges as neighbors. What remains is summing that over the vertex set, which
       needs a sum-over-fibers lemma. `src/finite_set_induction.ac` now supplies the transfer
       principle - a property holding of every unique-list representation holds of every finite set.
-      Using it needs `List.cons(head, tail).contains(x) = (x = head or tail.contains(x))`, which the
-      list interface does not expose; `contains` is defined by a `match` that does not unfold during
-      proof search. Adding that one lemma to the list library unblocks the whole chain. Note that induction on the
+      `src/list_cons_membership.ac` supplies the cons-membership lemma the list interface lacked, and
+      `src/finite_set_from_list_structure.ac` uses it to turn prepending into insertion. What remains
+      is the uniqueness step: `is_unique` is `self.unique = self` rather than structural, so ruling
+      out a repeated head needs a length argument. Note that induction on the
       vertex set directly is invalid here: `degree` is relative to the ambient set, so inserting a
       vertex changes the degrees of the vertices already counted.
 
