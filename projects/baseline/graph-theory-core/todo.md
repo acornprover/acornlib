@@ -22,9 +22,18 @@ Everything numeric depends on degree, so this comes first.
 was no numeric cardinality at all, only the predicate, so nothing countable could be defined. Every
 counting item below builds on it.
 
-- [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
-- [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
-- [ ] Prove the handshake lemma: the degree sum is twice the edge count.
+- [ ] Prove the handshake lemma: the degree sum equals the directed edge count.
+      `src/simple_graph_edges_from_card.ac` proves the per-vertex half: a vertex has exactly as many
+      outgoing directed edges as neighbors. What remains is summing that over the vertex set, which
+      needs a sum-over-fibers lemma. `src/finite_set_induction.ac` now supplies the transfer
+      principle - a property holding of every unique-list representation holds of every finite set.
+      `src/finite_set_induction_principle.ac` now supplies induction on finite sets. What remains for
+      the handshake is a sum-over-fibers lemma built with it: partition the directed edges by first
+      component and sum the per-vertex counts. `src/finite_set_unique_induction.ac` supplies
+      `finite_set_strong_induction`, whose step may assume the inserted element is new, which is the
+      form a counting argument needs. Note that induction on the
+      vertex set directly is invalid here: `degree` is relative to the ambient set, so inserting a
+      vertex changes the degrees of the vertices already counted.
 
 - [ ] Prove degree is invariant under graph isomorphism.
 
