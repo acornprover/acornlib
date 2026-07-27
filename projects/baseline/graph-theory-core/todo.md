@@ -22,12 +22,10 @@ Everything numeric depends on degree, so this comes first.
 was no numeric cardinality at all, only the predicate, so nothing countable could be defined. Every
 counting item below builds on it.
 
-- [ ] Prove `fs_card(s) = fs_card(s.remove(item)) + 1` when `s` contains `item`, and the positivity
-      corollary. `finite_set_remove_insert_cardinality_is_suc_of_contains` supplies the
-      `cardinality_is` step, but search times out assembling it with the `fs_card` bridge; it needs a
-      smaller decomposition, not more citations. Insert and remove-of-absent are done in
-      `src/finite_set_card_ops.ac`.
-- [ ] Add `fs_card` lemmas for union, intersection, difference, and subset monotonicity.
+- [ ] Add a bridge from `cardinality_at_most` to a `Nat` comparison: `s.cardinality_at_most(n)` and
+      `s.cardinality_is(m)` should give `m <= n`. Nothing in `set.ac` supplies it, and subset
+      monotonicity of `fs_card` needs it.
+- [ ] Add `fs_card` lemmas for union, intersection, and difference, after that bridge exists.
 - [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
 - [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
 - [ ] Prove the handshake lemma: the degree sum is twice the edge count.
