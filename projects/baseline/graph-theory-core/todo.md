@@ -44,6 +44,12 @@ Done in `src/simple_graph_bipartite.ac`: `is_bipartition` (a predicate two-colou
 are the predicate and its complement), `is_bipartite`, and `has_no_isolated_vertices`, each with
 `_apply`/`_intro`, plus restriction to subsets.
 
+## Triangle-freeness
+
+Done in `src/simple_graph_triangle_free.ac`. The three-variable form does not verify; naming the
+innermost variable as `has_no_common_neighbor` reduces both outer statements to two variables, and
+the classical no-three-mutually-adjacent reading is recovered from it.
+
 ## Zero forcing
 
 No Mathlib counterpart, and the most definitional work in this branch. Do it last, and settle the
