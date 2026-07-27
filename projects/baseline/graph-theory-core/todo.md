@@ -29,9 +29,9 @@ counting item below builds on it.
       principle - a property holding of every unique-list representation holds of every finite set.
       `src/finite_set_induction_principle.ac` now supplies induction on finite sets. What remains for
       the handshake is a sum-over-fibers lemma built with it: partition the directed edges by first
-      component and sum the per-vertex counts. Note the induction's step hypothesis does not assume
-      the inserted element is new, so a sum argument needing that will also need the uniqueness step,
-      which requires a length argument since `is_unique` is not structural. Note that induction on the
+      component and sum the per-vertex counts. `src/list_unique_cons.ac` supplies the uniqueness step
+      a counting argument needs, so a repeat-free induction principle can now be stated if the
+      current one's step hypothesis turns out to be too weak. Note that induction on the
       vertex set directly is invalid here: `degree` is relative to the ambient set, so inserting a
       vertex changes the degrees of the vertices already counted.
 
