@@ -22,10 +22,8 @@ Everything numeric depends on degree, so this comes first.
 was no numeric cardinality at all, only the predicate, so nothing countable could be defined. Every
 counting item below builds on it.
 
-- [ ] Add a bridge from `cardinality_at_most` to a `Nat` comparison: `s.cardinality_at_most(n)` and
-      `s.cardinality_is(m)` should give `m <= n`. Nothing in `set.ac` supplies it, and subset
-      monotonicity of `fs_card` needs it.
-- [ ] Add `fs_card` lemmas for union, intersection, and difference, after that bridge exists.
+- [ ] Add `fs_card` lemmas for union, intersection, and difference. `src/finite_set_card_compare.ac`
+      now supplies `fs_card_mono` and `fs_card_le_of_at_most`, which these rest on.
 - [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
 - [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
 - [ ] Prove the handshake lemma: the degree sum is twice the edge count.
@@ -44,8 +42,9 @@ the dominating set and the ambient set.
 
 ## Bipartite structure
 
-- [ ] Define bipartiteness, and the no-isolated-vertices condition.
-- [ ] Prove bipartiteness passes to induced subgraphs.
+Done in `src/simple_graph_bipartite.ac`: `is_bipartition` (a predicate two-colouring, so the sides
+are the predicate and its complement), `is_bipartite`, and `has_no_isolated_vertices`, each with
+`_apply`/`_intro`, plus restriction to subsets.
 
 ## Zero forcing
 
