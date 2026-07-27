@@ -22,9 +22,10 @@ Everything numeric depends on degree, so this comes first.
 was no numeric cardinality at all, only the predicate, so nothing countable could be defined. Every
 counting item below builds on it.
 
-- [ ] Define an edge as an unordered adjacent pair, and the edge set of a finite graph.
-- [ ] Define the edge count of a finite graph as `fs_card` of its edge set.
-- [ ] Prove the handshake lemma: the degree sum is twice the edge count.
+- [ ] Prove the handshake lemma: the degree sum equals the directed edge count.
+      `src/simple_graph_edges.ac` and `src/simple_graph_degree_sum.ac` supply both sides and the
+      per-vertex correspondence; what remains is partitioning the directed edges by first component
+      and summing, which needs a sum-over-partition lemma the finite-set interface does not have.
 
 - [ ] Prove degree is invariant under graph isomorphism.
 
