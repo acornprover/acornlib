@@ -80,6 +80,33 @@ Done in `src/simple_graph_triangle_free.ac`. The three-variable form does not ve
 innermost variable as `has_no_common_neighbor` reduces both outer statements to two variables, and
 the classical no-three-mutually-adjacent reading is recovered from it.
 
+## Forbidden induced subgraphs
+
+`src/simple_graph_forbidden.ac` has the general layer: `contains_induced` and `is_free_of`, stated
+through `is_graph_embedding`, which is already the induced notion since it both preserves and
+reflects adjacency. Composition of embeddings gives transport, so freeness passes to anything
+embedded in a free graph and across isomorphisms.
+
+The concrete conditions are stated combinatorially rather than through a four-vertex graph object,
+following `src/simple_graph_triangle_free.ac`: the innermost quantifier is named, which brings the
+outer statement down to a depth the restriction lemmas can handle. `src/simple_graph_diamond.ac`
+has the diamond, `src/simple_graph_claw.ac` the claw.
+
+- [x] Define containment of an induced copy and freeness from one, stated once and reused.
+- [x] Prove freeness transports along embeddings and across isomorphisms.
+- [x] Define the diamond configuration and diamond-free graphs, and prove a triangle-free graph is
+      diamond-free.
+- [x] Define the claw configuration and claw-free graphs.
+- [x] Prove both conditions pass to subsets of the vertex set, and that the complete graph satisfies
+      both.
+
+Remaining:
+
+- [ ] Build the diamond and the claw as actual four-vertex graphs, so that `is_free_of` applies to
+      them directly and the combinatorial conditions can be proved equivalent to it. This needs a
+      four-element vertex type; `Pair[Bool, Bool]` would serve.
+- [ ] Prove a diamond-free graph has every edge in at most one maximal clique.
+
 ## Zero forcing
 
 No Mathlib counterpart, and the most definitional work in this branch. Do it last, and settle the
