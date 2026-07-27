@@ -39,11 +39,6 @@ counting item below builds on it.
       vertex set directly is invalid here: `degree` is relative to the ambient set, so inserting a
       vertex changes the degrees of the vertices already counted.
 
-- [ ] Prove degree is invariant under graph isomorphism. `src/simple_graph_iso_degree.ac` has the
-      both inclusions of the neighborhood-image equality, each verified. Only the assembly into a
-      set equality fails. Naming the sets as definitions, splitting into implications, explicit `if`
-      blocks, and the `contains`-based extensionality were all tried without effect; look at how the
-      library assembles set equalities elsewhere before restructuring the proof again.
 
 ## Domination
 
