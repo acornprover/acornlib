@@ -23,9 +23,11 @@ was no numeric cardinality at all, only the predicate, so nothing countable coul
 counting item below builds on it.
 
 - [ ] Prove the handshake lemma: the degree sum equals the directed edge count.
-      `src/simple_graph_edges.ac` and `src/simple_graph_degree_sum.ac` supply both sides and the
-      per-vertex correspondence; what remains is partitioning the directed edges by first component
-      and summing, which needs a sum-over-partition lemma the finite-set interface does not have.
+      `src/simple_graph_edges_from_card.ac` proves the per-vertex half: a vertex has exactly as many
+      outgoing directed edges as neighbors. What remains is summing that over the vertex set, which
+      needs a sum-over-fibers lemma. `src/finite_fiber_partition.ac` has the covering and pairwise
+      disjointness of fibers, but indexed by a `List` of values and over `Set` rather than
+      `FiniteSet`, so the bridge to `finite_set_sum` has to be built.
 
 - [ ] Prove degree is invariant under graph isomorphism.
 
