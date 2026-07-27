@@ -109,11 +109,36 @@ Remaining:
 
 ## Zero forcing
 
-No Mathlib counterpart, and the most definitional work in this branch. Do it last, and settle the
-colour-change rule carefully before building on it.
+No Mathlib counterpart, so all of this is original. `src/simple_graph_zero_forcing_rule.ac` has the
+colour-change rule, `src/simple_graph_zero_forcing_closure.ac` the iteration and zero forcing sets,
+`src/simple_graph_zero_forcing_mono.ac` monotonicity, and `src/simple_graph_zero_forcing_number.ac`
+the invariant itself.
 
-- [ ] Define the diamond graph and the diamond-free condition via induced subgraphs.
-- [ ] Add forbidden induced subgraph conditions, stated once and reused.
-- [ ] Define the zero forcing colour-change rule on a vertex subset.
-- [ ] Define the closure of a subset under repeated forcing, and prove it terminates on a finite graph.
-- [ ] Define zero forcing sets and the zero forcing number `Z(G)`.
+The rule is stated through `is_white_neighbor` and a uniqueness clause: a blue vertex forces its
+only white neighbor. Each round colours every forceable vertex at once, which loses nothing against
+the one-at-a-time reading and makes the round a function of the current colouring alone. A set is
+zero forcing when some stage of the iteration reaches the whole vertex set, which needs no bound on
+the number of rounds.
+
+Monotonicity is the one part that is not routine. Colouring more vertices blue removes white
+neighbors, so a force blocked by two white neighbors can become available; it never goes the other
+way, so starting from more blue vertices never reaches fewer.
+
+- [x] Define the zero forcing colour-change rule on a vertex subset.
+- [x] Define the iteration of the rule, and prove each stage stays inside the ambient set, grows,
+      and repeats itself once closed.
+- [x] Define zero forcing sets and the zero forcing number, with minimum zero forcing sets.
+- [x] Prove a superset of a zero forcing set is a zero forcing set.
+
+Remaining:
+
+- [ ] Prove the iteration is stationary after `fs_card(s)` rounds, so `is_zero_forcing_set` can be
+      decided at a fixed stage rather than through an existential. Each non-stationary round adds a
+      vertex, so this is a counting argument over nested subsets.
+- [ ] Define the diamond graph and the diamond-free condition via induced subgraphs. Superseded by
+      the forbidden induced subgraph section above; what remains is building the diamond as an
+      actual four-vertex graph.
+- [ ] Compute the zero forcing number for paths, cycles, and complete graphs. Complete graphs need
+      only cardinality reasoning; paths and cycles wait on those graphs existing.
+- [ ] Relate the zero forcing number to the maximum nullity, which is the reason the invariant was
+      introduced.
