@@ -23,6 +23,11 @@ That keeps the eigenvalue equation pointwise.
       hypotheses are genuinely needed and are stated: the size must be positive, or there is no
       index to point at, and one must differ from zero, or every vector is the zero vector.
 - [x] Prove a matrix is column-stochastic exactly when its transpose is row-stochastic.
+- [x] Add order lemmas for `fin_sum`, which had none: a sum of nonnegative terms is nonnegative,
+      a single term is at most the sum, and sums are monotone in the summand. These live in
+      `src/fin_sum_order.ac` and are general rather than matrix specific.
+- [x] Prove every entry of a stochastic matrix is at most one, and the row and column sums of a
+      nonnegative matrix are nonnegative.
 
 Remaining:
 
@@ -31,10 +36,9 @@ Remaining:
       above. This is the missing bridge, and everything below waits on it.
 - [ ] Prove the spectrum is invariant under similarity. This needs matrix inverses, which
       `src/fin_matrix.ac` does not supply.
-- [ ] Prove every eigenvalue of a row-stochastic matrix has modulus at most one. The natural proof
-      picks the largest entry of an eigenvector and bounds the corresponding row, which needs
-      `fin_sum` term bounds: that a single term is at most the sum when all terms are nonnegative.
-      `src/fin_sum.ac` has no order lemmas at all, so that is the first thing to add.
-- [ ] Prove every entry of a stochastic matrix is at most one. Same missing `fin_sum` term bound.
+- [ ] Prove every eigenvalue of a row-stochastic matrix has modulus at most one. The `fin_sum` term
+      bound this was waiting on now exists. What remains is the argument itself: pick an index where
+      the eigenvector attains its largest absolute value and bound that row. That needs a maximum
+      over `Fin[n]`, which nothing supplies, and the triangle inequality for `fin_sum`.
 - [ ] Define regions in the complex plane, and set equality between them.
 - [ ] Prove the characteristic polynomial of a circulant or cyclic family in closed form.
