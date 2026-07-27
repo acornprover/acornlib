@@ -26,29 +26,47 @@ Everything numeric depends on degree, so this comes first.
 was no numeric cardinality at all, only the predicate, so nothing countable could be defined. Every
 counting item below builds on it.
 
-- [ ] Prove the handshake lemma: the degree sum equals the directed edge count.
-      `src/simple_graph_edges_from_card.ac` proves the per-vertex half: a vertex has exactly as many
-      outgoing directed edges as neighbors. What remains is summing that over the vertex set, which
-      needs a sum-over-fibers lemma. `src/finite_set_induction.ac` now supplies the transfer
-      principle - a property holding of every unique-list representation holds of every finite set.
-      `src/finite_set_induction_principle.ac` now supplies induction on finite sets. What remains for
-      the handshake is a sum-over-fibers lemma built with it: partition the directed edges by first
-      component and sum the per-vertex counts. `src/finite_set_unique_induction.ac` supplies
-      `finite_set_strong_induction`, whose step may assume the inserted element is new, which is the
-      form a counting argument needs. Note that induction on the
-      vertex set directly is invalid here: `degree` is relative to the ambient set, so inserting a
-      vertex changes the degrees of the vertices already counted.
+- [x] Prove the handshake lemma: the degree sum equals the directed edge count. Done in
+      `src/simple_graph_handshake.ac`. Getting there needed finite-set induction, which did not
+      exist; see `src/finite_set_induction_principle.ac` and `src/finite_set_unique_induction.ac`.
+      Note that induction on the vertex set directly is invalid: `degree` is relative to the ambient
+      set, so inserting a vertex changes the degrees of the vertices already counted. The induction
+      runs over a subset with the ambient set held fixed.
 
+- [x] Prove degree is invariant under graph isomorphism. Done in `src/simple_graph_iso_degree.ac`.
+      What made the neighborhood-image set equality go through was isolating the pointwise
+      biconditional as its own theorem, so it is a small standalone goal rather than a step inside a
+      quantified block.
 
 ## Domination
 
 No Mathlib counterpart. `src/simple_graph_domination.ac` has `is_dominated`, `is_dominating_set`,
 their `_apply`/`_intro` lemmas, the witness lemmas for `has_neighbor_in`, and monotonicity in both
-the dominating set and the ambient set.
+the dominating set and the ambient set. `src/simple_graph_domination_number.ac` defines the
+domination number as the least `fs_card` over dominating subsets, well defined because the ambient
+set dominates itself. `src/simple_graph_minimum_dominating.ac` has minimum dominating sets and the
+uniqueness condition, `src/simple_graph_domination_extremes.ac` the extremal graphs,
+`src/simple_graph_independent_domination.ac` the link to independence, and
+`src/simple_graph_domination_monotone.ac` the behaviour under adding edges.
 
-- [ ] Define the domination number `gamma(G)` as the least `fs_card` over dominating subsets.
-- [ ] Define uniqueness of a minimum dominating set.
-- [ ] Compute `gamma` for complete, empty, path, and cycle graphs.
+- [x] Define the domination number as the least `fs_card` over dominating subsets.
+- [x] Define minimum dominating sets and uniqueness of one.
+- [x] Compute the domination number for the complete and empty graphs: every vertex is needed when
+      there are no edges, and one suffices when all edges are present.
+- [x] Prove a maximal independent set is dominating, so the domination number is at most the size of
+      any independent dominating set.
+- [x] Prove the domination number cannot rise when edges are added, and that the complete graph
+      minimises it.
+
+Remaining:
+
+- [ ] Compute the domination number for path and cycle graphs. This waits on those graphs existing
+      as finite graphs; `src/simple_graph.ac` has only the empty, complete, and induced
+      constructions.
+- [ ] Define the independent domination number as the least `fs_card` over independent dominating
+      sets, and prove it is at least the domination number.
+- [ ] Prove a minimal dominating set of a graph without isolated vertices has a dominating
+      complement, which gives the classical bound of half the vertices.
 
 ## Bipartite structure
 
