@@ -39,7 +39,9 @@ counting item below builds on it.
       vertex set directly is invalid here: `degree` is relative to the ambient set, so inserting a
       vertex changes the degrees of the vertices already counted.
 
-- [ ] Prove degree is invariant under graph isomorphism.
+- [ ] Prove degree is invariant under graph isomorphism. `src/simple_graph_iso_degree.ac` has the
+      forward and backward adjacency lemmas; the neighborhood-image equality times out on term size,
+      not on missing facts, so name the two sets as definitions before retrying.
 
 ## Domination
 
