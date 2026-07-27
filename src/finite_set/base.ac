@@ -1,11 +1,16 @@
-from nat import Nat
-from list import List
+from nat import Nat, add_assoc, add_cancels_left, add_comm, add_imp_sub, add_sub,
+    lte_suc_suc, sub_lt
+from list import List, list_contains_has_greatest, list_contains_has_least,
+    list_contains_has_maximal, list_contains_has_minimal
 from list import pigeonhole_map_into_list
 from functions import compose, identity_fn, Inhabited, inverse_fn, is_bijection_fn,
     is_injective_fn, bijection_fn_is_injective
-from logic import exists_intro
+from logic import exists_intro, and_assoc, and_or_distrib_right, eq_false_intro
+from order import LinearOrder, PartialOrder, lte_refl, lte_antisymm, lte_trans, min_is_one, max_is_one,
+    min_lte_left, min_lte_right, lte_max_left, lte_max_right
 from set import Set, set_ext, finite_constraint, functional_insert, functional_remove,
-    empty_set_contains_eq, subset_contains, subset_refl, subset_trans,
+    empty_set_contains_eq, singleton_contains_eq, singleton_set_cardinality_is_one,
+    subset_contains, subset_refl, subset_trans,
     subset_antisymm, empty_set_is_always_subset, union_contains_eq,
     intersection_contains_eq, difference_contains_eq, sets_subset_union,
     sets_subset_contain_union, sets_subset_intersection, set_supset_contains_intersection,
@@ -28,7 +33,7 @@ from set import Set, set_ext, finite_constraint, functional_insert, functional_r
     intersection_is_disjoint_difference, intersection_union_difference_is_self,
     intersection_difference_cardinality_adds, difference_cardinality_is_sub_intersection,
     intersection_cardinality_is_sub_difference, inclusion_exclusion,
-    cardinality_is_well_defined, cardinality_is_smallest_cardinality,
+    cardinality_always_exists, cardinality_is_well_defined, cardinality_is_smallest_cardinality,
     cardinality_is_implies_is_finite
 from witness import exists_unique, exists_unique_exists, exists_unique_eq,
     set_witness_predicate, set_witness_contains, set_witness_property,
@@ -107,6 +112,20 @@ theorem finite_set_ext[T](a: FiniteSet[T], b: FiniteSet[T]) {
     a.underlying_set = b.underlying_set implies a = b
 }
 
+/// Finite sets with the same elements are equal.
+theorem finite_set_ext_contains[T](a: FiniteSet[T], b: FiniteSet[T]) {
+    (forall(x: T) {
+        a.underlying_set.contains(x) = b.underlying_set.contains(x)
+    }) implies a = b
+} by {
+    if forall(x: T) {
+        a.underlying_set.contains(x) = b.underlying_set.contains(x)
+    } {
+        set_ext(a.underlying_set, b.underlying_set)
+        finite_set_ext(a, b)
+    }
+}
+
 /// Equal finite sets have equal underlying sets.
 theorem finite_set_eq_underlying_set[T](a: FiniteSet[T], b: FiniteSet[T]) {
     a = b implies a.underlying_set = b.underlying_set
@@ -117,7 +136,6 @@ theorem finite_set_eq_underlying_contains_at[T](a: FiniteSet[T], b: FiniteSet[T]
     a = b implies a.underlying_set.contains(x) = b.underlying_set.contains(x)
 } by {
     if a = b {
-        a.underlying_set = b.underlying_set
         a.underlying_set.contains(x) = b.underlying_set.contains(x)
     }
 }
@@ -218,7 +236,21 @@ theorem finite_set_empty_contains_eq[T](x: T) {
 } by {
     FiniteSet.empty[T].underlying_set = Set[T].empty_set
     empty_set_contains_eq[T](x)
-    FiniteSet.empty[T].contains(x) = (Set[T].empty_set).contains(x)
+}
+
+/// Membership in a singleton finite set is equality with its element.
+theorem finite_set_singleton_contains_eq[T](a: T, x: T) {
+    fs_insert(FiniteSet.empty[T], a).contains(x) = (x = a)
+} by {
+    fs_insert(FiniteSet.empty[T], a).underlying_set =
+        FiniteSet.empty[T].underlying_set.insert(a)
+    FiniteSet.empty[T].underlying_set = Set[T].empty_set
+    insert_eq_union_singleton(Set[T].empty_set, a)
+    union_comm(Set[T].empty_set, Set[T].singleton(a))
+    union_with_empty_is_self(Set[T].singleton(a))
+    fs_insert(FiniteSet.empty[T], a).underlying_set = Set[T].singleton(a)
+    singleton_contains_eq(a, x)
+    fs_insert(FiniteSet.empty[T], a).contains(x) = (x = a)
 }
 
 /// Membership in a finite-set union is membership in either finite set.
@@ -227,10 +259,6 @@ theorem finite_set_union_contains_eq[T](a: FiniteSet[T], b: FiniteSet[T], x: T) 
 } by {
     fs_union(a, b).underlying_set = a.underlying_set.union(b.underlying_set)
     union_contains_eq(a.underlying_set, b.underlying_set, x)
-    fs_union(a, b).contains(x) =
-        (a.underlying_set.contains(x) or b.underlying_set.contains(x))
-    a.contains(x) = a.underlying_set.contains(x)
-    b.contains(x) = b.underlying_set.contains(x)
 }
 
 /// Membership in a finite-set intersection is membership in both finite sets.
@@ -239,10 +267,6 @@ theorem finite_set_intersection_contains_eq[T](a: FiniteSet[T], b: FiniteSet[T],
 } by {
     fs_intersection(a, b).underlying_set = a.underlying_set.intersection(b.underlying_set)
     intersection_contains_eq(a.underlying_set, b.underlying_set, x)
-    fs_intersection(a, b).contains(x) =
-        (a.underlying_set.contains(x) and b.underlying_set.contains(x))
-    a.contains(x) = a.underlying_set.contains(x)
-    b.contains(x) = b.underlying_set.contains(x)
 }
 
 /// Membership in a finite-set difference is membership in the left finite set and not the right one.
@@ -251,10 +275,6 @@ theorem finite_set_difference_contains_eq[T](a: FiniteSet[T], b: FiniteSet[T], x
 } by {
     fs_difference(a, b).underlying_set = a.underlying_set.difference(b.underlying_set)
     difference_contains_eq(a.underlying_set, b.underlying_set, x)
-    fs_difference(a, b).contains(x) =
-        (a.underlying_set.contains(x) and not b.underlying_set.contains(x))
-    a.contains(x) = a.underlying_set.contains(x)
-    b.contains(x) = b.underlying_set.contains(x)
 }
 
 /// A finite subset carries membership into the finite superset.
@@ -262,7 +282,6 @@ theorem finite_set_subset_contains[T](a: FiniteSet[T], b: FiniteSet[T], x: T) {
     a.subset_eq(b) and a.contains(x) implies b.contains(x)
 } by {
     if a.subset_eq(b) and a.contains(x) {
-        a.underlying_set.subset(b.underlying_set)
         a.underlying_set.contains(x)
         subset_contains(a.underlying_set, b.underlying_set, x)
         b.underlying_set.contains(x)
@@ -282,10 +301,8 @@ theorem finite_set_subset_trans[T](a: FiniteSet[T], b: FiniteSet[T], c: FiniteSe
     a.subset_eq(b) and b.subset_eq(c) implies a.subset_eq(c)
 } by {
     if a.subset_eq(b) and b.subset_eq(c) {
-        a.underlying_set.subset(b.underlying_set)
         b.underlying_set.subset(c.underlying_set)
         subset_trans(a.underlying_set, b.underlying_set, c.underlying_set)
-        a.underlying_set.subset(c.underlying_set)
         a.subset_eq(c)
     }
 }
@@ -295,10 +312,8 @@ theorem finite_set_subset_antisymm[T](a: FiniteSet[T], b: FiniteSet[T]) {
     a.subset_eq(b) and b.subset_eq(a) implies a = b
 } by {
     if a.subset_eq(b) and b.subset_eq(a) {
-        a.underlying_set.subset(b.underlying_set)
         b.underlying_set.subset(a.underlying_set)
         subset_antisymm(a.underlying_set, b.underlying_set)
-        a.underlying_set = b.underlying_set
         finite_set_ext(a, b)
         a = b
     }
@@ -312,35 +327,47 @@ theorem finite_set_empty_subset[T](s: FiniteSet[T]) {
     empty_set_is_always_subset(s.underlying_set)
 }
 
+/// The left operand is contained in a finite-set union.
+theorem finite_set_subset_union_left[T](a: FiniteSet[T], b: FiniteSet[T]) {
+    a.subset_eq(fs_union(a, b))
+} by {
+    fs_union(a, b).underlying_set = a.underlying_set.union(b.underlying_set)
+    sets_subset_union(a.underlying_set, b.underlying_set)
+    a.underlying_set.subset(a.underlying_set.union(b.underlying_set))
+    a.subset_eq(fs_union(a, b))
+}
+
+/// The right operand is contained in a finite-set union.
+theorem finite_set_subset_union_right[T](a: FiniteSet[T], b: FiniteSet[T]) {
+    b.subset_eq(fs_union(a, b))
+} by {
+    fs_union(a, b).underlying_set = a.underlying_set.union(b.underlying_set)
+    sets_subset_union(a.underlying_set, b.underlying_set)
+    b.underlying_set.subset(a.underlying_set.union(b.underlying_set))
+    b.subset_eq(fs_union(a, b))
+}
+
 /// A finite-set union is contained in a finite set exactly when both parts are contained in it.
 theorem finite_set_union_subset_eq[T](a: FiniteSet[T], b: FiniteSet[T], c: FiniteSet[T]) {
     fs_union(a, b).subset_eq(c) = (a.subset_eq(c) and b.subset_eq(c))
 } by {
     if fs_union(a, b).subset_eq(c) {
         fs_union(a, b).underlying_set = a.underlying_set.union(b.underlying_set)
-        a.underlying_set.union(b.underlying_set).subset(c.underlying_set)
         sets_subset_union(a.underlying_set, b.underlying_set)
-        a.underlying_set.subset(a.underlying_set.union(b.underlying_set))
-        b.underlying_set.subset(a.underlying_set.union(b.underlying_set))
         subset_trans(a.underlying_set, a.underlying_set.union(b.underlying_set), c.underlying_set)
         subset_trans(b.underlying_set, a.underlying_set.union(b.underlying_set), c.underlying_set)
         a.underlying_set.subset(c.underlying_set)
         b.underlying_set.subset(c.underlying_set)
-        a.subset_eq(c)
         b.subset_eq(c)
         a.subset_eq(c) and b.subset_eq(c)
     }
     if a.subset_eq(c) and b.subset_eq(c) {
-        a.underlying_set.subset(c.underlying_set)
         b.underlying_set.subset(c.underlying_set)
         sets_subset_contain_union(a.underlying_set, b.underlying_set, c.underlying_set)
         a.underlying_set.union(b.underlying_set).subset(c.underlying_set)
         fs_union(a, b).underlying_set = a.underlying_set.union(b.underlying_set)
         fs_union(a, b).subset_eq(c)
     }
-    fs_union(a, b).subset_eq(c) implies a.subset_eq(c) and b.subset_eq(c)
-    (a.subset_eq(c) and b.subset_eq(c)) implies fs_union(a, b).subset_eq(c)
-    fs_union(a, b).subset_eq(c) = (a.subset_eq(c) and b.subset_eq(c))
 }
 
 /// A finite set is contained in an intersection exactly when it is contained in both finite sets.
@@ -349,22 +376,15 @@ theorem finite_set_subset_intersection_eq[T](a: FiniteSet[T], b: FiniteSet[T], c
 } by {
     if c.subset_eq(fs_intersection(a, b)) {
         fs_intersection(a, b).underlying_set = a.underlying_set.intersection(b.underlying_set)
-        c.underlying_set.subset(a.underlying_set.intersection(b.underlying_set))
         sets_subset_intersection(a.underlying_set, b.underlying_set)
-        a.underlying_set.intersection(b.underlying_set).subset(a.underlying_set)
-        a.underlying_set.intersection(b.underlying_set).subset(b.underlying_set)
         subset_trans(c.underlying_set, a.underlying_set.intersection(b.underlying_set), a.underlying_set)
         subset_trans(c.underlying_set, a.underlying_set.intersection(b.underlying_set), b.underlying_set)
         c.underlying_set.subset(a.underlying_set)
         c.underlying_set.subset(b.underlying_set)
-        c.subset_eq(a)
         c.subset_eq(b)
         c.subset_eq(a) and c.subset_eq(b)
     }
     if c.subset_eq(a) and c.subset_eq(b) {
-        c.underlying_set.subset(a.underlying_set)
-        c.underlying_set.subset(b.underlying_set)
-        a.underlying_set.superset(c.underlying_set)
         b.underlying_set.superset(c.underlying_set)
         set_supset_contains_intersection(a.underlying_set, b.underlying_set, c.underlying_set)
         a.underlying_set.intersection(b.underlying_set).superset(c.underlying_set)
@@ -372,9 +392,6 @@ theorem finite_set_subset_intersection_eq[T](a: FiniteSet[T], b: FiniteSet[T], c
         fs_intersection(a, b).underlying_set = a.underlying_set.intersection(b.underlying_set)
         c.subset_eq(fs_intersection(a, b))
     }
-    c.subset_eq(fs_intersection(a, b)) implies c.subset_eq(a) and c.subset_eq(b)
-    (c.subset_eq(a) and c.subset_eq(b)) implies c.subset_eq(fs_intersection(a, b))
-    c.subset_eq(fs_intersection(a, b)) = (c.subset_eq(a) and c.subset_eq(b))
 }
 
 /// Finite-set union is commutative.
@@ -384,7 +401,6 @@ theorem finite_set_union_comm[T](a: FiniteSet[T], b: FiniteSet[T]) {
     fs_union(a, b).underlying_set = a.underlying_set.union(b.underlying_set)
     fs_union(b, a).underlying_set = b.underlying_set.union(a.underlying_set)
     union_comm(a.underlying_set, b.underlying_set)
-    fs_union(a, b).underlying_set = fs_union(b, a).underlying_set
     finite_set_ext(fs_union(a, b), fs_union(b, a))
 }
 
@@ -395,8 +411,89 @@ theorem finite_set_intersection_comm[T](a: FiniteSet[T], b: FiniteSet[T]) {
     fs_intersection(a, b).underlying_set = a.underlying_set.intersection(b.underlying_set)
     fs_intersection(b, a).underlying_set = b.underlying_set.intersection(a.underlying_set)
     intersection_comm(a.underlying_set, b.underlying_set)
-    fs_intersection(a, b).underlying_set = fs_intersection(b, a).underlying_set
     finite_set_ext(fs_intersection(a, b), fs_intersection(b, a))
+}
+
+/// Finite-set intersection is associative.
+theorem finite_set_intersection_assoc[T](a: FiniteSet[T], b: FiniteSet[T], c: FiniteSet[T]) {
+    fs_intersection(fs_intersection(a, b), c) =
+        fs_intersection(a, fs_intersection(b, c))
+} by {
+    forall(x: T) {
+        finite_set_intersection_contains_eq(fs_intersection(a, b), c, x)
+        finite_set_intersection_contains_eq(a, b, x)
+        finite_set_intersection_contains_eq(a, fs_intersection(b, c), x)
+        finite_set_intersection_contains_eq(b, c, x)
+        and_assoc(a.contains(x), b.contains(x), c.contains(x))
+        fs_intersection(fs_intersection(a, b), c).contains(x) =
+            fs_intersection(a, fs_intersection(b, c)).contains(x)
+    }
+    finite_set_ext_contains(
+        fs_intersection(fs_intersection(a, b), c),
+        fs_intersection(a, fs_intersection(b, c)))
+}
+
+/// Intersection distributes over finite-set union.
+theorem finite_set_intersection_union_distrib[T](
+    a: FiniteSet[T], b: FiniteSet[T], c: FiniteSet[T]
+) {
+    fs_intersection(fs_union(a, b), c) =
+        fs_union(fs_intersection(a, c), fs_intersection(b, c))
+} by {
+    forall(x: T) {
+        finite_set_intersection_contains_eq(fs_union(a, b), c, x)
+        finite_set_union_contains_eq(a, b, x)
+        finite_set_union_contains_eq(fs_intersection(a, c), fs_intersection(b, c), x)
+        finite_set_intersection_contains_eq(a, c, x)
+        finite_set_intersection_contains_eq(b, c, x)
+        and_or_distrib_right(a.contains(x), b.contains(x), c.contains(x))
+        fs_intersection(fs_union(a, b), c).contains(x) =
+            fs_union(fs_intersection(a, c), fs_intersection(b, c)).contains(x)
+    }
+    finite_set_ext_contains(
+        fs_intersection(fs_union(a, b), c),
+        fs_union(fs_intersection(a, c), fs_intersection(b, c)))
+}
+
+/// Intersecting two intersections with a common finite set gives their triple intersection.
+theorem finite_set_pair_intersections[T](
+    a: FiniteSet[T], b: FiniteSet[T], c: FiniteSet[T]
+) {
+    fs_intersection(fs_intersection(a, c), fs_intersection(b, c)) =
+        fs_intersection(fs_intersection(a, b), c)
+} by {
+    forall(x: T) {
+        finite_set_intersection_contains_eq(fs_intersection(a, c), fs_intersection(b, c), x)
+        finite_set_intersection_contains_eq(a, c, x)
+        finite_set_intersection_contains_eq(b, c, x)
+        finite_set_intersection_contains_eq(fs_intersection(a, b), c, x)
+        finite_set_intersection_contains_eq(a, b, x)
+        if a.contains(x) {
+            if b.contains(x) {
+                if c.contains(x) {
+                    fs_intersection(fs_intersection(a, c), fs_intersection(b, c)).contains(x) =
+                        fs_intersection(fs_intersection(a, b), c).contains(x)
+                } else {
+                    not c.contains(x)
+                    fs_intersection(fs_intersection(a, c), fs_intersection(b, c)).contains(x) =
+                        fs_intersection(fs_intersection(a, b), c).contains(x)
+                }
+            } else {
+                not b.contains(x)
+                fs_intersection(fs_intersection(a, c), fs_intersection(b, c)).contains(x) =
+                    fs_intersection(fs_intersection(a, b), c).contains(x)
+            }
+        } else {
+            not a.contains(x)
+            fs_intersection(fs_intersection(a, c), fs_intersection(b, c)).contains(x) =
+                fs_intersection(fs_intersection(a, b), c).contains(x)
+        }
+        fs_intersection(fs_intersection(a, c), fs_intersection(b, c)).contains(x) =
+            fs_intersection(fs_intersection(a, b), c).contains(x)
+    }
+    finite_set_ext_contains(
+        fs_intersection(fs_intersection(a, c), fs_intersection(b, c)),
+        fs_intersection(fs_intersection(a, b), c))
 }
 
 /// Finite-set union is idempotent.
@@ -405,7 +502,6 @@ theorem finite_set_union_idemp[T](s: FiniteSet[T]) {
 } by {
     fs_union(s, s).underlying_set = s.underlying_set.union(s.underlying_set)
     union_idemp(s.underlying_set)
-    fs_union(s, s).underlying_set = s.underlying_set
     finite_set_ext(fs_union(s, s), s)
 }
 
@@ -415,7 +511,6 @@ theorem finite_set_intersection_idemp[T](s: FiniteSet[T]) {
 } by {
     fs_intersection(s, s).underlying_set = s.underlying_set.intersection(s.underlying_set)
     intersection_idemp(s.underlying_set)
-    fs_intersection(s, s).underlying_set = s.underlying_set
     finite_set_ext(fs_intersection(s, s), s)
 }
 
@@ -427,7 +522,6 @@ theorem finite_set_union_empty_right[T](s: FiniteSet[T]) {
         s.underlying_set.union(FiniteSet.empty[T].underlying_set)
     FiniteSet.empty[T].underlying_set = Set[T].empty_set
     union_with_empty_is_self(s.underlying_set)
-    fs_union(s, FiniteSet.empty[T]).underlying_set = s.underlying_set
     finite_set_ext(fs_union(s, FiniteSet.empty[T]), s)
 }
 
@@ -439,8 +533,6 @@ theorem finite_set_intersection_empty_right[T](s: FiniteSet[T]) {
         s.underlying_set.intersection(FiniteSet.empty[T].underlying_set)
     FiniteSet.empty[T].underlying_set = Set[T].empty_set
     intersection_with_empty_is_empty(s.underlying_set)
-    fs_intersection(s, FiniteSet.empty[T]).underlying_set = Set[T].empty_set
-    fs_intersection(s, FiniteSet.empty[T]).underlying_set = FiniteSet.empty[T].underlying_set
     finite_set_ext(fs_intersection(s, FiniteSet.empty[T]), FiniteSet.empty[T])
 }
 
@@ -456,10 +548,6 @@ theorem finite_set_image_contains_eq[T, U](s: FiniteSet[T], f: T -> U, y: U) {
         let x: T satisfy {
             s.underlying_set.contains(x) and y = f(x)
         }
-        s.contains(x)
-        exists(z: T) {
-            z = x and s.contains(z) and y = f(z)
-        }
         fs_image(s, f).contains(y) = exists(z: T) {
             s.contains(z) and y = f(z)
         }
@@ -473,7 +561,6 @@ theorem finite_set_image_contains_eq[T, U](s: FiniteSet[T], f: T -> U, y: U) {
             set_image(s.underlying_set, f).contains(f(x))
             set_image(s.underlying_set, f).contains(y)
             fs_image(s, f).underlying_set = set_image(s.underlying_set, f)
-            fs_image(s, f).contains(y)
             false
         }
         fs_image(s, f).contains(y) = exists(x: T) {
@@ -502,9 +589,6 @@ theorem finite_set_maps_into_image[T, U](s: FiniteSet[T], f: T -> U, x: T) {
 } by {
     if s.contains(x) {
         finite_set_image_contains_eq(s, f, f(x))
-        exists(z: T) {
-            z = x and s.contains(z) and f(x) = f(z)
-        }
         fs_image(s, f).contains(f(x))
     }
 }
@@ -516,9 +600,7 @@ theorem finite_set_image_empty[T, U](f: T -> U) {
     FiniteSet.empty[T].underlying_set = Set[T].empty_set
     fs_image(FiniteSet.empty[T], f).underlying_set = set_image(Set[T].empty_set, f)
     set_image_empty(f)
-    set_image(Set[T].empty_set, f) = Set[U].empty_set
     FiniteSet.empty[U].underlying_set = Set[U].empty_set
-    fs_image(FiniteSet.empty[T], f).underlying_set = FiniteSet.empty[U].underlying_set
     finite_set_ext(fs_image(FiniteSet.empty[T], f), FiniteSet.empty[U])
 }
 
@@ -549,9 +631,6 @@ theorem finite_set_image_singleton[T, U](a: T, f: T -> U) {
     fs_image(fs_insert(FiniteSet.empty[T], a), f).underlying_set =
         set_image(fs_insert(FiniteSet.empty[T], a).underlying_set, f)
     set_image_singleton(a, f)
-    fs_image(fs_insert(FiniteSet.empty[T], a), f).underlying_set = Set[U].singleton(f(a))
-    fs_image(fs_insert(FiniteSet.empty[T], a), f).underlying_set =
-        fs_insert(FiniteSet.empty[U], f(a)).underlying_set
     finite_set_ext(fs_image(fs_insert(FiniteSet.empty[T], a), f),
         fs_insert(FiniteSet.empty[U], f(a)))
 }
@@ -578,7 +657,6 @@ theorem finite_set_image_union[T, U](a: FiniteSet[T], b: FiniteSet[T], f: T -> U
     let right = fs_union(fs_image(a, f), fs_image(b, f))
     forall(y: U) {
         if left.underlying_set.contains(y) {
-            left.contains(y)
             finite_set_image_contains_witness(fs_union(a, b), f, y)
             let x: T satisfy {
                 fs_union(a, b).contains(x) and y = f(x)
@@ -586,12 +664,9 @@ theorem finite_set_image_union[T, U](a: FiniteSet[T], b: FiniteSet[T], f: T -> U
             finite_set_union_contains_eq(a, b, x)
             if a.contains(x) {
                 finite_set_maps_into_image(a, f, x)
-                fs_image(a, f).contains(f(x))
                 fs_image(a, f).contains(y)
             } else {
-                b.contains(x)
                 finite_set_maps_into_image(b, f, x)
-                fs_image(b, f).contains(f(x))
                 fs_image(b, f).contains(y)
             }
             finite_set_union_contains_eq(fs_image(a, f), fs_image(b, f), y)
@@ -599,7 +674,6 @@ theorem finite_set_image_union[T, U](a: FiniteSet[T], b: FiniteSet[T], f: T -> U
             right.underlying_set.contains(y)
         }
         if right.underlying_set.contains(y) {
-            right.contains(y)
             finite_set_union_contains_eq(fs_image(a, f), fs_image(b, f), y)
             if fs_image(a, f).contains(y) {
                 finite_set_image_contains_witness(a, f, y)
@@ -607,20 +681,15 @@ theorem finite_set_image_union[T, U](a: FiniteSet[T], b: FiniteSet[T], f: T -> U
                     a.contains(x) and y = f(x)
                 }
                 finite_set_union_contains_eq(a, b, x)
-                fs_union(a, b).contains(x)
                 finite_set_maps_into_image(fs_union(a, b), f, x)
-                fs_image(fs_union(a, b), f).contains(f(x))
                 left.contains(y)
             } else {
-                fs_image(b, f).contains(y)
                 finite_set_image_contains_witness(b, f, y)
                 let x: T satisfy {
                     b.contains(x) and y = f(x)
                 }
                 finite_set_union_contains_eq(a, b, x)
-                fs_union(a, b).contains(x)
                 finite_set_maps_into_image(fs_union(a, b), f, x)
-                fs_image(fs_union(a, b), f).contains(f(x))
                 left.contains(y)
             }
             left.underlying_set.contains(y)
@@ -641,7 +710,6 @@ theorem finite_set_image_compose[A, B, C](s: FiniteSet[A], g: A -> B, f: B -> C)
     let right = fs_image(s, compose(f, g))
     forall(y: C) {
         if left.underlying_set.contains(y) {
-            left.contains(y)
             finite_set_image_contains_witness(image_g, f, y)
             let z: B satisfy {
                 image_g.contains(z) and y = f(z)
@@ -650,7 +718,6 @@ theorem finite_set_image_compose[A, B, C](s: FiniteSet[A], g: A -> B, f: B -> C)
             let x: A satisfy {
                 s.contains(x) and z = g(x)
             }
-            y = f(g(x))
             compose(f, g, x) = f(g(x))
             y = compose(f, g, x)
             finite_set_maps_into_image(s, compose(f, g), x)
@@ -946,6 +1013,833 @@ theorem finite_set_has_unique_list[T](s: FiniteSet[T]) {
     }
 }
 
+/// A nonempty finite subset of a linear order has a least element.
+theorem finite_set_nonempty_has_least[T: LinearOrder](s: FiniteSet[T]) {
+    not s.is_empty implies exists(least: T) {
+        s.contains(least) and forall(item: T) {
+            s.contains(item) implies least <= item
+        }
+    }
+} by {
+    if not s.is_empty {
+        if not exists(item: T) {
+            s.contains(item)
+        } {
+            forall(item: T) {
+                not s.contains(item)
+                not s.underlying_set.contains(item)
+            }
+            s.underlying_set.is_empty
+            s.is_empty = s.underlying_set.is_empty
+            s.is_empty
+            false
+        }
+        let witness: T satisfy {
+            s.contains(witness)
+        }
+        finite_set_has_unique_list(s)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique
+        }
+        fs_from_list(items).contains(witness)
+        fs_from_list(items).underlying_set = list_set(items)
+        list_set(items).contains(witness)
+        list_set_contains_eq(items, witness)
+        items.contains(witness)
+        list_contains_has_least(items, witness)
+        let least: T satisfy {
+            items.contains(least) and forall(item: T) {
+                items.contains(item) implies least <= item
+            }
+        }
+        list_set_contains_eq(items, least)
+        list_set(items).contains(least)
+        fs_from_list(items).contains(least)
+        s.contains(least)
+        forall(item: T) {
+            if s.contains(item) {
+                fs_from_list(items).contains(item)
+                list_set(items).contains(item)
+                list_set_contains_eq(items, item)
+                items.contains(item)
+                least <= item
+            }
+        }
+        exists(result: T) {
+            result = least and s.contains(result) and forall(item: T) {
+                s.contains(item) implies result <= item
+            }
+        }
+        exists(result: T) {
+            s.contains(result) and forall(item: T) {
+                s.contains(item) implies result <= item
+            }
+        }
+    }
+}
+
+/// A nonempty finite subset of a linear order has a greatest element.
+theorem finite_set_nonempty_has_greatest[T: LinearOrder](s: FiniteSet[T]) {
+    not s.is_empty implies exists(greatest: T) {
+        s.contains(greatest) and forall(item: T) {
+            s.contains(item) implies item <= greatest
+        }
+    }
+} by {
+    if not s.is_empty {
+        if not exists(item: T) {
+            s.contains(item)
+        } {
+            forall(item: T) {
+                not s.contains(item)
+                not s.underlying_set.contains(item)
+            }
+            s.underlying_set.is_empty
+            s.is_empty = s.underlying_set.is_empty
+            s.is_empty
+            false
+        }
+        let witness: T satisfy {
+            s.contains(witness)
+        }
+        finite_set_has_unique_list(s)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique
+        }
+        fs_from_list(items).contains(witness)
+        fs_from_list(items).underlying_set = list_set(items)
+        list_set(items).contains(witness)
+        list_set_contains_eq(items, witness)
+        items.contains(witness)
+        list_contains_has_greatest(items, witness)
+        let greatest: T satisfy {
+            items.contains(greatest) and forall(item: T) {
+                items.contains(item) implies item <= greatest
+            }
+        }
+        list_set_contains_eq(items, greatest)
+        list_set(items).contains(greatest)
+        fs_from_list(items).contains(greatest)
+        s.contains(greatest)
+        forall(item: T) {
+            if s.contains(item) {
+                fs_from_list(items).contains(item)
+                list_set(items).contains(item)
+                list_set_contains_eq(items, item)
+                items.contains(item)
+                item <= greatest
+            }
+        }
+        exists(result: T) {
+            result = greatest and s.contains(result) and forall(item: T) {
+                s.contains(item) implies item <= result
+            }
+        }
+        exists(result: T) {
+            s.contains(result) and forall(item: T) {
+                s.contains(item) implies item <= result
+            }
+        }
+    }
+}
+
+/// A nonempty finite subset of a partial order has a maximal element.
+theorem finite_set_nonempty_has_maximal[T: PartialOrder](s: FiniteSet[T]) {
+    not s.is_empty implies exists(maximal: T) {
+        s.contains(maximal) and forall(item: T) {
+            s.contains(item) and maximal <= item implies item = maximal
+        }
+    }
+} by {
+    if not s.is_empty {
+        if not exists(item: T) {
+            s.contains(item)
+        } {
+            forall(item: T) {
+                not s.contains(item)
+                not s.underlying_set.contains(item)
+            }
+            s.underlying_set.is_empty
+            s.is_empty = s.underlying_set.is_empty
+            s.is_empty
+            false
+        }
+        let witness: T satisfy {
+            s.contains(witness)
+        }
+        finite_set_has_unique_list(s)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique
+        }
+        fs_from_list(items).contains(witness)
+        fs_from_list(items).underlying_set = list_set(items)
+        list_set(items).contains(witness)
+        list_set_contains_eq(items, witness)
+        items.contains(witness)
+        list_contains_has_maximal(items, witness)
+        let maximal: T satisfy {
+            items.contains(maximal) and forall(item: T) {
+                items.contains(item) and maximal <= item implies item = maximal
+            }
+        }
+        list_set_contains_eq(items, maximal)
+        list_set(items).contains(maximal)
+        fs_from_list(items).contains(maximal)
+        s.contains(maximal)
+        forall(item: T) {
+            if s.contains(item) and maximal <= item {
+                fs_from_list(items).contains(item)
+                list_set(items).contains(item)
+                list_set_contains_eq(items, item)
+                items.contains(item)
+                item = maximal
+            }
+        }
+        exists(result: T) {
+            result = maximal and s.contains(result) and forall(item: T) {
+                s.contains(item) and result <= item implies item = result
+            }
+        }
+        exists(result: T) {
+            s.contains(result) and forall(item: T) {
+                s.contains(item) and result <= item implies item = result
+            }
+        }
+    }
+}
+
+/// A nonempty finite subset of a partial order has a minimal element.
+theorem finite_set_nonempty_has_minimal[T: PartialOrder](s: FiniteSet[T]) {
+    not s.is_empty implies exists(minimal: T) {
+        s.contains(minimal) and forall(item: T) {
+            s.contains(item) and item <= minimal implies item = minimal
+        }
+    }
+} by {
+    if not s.is_empty {
+        if not exists(item: T) {
+            s.contains(item)
+        } {
+            forall(item: T) {
+                not s.contains(item)
+                not s.underlying_set.contains(item)
+            }
+            s.underlying_set.is_empty
+            s.is_empty = s.underlying_set.is_empty
+            s.is_empty
+            false
+        }
+        let witness: T satisfy {
+            s.contains(witness)
+        }
+        finite_set_has_unique_list(s)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique
+        }
+        fs_from_list(items).contains(witness)
+        fs_from_list(items).underlying_set = list_set(items)
+        list_set(items).contains(witness)
+        list_set_contains_eq(items, witness)
+        items.contains(witness)
+        list_contains_has_minimal(items, witness)
+        let minimal: T satisfy {
+            items.contains(minimal) and forall(item: T) {
+                items.contains(item) and item <= minimal implies item = minimal
+            }
+        }
+        list_set_contains_eq(items, minimal)
+        list_set(items).contains(minimal)
+        fs_from_list(items).contains(minimal)
+        s.contains(minimal)
+        forall(item: T) {
+            if s.contains(item) and item <= minimal {
+                fs_from_list(items).contains(item)
+                list_set(items).contains(item)
+                list_set_contains_eq(items, item)
+                items.contains(item)
+                item = minimal
+            }
+        }
+        exists(result: T) {
+            result = minimal and s.contains(result) and forall(item: T) {
+                s.contains(item) and item <= result implies item = result
+            }
+        }
+        exists(result: T) {
+            s.contains(result) and forall(item: T) {
+                s.contains(item) and item <= result implies item = result
+            }
+        }
+    }
+}
+
+/// Two least elements of a finite subset of a partial order are equal.
+theorem finite_set_least_unique[T: PartialOrder](s: FiniteSet[T], a: T, b: T) {
+    s.contains(a) and s.contains(b) and
+    (forall(item: T) { s.contains(item) implies a <= item }) and
+    (forall(item: T) { s.contains(item) implies b <= item })
+    implies a = b
+} by {
+    if s.contains(a) and s.contains(b) and
+        (forall(item: T) { s.contains(item) implies a <= item }) and
+        (forall(item: T) { s.contains(item) implies b <= item }) {
+        s.contains(a)
+        s.contains(b)
+        forall(item: T) { s.contains(item) implies a <= item }
+        forall(item: T) { s.contains(item) implies b <= item }
+        s.contains(b) implies a <= b
+        s.contains(a) implies b <= a
+        a <= b
+        b <= a
+        lte_antisymm(a, b)
+        a = b
+    }
+}
+
+/// Two greatest elements of a finite subset of a partial order are equal.
+theorem finite_set_greatest_unique[T: PartialOrder](s: FiniteSet[T], a: T, b: T) {
+    s.contains(a) and s.contains(b) and
+    (forall(item: T) { s.contains(item) implies item <= a }) and
+    (forall(item: T) { s.contains(item) implies item <= b })
+    implies a = b
+} by {
+    if s.contains(a) and s.contains(b) and
+        (forall(item: T) { s.contains(item) implies item <= a }) and
+        (forall(item: T) { s.contains(item) implies item <= b }) {
+        s.contains(a)
+        s.contains(b)
+        forall(item: T) { s.contains(item) implies item <= a }
+        forall(item: T) { s.contains(item) implies item <= b }
+        s.contains(b) implies b <= a
+        s.contains(a) implies a <= b
+        b <= a
+        a <= b
+        lte_antisymm(a, b)
+        a = b
+    }
+}
+
+/// Inclusion reverses the comparison of least elements of finite subsets of a partial order.
+theorem finite_set_least_lte_of_subset[T: PartialOrder](
+    s: FiniteSet[T], t: FiniteSet[T], least_s: T, least_t: T
+) {
+    s.subset_eq(t) and s.contains(least_s) and
+    (forall(item: T) { s.contains(item) implies least_s <= item }) and
+    t.contains(least_t) and
+    (forall(item: T) { t.contains(item) implies least_t <= item })
+    implies least_t <= least_s
+} by {
+    if s.subset_eq(t) and s.contains(least_s) and
+        (forall(item: T) { s.contains(item) implies least_s <= item }) and
+        t.contains(least_t) and
+        (forall(item: T) { t.contains(item) implies least_t <= item }) {
+        finite_set_subset_contains(s, t, least_s)
+        t.contains(least_s)
+        forall(item: T) { t.contains(item) implies least_t <= item }
+        t.contains(least_s) implies least_t <= least_s
+        least_t <= least_s
+    }
+}
+
+/// Inclusion preserves the comparison of greatest elements of finite subsets of a partial order.
+theorem finite_set_greatest_lte_of_subset[T: PartialOrder](
+    s: FiniteSet[T], t: FiniteSet[T], greatest_s: T, greatest_t: T
+) {
+    s.subset_eq(t) and s.contains(greatest_s) and
+    (forall(item: T) { s.contains(item) implies item <= greatest_s }) and
+    t.contains(greatest_t) and
+    (forall(item: T) { t.contains(item) implies item <= greatest_t })
+    implies greatest_s <= greatest_t
+} by {
+    if s.subset_eq(t) and s.contains(greatest_s) and
+        (forall(item: T) { s.contains(item) implies item <= greatest_s }) and
+        t.contains(greatest_t) and
+        (forall(item: T) { t.contains(item) implies item <= greatest_t }) {
+        finite_set_subset_contains(s, t, greatest_s)
+        t.contains(greatest_s)
+        forall(item: T) { t.contains(item) implies item <= greatest_t }
+        t.contains(greatest_s) implies greatest_s <= greatest_t
+        greatest_s <= greatest_t
+    }
+}
+
+/// A least element of a finite subset of a partial order lies below every greatest element.
+theorem finite_set_least_lte_greatest[T: PartialOrder](
+    s: FiniteSet[T], least: T, greatest: T
+) {
+    s.contains(least) and
+    (forall(item: T) { s.contains(item) implies least <= item }) and
+    s.contains(greatest) and
+    (forall(item: T) { s.contains(item) implies item <= greatest })
+    implies least <= greatest
+} by {
+    if s.contains(least) and
+        (forall(item: T) { s.contains(item) implies least <= item }) and
+        s.contains(greatest) and
+        (forall(item: T) { s.contains(item) implies item <= greatest }) {
+        forall(item: T) { s.contains(item) implies least <= item }
+        s.contains(greatest) implies least <= greatest
+        least <= greatest
+    }
+}
+
+/// A nonempty finite subset of a linear order has comparable least and greatest elements.
+theorem finite_set_nonempty_has_least_and_greatest[T: LinearOrder](s: FiniteSet[T]) {
+    not s.is_empty implies exists(least: T, greatest: T) {
+        s.contains(least) and
+        (forall(item: T) { s.contains(item) implies least <= item }) and
+        s.contains(greatest) and
+        (forall(item: T) { s.contains(item) implies item <= greatest }) and
+        least <= greatest
+    }
+} by {
+    if not s.is_empty {
+        finite_set_nonempty_has_least(s)
+        let least: T satisfy {
+            s.contains(least) and forall(item: T) {
+                s.contains(item) implies least <= item
+            }
+        }
+        finite_set_nonempty_has_greatest(s)
+        let greatest: T satisfy {
+            s.contains(greatest) and forall(item: T) {
+                s.contains(item) implies item <= greatest
+            }
+        }
+        finite_set_least_lte_greatest(s, least, greatest)
+        exists(result_least: T, result_greatest: T) {
+            result_least = least and result_greatest = greatest and
+            s.contains(result_least) and
+            (forall(item: T) { s.contains(item) implies result_least <= item }) and
+            s.contains(result_greatest) and
+            (forall(item: T) { s.contains(item) implies item <= result_greatest }) and
+            result_least <= result_greatest
+        }
+        exists(result_least: T, result_greatest: T) {
+            s.contains(result_least) and
+            (forall(item: T) { s.contains(item) implies result_least <= item }) and
+            s.contains(result_greatest) and
+            (forall(item: T) { s.contains(item) implies item <= result_greatest }) and
+            result_least <= result_greatest
+        }
+    }
+}
+
+/// The least element of a finite-set union lies below the least element of its left operand.
+theorem finite_set_union_least_lte_left[T: PartialOrder](
+    s: FiniteSet[T], t: FiniteSet[T], least_s: T, least_union: T
+) {
+    s.contains(least_s) and
+    (forall(item: T) { s.contains(item) implies least_s <= item }) and
+    fs_union(s, t).contains(least_union) and
+    (forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item })
+    implies least_union <= least_s
+} by {
+    if s.contains(least_s) and
+        (forall(item: T) { s.contains(item) implies least_s <= item }) and
+        fs_union(s, t).contains(least_union) and
+        (forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item }) {
+        s.contains(least_s)
+        finite_set_subset_union_left(s, t)
+        finite_set_subset_contains(s, fs_union(s, t), least_s)
+        fs_union(s, t).contains(least_s)
+        forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item }
+        fs_union(s, t).contains(least_s) implies least_union <= least_s
+        least_union <= least_s
+    }
+}
+
+/// The least element of a finite-set union lies below the least element of its right operand.
+theorem finite_set_union_least_lte_right[T: PartialOrder](
+    s: FiniteSet[T], t: FiniteSet[T], least_t: T, least_union: T
+) {
+    t.contains(least_t) and
+    (forall(item: T) { t.contains(item) implies least_t <= item }) and
+    fs_union(s, t).contains(least_union) and
+    (forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item })
+    implies least_union <= least_t
+} by {
+    if t.contains(least_t) and
+        (forall(item: T) { t.contains(item) implies least_t <= item }) and
+        fs_union(s, t).contains(least_union) and
+        (forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item }) {
+        t.contains(least_t)
+        finite_set_subset_union_right(s, t)
+        finite_set_subset_contains(t, fs_union(s, t), least_t)
+        fs_union(s, t).contains(least_t)
+        forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item }
+        fs_union(s, t).contains(least_t) implies least_union <= least_t
+        least_union <= least_t
+    }
+}
+
+/// The greatest element of a finite-set union lies above the greatest element of its left operand.
+theorem finite_set_union_greatest_gte_left[T: PartialOrder](
+    s: FiniteSet[T], t: FiniteSet[T], greatest_s: T, greatest_union: T
+) {
+    s.contains(greatest_s) and
+    (forall(item: T) { s.contains(item) implies item <= greatest_s }) and
+    fs_union(s, t).contains(greatest_union) and
+    (forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union })
+    implies greatest_s <= greatest_union
+} by {
+    if s.contains(greatest_s) and
+        (forall(item: T) { s.contains(item) implies item <= greatest_s }) and
+        fs_union(s, t).contains(greatest_union) and
+        (forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union }) {
+        s.contains(greatest_s)
+        finite_set_subset_union_left(s, t)
+        finite_set_subset_contains(s, fs_union(s, t), greatest_s)
+        fs_union(s, t).contains(greatest_s)
+        forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union }
+        fs_union(s, t).contains(greatest_s) implies greatest_s <= greatest_union
+        greatest_s <= greatest_union
+    }
+}
+
+/// The greatest element of a finite-set union lies above the greatest element of its right operand.
+theorem finite_set_union_greatest_gte_right[T: PartialOrder](
+    s: FiniteSet[T], t: FiniteSet[T], greatest_t: T, greatest_union: T
+) {
+    t.contains(greatest_t) and
+    (forall(item: T) { t.contains(item) implies item <= greatest_t }) and
+    fs_union(s, t).contains(greatest_union) and
+    (forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union })
+    implies greatest_t <= greatest_union
+} by {
+    if t.contains(greatest_t) and
+        (forall(item: T) { t.contains(item) implies item <= greatest_t }) and
+        fs_union(s, t).contains(greatest_union) and
+        (forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union }) {
+        t.contains(greatest_t)
+        finite_set_subset_union_right(s, t)
+        finite_set_subset_contains(t, fs_union(s, t), greatest_t)
+        fs_union(s, t).contains(greatest_t)
+        forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union }
+        fs_union(s, t).contains(greatest_t) implies greatest_t <= greatest_union
+        greatest_t <= greatest_union
+    }
+}
+
+/// The minimum of two least elements belongs to the union of their finite sets.
+theorem finite_set_union_contains_min_of_leasts[T: LinearOrder](
+    s: FiniteSet[T], t: FiniteSet[T], least_s: T, least_t: T
+) {
+    s.contains(least_s) and t.contains(least_t)
+    implies fs_union(s, t).contains(least_s.min(least_t))
+} by {
+    if s.contains(least_s) and t.contains(least_t) {
+        min_is_one(least_s, least_t)
+        if least_s.min(least_t) = least_s {
+            finite_set_union_contains_eq(s, t, least_s)
+            fs_union(s, t).contains(least_s)
+            fs_union(s, t).contains(least_s.min(least_t))
+        } else {
+            least_s.min(least_t) = least_t
+            finite_set_union_contains_eq(s, t, least_t)
+            fs_union(s, t).contains(least_t)
+            fs_union(s, t).contains(least_s.min(least_t))
+        }
+    }
+}
+
+/// The minimum of lower bounds for two finite sets is a lower bound for their union.
+theorem finite_set_union_min_is_lower_bound[T: LinearOrder](
+    s: FiniteSet[T], t: FiniteSet[T], least_s: T, least_t: T
+) {
+    (forall(item: T) { s.contains(item) implies least_s <= item }) and
+    (forall(item: T) { t.contains(item) implies least_t <= item })
+    implies forall(item: T) {
+        fs_union(s, t).contains(item) implies least_s.min(least_t) <= item
+    }
+} by {
+    if (forall(item: T) { s.contains(item) implies least_s <= item }) and
+        (forall(item: T) { t.contains(item) implies least_t <= item }) {
+        forall(item: T) {
+            if fs_union(s, t).contains(item) {
+                finite_set_union_contains_eq(s, t, item)
+                if s.contains(item) {
+                    min_lte_left(least_s, least_t)
+                    s.contains(item) implies least_s <= item
+                    lte_trans(least_s.min(least_t), least_s, item)
+                    least_s.min(least_t) <= item
+                }
+                if t.contains(item) {
+                    min_lte_right(least_s, least_t)
+                    t.contains(item) implies least_t <= item
+                    lte_trans(least_s.min(least_t), least_t, item)
+                    least_s.min(least_t) <= item
+                }
+            }
+        }
+        forall(item: T) {
+            fs_union(s, t).contains(item) implies least_s.min(least_t) <= item
+        }
+    }
+}
+
+/// A least element of a finite-set union is the minimum of the operands' least elements.
+theorem finite_set_union_least_eq_min[T: LinearOrder](
+    s: FiniteSet[T], t: FiniteSet[T], least_s: T, least_t: T, least_union: T
+) {
+    s.contains(least_s) and
+    (forall(item: T) { s.contains(item) implies least_s <= item }) and
+    t.contains(least_t) and
+    (forall(item: T) { t.contains(item) implies least_t <= item }) and
+    fs_union(s, t).contains(least_union) and
+    (forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item })
+    implies least_union = least_s.min(least_t)
+} by {
+    if s.contains(least_s) and
+        (forall(item: T) { s.contains(item) implies least_s <= item }) and
+        t.contains(least_t) and
+        (forall(item: T) { t.contains(item) implies least_t <= item }) and
+        fs_union(s, t).contains(least_union) and
+        (forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item }) {
+        finite_set_union_contains_min_of_leasts(s, t, least_s, least_t)
+        finite_set_union_min_is_lower_bound(s, t, least_s, least_t)
+        fs_union(s, t).contains(least_s.min(least_t))
+        forall(item: T) { fs_union(s, t).contains(item) implies least_union <= item }
+        fs_union(s, t).contains(least_s.min(least_t)) implies least_union <= least_s.min(least_t)
+        least_union <= least_s.min(least_t)
+        forall(item: T) {
+            fs_union(s, t).contains(item) implies least_s.min(least_t) <= item
+        }
+        fs_union(s, t).contains(least_union) implies least_s.min(least_t) <= least_union
+        least_s.min(least_t) <= least_union
+        lte_antisymm(least_union, least_s.min(least_t))
+        least_union = least_s.min(least_t)
+    }
+}
+
+/// The maximum of two greatest elements belongs to the union of their finite sets.
+theorem finite_set_union_contains_max_of_greatests[T: LinearOrder](
+    s: FiniteSet[T], t: FiniteSet[T], greatest_s: T, greatest_t: T
+) {
+    s.contains(greatest_s) and t.contains(greatest_t)
+    implies fs_union(s, t).contains(greatest_s.max(greatest_t))
+} by {
+    if s.contains(greatest_s) and t.contains(greatest_t) {
+        max_is_one(greatest_s, greatest_t)
+        if greatest_s.max(greatest_t) = greatest_s {
+            finite_set_union_contains_eq(s, t, greatest_s)
+            fs_union(s, t).contains(greatest_s)
+            fs_union(s, t).contains(greatest_s.max(greatest_t))
+        } else {
+            greatest_s.max(greatest_t) = greatest_t
+            finite_set_union_contains_eq(s, t, greatest_t)
+            fs_union(s, t).contains(greatest_t)
+            fs_union(s, t).contains(greatest_s.max(greatest_t))
+        }
+    }
+}
+
+/// The maximum of upper bounds for two finite sets is an upper bound for their union.
+theorem finite_set_union_max_is_upper_bound[T: LinearOrder](
+    s: FiniteSet[T], t: FiniteSet[T], greatest_s: T, greatest_t: T
+) {
+    (forall(item: T) { s.contains(item) implies item <= greatest_s }) and
+    (forall(item: T) { t.contains(item) implies item <= greatest_t })
+    implies forall(item: T) {
+        fs_union(s, t).contains(item) implies item <= greatest_s.max(greatest_t)
+    }
+} by {
+    if (forall(item: T) { s.contains(item) implies item <= greatest_s }) and
+        (forall(item: T) { t.contains(item) implies item <= greatest_t }) {
+        forall(item: T) {
+            if fs_union(s, t).contains(item) {
+                finite_set_union_contains_eq(s, t, item)
+                if s.contains(item) {
+                    s.contains(item) implies item <= greatest_s
+                    lte_max_left(greatest_s, greatest_t)
+                    lte_trans(item, greatest_s, greatest_s.max(greatest_t))
+                    item <= greatest_s.max(greatest_t)
+                }
+                if t.contains(item) {
+                    t.contains(item) implies item <= greatest_t
+                    lte_max_right(greatest_s, greatest_t)
+                    lte_trans(item, greatest_t, greatest_s.max(greatest_t))
+                    item <= greatest_s.max(greatest_t)
+                }
+            }
+        }
+        forall(item: T) {
+            fs_union(s, t).contains(item) implies item <= greatest_s.max(greatest_t)
+        }
+    }
+}
+
+/// A greatest element of a finite-set union is the maximum of the operands' greatest elements.
+theorem finite_set_union_greatest_eq_max[T: LinearOrder](
+    s: FiniteSet[T], t: FiniteSet[T], greatest_s: T, greatest_t: T, greatest_union: T
+) {
+    s.contains(greatest_s) and
+    (forall(item: T) { s.contains(item) implies item <= greatest_s }) and
+    t.contains(greatest_t) and
+    (forall(item: T) { t.contains(item) implies item <= greatest_t }) and
+    fs_union(s, t).contains(greatest_union) and
+    (forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union })
+    implies greatest_union = greatest_s.max(greatest_t)
+} by {
+    if s.contains(greatest_s) and
+        (forall(item: T) { s.contains(item) implies item <= greatest_s }) and
+        t.contains(greatest_t) and
+        (forall(item: T) { t.contains(item) implies item <= greatest_t }) and
+        fs_union(s, t).contains(greatest_union) and
+        (forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union }) {
+        finite_set_union_contains_max_of_greatests(s, t, greatest_s, greatest_t)
+        finite_set_union_max_is_upper_bound(s, t, greatest_s, greatest_t)
+        fs_union(s, t).contains(greatest_s.max(greatest_t))
+        forall(item: T) { fs_union(s, t).contains(item) implies item <= greatest_union }
+        fs_union(s, t).contains(greatest_s.max(greatest_t)) implies greatest_s.max(greatest_t) <= greatest_union
+        greatest_s.max(greatest_t) <= greatest_union
+        forall(item: T) {
+            fs_union(s, t).contains(item) implies item <= greatest_s.max(greatest_t)
+        }
+        fs_union(s, t).contains(greatest_union) implies greatest_union <= greatest_s.max(greatest_t)
+        greatest_union <= greatest_s.max(greatest_t)
+        lte_antisymm(greatest_union, greatest_s.max(greatest_t))
+        greatest_union = greatest_s.max(greatest_t)
+    }
+}
+
+/// Every member equals an element which is both least and greatest.
+theorem finite_set_member_eq_of_least_and_greatest[T: PartialOrder](
+    s: FiniteSet[T], extremum: T, item: T
+) {
+    s.contains(extremum) and
+    (forall(member: T) { s.contains(member) implies extremum <= member }) and
+    (forall(member: T) { s.contains(member) implies member <= extremum }) and
+    s.contains(item)
+    implies item = extremum
+} by {
+    if s.contains(extremum) and
+        (forall(member: T) { s.contains(member) implies extremum <= member }) and
+        (forall(member: T) { s.contains(member) implies member <= extremum }) and
+        s.contains(item) {
+        forall(x: T) { s.contains(x) implies extremum <= x }
+        forall(x: T) { s.contains(x) implies x <= extremum }
+        s.contains(item) implies extremum <= item
+        s.contains(item) implies item <= extremum
+        extremum <= item
+        item <= extremum
+        lte_antisymm(item, extremum)
+        item = extremum
+    }
+}
+
+/// A singleton finite set is contained in every finite set containing its element.
+theorem finite_set_singleton_subset_of_contains[T](s: FiniteSet[T], item: T) {
+    s.contains(item) implies fs_insert(FiniteSet.empty[T], item).subset_eq(s)
+} by {
+    if s.contains(item) {
+        forall(x: T) {
+            finite_set_singleton_contains_eq(item, x)
+            if fs_insert(FiniteSet.empty[T], item).contains(x) {
+                x = item
+                s.contains(item)
+                s.contains(x)
+            }
+            fs_insert(FiniteSet.empty[T], item).underlying_set.contains(x) implies s.underlying_set.contains(x)
+        }
+        fs_insert(FiniteSet.empty[T], item).underlying_set.subset(s.underlying_set)
+        fs_insert(FiniteSet.empty[T], item).subset_eq(s)
+    }
+}
+
+/// A finite subset with the same least and greatest element is contained in its singleton.
+theorem finite_set_subset_singleton_of_least_and_greatest[T: PartialOrder](
+    s: FiniteSet[T], extremum: T
+) {
+    s.contains(extremum) and
+    (forall(item: T) { s.contains(item) implies extremum <= item }) and
+    (forall(item: T) { s.contains(item) implies item <= extremum })
+    implies s.subset_eq(fs_insert(FiniteSet.empty[T], extremum))
+} by {
+    if s.contains(extremum) and
+        (forall(item: T) { s.contains(item) implies extremum <= item }) and
+        (forall(item: T) { s.contains(item) implies item <= extremum }) {
+        forall(x: T) {
+            if s.contains(x) {
+                finite_set_member_eq_of_least_and_greatest(s, extremum, x)
+                x = extremum
+                finite_set_singleton_contains_eq(extremum, x)
+                fs_insert(FiniteSet.empty[T], extremum).contains(x)
+            }
+            s.underlying_set.contains(x) implies fs_insert(FiniteSet.empty[T], extremum).underlying_set.contains(x)
+        }
+        s.underlying_set.subset(fs_insert(FiniteSet.empty[T], extremum).underlying_set)
+        s.subset_eq(fs_insert(FiniteSet.empty[T], extremum))
+    }
+}
+
+/// A finite subset with the same least and greatest element is a singleton.
+theorem finite_set_eq_singleton_of_least_and_greatest[T: PartialOrder](
+    s: FiniteSet[T], extremum: T
+) {
+    s.contains(extremum) and
+    (forall(item: T) { s.contains(item) implies extremum <= item }) and
+    (forall(item: T) { s.contains(item) implies item <= extremum })
+    implies s = fs_insert(FiniteSet.empty[T], extremum)
+} by {
+    if s.contains(extremum) and
+        (forall(item: T) { s.contains(item) implies extremum <= item }) and
+        (forall(item: T) { s.contains(item) implies item <= extremum }) {
+        finite_set_subset_singleton_of_least_and_greatest(s, extremum)
+        finite_set_singleton_subset_of_contains(s, extremum)
+        finite_set_subset_antisymm(s, fs_insert(FiniteSet.empty[T], extremum))
+        s = fs_insert(FiniteSet.empty[T], extremum)
+    }
+}
+
+/// The element of a singleton finite subset is a lower bound.
+theorem finite_set_singleton_element_is_lower_bound[T: PartialOrder](item: T) {
+    forall(member: T) {
+        fs_insert(FiniteSet.empty[T], item).contains(member) implies item <= member
+    }
+} by {
+    forall(member: T) {
+        if fs_insert(FiniteSet.empty[T], item).contains(member) {
+            finite_set_singleton_contains_eq(item, member)
+            member = item
+            lte_refl(item)
+            item <= member
+        }
+    }
+}
+
+/// The element of a singleton finite subset is an upper bound.
+theorem finite_set_singleton_element_is_upper_bound[T: PartialOrder](item: T) {
+    forall(member: T) {
+        fs_insert(FiniteSet.empty[T], item).contains(member) implies member <= item
+    }
+} by {
+    forall(member: T) {
+        if fs_insert(FiniteSet.empty[T], item).contains(member) {
+            finite_set_singleton_contains_eq(item, member)
+            member = item
+            lte_refl(item)
+            member <= item
+        }
+    }
+}
+
+/// A singleton finite set has cardinality one.
+theorem finite_set_singleton_cardinality_is_one[T](item: T) {
+    fs_insert(FiniteSet.empty[T], item).cardinality_is(Nat.1)
+} by {
+    forall(x: T) {
+        finite_set_singleton_contains_eq(item, x)
+        singleton_contains_eq(item, x)
+        fs_insert(FiniteSet.empty[T], item).underlying_set.contains(x) =
+            Set[T].singleton(item).contains(x)
+    }
+    set_ext(fs_insert(FiniteSet.empty[T], item).underlying_set, Set[T].singleton(item))
+    fs_insert(FiniteSet.empty[T], item).underlying_set = Set[T].singleton(item)
+    singleton_set_cardinality_is_one(item)
+    fs_insert(FiniteSet.empty[T], item).cardinality_is(Nat.1)
+}
+
 /// A finite set with exact cardinality is represented by a unique list of that length.
 theorem finite_set_cardinality_has_exact_unique_list[T](s: FiniteSet[T], n: Nat) {
     s.cardinality_is(n) implies exists(items: List[T]) {
@@ -967,6 +1861,211 @@ theorem finite_set_cardinality_has_exact_unique_list[T](s: FiniteSet[T], n: Nat)
             fs_from_list(result) = s and result.is_unique and result.length = n
         }
     }
+}
+
+/// A finite set of cardinality one is the singleton of any element it contains.
+theorem finite_set_eq_singleton_of_cardinality_one_contains[T](s: FiniteSet[T], item: T) {
+    s.cardinality_is(Nat.1) and s.contains(item) implies
+        s = fs_insert(FiniteSet.empty[T], item)
+} by {
+    if s.cardinality_is(Nat.1) and s.contains(item) {
+        finite_set_cardinality_has_exact_unique_list(s, Nat.1)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique and items.length = Nat.1
+        }
+        match items {
+            List.nil {
+                items.length = Nat.0
+                Nat.0 != Nat.1
+                false
+            }
+            List.cons(head, tail) {
+                items.length = tail.length.suc
+                Nat.1 = Nat.0.suc
+                tail.length = Nat.0
+                match tail {
+                    List.nil {
+                        tail = List.nil[T]
+                        items = List.singleton(head)
+                        finite_set_eq_underlying_contains_at(fs_from_list(items), s, item)
+                        fs_from_list(items).underlying_set = list_set(items)
+                        list_set_contains_eq(items, item)
+                        items.contains(item)
+                        if head != item {
+                            items.contains(item) = List.nil[T].contains(item)
+                            not List.nil[T].contains(item)
+                            false
+                        }
+                        head = item
+                        forall(x: T) {
+                            finite_set_eq_underlying_contains_at(fs_from_list(items), s, x)
+                            fs_from_list(items).underlying_set = list_set(items)
+                            list_set_contains_eq(items, x)
+                            finite_set_singleton_contains_eq(item, x)
+                            if x = item {
+                                items.contains(x)
+                                s.contains(x)
+                                fs_insert(FiniteSet.empty[T], item).contains(x)
+                                s.underlying_set.contains(x) =
+                                    fs_insert(FiniteSet.empty[T], item).underlying_set.contains(x)
+                            } else {
+                                head != x
+                                items.contains(x) = List.nil[T].contains(x)
+                                not List.nil[T].contains(x)
+                                not s.contains(x)
+                                not fs_insert(FiniteSet.empty[T], item).contains(x)
+                                eq_false_intro(s.underlying_set.contains(x))
+                                eq_false_intro(
+                                    fs_insert(FiniteSet.empty[T], item).underlying_set.contains(x))
+                                s.underlying_set.contains(x) = false
+                                fs_insert(FiniteSet.empty[T], item).underlying_set.contains(x) = false
+                                s.underlying_set.contains(x) =
+                                    fs_insert(FiniteSet.empty[T], item).underlying_set.contains(x)
+                            }
+                        }
+                        finite_set_ext_contains(s, fs_insert(FiniteSet.empty[T], item))
+                        s = fs_insert(FiniteSet.empty[T], item)
+                    }
+                    List.cons(next, rest) {
+                        tail.length = rest.length.suc
+                        rest.length.suc != Nat.0
+                        false
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Every element of a cardinality-one finite subset is a lower bound.
+theorem finite_set_cardinality_one_element_is_lower_bound[T: PartialOrder](
+    s: FiniteSet[T], item: T
+) {
+    s.cardinality_is(Nat.1) and s.contains(item) implies forall(member: T) {
+        s.contains(member) implies item <= member
+    }
+} by {
+    if s.cardinality_is(Nat.1) and s.contains(item) {
+        finite_set_eq_singleton_of_cardinality_one_contains(s, item)
+        forall(member: T) {
+            if s.contains(member) {
+                finite_set_eq_underlying_contains_at(
+                    s, fs_insert(FiniteSet.empty[T], item), member)
+                s.underlying_set.contains(member) =
+                    fs_insert(FiniteSet.empty[T], item).underlying_set.contains(member)
+                fs_insert(FiniteSet.empty[T], item).contains(member)
+                finite_set_singleton_contains_eq(item, member)
+                member = item
+                lte_refl(item)
+                item <= member
+            }
+        }
+    }
+}
+
+/// Every element of a cardinality-one finite subset is an upper bound.
+theorem finite_set_cardinality_one_element_is_upper_bound[T: PartialOrder](
+    s: FiniteSet[T], item: T
+) {
+    s.cardinality_is(Nat.1) and s.contains(item) implies forall(member: T) {
+        s.contains(member) implies member <= item
+    }
+} by {
+    if s.cardinality_is(Nat.1) and s.contains(item) {
+        finite_set_eq_singleton_of_cardinality_one_contains(s, item)
+        forall(member: T) {
+            if s.contains(member) {
+                finite_set_eq_underlying_contains_at(
+                    s, fs_insert(FiniteSet.empty[T], item), member)
+                s.underlying_set.contains(member) =
+                    fs_insert(FiniteSet.empty[T], item).underlying_set.contains(member)
+                fs_insert(FiniteSet.empty[T], item).contains(member)
+                finite_set_singleton_contains_eq(item, member)
+                member = item
+                lte_refl(item)
+                member <= item
+            }
+        }
+    }
+}
+
+/// A finite set containing two distinct elements has cardinality at least two.
+theorem finite_set_cardinality_at_least_two_of_contains_ne[T](
+    s: FiniteSet[T], a: T, b: T, n: Nat
+) {
+    s.cardinality_is(n) and s.contains(a) and s.contains(b) and a != b implies Nat.2 <= n
+} by {
+    if s.cardinality_is(n) and s.contains(a) and s.contains(b) and a != b {
+        finite_set_cardinality_has_exact_unique_list(s, n)
+        let items: List[T] satisfy {
+            fs_from_list(items) = s and items.is_unique and items.length = n
+        }
+        finite_set_eq_underlying_contains_at(fs_from_list(items), s, a)
+        finite_set_eq_underlying_contains_at(fs_from_list(items), s, b)
+        fs_from_list(items).underlying_set = list_set(items)
+        list_set_contains_eq(items, a)
+        list_set_contains_eq(items, b)
+        items.contains(a)
+        items.contains(b)
+        match items {
+            List.nil {
+                not items.contains(a)
+                false
+            }
+            List.cons(head, tail) {
+                match tail {
+                    List.nil {
+                        tail = List.nil[T]
+                        items = List.singleton(head)
+                        if head != a {
+                            items.contains(a) = List.nil[T].contains(a)
+                            not List.nil[T].contains(a)
+                            false
+                        }
+                        head = a
+                        if head != b {
+                            items.contains(b) = List.nil[T].contains(b)
+                            not List.nil[T].contains(b)
+                            false
+                        }
+                        head = b
+                        a = b
+                        false
+                    }
+                    List.cons(next, rest) {
+                        tail = List.cons(next, rest)
+                        items = List.cons(head, List.cons(next, rest))
+                        tail.length = rest.length.suc
+                        items.length = tail.length.suc
+                        items.length = rest.length.suc.suc
+                        Nat.2 = Nat.0.suc.suc
+                        Nat.0 <= rest.length
+                        lte_suc_suc(Nat.0, rest.length)
+                        Nat.0.suc <= rest.length.suc
+                        lte_suc_suc(Nat.0.suc, rest.length.suc)
+                        Nat.0.suc.suc <= rest.length.suc.suc
+                        Nat.2 <= items.length
+                        Nat.2 <= n
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Distinct least and greatest elements force cardinality at least two.
+theorem finite_set_distinct_extrema_cardinality_at_least_two[T: PartialOrder](
+    s: FiniteSet[T], least: T, greatest: T, n: Nat
+) {
+    s.cardinality_is(n) and
+    s.contains(least) and
+    (forall(item: T) { s.contains(item) implies least <= item }) and
+    s.contains(greatest) and
+    (forall(item: T) { s.contains(item) implies item <= greatest }) and
+    least != greatest
+    implies Nat.2 <= n
+} by {
+    finite_set_cardinality_at_least_two_of_contains_ne(s, least, greatest, n)
 }
 
 /// The image of a cardinality-bounded finite set has the same cardinality bound.
@@ -1115,6 +2214,23 @@ theorem finite_set_cardinality_is_well_defined[T](s: FiniteSet[T], n1: Nat, n2: 
         s.underlying_set.cardinality_is(n2)
         cardinality_is_well_defined(s.underlying_set, n1, n2)
         n1 = n2
+    }
+}
+
+/// Every finite set has an exact cardinality.
+theorem finite_set_cardinality_exists[T](s: FiniteSet[T]) {
+    exists(n: Nat) {
+        s.cardinality_is(n)
+    }
+} by {
+    s.underlying_set.is_finite
+    cardinality_always_exists(s.underlying_set)
+    let n: Nat satisfy {
+        s.underlying_set.cardinality_is(n)
+    }
+    s.cardinality_is(n)
+    exists(m: Nat) {
+        m = n and s.cardinality_is(m)
     }
 }
 
@@ -1412,5 +2528,223 @@ theorem finite_set_inclusion_exclusion[T](s: FiniteSet[T], t: FiniteSet[T],
         fs_union(s, t).underlying_set = s.underlying_set.union(t.underlying_set)
         fs_union(s, t).underlying_set.cardinality_is(n_s + n_t - n_inter)
         fs_union(s, t).cardinality_is(n_s + n_t - n_inter)
+    }
+}
+
+/// The union of two pairwise intersections has the inclusion-exclusion cardinality.
+theorem finite_set_pair_intersections_union_cardinality[T](
+    a: FiniteSet[T], b: FiniteSet[T], c: FiniteSet[T],
+    n_ac: Nat, n_bc: Nat, n_abc: Nat
+) {
+    fs_intersection(a, c).cardinality_is(n_ac) and
+    fs_intersection(b, c).cardinality_is(n_bc) and
+    fs_intersection(fs_intersection(a, b), c).cardinality_is(n_abc)
+    implies fs_union(fs_intersection(a, c), fs_intersection(b, c)).cardinality_is(
+        n_ac + n_bc - n_abc)
+} by {
+    if fs_intersection(a, c).cardinality_is(n_ac) and
+        fs_intersection(b, c).cardinality_is(n_bc) and
+        fs_intersection(fs_intersection(a, b), c).cardinality_is(n_abc) {
+        let ac_inter = fs_intersection(a, c)
+        let bc_inter = fs_intersection(b, c)
+        let abc_inter = fs_intersection(fs_intersection(a, b), c)
+        ac_inter.cardinality_is(n_ac)
+        bc_inter.cardinality_is(n_bc)
+        abc_inter.cardinality_is(n_abc)
+        finite_set_pair_intersections(a, b, c)
+        fs_intersection(ac_inter, bc_inter) = abc_inter
+        fs_intersection(ac_inter, bc_inter).cardinality_is(n_abc)
+        finite_set_inclusion_exclusion(ac_inter, bc_inter, n_ac, n_bc, n_abc)
+    }
+}
+
+/// Inclusion-exclusion for the union of three finite sets.
+theorem finite_set_inclusion_exclusion_three[T](
+    a: FiniteSet[T], b: FiniteSet[T], c: FiniteSet[T],
+    n_a: Nat, n_b: Nat, n_c: Nat,
+    n_ab: Nat, n_ac: Nat, n_bc: Nat, n_abc: Nat
+) {
+    a.cardinality_is(n_a) and b.cardinality_is(n_b) and c.cardinality_is(n_c) and
+    fs_intersection(a, b).cardinality_is(n_ab) and
+    fs_intersection(a, c).cardinality_is(n_ac) and
+    fs_intersection(b, c).cardinality_is(n_bc) and
+    fs_intersection(fs_intersection(a, b), c).cardinality_is(n_abc)
+    implies fs_union(fs_union(a, b), c).cardinality_is(
+        (n_a + n_b - n_ab) + n_c - (n_ac + n_bc - n_abc))
+} by {
+    if a.cardinality_is(n_a) and b.cardinality_is(n_b) and c.cardinality_is(n_c) and
+        fs_intersection(a, b).cardinality_is(n_ab) and
+        fs_intersection(a, c).cardinality_is(n_ac) and
+        fs_intersection(b, c).cardinality_is(n_bc) and
+        fs_intersection(fs_intersection(a, b), c).cardinality_is(n_abc) {
+        a.cardinality_is(n_a)
+        b.cardinality_is(n_b)
+        c.cardinality_is(n_c)
+        fs_intersection(a, b).cardinality_is(n_ab)
+        fs_intersection(a, c).cardinality_is(n_ac)
+        fs_intersection(b, c).cardinality_is(n_bc)
+        fs_intersection(fs_intersection(a, b), c).cardinality_is(n_abc)
+
+        finite_set_inclusion_exclusion(a, b, n_a, n_b, n_ab)
+        fs_union(a, b).cardinality_is(n_a + n_b - n_ab)
+
+        finite_set_pair_intersections_union_cardinality(a, b, c, n_ac, n_bc, n_abc)
+        fs_union(fs_intersection(a, c), fs_intersection(b, c)).cardinality_is(
+            n_ac + n_bc - n_abc)
+
+        finite_set_intersection_union_distrib(a, b, c)
+        fs_intersection(fs_union(a, b), c) =
+            fs_union(fs_intersection(a, c), fs_intersection(b, c))
+        fs_intersection(fs_union(a, b), c).cardinality_is(n_ac + n_bc - n_abc)
+        finite_set_inclusion_exclusion(
+            fs_union(a, b), c, n_a + n_b - n_ab, n_c, n_ac + n_bc - n_abc)
+        fs_union(fs_union(a, b), c).cardinality_is(
+            (n_a + n_b - n_ab) + n_c - (n_ac + n_bc - n_abc))
+    }
+}
+
+lemma finite_set_bonferroni_lower_three_arithmetic(
+    n_a: Nat, n_b: Nat, n_c: Nat,
+    n_ab: Nat, n_ac: Nat, n_bc: Nat, n_abc: Nat
+) {
+    n_a + n_b + n_c - (n_ab + n_ac + n_bc) <=
+        (n_a + n_b - n_ab) + n_c - (n_ac + n_bc - n_abc)
+} by {
+    let singles_ab = n_a + n_b
+    let pair_ac_bc = n_ac + n_bc
+    let singles = singles_ab + n_c
+    let pairs = n_ab + pair_ac_bc
+    let lower = singles - pairs
+    let upper = (singles_ab - n_ab) + n_c - (pair_ac_bc - n_abc)
+    let ab_remainder = singles_ab - n_ab
+    let pair_remainder = pair_ac_bc - n_abc
+    let ab_excess = n_ab - singles_ab
+    if singles < pairs {
+        sub_lt(singles, pairs)
+        singles - pairs = Nat.0
+        lower = Nat.0
+        lower <= upper
+    } else {
+        pairs <= singles
+        add_sub(singles, pairs)
+        singles - pairs + pairs = singles
+        lower + pairs = singles
+        lower + n_ab + pair_ac_bc = singles_ab + n_c
+        if singles_ab < n_ab {
+            sub_lt(singles_ab, n_ab)
+            singles_ab - n_ab = Nat.0
+            ab_remainder = Nat.0
+            add_sub(n_ab, singles_ab)
+            ab_excess + singles_ab = n_ab
+            if pair_ac_bc < n_abc {
+                sub_lt(pair_ac_bc, n_abc)
+                pair_ac_bc - n_abc = Nat.0
+                pair_remainder = Nat.0
+                lower + (ab_excess + singles_ab) + pair_ac_bc = singles_ab + n_c
+                add_assoc(lower, ab_excess, singles_ab)
+                add_comm(lower + ab_excess, singles_ab)
+                add_assoc(singles_ab, lower + ab_excess, pair_ac_bc)
+                singles_ab + (lower + ab_excess + pair_ac_bc) = singles_ab + n_c
+                add_cancels_left(singles_ab, lower + ab_excess + pair_ac_bc, n_c)
+                lower + ab_excess + pair_ac_bc = n_c
+                lower <= n_c
+                upper = n_c
+                lower <= upper
+            } else {
+                n_abc <= pair_ac_bc
+                add_sub(pair_ac_bc, n_abc)
+                pair_ac_bc - n_abc + n_abc = pair_ac_bc
+                pair_remainder + n_abc = pair_ac_bc
+                lower + (ab_excess + singles_ab) + pair_ac_bc = singles_ab + n_c
+                add_assoc(lower, ab_excess, singles_ab)
+                add_comm(lower + ab_excess, singles_ab)
+                add_assoc(singles_ab, lower + ab_excess, pair_ac_bc)
+                singles_ab + (lower + ab_excess + pair_ac_bc) = singles_ab + n_c
+                add_cancels_left(singles_ab, lower + ab_excess + pair_ac_bc, n_c)
+                lower + ab_excess + pair_ac_bc = n_c
+                lower + ab_excess + pair_remainder + n_abc = n_c
+                lower + ab_excess + n_abc + pair_remainder = n_c
+                add_imp_sub(lower + ab_excess + n_abc, pair_remainder, n_c)
+                n_c - pair_remainder = lower + ab_excess + n_abc
+                upper = lower + ab_excess + n_abc
+                lower <= upper
+            }
+        } else {
+            n_ab <= singles_ab
+            add_sub(singles_ab, n_ab)
+            singles_ab - n_ab + n_ab = singles_ab
+            ab_remainder + n_ab = singles_ab
+            if pair_ac_bc < n_abc {
+                sub_lt(pair_ac_bc, n_abc)
+                pair_ac_bc - n_abc = Nat.0
+                pair_remainder = Nat.0
+                n_ab + (lower + pair_ac_bc) = n_ab + (ab_remainder + n_c)
+                add_cancels_left(n_ab, lower + pair_ac_bc, ab_remainder + n_c)
+                lower + pair_ac_bc = ab_remainder + n_c
+                lower <= ab_remainder + n_c
+                upper = ab_remainder + n_c
+                lower <= upper
+            } else {
+                n_abc <= pair_ac_bc
+                add_sub(pair_ac_bc, n_abc)
+                pair_ac_bc - n_abc + n_abc = pair_ac_bc
+                pair_remainder + n_abc = pair_ac_bc
+                n_ab + (lower + pair_ac_bc) = n_ab + (ab_remainder + n_c)
+                add_cancels_left(n_ab, lower + pair_ac_bc, ab_remainder + n_c)
+                lower + pair_ac_bc = ab_remainder + n_c
+                lower + pair_remainder + n_abc = ab_remainder + n_c
+                lower + n_abc + pair_remainder = ab_remainder + n_c
+                add_imp_sub(lower + n_abc, pair_remainder, ab_remainder + n_c)
+                ab_remainder + n_c - pair_remainder = lower + n_abc
+                upper = lower + n_abc
+                lower <= upper
+            }
+        }
+    }
+    lower <= upper
+}
+
+/// The sum of singleton cardinalities minus pairwise-intersection cardinalities
+/// is a lower bound for the cardinality of a union of three finite sets.
+theorem finite_set_bonferroni_lower_three[T](
+    a: FiniteSet[T], b: FiniteSet[T], c: FiniteSet[T],
+    n_a: Nat, n_b: Nat, n_c: Nat,
+    n_ab: Nat, n_ac: Nat, n_bc: Nat, n_union: Nat
+) {
+    a.cardinality_is(n_a) and b.cardinality_is(n_b) and c.cardinality_is(n_c) and
+    fs_intersection(a, b).cardinality_is(n_ab) and
+    fs_intersection(a, c).cardinality_is(n_ac) and
+    fs_intersection(b, c).cardinality_is(n_bc) and
+    fs_union(fs_union(a, b), c).cardinality_is(n_union)
+    implies n_a + n_b + n_c - (n_ab + n_ac + n_bc) <= n_union
+} by {
+    if a.cardinality_is(n_a) and b.cardinality_is(n_b) and c.cardinality_is(n_c) and
+        fs_intersection(a, b).cardinality_is(n_ab) and
+        fs_intersection(a, c).cardinality_is(n_ac) and
+        fs_intersection(b, c).cardinality_is(n_bc) and
+        fs_union(fs_union(a, b), c).cardinality_is(n_union) {
+        a.cardinality_is(n_a)
+        b.cardinality_is(n_b)
+        c.cardinality_is(n_c)
+        fs_intersection(a, b).cardinality_is(n_ab)
+        fs_intersection(a, c).cardinality_is(n_ac)
+        fs_intersection(b, c).cardinality_is(n_bc)
+        fs_union(fs_union(a, b), c).cardinality_is(n_union)
+        let abc_inter = fs_intersection(fs_intersection(a, b), c)
+        finite_set_cardinality_exists(abc_inter)
+        let n_abc: Nat satisfy {
+            abc_inter.cardinality_is(n_abc)
+        }
+        finite_set_inclusion_exclusion_three(
+            a, b, c, n_a, n_b, n_c, n_ab, n_ac, n_bc, n_abc)
+        fs_union(fs_union(a, b), c).cardinality_is(
+            (n_a + n_b - n_ab) + n_c - (n_ac + n_bc - n_abc))
+        finite_set_cardinality_is_well_defined(
+            fs_union(fs_union(a, b), c),
+            (n_a + n_b - n_ab) + n_c - (n_ac + n_bc - n_abc), n_union)
+        (n_a + n_b - n_ab) + n_c - (n_ac + n_bc - n_abc) = n_union
+        finite_set_bonferroni_lower_three_arithmetic(
+            n_a, n_b, n_c, n_ab, n_ac, n_bc, n_abc)
+        n_a + n_b + n_c - (n_ab + n_ac + n_bc) <= n_union
     }
 }
