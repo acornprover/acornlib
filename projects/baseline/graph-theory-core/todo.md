@@ -136,8 +136,14 @@ Remaining:
       Comparisons between numerals are not free, so the ordering and distinctness of the four
       labels is packaged into `four_labels_ordered` and read off rather than rederived at each
       use.
-- [ ] Prove the combinatorial conditions equivalent to `is_free_of` at these two graphs. That
-      needs graph embeddings to and from them, which the concrete graphs now make statable.
+- [ ] Prove the combinatorial conditions equivalent to `is_free_of` at these two graphs. This does
+      need a four-element vertex type after all, contrary to the note above: `contains_induced`
+      and `is_free_of` take no vertex set, so an embedding of `claw_graph` into a graph has to
+      embed the whole infinite star on the naturals, not the four-vertex claw. Cutting the vertex
+      set out with `range_set` is enough to state the combinatorial conditions and show they are
+      not vacuous, which is what `src/simple_graph_four_vertex.ac` does, but it is not enough
+      here. Either a four-element type or an induced-subgraph-on-a-finite-set construction is
+      required.
 - [x] Prove a diamond-free graph has every edge in at most one maximal clique, in
       `src/simple_graph_maximal_clique.ac`. This needed maximal cliques, which the library did not
       have: `is_clique_in` existed but nothing about inclusion-maximality.
