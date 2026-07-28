@@ -23,8 +23,10 @@ search will not find on its own inside an induction, chiefly `add_swap_inner`.
 
 Remaining:
 
-- [ ] Bridge the two indexing schemes: prove a range sum equals the finite-set sum over
-      `{0, ..., n - 1}`. This needs that finite set to be constructed, which is the missing piece.
+- [x] Bridge the two indexing schemes. `range_sum` and `partial` have the same base case and the
+      same step, so they agree everywhere; from there the finite-set sum over `fs_from_list(n.range)`
+      follows, the index list being duplicate-free. Everything in `src/list/` stated for `partial` is
+      therefore available for range sums.
 - [x] Prove a range sum of naturals is monotone in the summand, and bounded by the count times a
       bound on the terms. Stated over the naturals rather than an ordered semiring, since
       `AddCommMonoid` carries no order and the ordered-semiring layer has no range sums.
