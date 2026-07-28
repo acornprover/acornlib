@@ -36,10 +36,25 @@ Remaining:
       above. This is the missing bridge, and everything below waits on it.
 - [ ] Prove the spectrum is invariant under similarity. This needs matrix inverses, which
       `src/fin_matrix.ac` does not supply.
-- [ ] Prove every eigenvalue of a row-stochastic matrix has modulus at most one. The `fin_sum` term
-      bound this was waiting on now exists. What remains is the argument itself: pick an index where
-      the eigenvector attains its largest absolute value and bound that row. The maximum over
-      `Fin[n]` now exists as `fin_function_max` in `src/fin_function_max.ac`; what remains is the
-      triangle inequality for `fin_sum`, which needs an absolute value on the entries.
+- [x] Prove every eigenvalue of a row-stochastic matrix has modulus at most one, in
+      `src/fin_matrix_stochastic_bound.ac`. Evaluate the eigenvalue equation at an index where the
+      eigenvector attains its largest absolute value: the left side is that value times the
+      absolute value of the eigenvalue, and the right side is bounded by the value itself, since
+      the row weights are nonnegative and sum to one. The value is positive because the
+      eigenvector is nonzero, so it cancels.
+
+      Two general lemmas were missing and are added. `fin_sum_abs_le` in `src/fin_sum_abs.ac` is
+      the triangle inequality for a finite sum; getting it needed `abs_add_le` too, since
+      `src/real/` exports the pieces the triangle inequality follows from but not the inequality.
+      `fin_sum_scalar_mul` in `src/fin_sum_scalar.ac` factors a scalar out of a finite sum, which
+      `src/nat_range_sum_semiring.ac` had for range sums but nothing had for `Fin`-indexed ones.
+
+      Stated over the reals rather than an ordered field, since there is no absolute value at
+      that level and adding one is a design decision.
+
+      One shape note: the `match fin_of_nat_option(n, k)` branches that reduce inside
+      `src/fin_sum.ac` do not reduce from outside it. Both new zero-extension identities go
+      through `fin_value_or_zero_value` and a `Fin` index instead, which is all
+      `partial_pointwise_eq` asks for.
 - [ ] Define regions in the complex plane, and set equality between them.
 - [ ] Prove the characteristic polynomial of a circulant or cyclic family in closed form.
