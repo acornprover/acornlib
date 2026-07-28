@@ -25,13 +25,18 @@ unfolding on its own.
 
 Remaining:
 
-- [ ] Prove `a mod m` and `b mod n` are disjoint iff `gcd(m, n)` does not divide `a - b`. The
-      forward direction is elementary and the ingredients are in `residue_class_disjoint.ac`; the
-      converse needs the two-modulus case of the Chinese remainder theorem to produce the common
-      member.
+- [x] Prove that if `gcd(m, n)` does not divide `a - b` then `a mod m` and `b mod n` are disjoint.
+      A common member is congruent to both residues, so the greatest common divisor of the moduli
+      divides the gap between them; a failure of that divisibility rules out any common member.
+
+- [ ] Prove the converse: disjointness implies `gcd(m, n)` does not divide `a - b`. This needs the
+      two-modulus Chinese remainder theorem to produce a common member from the divisibility, which
+      `src/number_theory/crt.ac` does not supply in that form.
 - [ ] Prove a covering system has density at least one, and a disjoint system at most one. Both
       need counting over one period, which `system_periodic` now makes meaningful but which still
       needs the count of integers in a residue class below a bound.
 - [ ] Prove the density of a system bounded by `N` is attained by an explicit construction.
-- [ ] Add the least common modulus of a system. `system_modulus` in `crt_list.ac` is the product,
-      not the least common multiple, so this is a separate construction.
+- [x] Add the least common modulus of a system, as `system_lcm`, and prove every modulus divides
+      it. `system_modulus` in `crt_list.ac` is the product of the moduli, which is a common multiple
+      but usually far from the least. With `all_moduli_divide_system_lcm`, `system_periodic` applies
+      with the true period.
