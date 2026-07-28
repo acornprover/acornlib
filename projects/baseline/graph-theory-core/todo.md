@@ -157,9 +157,11 @@ Remaining:
       white neighbour and one round finishes. Hence the invariant is strictly below the vertex
       count. The matching lower bound, that no smaller set works, is separate.
 
-- [ ] Prove the zero forcing number of the complete graph is exactly one below the vertex count.
-      Two white vertices leave every blue vertex with two white neighbours, so nothing can force;
-      stating that needs a second white vertex to be produced from a cardinality gap.
+- [x] Prove the matching lower bound: a zero forcing set of the complete graph leaves at most one
+      vertex uncoloured. Two white vertices leave every blue vertex with two white neighbours, so
+      the colouring is closed from the start and never reaches the whole set. Producing the second
+      white vertex needed `fs_two_distinct_members`, which reads two entries off a duplicate-free
+      list representation and is general finite-set API.
 
 - [ ] Compute the zero forcing number for paths and cycles. Waits on those graphs existing as finite
       graphs; `src/simple_graph.ac` has only the empty, complete, and induced constructions.
