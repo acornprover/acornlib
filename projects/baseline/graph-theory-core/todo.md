@@ -75,10 +75,9 @@ Remaining:
       not rescue every vacuous case: it fails for `empty_graph.adj`, whose falsity is definitional,
       so the context is inconsistent before the rewrite can apply.
 
-- [ ] Define the independent domination number as the least `fs_card` over independent dominating
-      sets, and prove it is at least the domination number. The existence witness is now available
-      as `independent_dominating_set_exists`, so this is the `has_min` construction applied to it,
-      in the same shape as `domination_number` and `zero_forcing_number`.
+- [x] Define the independent domination number as the least `fs_card` over independent dominating
+      sets, and prove the classical chain `gamma(G) <= i(G) <= alpha(G)` relating it to the
+      domination and independence numbers.
 - [ ] Prove a minimal dominating set of a graph without isolated vertices has a dominating
       complement, which gives the classical bound of half the vertices.
 
