@@ -27,8 +27,11 @@ Remaining:
 - [ ] Relate `is_squarefree` to the prime valuation being at most one. The predicate is defined
       through divisibility in `src/nat_squarefree.ac`; connecting it to valuations needs the
       factorisation machinery.
-- [ ] Prove `all_prime_factors_in` is multiplicative over coprime factors. One direction follows
-      from `all_prime_factors_in_of_divides`; the converse needs a prime dividing a product to
-      divide one of the factors.
-- [ ] Add the greatest prime factor function and its basic properties. This needs a maximum over
-      the prime factors, so it waits on those being available as a `FiniteSet`.
+- [x] Prove the interval condition passes from factors to product. Coprimality turns out not to be
+      needed in either direction: a prime dividing a product divides one of the factors, which is
+      Euclid's lemma, now exported from `number_theory` as `prime_divides_mul`.
+- [x] Add the greatest prime factor and its basic properties. No `FiniteSet` of prime factors is
+      needed after all: `has_max` from `src/nat_bounded_max.ac` applies directly to the predicate
+      "is a prime dividing `n`", whose witness is `has_prime_divisor` and whose bound is `n` itself.
+      Stated as a predicate rather than a function, since a natural below two has no prime factor and
+      a total function would have nothing to return.
