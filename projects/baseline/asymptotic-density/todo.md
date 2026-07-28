@@ -42,7 +42,20 @@ Remaining:
       reflection identity needs `add_swap_inner` cited rather than left to search.
 - [ ] Add limsup and liminf APIs for sequences and series, so that upper and lower density can be
       defined when the density itself does not exist.
-- [ ] Add asymptotic notation and asymptotic comparison lemmas.
+- [x] Add asymptotic notation and asymptotic comparison lemmas, in `src/real_asymptotic.ac`.
+      Big-O, little-o, and the fact that negligible implies boundedly dominated, with
+      reflexivity, transitivity, closure under sums, and closure under positive scaling.
+
+      Three shape decisions. The inner condition is named `dominated_from` so that no definition
+      is more than one quantifier deep, which is the same move the graph conditions needed. The
+      big-O constant is required positive, which loses nothing and keeps transitivity from
+      needing a sign analysis. Two thresholds are combined by adding them rather than by taking a
+      maximum, which avoids the typeclass `max` entirely; the small lemma `lte_of_add_lte` is
+      what makes that work, and it is stated locally because `lte_trans` on the naturals is
+      shadowed by the one on the reals in any module importing both.
+
+      The sum lemma reuses `abs_add_le` from `src/fin_sum_abs.ac`, which is the only place the
+      triangle inequality for `abs` is available.
 - [ ] Define logarithmic density, and relate it to natural density where both exist.
 - [ ] Add comparison tests for series convergence against a geometric series.
 - [ ] Add the base-`b` digit expansion of a real number in the unit interval, and prove it agrees
