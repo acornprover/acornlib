@@ -29,9 +29,21 @@ Remaining:
       A common member is congruent to both residues, so the greatest common divisor of the moduli
       divides the gap between them; a failure of that divisibility rules out any common member.
 
-- [ ] Prove the converse: disjointness implies `gcd(m, n)` does not divide `a - b`. This needs the
-      two-modulus Chinese remainder theorem to produce a common member from the divisibility, which
-      `src/number_theory/crt.ac` does not supply in that form.
+- [x] Prove the converse: disjointness implies `gcd(m, n)` does not divide `a - b`, in
+      `src/residue_class_crt.ac`. The two-modulus Chinese remainder theorem needed is not the
+      coprime one and does not have to come from `crt.ac`: Bezout, which is exported as
+      `nat_bezout`, writes the greatest common divisor as `u * m1 + v * m2`, and scaling by the
+      multiple `k` carrying the gcd to the residue gap makes `r1 - k * u * m1` congruent to `r1`
+      modulo `m1` and to `r2` modulo `m2`.
+
+      With `classes_disjoint_of_gcd_not_divides` this closes the criterion in both directions:
+      two congruence classes are disjoint exactly when the greatest common divisor of their
+      moduli misses the gap between their residues.
+
+      Two things cost time and are worth knowing. `Int.divides` puts the multiplier first, so
+      unfolding it needs `c * m = z` rather than `m * c = z`. And the two rearrangements of the
+      form `(a - b) - a = -b` both time out written directly; citing `add_swap_inner` with a
+      zero padding term settles them, the same fix the density reflection identity needed.
 - [ ] Prove a covering system has density at least one, and a disjoint system at most one. Both
       need counting over one period, which `system_periodic` now makes meaningful but which still
       needs the count of integers in a residue class below a bound.

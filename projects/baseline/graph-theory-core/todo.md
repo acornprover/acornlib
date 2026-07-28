@@ -268,5 +268,15 @@ equal pair is handled by irreflexivity on one side and by the distinctness claus
 which is the only asymmetry between the two statements.
 
 - [x] Prove both halves of the clique-independence duality under complementation.
-- [ ] Relate the independence number and the clique number of complementary graphs, which the
-      duality now makes a matter of transporting the maximisation.
+- [x] Compute the two invariants for the complete graph, in
+      `src/simple_graph_clique_extremes.ac`: its clique number is the number of vertices and its
+      independence number is at most one. This is the duality made concrete, since the complement
+      of the complete graph is the empty graph.
+- [x] Relate the independence number and the clique number of complementary graphs, in
+      `src/simple_graph_clique_number.ac`. The clique number is defined by the same maximisation
+      the independence number uses, and its well-definedness comes free: the duality already
+      shows the independence number of the complement is a maximum of the clique sizes, so no
+      separate witness and bound are needed.
+
+      Both directions are proved separately rather than one from the other, since the library
+      has no involution law for the complement.
