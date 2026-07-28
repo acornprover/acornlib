@@ -27,9 +27,10 @@ subset lemma then goes through. This is the same move `simple_graph_triangle_fre
 
 Remaining:
 
-- [ ] Prove the distance set is finite in the sense of having a cardinality bounded by the size of
-      the point set. `fs_image` already gives a finite set, so what is missing is the bound
-      `distance_count(p, s) <= fs_card(s)`, which needs the image cardinality bound.
+- [x] Prove the distance count is bounded by the size of the point set. The image bound existed as
+      `finite_set_image_cardinality_at_most` but only in terms of the `cardinality_at_most`
+      predicate; `src/finite_set_image_card.ac` restates it for the numeric `fs_card`, which is what
+      counting arguments use.
 - [ ] Prove a set in general position with no four concyclic points has all distance counts
       positive, and relate the two conditions.
 - [ ] Add the distance set between two different point sets, not just from a single point.

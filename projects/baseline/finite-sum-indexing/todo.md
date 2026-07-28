@@ -25,8 +25,9 @@ Remaining:
 
 - [ ] Bridge the two indexing schemes: prove a range sum equals the finite-set sum over
       `{0, ..., n - 1}`. This needs that finite set to be constructed, which is the missing piece.
-- [ ] Prove a range sum of naturals is monotone in the summand, and bounded by the count times the
-      largest term.
+- [x] Prove a range sum of naturals is monotone in the summand, and bounded by the count times a
+      bound on the terms. Stated over the naturals rather than an ordered semiring, since
+      `AddCommMonoid` carries no order and the ordered-semiring layer has no range sums.
 - [ ] Add ordered set partitions and the surjection count defining the Fubini numbers. This is the
       largest remaining item and mostly definitional: it needs surjections between finite sets to
       be countable, which nothing above supplies.
