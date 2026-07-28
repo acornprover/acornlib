@@ -21,12 +21,17 @@ form `reduced_residue_sum_below`, matching how the residue list is built.
 
 Remaining:
 
-- [ ] Prove the closed form `phi_1(n) = n * totient(n) / 2` for `n > 1`. All the ingredients about
-      the reflection are now in place, but the sum-level step is not: summing over a list is
-      unchanged by permuting it, and the reflection permutes `coprime_residues(n)`. `src/list/` has
-      `sum_reverse` and `sum_map_remove_one` but no statement that a permutation preserves a sum,
-      and no way to say the reflection induces one. That is the missing piece, and it is a list
-      lemma rather than a number-theoretic one.
+- [x] Reindex a reduced residue sum along a permutation of the residue list. `permutation_preserves_sum`
+      already existed in `src/list/list_permutation.ac` but was not exported, and the *mapped*
+      version needed here did not exist at all; both are now available as
+      `permutation_preserves_mapped_sum`.
+
+- [ ] Prove the closed form `phi_1(n) = n * totient(n) / 2` for `n > 1`. The sum-level step is now
+      available as `reduced_residue_sum_reindex`, and every fact about the reflection is proved.
+      What remains is discharging its hypothesis — that reflecting permutes `coprime_residues(n)` —
+      which needs `coprime_residues_all_coprime`, `coprime_residues_unique`, and
+      `coprime_residues_contains_intro`. All three exist in `src/number_theory/totient.ac` but the
+      `number_theory` interface exports only `coprime_residues_length`.
 - [ ] Prove `phi_k` is multiplicative across coprime factors. This needs the Chinese remainder
       bijection between reduced residues modulo `m * n` and pairs of reduced residues, which
       `src/number_theory/crt.ac` supports at the level of solutions but not as a bijection of lists.
