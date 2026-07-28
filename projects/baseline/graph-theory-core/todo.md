@@ -77,8 +77,19 @@ Remaining:
 - [x] Define the independent domination number as the least `fs_card` over independent dominating
       sets, and prove the classical chain `gamma(G) <= i(G) <= alpha(G)` relating it to the
       domination and independence numbers.
-- [ ] Prove a minimal dominating set of a graph without isolated vertices has a dominating
-      complement, which gives the classical bound of half the vertices.
+- [x] Prove a minimal dominating set of a graph without isolated vertices has a dominating
+      complement, which gives the classical bound of half the vertices. Both are in
+      `src/simple_graph_minimal_dominating.ac`, which also adds inclusion-minimality: a minimal
+      dominating set need not be a minimum one, and minimality is the weaker hypothesis the
+      theorem actually needs.
+
+      The argument is that minimality names, for each `v` in the set, a vertex `u` that only `v`
+      was dominating. Either `u` is `v` itself, and then `v` has no neighbour left inside the set,
+      so the neighbour it has by non-isolation lies outside; or `u` is elsewhere, and then `u`
+      itself is outside and adjacent to `v`.
+
+      For the bound, a minimum dominating set is minimal, so it and its complement are both
+      dominating and partition the vertex set, giving `2 * gamma(G) <= |V|`.
 
 ## Bipartite structure
 
