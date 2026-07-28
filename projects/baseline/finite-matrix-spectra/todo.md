@@ -60,5 +60,13 @@ Remaining:
       `src/fin_sum.ac` do not reduce from outside it. Both new zero-extension identities go
       through `fin_value_or_zero_value` and a `Fin` index instead, which is all
       `partial_pointwise_eq` asks for.
-- [ ] Define regions in the complex plane, and set equality between them.
+- [x] Define regions in the complex plane, and set equality between them, in
+      `src/complex_region.ac`. Regions are `Set[Complex]`, so containment and equality of regions
+      are the containment and equality the set API already supplies rather than new notions.
+
+      Closed disks come with membership, monotonicity in the radius, the degenerate case of a
+      zero radius being exactly the centre, and the shift containment a perturbation argument
+      uses: if the centres are within `d` of each other then a disk of radius `r` about one sits
+      inside the disk of radius `d + r` about the other. The closed unit disk is named, since
+      that is the region an eigenvalue bound of one places a spectrum in.
 - [ ] Prove the characteristic polynomial of a circulant or cyclic family in closed form.
