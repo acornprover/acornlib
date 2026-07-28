@@ -174,8 +174,17 @@ Remaining:
       inconsistent-assumptions refusal, since the antecedent `b.contains(z)` is false in context
       and the `false_implies` rewrite does not rescue it here; identifying `b` with
       `FiniteSet.empty` and citing `finite_set_empty_subset` avoids the implication entirely.
-- [ ] Compute the zero forcing number for cycles. It is two, and unlike the path it needs two
-      seeds: any single vertex has two white neighbours and forces nothing.
+- [x] Bound the zero forcing number of the cycle by two, in `src/simple_graph_cycle_zf.ac`. Two
+      adjacent seeds suffice.
+
+      The prefix invariant that works for the path is false here. On a cycle the vertex `0` also
+      has a single white neighbour, `n - 1` across the wrap-around edge, so the blue set grows at
+      both ends and one round is not `range_set(k + 2)` but strictly more. Restating the step as a
+      containment rather than an equality fixes it, and `derived_set_mono` carries the containment
+      through each round. The wrap-around edge is also why the forcing lemma needs `1 <= k`: at
+      `k = 0` the vertex has two white neighbours, which is the real reason a cycle needs two
+      seeds where a path needs one.
+- [ ] Prove the matching lower bound for the cycle, that one seed never suffices.
 - [ ] Relate the zero forcing number to the maximum nullity, which is the reason the invariant was
       introduced.
 
