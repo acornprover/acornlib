@@ -25,11 +25,15 @@ be worth doing. `div_le_div_pos` is in the same position: `src/real/interface.ac
 
 Remaining:
 
-- [ ] Prove a predicate holding from some point on has density one. Blocked lower down than the
-      note suggested: the limit of `N / n` needs the Archimedean property, and `src/real/` states
-      neither that nor the convergence of the reciprocals of the naturals. Establishing either
-      for this construction of the reals is work inside `src/real/` rather than something to
-      bolt on from outside.
+- [ ] Prove a predicate holding from some point on has density one. The Archimedean property this
+      waits on is no longer missing: `src/real_archimedean.ac` proves every real is below some
+      natural, and hence that enough copies of any positive real exceed any target.
+
+      `src/real/` states neither of those, but both halves were there — every real has a rational
+      strictly above it, and the rationals are Archimedean because they are built from integers.
+      What remains for the density statement itself is turning that into a bound on the density
+      sequence and identifying the limit, which the limsup machinery should now reach without a
+      `converges_to` construction.
 - [ ] Prove the complement of a set of density `d` has density `1 - d`. Everything but the last
       step is now in `src/nat_density_complement.ac`: the counting identity
       `count_upto_complement`, the term-by-term reflection `density_seq_complement`, and
