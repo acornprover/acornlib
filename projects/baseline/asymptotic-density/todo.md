@@ -40,8 +40,22 @@ Remaining:
       matter along the way: `if` over a large `forall` hypothesis does not verify where stating
       the definitional equation alone does, and the commutativity rearrangement inside the
       reflection identity needs `add_swap_inner` cited rather than left to search.
-- [ ] Add limsup and liminf APIs for sequences and series, so that upper and lower density can be
-      defined when the density itself does not exist.
+- [x] Add the limit superior for bounded sequences, in `src/real_tail_supremum.ac` and
+      `src/real_limsup.ac`. The tail supremum is the least bound on the values from an index
+      onward, which completeness supplies since the tail is nonempty and inherits any bound on the
+      sequence; it bounds every term from that index, nothing smaller does, and it does not
+      increase as the index grows.
+
+      The limit superior is where the tail suprema settle. It is built through the *negated*
+      sequence of tail suprema, because `src/real/` has no dual of the monotone convergence
+      principle and no existence theorem for infima, and negating turns the antitone sequence
+      into the increasing one that principle is stated for. Two theorems already in
+      `src/real/real_series.ac` had to be exported to reach it.
+
+      `neg_reverses_lte` is proved locally: `src/real/` has additive monotonicity but does not
+      state that negation reverses order, which every step of this construction needs.
+- [ ] Add liminf, and upper and lower density defined from the two. Liminf is the mirror image and
+      should follow the same route with the roles of the bounds exchanged.
 - [x] Add asymptotic notation and asymptotic comparison lemmas, in `src/real_asymptotic.ac`.
       Big-O, little-o, and the fact that negligible implies boundedly dominated, with
       reflexivity, transitivity, closure under sums, and closure under positive scaling.
