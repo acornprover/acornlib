@@ -162,8 +162,29 @@ Remaining:
       white vertex needed `fs_two_distinct_members`, which reads two entries off a duplicate-free
       list representation and is general finite-set API.
 
-- [ ] Compute the zero forcing number for paths and cycles. The graphs now exist; what remains is
-      the counting.
+- [x] Compute the zero forcing number for the path: it is exactly one. A single endpoint forces
+      everything, since at each stage the last blue vertex has exactly one white neighbour, the
+      next one along. `src/simple_graph_path_zf.ac` has the induction and
+      `src/nat_range_set.ac` the vertex set `{0, ..., n - 1}` it runs over.
+
+      The matching lower bound is general rather than path-specific and lives in
+      `src/simple_graph_zero_forcing_lower.ac`: with no blue vertex nothing is forceable, so the
+      colouring is closed from the start and never reaches a nonempty vertex set. Proving the
+      empty blue set is a subset of the ambient set through `fs_subset_eq_intro` runs into the
+      inconsistent-assumptions refusal, since the antecedent `b.contains(z)` is false in context
+      and the `false_implies` rewrite does not rescue it here; identifying `b` with
+      `FiniteSet.empty` and citing `finite_set_empty_subset` avoids the implication entirely.
+- [x] Bound the zero forcing number of the cycle by two, in `src/simple_graph_cycle_zf.ac`. Two
+      adjacent seeds suffice.
+
+      The prefix invariant that works for the path is false here. On a cycle the vertex `0` also
+      has a single white neighbour, `n - 1` across the wrap-around edge, so the blue set grows at
+      both ends and one round is not `range_set(k + 2)` but strictly more. Restating the step as a
+      containment rather than an equality fixes it, and `derived_set_mono` carries the containment
+      through each round. The wrap-around edge is also why the forcing lemma needs `1 <= k`: at
+      `k = 0` the vertex has two white neighbours, which is the real reason a cycle needs two
+      seeds where a path needs one.
+- [ ] Prove the matching lower bound for the cycle, that one seed never suffices.
 - [ ] Relate the zero forcing number to the maximum nullity, which is the reason the invariant was
       introduced.
 
