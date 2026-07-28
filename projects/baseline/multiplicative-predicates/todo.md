@@ -32,6 +32,9 @@ Remaining:
 - [x] Prove every positive natural factors as a square times a squarefree number. Maximality of
       the square part is exactly what makes the cofactor squarefree: a square `c * c` dividing it
       would make `square_part(n) * c` a larger square divisor.
+- [x] Characterise squarefreeness through the square part: a positive number is squarefree exactly
+      when its largest square divisor is one, equivalently when it is its own squarefree part.
+      This is the decision form of the decomposition.
 - [x] Characterise the two extremes: a squarefree number is its own squarefree part with trivial
       square part, a positive square has its root as square part, and a positive number is a square
       exactly when its squarefree part is one.

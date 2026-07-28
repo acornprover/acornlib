@@ -131,6 +131,8 @@ Remaining:
 
       Each graph is proved to violate its own combinatorial condition, which is what shows the
       conditions of `src/simple_graph_diamond.ac` and `src/simple_graph_claw.ac` are not vacuous.
+      The claw is also proved triangle free, so triangle-freeness does not imply claw-freeness and
+      the two forbidden-subgraph conditions are genuinely independent.
       Comparisons between numerals are not free, so the ordering and distinctness of the four
       labels is packaged into `four_labels_ordered` and read off rather than rederived at each
       use.

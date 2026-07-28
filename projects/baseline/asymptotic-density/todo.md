@@ -27,8 +27,19 @@ Remaining:
 
 - [ ] Prove a predicate holding from some point on has density one. This needs the limit of `N / n`
       as `n` grows, which is the first genuinely analytic step in this branch.
-- [ ] Prove the complement of a set of density `d` has density `1 - d`. The counting identity is
-      already available; what is missing is the limit arithmetic.
+- [ ] Prove the complement of a set of density `d` has density `1 - d`. Everything but the last
+      step is now in `src/nat_density_complement.ac`: the counting identity
+      `count_upto_complement`, the term-by-term reflection `density_seq_complement`, and
+      `density_seq_complement_is_close`, which says the same tail bound serves both sequences.
+
+      What remains is assembling those into `converges_to`. The obstruction turned out not to be
+      limit arithmetic at all. `src/real/` reads tail bounds out of `converges_to` but never
+      builds one, so `src/real_converges_to_intro.ac` adds `converges_to_intro`; that verifies on
+      its own but will not instantiate at the partially applied `density_seq(not_pred(p))`, even
+      with the hypothesis stated in exactly the form the theorem takes it. Two shapes that did
+      matter along the way: `if` over a large `forall` hypothesis does not verify where stating
+      the definitional equation alone does, and the commutativity rearrangement inside the
+      reflection identity needs `add_swap_inner` cited rather than left to search.
 - [ ] Add limsup and liminf APIs for sequences and series, so that upper and lower density can be
       defined when the density itself does not exist.
 - [ ] Add asymptotic notation and asymptotic comparison lemmas.
