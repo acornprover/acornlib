@@ -31,6 +31,8 @@ Remaining:
       `finite_set_image_cardinality_at_most` but only in terms of the `cardinality_at_most`
       predicate; `src/finite_set_image_card.ac` restates it for the numeric `fs_card`, which is what
       counting arguments use.
-- [ ] Prove a set in general position with no four concyclic points has all distance counts
-      positive, and relate the two conditions.
+- [x] Relate the no-four-concyclic condition to distance counting, and prove distance counts are
+      positive on a nonempty set. Being equidistant from a point is exactly lying on a circle about
+      it, so `no_four_equidistant` says each realised distance is attained by at most three points.
+      That is what makes no-four-concyclic a hypothesis about distances rather than about circles.
 - [ ] Add the distance set between two different point sets, not just from a single point.
