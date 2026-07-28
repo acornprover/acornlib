@@ -77,8 +77,19 @@ Remaining:
 - [x] Define the independent domination number as the least `fs_card` over independent dominating
       sets, and prove the classical chain `gamma(G) <= i(G) <= alpha(G)` relating it to the
       domination and independence numbers.
-- [ ] Prove a minimal dominating set of a graph without isolated vertices has a dominating
-      complement, which gives the classical bound of half the vertices.
+- [x] Prove a minimal dominating set of a graph without isolated vertices has a dominating
+      complement, which gives the classical bound of half the vertices. Both are in
+      `src/simple_graph_minimal_dominating.ac`, which also adds inclusion-minimality: a minimal
+      dominating set need not be a minimum one, and minimality is the weaker hypothesis the
+      theorem actually needs.
+
+      The argument is that minimality names, for each `v` in the set, a vertex `u` that only `v`
+      was dominating. Either `u` is `v` itself, and then `v` has no neighbour left inside the set,
+      so the neighbour it has by non-isolation lies outside; or `u` is elsewhere, and then `u`
+      itself is outside and adjacent to `v`.
+
+      For the bound, a minimum dominating set is minimal, so it and its complement are both
+      dominating and partition the vertex set, giving `2 * gamma(G) <= |V|`.
 
 ## Bipartite structure
 
@@ -114,9 +125,17 @@ has the diamond, `src/simple_graph_claw.ac` the claw.
 
 Remaining:
 
-- [ ] Build the diamond and the claw as actual four-vertex graphs, so that `is_free_of` applies to
-      them directly and the combinatorial conditions can be proved equivalent to it. This needs a
-      four-element vertex type; `Pair[Bool, Bool]` would serve.
+- [x] Build the diamond and the claw as actual four-vertex graphs, in
+      `src/simple_graph_four_vertex.ac`. No new vertex type was needed: the naturals with the
+      four-element set cut out by `range_set` is the same arrangement the path and cycle use.
+
+      Each graph is proved to violate its own combinatorial condition, which is what shows the
+      conditions of `src/simple_graph_diamond.ac` and `src/simple_graph_claw.ac` are not vacuous.
+      Comparisons between numerals are not free, so the ordering and distinctness of the four
+      labels is packaged into `four_labels_ordered` and read off rather than rederived at each
+      use.
+- [ ] Prove the combinatorial conditions equivalent to `is_free_of` at these two graphs. That
+      needs graph embeddings to and from them, which the concrete graphs now make statable.
 - [ ] Prove a diamond-free graph has every edge in at most one maximal clique.
 
 ## Zero forcing
@@ -148,9 +167,9 @@ Remaining:
       anything is a proper enlargement of the blue set, hence strictly larger, so more changing
       rounds than there are vertices is impossible. `forcing_iterate_fixed_point_exists` is the
       usable form: the search for a fixed point never has to look past `fs_card(s)` steps.
-- [ ] Define the diamond graph and the diamond-free condition via induced subgraphs. Superseded by
-      the forbidden induced subgraph section above; what remains is building the diamond as an
-      actual four-vertex graph.
+- [x] Define the diamond graph and the diamond-free condition via induced subgraphs. Superseded by
+      the forbidden induced subgraph section above; the diamond now exists as an actual
+      four-vertex graph in `src/simple_graph_four_vertex.ac`.
 - [x] Bound the zero forcing number of the complete graph. All but one vertex is a zero forcing set:
       the single white vertex is adjacent to every blue one, so each of them sees it as its only
       white neighbour and one round finishes. Hence the invariant is strictly below the vertex
