@@ -184,7 +184,21 @@ Remaining:
       through each round. The wrap-around edge is also why the forcing lemma needs `1 <= k`: at
       `k = 0` the vertex has two white neighbours, which is the real reason a cycle needs two
       seeds where a path needs one.
-- [ ] Prove the matching lower bound for the cycle, that one seed never suffices.
+- [x] Prove the matching lower bound for the cycle, that one seed never suffices. A single blue
+      vertex has two distinct in-range neighbours, both different from it and so both white, and
+      the uniqueness clause of the rule fails. With the construction above, the zero forcing
+      number of a cycle of length at least three is exactly two.
+
+      The obstruction is general and is stated once, as `two_white_neighbors_blocks_forcing` in
+      `src/simple_graph_zero_forcing_lower.ac`; it is the same one that stops two white vertices
+      on a complete graph.
+
+      Two statements had to be reshaped before they would verify. The blocking hypothesis, written
+      with its existential inline, is too deep for proof search: naming it
+      `has_two_white_neighbors` brings it down to a two-variable statement. The same applies to
+      the pair of cycle neighbours, whose seven conjuncts proof search will not instantiate
+      directly. Truncated subtraction was also avoidable throughout by writing the length as
+      `p + 1` and matching the vertex as zero or a successor.
 - [ ] Relate the zero forcing number to the maximum nullity, which is the reason the invariant was
       introduced.
 
