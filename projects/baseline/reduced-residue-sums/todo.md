@@ -28,14 +28,17 @@ Remaining:
 
 - [ ] Prove the closed form `phi_1(n) = n * totient(n) / 2` for `n > 1`. The sum-level step is now
       available as `reduced_residue_sum_reindex`, and every fact about the reflection is proved.
-      Its hypothesis — that reflecting permutes `coprime_residues(n)` — is now within reach on the
-      membership side, since `coprime_residues_all_coprime`, `coprime_residues_contains_imp`,
-      `coprime_residues_contains_intro`, and `coprime_residues_unique` are exported. What is still
-      missing is uniqueness of the reflected list. `injective_map_is_unique` requires the map to be
-      injective *everywhere*, and reflection is injective only below the modulus. The locally
-      injective version needs `pigeonhole_unique_map` strengthened to state that the two colliding
-      elements lie in the list, which it does not currently say; that is a list lemma and an
-      induction of its own.
+      Its hypothesis is now discharged: `reflect_permutes_coprime_residues` proves that reflecting
+      permutes `coprime_residues(n)` for `n > 1`. That needed
+      `locally_injective_map_is_unique` in `src/list_pigeonhole.ac`, since `injective_map_is_unique`
+      demands injectivity everywhere while reflection is injective only below the modulus.
+
+      Note that the bound `n > 1` on the permutation is necessary rather than convenient: modulo one
+      the only reduced residue is zero and reflection sends it to one, so the two lists are `[0]`
+      and `[1]`. What remains for the closed form is the counting step — pairing each residue with
+      its reflection sums `a + (n - a) = n` over `totient(n)` residues, giving `n * totient(n)` for
+      twice the answer — which needs the sum of a pointwise sum to split and a division by two in
+      the target ring.
 - [ ] Prove `phi_k` is multiplicative across coprime factors. This needs the Chinese remainder
       bijection between reduced residues modulo `m * n` and pairs of reduced residues, which
       `src/number_theory/crt.ac` supports at the level of solutions but not as a bijection of lists.
