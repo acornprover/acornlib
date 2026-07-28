@@ -68,8 +68,20 @@ Remaining:
       sequence, in `src/nat_density_extremes.ac`. Unlike the natural density these always exist,
       since the density sequence lies in the unit interval and so is bounded on both sides.
       Proved: both lie in the unit interval and the lower never exceeds the upper.
-- [ ] Prove upper and lower density agree with the natural density when it exists. This needs the
-      limit superior of a convergent sequence to be its limit, which nothing above supplies.
+- [x] Prove upper and lower density agree with the natural density when it exists, in
+      `src/nat_density_agrees.ac`. The two one-sided densities always exist, so this is what says
+      they carry no more information than the natural density wherever that exists.
+
+      The limit superior and inferior of a convergent sequence are proved equal to its limit, in
+      `src/real_limsup_converges.ac` and `src/real_liminf_converges.ac`. Both go by an epsilon
+      argument, closed with `lte_of_lte_add_eps`, which `src/real/` does not state though it
+      supplies the ingredient.
+
+      The liminf half is proved directly rather than by reflecting the limsup half, because
+      reflecting would require *building* `converges_to(neg_seq(a), -l)`, and constructing a
+      `converges_to` for a compound sequence expression from outside `src/real/` does not go
+      through — the same obstruction recorded for the complement density below. Going through the
+      tail infima needs no such construction.
 - [x] Add asymptotic notation and asymptotic comparison lemmas, in `src/real_asymptotic.ac`.
       Big-O, little-o, and the fact that negligible implies boundedly dominated, with
       reflexivity, transitivity, closure under sums, and closure under positive scaling.
