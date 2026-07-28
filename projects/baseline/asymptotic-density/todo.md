@@ -54,8 +54,22 @@ Remaining:
 
       `neg_reverses_lte` is proved locally: `src/real/` has additive monotonicity but does not
       state that negation reverses order, which every step of this construction needs.
-- [ ] Add liminf, and upper and lower density defined from the two. Liminf is the mirror image and
-      should follow the same route with the roles of the bounds exchanged.
+- [x] Add the limit inferior, in `src/real_liminf.ac`. Obtained as the reflection of the limit
+      superior of the negated sequence rather than by repeating the tail construction with
+      infima, so the tail infimum and every property of it transfer along that reflection instead
+      of being reproved.
+
+      The classical comparison `liminf <= limsup` is proved. It does not follow from the two
+      one-sided bounds directly: every tail infimum lies below every tail supremum, since the two
+      tails overlap from the later of their indices onward, so a tail supremum bounds the whole
+      sequence of tail infima and hence their limit. That step needed `ub_imp_limit_lte`
+      exported.
+- [x] Define upper and lower density from the limit superior and inferior of the density
+      sequence, in `src/nat_density_extremes.ac`. Unlike the natural density these always exist,
+      since the density sequence lies in the unit interval and so is bounded on both sides.
+      Proved: both lie in the unit interval and the lower never exceeds the upper.
+- [ ] Prove upper and lower density agree with the natural density when it exists. This needs the
+      limit superior of a convergent sequence to be its limit, which nothing above supplies.
 - [x] Add asymptotic notation and asymptotic comparison lemmas, in `src/real_asymptotic.ac`.
       Big-O, little-o, and the fact that negligible implies boundedly dominated, with
       reflexivity, transitivity, closure under sums, and closure under positive scaling.
