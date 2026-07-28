@@ -69,4 +69,9 @@ Remaining:
       uses: if the centres are within `d` of each other then a disk of radius `r` about one sits
       inside the disk of radius `d + r` about the other. The closed unit disk is named, since
       that is the region an eigenvalue bound of one places a spectrum in.
+
+      Open disks are there too, with the two containments that make the families interleave: an
+      open disk sits inside the closed disk of the same radius, and a closed disk inside every
+      strictly larger open one. That is what makes either family enough to describe a region up
+      to arbitrary precision.
 - [ ] Prove the characteristic polynomial of a circulant or cyclic family in closed form.
