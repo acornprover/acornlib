@@ -258,3 +258,15 @@ form, which the cycle uses, does take one.
       triangle free.
 - [x] Define the cycle graph, prove its adjacency characterisation, and prove both the in-range
       successor edges and the wrap-around edge that closes the cycle.
+
+## Complement duality
+
+`src/simple_graph_complement_duality.ac`. Cliques of a graph are exactly independent sets of its
+complement, and independent sets exactly cliques of the complement. The complement joins the
+distinct non-adjacent pairs, so the two conditions say the same thing about a distinct pair; the
+equal pair is handled by irreflexivity on one side and by the distinctness clause on the other,
+which is the only asymmetry between the two statements.
+
+- [x] Prove both halves of the clique-independence duality under complementation.
+- [ ] Relate the independence number and the clique number of complementary graphs, which the
+      duality now makes a matter of transporting the maximisation.
