@@ -25,8 +25,11 @@ be worth doing. `div_le_div_pos` is in the same position: `src/real/interface.ac
 
 Remaining:
 
-- [ ] Prove a predicate holding from some point on has density one. This needs the limit of `N / n`
-      as `n` grows, which is the first genuinely analytic step in this branch.
+- [ ] Prove a predicate holding from some point on has density one. Blocked lower down than the
+      note suggested: the limit of `N / n` needs the Archimedean property, and `src/real/` states
+      neither that nor the convergence of the reciprocals of the naturals. Establishing either
+      for this construction of the reals is work inside `src/real/` rather than something to
+      bolt on from outside.
 - [ ] Prove the complement of a set of density `d` has density `1 - d`. Everything but the last
       step is now in `src/nat_density_complement.ac`: the counting identity
       `count_upto_complement`, the term-by-term reflection `density_seq_complement`, and
@@ -99,6 +102,12 @@ Remaining:
       rearrangement, which existed only for the naturals; `src/comm_monoid_rearrange.ac` states
       it over a commutative monoid.
 - [ ] Define logarithmic density, and relate it to natural density where both exist.
-- [ ] Add comparison tests for series convergence against a geometric series.
+- [x] Add comparison tests for series convergence against a geometric series, in
+      `src/real_geometric_comparison.ac`. Both ingredients turned out to exist already and only
+      to be unexported: `comparison_test` and `geom_converges` in `src/real/real_series.ac`,
+      along with `converges_mul_seq`. What was missing is the statement that ties them together,
+      that a nonnegative series dominated termwise by a constant times a geometric sequence
+      converges, and `partial_mul_seq`, which says the partial sums of a scaled sequence are the
+      scaled partial sums.
 - [ ] Add the base-`b` digit expansion of a real number in the unit interval, and prove it agrees
       with the natural-number base-`b` API.
