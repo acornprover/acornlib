@@ -38,19 +38,16 @@ Remaining:
 
       With `eventually_all_and` this gives that two predicates of density one hold together on a
       set of density one, which is what makes density one behave like a notion of almost-all.
-- [ ] Prove the complement of a set of density `d` has density `1 - d`. Everything but the last
-      step is now in `src/nat_density_complement.ac`: the counting identity
-      `count_upto_complement`, the term-by-term reflection `density_seq_complement`, and
-      `density_seq_complement_is_close`, which says the same tail bound serves both sequences.
+- [x] Prove the complement of a set of density `d` has density `1 - d`, in
+      `src/nat_density_complement_extremes.ac`. Stated as `upper_density(not p) = 1 -
+      lower_density(p)`, which needs no `converges_to` construction and so is not blocked the way
+      the natural-density form was.
 
-      What remains is assembling those into `converges_to`. The obstruction turned out not to be
-      limit arithmetic at all. `src/real/` reads tail bounds out of `converges_to` but never
-      builds one, so `src/real_converges_to_intro.ac` adds `converges_to_intro`; that verifies on
-      its own but will not instantiate at the partially applied `density_seq(not_pred(p))`, even
-      with the hypothesis stated in exactly the form the theorem takes it. Two shapes that did
-      matter along the way: `if` over a large `forall` hypothesis does not verify where stating
-      the definitional equation alone does, and the commutativity rearrangement inside the
-      reflection identity needs `add_swap_inner` cited rather than left to search.
+      The route is `src/real_one_minus_seq.ac`: the tail supremum of a reflected sequence is the
+      reflection of its tail infimum, proved at the level of the tails where it needs no limits
+      at all, since reflection simply exchanges the two characterising properties. Only lifting
+      that to the limit superior needs the limit machinery, and there it is a constant shift, so
+      `limit_add_seq` against a constant sequence does it.
 - [x] Add the limit superior for bounded sequences, in `src/real_tail_supremum.ac` and
       `src/real_limsup.ac`. The tail supremum is the least bound on the values from an index
       onward, which completeness supplies since the tail is nonempty and inherits any bound on the
