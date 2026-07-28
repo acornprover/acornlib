@@ -145,9 +145,10 @@ way, so starting from more blue vertices never reaches fewer.
 
 Remaining:
 
-- [ ] Prove the iteration is stationary after `fs_card(s)` rounds, so `is_zero_forcing_set` can be
-      decided at a fixed stage rather than through an existential. Each non-stationary round adds a
-      vertex, so this is a counting argument over nested subsets.
+- [x] Prove the iteration reaches a fixed point at or before round `fs_card(s)`. A round that changes
+      anything is a proper enlargement of the blue set, hence strictly larger, so more changing
+      rounds than there are vertices is impossible. `forcing_iterate_fixed_point_exists` is the
+      usable form: the search for a fixed point never has to look past `fs_card(s)` steps.
 - [ ] Define the diamond graph and the diamond-free condition via induced subgraphs. Superseded by
       the forbidden induced subgraph section above; what remains is building the diamond as an
       actual four-vertex graph.
