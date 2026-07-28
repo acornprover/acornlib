@@ -30,9 +30,10 @@ Remaining:
 - [ ] Finish the prime power statement: a natural above one with no coprime splitting is a prime
       power. This is the factorisation half, and needs the canonical factorisation rather than
       divisibility alone.
-- [ ] Prove the prime factors of a falling product are the union of those of its factors. The
-      valuation form is already `count_prime_factor_falling_product`; what is missing is the
-      statement about the factors themselves.
+- [x] Prove the prime factors of a falling product are exactly those of its factors. The valuation
+      form `count_prime_factor_falling_product` adds up multiplicities but says nothing about which
+      factor a prime came from; `prime_divides_falling_product_iff` supplies that, by Euclid's lemma
+      applied along the product. Unblocked by exporting `prime_divides_mul` in an earlier pass.
 - [ ] Relate the `p`-adic valuation of `binom(2n, n)` to carries, completing the Kummer bridge.
       Much of this is present in `kummer_carry.ac`; the gap is the exported surface.
 - [ ] Relate falling-product divisibility to central-binomial divisibility.
