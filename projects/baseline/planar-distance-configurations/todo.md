@@ -35,4 +35,10 @@ Remaining:
       positive on a nonempty set. Being equidistant from a point is exactly lying on a circle about
       it, so `no_four_equidistant` says each realised distance is attained by at most three points.
       That is what makes no-four-concyclic a hypothesis about distances rather than about circles.
-- [ ] Add the distance set between two different point sets, not just from a single point.
+- [x] Add the distance set between two different point sets, not just from a single point.
+      Taken as the image of the Cartesian product under the squared distance, since the pairs are
+      what the count ranges over and `distances_from` fixes one endpoint. The product cardinality
+      existed only through `cardinality_is`; `src/finite_set_product_card.ac` restates it for the
+      numeric `fs_card`, which is what the bound `|A| * |B|` needs.
+
+This branch is complete.
