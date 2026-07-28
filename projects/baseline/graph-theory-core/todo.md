@@ -152,7 +152,16 @@ Remaining:
 - [ ] Define the diamond graph and the diamond-free condition via induced subgraphs. Superseded by
       the forbidden induced subgraph section above; what remains is building the diamond as an
       actual four-vertex graph.
-- [ ] Compute the zero forcing number for paths, cycles, and complete graphs. Complete graphs need
-      only cardinality reasoning; paths and cycles wait on those graphs existing.
+- [x] Bound the zero forcing number of the complete graph. All but one vertex is a zero forcing set:
+      the single white vertex is adjacent to every blue one, so each of them sees it as its only
+      white neighbour and one round finishes. Hence the invariant is strictly below the vertex
+      count. The matching lower bound, that no smaller set works, is separate.
+
+- [ ] Prove the zero forcing number of the complete graph is exactly one below the vertex count.
+      Two white vertices leave every blue vertex with two white neighbours, so nothing can force;
+      stating that needs a second white vertex to be produced from a cardinality gap.
+
+- [ ] Compute the zero forcing number for paths and cycles. Waits on those graphs existing as finite
+      graphs; `src/simple_graph.ac` has only the empty, complete, and induced constructions.
 - [ ] Relate the zero forcing number to the maximum nullity, which is the reason the invariant was
       introduced.
