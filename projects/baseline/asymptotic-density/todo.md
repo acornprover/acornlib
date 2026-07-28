@@ -25,8 +25,15 @@ be worth doing. `div_le_div_pos` is in the same position: `src/real/interface.ac
 
 Remaining:
 
-- [ ] Prove a predicate holding from some point on has density one. This needs the limit of `N / n`
-      as `n` grows, which is the first genuinely analytic step in this branch.
+- [ ] Prove a predicate holding from some point on has density one. The Archimedean property this
+      waits on is no longer missing: `src/real_archimedean.ac` proves every real is below some
+      natural, and hence that enough copies of any positive real exceed any target.
+
+      `src/real/` states neither of those, but both halves were there — every real has a rational
+      strictly above it, and the rationals are Archimedean because they are built from integers.
+      What remains for the density statement itself is turning that into a bound on the density
+      sequence and identifying the limit, which the limsup machinery should now reach without a
+      `converges_to` construction.
 - [ ] Prove the complement of a set of density `d` has density `1 - d`. Everything but the last
       step is now in `src/nat_density_complement.ac`: the counting identity
       `count_upto_complement`, the term-by-term reflection `density_seq_complement`, and
@@ -99,6 +106,12 @@ Remaining:
       rearrangement, which existed only for the naturals; `src/comm_monoid_rearrange.ac` states
       it over a commutative monoid.
 - [ ] Define logarithmic density, and relate it to natural density where both exist.
-- [ ] Add comparison tests for series convergence against a geometric series.
+- [x] Add comparison tests for series convergence against a geometric series, in
+      `src/real_geometric_comparison.ac`. Both ingredients turned out to exist already and only
+      to be unexported: `comparison_test` and `geom_converges` in `src/real/real_series.ac`,
+      along with `converges_mul_seq`. What was missing is the statement that ties them together,
+      that a nonnegative series dominated termwise by a constant times a geometric sequence
+      converges, and `partial_mul_seq`, which says the partial sums of a scaled sequence are the
+      scaled partial sums.
 - [ ] Add the base-`b` digit expansion of a real number in the unit interval, and prove it agrees
       with the natural-number base-`b` API.
