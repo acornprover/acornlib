@@ -35,6 +35,9 @@ Remaining:
 
       The counting bound is written `n <= count + threshold` rather than with a subtraction, so
       the induction step needs no case analysis on which side is larger.
+
+      With `eventually_all_and` this gives that two predicates of density one hold together on a
+      set of density one, which is what makes density one behave like a notion of almost-all.
 - [ ] Prove the complement of a set of density `d` has density `1 - d`. Everything but the last
       step is now in `src/nat_density_complement.ac`: the counting identity
       `count_upto_complement`, the term-by-term reflection `density_seq_complement`, and
