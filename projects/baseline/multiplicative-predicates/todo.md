@@ -21,8 +21,23 @@ Remaining:
 - [ ] Prove the converse for coprime squares: if a product of coprime numbers is a square then each
       factor is. The divisibility statement of `is_square` gives no way to split a root across
       coprime factors, so this needs the factorisation machinery.
-- [ ] Define the squarefree part and the square part of a natural.
-- [ ] Prove every natural factors uniquely as a square times a squarefree number.
+- [x] Define the squarefree part and the square part of a natural, in `src/nat_square_part.ac`.
+      Defined by maximisation rather than through prime valuations: the square part is the largest
+      `d` with `d * d` dividing `n`, which `has_max` from `src/nat_bounded_max.ac` supplies since
+      the family contains one and is bounded by `n`. No factorisation machinery is needed.
+
+      At `n = 0` every square divides, so the maximum does not exist and every statement here
+      carries `1 <= n`. The squarefree part is written with `div` rather than as a chosen cofactor
+      so that the function is total even though its defining equation is not.
+- [x] Prove every positive natural factors as a square times a squarefree number. Maximality of
+      the square part is exactly what makes the cofactor squarefree: a square `c * c` dividing it
+      would make `square_part(n) * c` a larger square divisor.
+- [x] Characterise the two extremes: a squarefree number is its own squarefree part with trivial
+      square part, a positive square has its root as square part, and a positive number is a square
+      exactly when its squarefree part is one.
+- [ ] Prove the factorisation is unique. Existence is above, but uniqueness needs that `d * d`
+      dividing `a * a * b` with `b` squarefree forces `d` to divide `a`, which is a statement about
+      prime valuations and does not follow from the divisibility-only API used here.
 - [ ] Prove a product is a square iff the squarefree parts multiply to a square.
 - [ ] Relate `is_squarefree` to the prime valuation being at most one. The predicate is defined
       through divisibility in `src/nat_squarefree.ac`; connecting it to valuations needs the
