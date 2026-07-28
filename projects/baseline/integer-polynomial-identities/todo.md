@@ -14,11 +14,10 @@ multivariate evaluation and a way to conclude that a family is infinite.
 
 Remaining, with what each actually needs:
 
-- [ ] Prove a `Nat`-indexed embedding of solutions makes the solution set infinite. This is the
-      payoff of the pattern above and it is blocked on one missing lemma: an injection from `Nat`
-      into a set forces `Set.is_infinite`. `src/set.ac` has closure lemmas for finiteness under
-      union, intersection, difference, and subsets, but nothing relating injections to it. The proof
-      is a pigeonhole against the covering list in `cardinality_at_most`.
+- [x] Prove a `Nat`-indexed embedding of solutions makes the solution set infinite. The missing
+      criterion is now `set_infinite_of_injection` in `src/set_infinite.ac`: a covering list would
+      have to hold one more distinct value than its own length. `infinitely_many_solutions` is the
+      form a downstream claim states.
 - [ ] Prove a nonconstant integer polynomial takes each value finitely often, and has infinite
       image. The root bound `polynomial_root_list_length_lt_support_bound` already says a nonzero
       polynomial supported below `n` has fewer than `n` distinct roots, but the whole of
