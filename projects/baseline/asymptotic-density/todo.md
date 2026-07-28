@@ -116,3 +116,16 @@ Remaining:
       scaled partial sums.
 - [ ] Add the base-`b` digit expansion of a real number in the unit interval, and prove it agrees
       with the natural-number base-`b` API.
+
+## Monotonicity
+
+`src/nat_density_mono.ac`. Both one-sided densities are monotone in the predicate, via monotonicity
+of the tail supremum and infimum and then of the limit superior and inferior.
+
+The tail-level halves need no limits at all — each is one application of a characterising
+property, the same pattern the reflection lemmas use. Lifting to the invariants needs
+`seq_lte_preserves_limit`, which was proved in `src/real/real_series.ac` and unexported.
+
+- [x] Prove both one-sided densities monotone in the predicate.
+- [ ] Prove the upper density subadditive over a disjunction, which with monotonicity is what a
+      covering-system density bound needs.
