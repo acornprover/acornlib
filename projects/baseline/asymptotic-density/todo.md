@@ -25,15 +25,19 @@ be worth doing. `div_le_div_pos` is in the same position: `src/real/interface.ac
 
 Remaining:
 
-- [ ] Prove a predicate holding from some point on has density one. The Archimedean property this
-      waits on is no longer missing: `src/real_archimedean.ac` proves every real is below some
-      natural, and hence that enough copies of any positive real exceed any target.
+- [x] Prove a predicate holding from some point on has density one, in
+      `src/nat_density_eventually.ac`. Stated as upper and lower density both being one, which is
+      the strongest form reachable without building a `converges_to`.
 
-      `src/real/` states neither of those, but both halves were there — every real has a rational
-      strictly above it, and the rationals are Archimedean because they are built from integers.
-      What remains for the density statement itself is turning that into a bound on the density
-      sequence and identifying the limit, which the limsup machinery should now reach without a
-      `converges_to` construction.
+      The Archimedean property is what makes it go: for each size it gives a range long enough
+      that the threshold is below that fraction of it, and from there on the density fraction is
+      within that size of one, so the tail infimum is and so is the limit inferior.
+
+      The counting bound is written `n <= count + threshold` rather than with a subtraction, so
+      the induction step needs no case analysis on which side is larger.
+
+      With `eventually_all_and` this gives that two predicates of density one hold together on a
+      set of density one, which is what makes density one behave like a notion of almost-all.
 - [ ] Prove the complement of a set of density `d` has density `1 - d`. Everything but the last
       step is now in `src/nat_density_complement.ac`: the counting identity
       `count_upto_complement`, the term-by-term reflection `density_seq_complement`, and
