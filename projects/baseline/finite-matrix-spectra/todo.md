@@ -38,7 +38,8 @@ Remaining:
       `src/fin_matrix.ac` does not supply.
 - [ ] Prove every eigenvalue of a row-stochastic matrix has modulus at most one. The `fin_sum` term
       bound this was waiting on now exists. What remains is the argument itself: pick an index where
-      the eigenvector attains its largest absolute value and bound that row. That needs a maximum
-      over `Fin[n]`, which nothing supplies, and the triangle inequality for `fin_sum`.
+      the eigenvector attains its largest absolute value and bound that row. The maximum over
+      `Fin[n]` now exists as `fin_function_max` in `src/fin_function_max.ac`; what remains is the
+      triangle inequality for `fin_sum`, which needs an absolute value on the entries.
 - [ ] Define regions in the complex plane, and set equality between them.
 - [ ] Prove the characteristic polynomial of a circulant or cyclic family in closed form.
