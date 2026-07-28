@@ -22,10 +22,10 @@ Remaining, with what each actually needs:
       image. The root bound `polynomial_root_list_length_lt_support_bound` already says a nonzero
       polynomial supported below `n` has fewer than `n` distinct roots, but the whole of
       `src/polynomial/root_bound.ac` is stated over a `Field`, and the integers are not one. Two
-      routes: state the root bound over an integral domain, or build the `SemiringHom` from `Int` to
-      `Rat` and transfer along it. `Rat.from_int` exists and `from_int_cancel` gives injectivity,
-      but its additivity and multiplicativity are not stated anywhere, so either route starts with
-      real work.
+      route is now open: `src/rat_int_hom.ac` supplies `int_to_rat_hom`, the `SemiringHom` from
+      `Int` to `Rat`, together with the additivity and multiplicativity of `Rat.from_int` that
+      `src/rat/` did not state. With `polynomial_map` and `polynomial_root_mod_hom_iff_mapped_root`
+      the integer root bound should follow from the `Field` one by transport.
 - [ ] Add multivariate polynomial evaluation over a commutative ring, prove evaluation is a ring
       homomorphism in each argument, add substitution, and prove substitution commutes with
       evaluation at a point. This is the largest single construction left in the baseline project.
