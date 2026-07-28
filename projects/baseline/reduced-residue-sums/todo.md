@@ -28,10 +28,14 @@ Remaining:
 
 - [ ] Prove the closed form `phi_1(n) = n * totient(n) / 2` for `n > 1`. The sum-level step is now
       available as `reduced_residue_sum_reindex`, and every fact about the reflection is proved.
-      What remains is discharging its hypothesis — that reflecting permutes `coprime_residues(n)` —
-      which needs `coprime_residues_all_coprime`, `coprime_residues_unique`, and
-      `coprime_residues_contains_intro`. All three exist in `src/number_theory/totient.ac` but the
-      `number_theory` interface exports only `coprime_residues_length`.
+      Its hypothesis — that reflecting permutes `coprime_residues(n)` — is now within reach on the
+      membership side, since `coprime_residues_all_coprime`, `coprime_residues_contains_imp`,
+      `coprime_residues_contains_intro`, and `coprime_residues_unique` are exported. What is still
+      missing is uniqueness of the reflected list. `injective_map_is_unique` requires the map to be
+      injective *everywhere*, and reflection is injective only below the modulus. The locally
+      injective version needs `pigeonhole_unique_map` strengthened to state that the two colliding
+      elements lie in the list, which it does not currently say; that is a list lemma and an
+      induction of its own.
 - [ ] Prove `phi_k` is multiplicative across coprime factors. This needs the Chinese remainder
       bijection between reduced residues modulo `m * n` and pairs of reduced residues, which
       `src/number_theory/crt.ac` supports at the level of solutions but not as a bijection of lists.
