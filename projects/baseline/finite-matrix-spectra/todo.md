@@ -49,6 +49,10 @@ Remaining:
       `fin_sum_scalar_mul` in `src/fin_sum_scalar.ac` factors a scalar out of a finite sum, which
       `src/nat_range_sum_semiring.ac` had for range sums but nothing had for `Fin`-indexed ones.
 
+      The bound is tight: `row_stochastic_has_eigenvalue_one` already showed one is an
+      eigenvalue, so `stochastic_spectral_radius_one` packages the two into the statement that
+      one is an eigenvalue of largest absolute value.
+
       Stated over the reals rather than an ordered field, since there is no absolute value at
       that level and adding one is a design decision.
 
