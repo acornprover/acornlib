@@ -64,7 +64,16 @@ Remaining:
       as finite graphs; `src/simple_graph.ac` has only the empty, complete, and induced
       constructions.
 - [ ] Define the independent domination number as the least `fs_card` over independent dominating
-      sets, and prove it is at least the domination number.
+      sets, and prove it is at least the domination number. The minimum construction needs a witness,
+      and the natural one — the empty set is independent — cannot currently be stated. Proving
+      `is_independent_in(g, FiniteSet.empty)` means proving a `forall` whose body is an implication
+      with a provably false antecedent, and the verifier rejects that as "prover found inconsistent
+      assumptions". Nothing in `src/` proves such a fact about the empty finite set, so there is no
+      idiom to copy. Either the maximum must be taken over a family with a non-vacuous witness, or
+      the language needs a way to discharge a vacuous case.
+
+      `src/nat_bounded_max.ac` supplies the maximisation side of this — `has_max` for a satisfiable
+      predicate with an upper bound — so only the witness is missing.
 - [ ] Prove a minimal dominating set of a graph without isolated vertices has a dominating
       complement, which gives the classical bound of half the vertices.
 
