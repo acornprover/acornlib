@@ -18,14 +18,23 @@ Remaining, with what each actually needs:
       criterion is now `set_infinite_of_injection` in `src/set_infinite.ac`: a covering list would
       have to hold one more distinct value than its own length. `infinitely_many_solutions` is the
       form a downstream claim states.
-- [ ] Prove a nonconstant integer polynomial takes each value finitely often, and has infinite
-      image. The root bound `polynomial_root_list_length_lt_support_bound` already says a nonzero
-      polynomial supported below `n` has fewer than `n` distinct roots, but the whole of
-      `src/polynomial/root_bound.ac` is stated over a `Field`, and the integers are not one. Two
-      route is now open: `src/rat_int_hom.ac` supplies `int_to_rat_hom`, the `SemiringHom` from
-      `Int` to `Rat`, together with the additivity and multiplicativity of `Rat.from_int` that
-      `src/rat/` did not state. With `polynomial_map` and `polynomial_root_mod_hom_iff_mapped_root`
-      the integer root bound should follow from the `Field` one by transport.
+- [x] Prove a nonzero integer polynomial supported below `n` has fewer than `n` distinct integer
+      roots, and hence takes each value finitely often. `src/polynomial/root_bound.ac` is stated
+      over a `Field` throughout and the integers are not one; `src/polynomial_int_roots.ac`
+      transports the bound along `int_to_rat_hom`. The rationalised polynomial is nonzero because
+      the embedding is injective on coefficients, keeps the same support bound, and carries a
+      distinct root list to a distinct one.
+
+- [ ] Prove a nonconstant integer polynomial has infinite image. The value bound above is the input:
+      each value has finitely many preimages, so an infinite domain forces an infinite image. Making
+      that precise needs the image as a `Set` and a counting argument against
+      `set_infinite_of_injection`.
+
+- [ ] Add a support bound for a difference of polynomials. `polynomial_add_support_bounded_by`
+      exists but there is no subtraction counterpart, so
+      `int_polynomial_value_list_length_lt_support_bound` takes its hypotheses on `p - c` rather
+      than on `p`. That is workable at a call site where the degree is known, but the direct form
+      would be better.
 - [ ] Add multivariate polynomial evaluation over a commutative ring, prove evaluation is a ring
       homomorphism in each argument, add substitution, and prove substitution commutes with
       evaluation at a point. This is the largest single construction left in the baseline project.
