@@ -34,11 +34,23 @@ Remaining:
       form `count_prime_factor_falling_product` adds up multiplicities but says nothing about which
       factor a prime came from; `prime_divides_falling_product_iff` supplies that, by Euclid's lemma
       applied along the product. Unblocked by exporting `prime_divides_mul` in an earlier pass.
-- [ ] Relate the `p`-adic valuation of `binom(2n, n)` to carries, completing the Kummer bridge.
-      Much of this is present in `kummer_carry.ac`; the gap is the exported surface.
-- [ ] Relate falling-product divisibility to central-binomial divisibility.
+- [x] Relate the `p`-adic valuation of `binom(2n, n)` to carries. The note about the exported
+      surface was wrong: every theorem in `kummer_carry.ac` is already exported, and
+      `central_binom_valuation_eq_addition_carry_count` is exactly the statement wanted. Only the
+      internal algebra helpers in `kummer.ac` are unexported, which is right.
+- [x] Relate falling-product divisibility to central-binomial divisibility, in
+      `src/nat_prime_central_binom.ac`. A prime with `n < p <= 2n` is one of the factors of the
+      falling product `2n * (2n - 1) * ... * (n + 1)`, and that product is the central binomial
+      coefficient times `n!`. The prime cannot come from the factorial, so it divides the
+      binomial coefficient.
+
+      Separating the two halves needed `prime_divides_factorial_imp_lte`, which nothing in
+      `src/number_theory/` supplied. `falling_product_eq_binom_mul_factorial` existed but was
+      unexported, and is now.
 - [ ] Strengthen finite interval sums and products, including partial sums over residue classes.
-- [ ] Prove Bertrand's postulate, or the existence of a prime in `(k, 2k)`. The divisibility result
-      above is the standard entry point: it bounds the product of the primes in the interval below
-      by the central binomial coefficient divided by the contribution of the small primes.
+- [ ] Prove Bertrand's postulate, or the existence of a prime in `(k, 2k)`. The entry point is now
+      available as `prime_in_interval_divides_central_binom`. What remains is the product bound:
+      the primes in `(n, 2n]` are distinct and each divides the central binomial coefficient, so
+      their product does, which needs products over a set of primes and a size estimate for the
+      central binomial coefficient.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.

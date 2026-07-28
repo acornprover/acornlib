@@ -138,7 +138,18 @@ Remaining:
       use.
 - [ ] Prove the combinatorial conditions equivalent to `is_free_of` at these two graphs. That
       needs graph embeddings to and from them, which the concrete graphs now make statable.
-- [ ] Prove a diamond-free graph has every edge in at most one maximal clique.
+- [x] Prove a diamond-free graph has every edge in at most one maximal clique, in
+      `src/simple_graph_maximal_clique.ac`. This needed maximal cliques, which the library did not
+      have: `is_clique_in` existed but nothing about inclusion-maximality.
+
+      The union of two cliques through a shared edge is again a clique. Vertices in the same
+      clique are adjacent outright; a vertex of one clique and a vertex of the other are both
+      common neighbours of the shared edge, since neither is one of its ends, and
+      diamond-freeness forbids two common neighbours of an edge from being non-adjacent.
+      Maximality then forces each clique to equal the union.
+
+      The cross case is symmetric in the two cliques and has to be applied in both orientations,
+      so it is factored out as `diamond_free_cross_adj` rather than written twice.
 
 ## Zero forcing
 
@@ -247,3 +258,15 @@ form, which the cycle uses, does take one.
       triangle free.
 - [x] Define the cycle graph, prove its adjacency characterisation, and prove both the in-range
       successor edges and the wrap-around edge that closes the cycle.
+
+## Complement duality
+
+`src/simple_graph_complement_duality.ac`. Cliques of a graph are exactly independent sets of its
+complement, and independent sets exactly cliques of the complement. The complement joins the
+distinct non-adjacent pairs, so the two conditions say the same thing about a distinct pair; the
+equal pair is handled by irreflexivity on one side and by the distinctness clause on the other,
+which is the only asymmetry between the two statements.
+
+- [x] Prove both halves of the clique-independence duality under complementation.
+- [ ] Relate the independence number and the clique number of complementary graphs, which the
+      duality now makes a matter of transporting the maximisation.

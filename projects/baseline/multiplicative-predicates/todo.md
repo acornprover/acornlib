@@ -42,7 +42,14 @@ Remaining:
       dividing `a * a * b` with `b` squarefree forces `d` to divide `a`, which is a statement about
       prime valuations and does not follow from the divisibility-only API used here.
 - [ ] Prove a product is a square iff the squarefree parts multiply to a square.
-- [ ] Relate `is_squarefree` to the prime valuation being at most one. The predicate is defined
+- [ ] Relate `is_squarefree` to the prime valuation being at most one. Blocked, and not for a
+      mathematical reason: `src/number_theory/factorisation.ac` has everything needed
+      (`count_prime_factor_mul`, `divides_iff_count_prime_factor_le`,
+      `count_prime_factor_le_imp_divides`, `count_prime_factor_self`,
+      `count_prime_factor_other_prime`, `count_prime_factor_pow`) but **none of it is exported**,
+      and `src/number_theory/interface.ac` is at the 500-declaration cap the compiler enforces.
+      Adding the valuation API there means removing something else, which is a maintainer
+      decision about what that interface is for rather than something to settle in passing. The predicate is defined
       through divisibility in `src/nat_squarefree.ac`; connecting it to valuations needs the
       factorisation machinery.
 - [x] Prove the interval condition passes from factors to product. Coprimality turns out not to be
