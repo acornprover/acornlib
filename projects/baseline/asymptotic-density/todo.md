@@ -55,7 +55,9 @@ Remaining:
       shadowed by the one on the reals in any module importing both.
 
       The sum lemma reuses `abs_add_le` from `src/fin_sum_abs.ac`, which is the only place the
-      triangle inequality for `abs` is available.
+      triangle inequality for `abs` is available. The product lemma needs the four-factor
+      rearrangement, which existed only for the naturals; `src/comm_monoid_rearrange.ac` states
+      it over a commutative monoid.
 - [ ] Define logarithmic density, and relate it to natural density where both exist.
 - [ ] Add comparison tests for series convergence against a geometric series.
 - [ ] Add the base-`b` digit expansion of a real number in the unit interval, and prove it agrees
