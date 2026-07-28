@@ -44,9 +44,21 @@ Remaining:
       unfolding it needs `c * m = z` rather than `m * c = z`. And the two rearrangements of the
       form `(a - b) - a = -b` both time out written directly; citing `add_swap_inner` with a
       zero padding term settles them, the same fix the density reflection identity needed.
-- [ ] Prove a covering system has density at least one, and a disjoint system at most one. Both
-      need counting over one period, which `system_periodic` now makes meaningful but which still
-      needs the count of integers in a residue class below a bound.
+- [ ] Prove a covering system has density at least one, and a disjoint system at most one. The
+      count of integers in a residue class below a bound now exists, in
+      `src/nat_residue_count.ac`: a residue class is hit exactly once per block, so the count over
+      a whole number of periods is the number of periods. What remains is summing that over a
+      system and passing to the density.
+
+      Two things about the shape. `mod_lt`, `div_of_decomp` and `mod_of_decomp` were all proved in
+      `src/nat/division.ac` and unexported; `mod` is barely usable from outside without them, and
+      they are exported now.
+
+      The counting lemma was first written as a single statement with a conditional term,
+      `count(q * m + j) = count(q * m) + (if a < j { 1 } else { 0 })`. That form sent proof search
+      into a blowup — the module did not verify in twenty minutes. Split into the two cases it
+      verifies in seconds, with a 36 ms average search. Conditional terms inside an arithmetic
+      identity look worth avoiding entirely.
 - [ ] Prove the density of a system bounded by `N` is attained by an explicit construction.
 - [x] Add the least common modulus of a system, as `system_lcm`, and prove every modulus divides
       it. `system_modulus` in `crt_list.ac` is the product of the moduli, which is a common multiple
