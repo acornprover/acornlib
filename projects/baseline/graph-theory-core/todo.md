@@ -60,9 +60,8 @@ uniqueness condition, `src/simple_graph_domination_extremes.ac` the extremal gra
 
 Remaining:
 
-- [ ] Compute the domination number for path and cycle graphs. This waits on those graphs existing
-      as finite graphs; `src/simple_graph.ac` has only the empty, complete, and induced
-      constructions.
+- [ ] Compute the domination number for path and cycle graphs. The graphs now exist:
+      `src/simple_graph_path.ac` and `src/simple_graph_cycle.ac`. What remains is the counting.
 - [x] Prove every vertex set has a maximal independent subset, and hence an independent dominating
       set. Done without a greedy construction: `src/simple_graph_max_independent.ac` defines the
       independence number as the largest size of an independent subset, using `has_max` from
@@ -163,7 +162,32 @@ Remaining:
       white vertex needed `fs_two_distinct_members`, which reads two entries off a duplicate-free
       list representation and is general finite-set API.
 
-- [ ] Compute the zero forcing number for paths and cycles. Waits on those graphs existing as finite
-      graphs; `src/simple_graph.ac` has only the empty, complete, and induced constructions.
+- [ ] Compute the zero forcing number for paths and cycles. The graphs now exist; what remains is
+      the counting.
 - [ ] Relate the zero forcing number to the maximum nullity, which is the reason the invariant was
       introduced.
+
+## Paths and cycles
+
+`src/simple_graph_path.ac` has the path and `src/simple_graph_cycle.ac` the cycle. Both are defined
+on all of the naturals, with the finite `P_n` and `C_n` cut out by the vertex set that every graph
+predicate already carries; that keeps one relation serving every length at once and avoids needing
+a bounded vertex type.
+
+Adjacency on the path is consecutiveness, `x + 1 = y or y + 1 = x`. On the cycle it is
+consecutiveness modulo `n`, with an explicit distinctness clause: at `n = 1` every vertex is its
+own successor modulo `n`, and a simple graph has no loops.
+
+Outside `{0, ..., n - 1}` the cycle relation is not the intended one. That costs nothing, since the
+vertex set is always supplied, but it does mean statements have to carry range hypotheses; the
+first version of a `C_1`-has-no-edges lemma was false for exactly that reason.
+
+The `let ... satisfy` form for a nullary constant takes no `by` block, so the existence obligation
+for the path graph is discharged by a preceding `path_graph_exists` theorem. The parameterized
+form, which the cycle uses, does take one.
+
+- [x] Define the path graph and prove its adjacency characterisation.
+- [x] Prove the two neighbours of a path vertex differ by two, and hence that every finite path is
+      triangle free.
+- [x] Define the cycle graph, prove its adjacency characterisation, and prove both the in-range
+      successor edges and the wrap-around edge that closes the cycle.
