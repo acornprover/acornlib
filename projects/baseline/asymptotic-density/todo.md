@@ -48,6 +48,19 @@ Remaining:
       at all, since reflection simply exchanges the two characterising properties. Only lifting
       that to the limit superior needs the limit machinery, and there it is a constant shift, so
       `limit_add_seq` against a constant sequence does it.
+
+      The dual, `lower_density(not p) = 1 - upper_density(p)`, is in
+      `src/nat_density_complement_lower.ac`, with `liminf_one_minus` in
+      `src/real_liminf_one_minus.ac`. It is not proved again from the tails: reflection in one
+      is an involution, so applying the limit-superior statement at the reflected sequence gives
+      the limit-inferior one. Between the two, both one-sided densities of a complement are
+      determined by those of the predicate with the roles exchanged, which is what gives the two
+      equivalences between density one and complementary density zero.
+
+      Complementing twice restoring the predicate needs both truth values written out by hand,
+      and so does the shape of the statement: `not x = y` parses as `not (x = y)`, so the
+      double-negation step has to be phrased through the complement itself rather than through a
+      bare `not`.
 - [x] Add the limit superior for bounded sequences, in `src/real_tail_supremum.ac` and
       `src/real_limsup.ac`. The tail supremum is the least bound on the values from an index
       onward, which completeness supplies since the tail is nonempty and inherits any bound on the
