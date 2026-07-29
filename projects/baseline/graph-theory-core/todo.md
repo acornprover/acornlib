@@ -227,9 +227,18 @@ Remaining:
       symmetry and three from irreflexivity — have to be supplied as a separate statement, since
       a hypothesis that is a conjunction of two disjunctions is not discharged.
 
-      What remains is the converse, that a claw-free graph is free of the claw. It needs the
-      four images of an embedding assembled into a `FiniteSet` and the four `Fin[4]` elements
-      constructed, neither of which the forward direction needs. The diamond is untouched.
+      The converse is in `src/simple_graph_claw_converse.ac`, so the claw is settled:
+      `is_free_of(g, claw4_graph)` and claw-freeness on every vertex set are equal. It needs the
+      four `Fin[4]` elements constructed, which `fin_new_exists_of_lt` supplies, and the four
+      images assembled into a `FiniteSet` — any set holding them serves, since the combinatorial
+      condition carries a vertex set only to restrict the neighborhood.
+
+      Note that `is_claw_free_apply` requires the center to lie in the vertex set, so the
+      existential the converse produces has to carry that containment alongside the triple, not
+      just the triple.
+
+      The diamond is untouched. Its adjacency has a different shape — all pairs but one — so the
+      case analyses do not transfer mechanically from the claw.
 - [x] Prove a diamond-free graph has every edge in at most one maximal clique, in
       `src/simple_graph_maximal_clique.ac`. This needed maximal cliques, which the library did not
       have: `is_clique_in` existed but nothing about inclusion-maximality.
