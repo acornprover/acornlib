@@ -61,7 +61,29 @@ uniqueness condition, `src/simple_graph_domination_extremes.ac` the extremal gra
 Remaining:
 
 - [ ] Compute the domination number for path and cycle graphs. The graphs now exist:
-      `src/simple_graph_path.ac` and `src/simple_graph_cycle.ac`. What remains is the counting.
+      `src/simple_graph_path.ac` and `src/simple_graph_cycle.ac`.
+
+      The lower bound for the path is done, in `src/simple_graph_path_domination.ac`:
+      `n <= 3 * domination_number(path_graph, range_set(n))`, which is the classical
+      `gamma >= n / 3` written without division.
+
+      The counting goes through a covering rather than an injection. `src/finite_set_cover_card.ac`
+      states that a finite set every member of which is a value of a map on another finite set is
+      no larger than that set — no injectivity is needed, since a map can identify members but
+      never create new ones. The map here sends a pair of a dominating vertex `w` and an offset
+      `j` in `{0, 1, 2}` to `w + j - 1`, so the three vertices `w` can dominate are one expression
+      indexed by a three-element set, and the product cardinality supplies the factor of three.
+      Every offset stays a natural and every truncated subtraction that arises is exact.
+
+      Two things cost time. The covering condition is an existential under a universal, which
+      proof search does not assemble; the inner existential has to be named, exactly as
+      `head_disjoint_from` does in the residue-class work. And comparisons between numerals are
+      not free, so `0 < 3`, `1 < 3`, and `2 < 3` need the successor ladder stated once.
+
+      What remains is the matching upper bound, which needs an explicit dominating set of size
+      `ceil(n / 3)` and its cardinality, and the same pair of bounds for the cycle. The cycle
+      lower bound wants the offset map `(w + j + n - 1) mod n`, which needs modular addition
+      lemmas that `src/nat/interface.ac` does not currently export.
 - [x] Prove every vertex set has a maximal independent subset, and hence an independent dominating
       set. Done without a greedy construction: `src/simple_graph_max_independent.ac` defines the
       independence number as the largest size of an independent subset, using `has_max` from
