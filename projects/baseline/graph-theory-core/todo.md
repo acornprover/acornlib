@@ -204,7 +204,7 @@ Remaining:
       Comparisons between numerals are not free, so the ordering and distinctness of the four
       labels is packaged into `four_labels_ordered` and read off rather than rederived at each
       use.
-- [ ] Prove the combinatorial conditions equivalent to `is_free_of` at these two graphs. This does
+- [x] Prove the combinatorial conditions equivalent to `is_free_of` at these two graphs. This does
       need a four-element vertex type after all, contrary to the note above: `contains_induced`
       and `is_free_of` take no vertex set, so an embedding of `claw_graph` into a graph has to
       embed the whole infinite star on the naturals, not the four-vertex claw. Cutting the vertex
@@ -237,8 +237,21 @@ Remaining:
       existential the converse produces has to carry that containment alongside the triple, not
       just the triple.
 
-      The diamond is untouched. Its adjacency has a different shape — all pairs but one — so the
-      case analyses do not transfer mechanically from the claw.
+      The diamond is settled the same way, in `src/simple_graph_diamond_graph.ac` and
+      `src/simple_graph_diamond_embed.ac`. Its adjacency has a different shape — every pair but
+      one — but the *map* transfers unchanged: `claw_map` sends label `i` to the `i`-th of four
+      given vertices and knows nothing about either graph, so its injectivity and its four
+      equations serve both. Only the adjacency it has to match differs, and that is sixteen
+      cases either way.
+
+      Two things are worth knowing. A conjunction of sixteen adjacency facts is not assembled
+      from the configuration on its own; each has to be stated first, and then the conjunction
+      goes through. And a numeral inequality has to be stated at the value being compared —
+      `v2.value != Nat.0` rather than `Nat.2 != Nat.0` — or the substitution is left to proof
+      search and times out.
+
+      Both conditions now read either way: as an embedding of a four-vertex graph, or as a
+      condition on neighborhoods inside an ambient set.
 - [x] Prove a diamond-free graph has every edge in at most one maximal clique, in
       `src/simple_graph_maximal_clique.ac`. This needed maximal cliques, which the library did not
       have: `is_clique_in` existed but nothing about inclusion-maximality.
