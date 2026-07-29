@@ -96,8 +96,27 @@ Remaining:
       `w + n + 2 - 1 = (w + 1) + n` has to be split into the additive identity and the
       cancellation, since neither half is found on its own.
 
-      What remains is the matching upper bound for both, which needs an explicit dominating set
-      of size `ceil(n / 3)` and its cardinality.
+      The upper bound for the path is in `src/simple_graph_path_domination_upper.ac`:
+      `3 * gamma <= n + 2`. With the lower bound this pins the domination number exactly, since
+      `3 * gamma` lying in `{n, n + 1, n + 2}` leaves only one value for it. Both are stated as
+      bounds rather than through a ceiling, which is what a counting argument supplies and what
+      one consumes.
+
+      No explicit dominating set of size `ceil(n / 3)` is needed after all. Extending a path by
+      three vertices costs at most one more dominating vertex — insert the middle of the three,
+      which dominates all of them at once, and the old vertices stay dominated because the path
+      relation is the same for every length. That recursion has step three, so the induction
+      carries three consecutive lengths at once: the window `q(m) and q(m+1) and q(m+2)` slides
+      by one while the step proves the length three further out. Ordinary induction then
+      suffices, and no counting of `{v < n : v = 1 mod 3}` is required.
+
+      Only one base case needs work. `P_0` and `P_1` come from the ambient bound, but `P_2` has
+      two vertices and needs only one, so the singleton `{0}` has to be exhibited.
+      `src/finite_set_insert_members.ac` supplies what that needs: membership in an insertion,
+      that inserting a present element changes nothing, and the bound `|s + x| <= |s| + 1`,
+      which avoids a case analysis on whether the element was already there.
+
+      What remains is the upper bound for the cycle, which should follow the same recursion.
 - [x] Prove every vertex set has a maximal independent subset, and hence an independent dominating
       set. Done without a greedy construction: `src/simple_graph_max_independent.ac` defines the
       independence number as the largest size of an independent subset, using `has_max` from
