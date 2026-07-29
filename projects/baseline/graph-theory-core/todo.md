@@ -80,10 +80,24 @@ Remaining:
       `head_disjoint_from` does in the residue-class work. And comparisons between numerals are
       not free, so `0 < 3`, `1 < 3`, and `2 < 3` need the successor ladder stated once.
 
-      What remains is the matching upper bound, which needs an explicit dominating set of size
-      `ceil(n / 3)` and its cardinality, and the same pair of bounds for the cycle. The cycle
-      lower bound wants the offset map `(w + j + n - 1) mod n`, which needs modular addition
-      lemmas that `src/nat/interface.ac` does not currently export.
+      The cycle lower bound is done the same way, in `src/simple_graph_cycle_domination.ac`.
+      The offset map is `(w + n + j - 1) mod n`: adding a whole turn *before* subtracting one
+      keeps every intermediate value a natural, so the truncated subtraction is exact at every
+      offset, including the wrap where the dominator is zero and the dominated vertex is
+      `n - 1`. Writing it as `(w + j + n - 1) mod n` instead would not have this property.
+
+      The modular arithmetic it needs is in `src/nat_mod_period.ac`: adding the modulus leaves
+      the remainder unchanged, which nothing in `src/nat/` states, and the two cases of a
+      successor reduced modulo the modulus — either the successor outright, or zero at the wrap.
+      Stating the wrap case through the successor rather than through a subtraction is what
+      keeps it free of truncation.
+
+      Truncated subtraction is where the time goes. Each rearrangement of the form
+      `w + n + 2 - 1 = (w + 1) + n` has to be split into the additive identity and the
+      cancellation, since neither half is found on its own.
+
+      What remains is the matching upper bound for both, which needs an explicit dominating set
+      of size `ceil(n / 3)` and its cardinality.
 - [x] Prove every vertex set has a maximal independent subset, and hence an independent dominating
       set. Done without a greedy construction: `src/simple_graph_max_independent.ac` defines the
       independence number as the largest size of an independent subset, using `has_max` from
