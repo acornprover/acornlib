@@ -136,3 +136,14 @@ property, the same pattern the reflection lemmas use. Lifting to the invariants 
 
       On the counting side, `or_pred` and the bound `count(p or r) <= count(p) + count(r)` did not
       exist and are added here.
+
+## Superadditivity
+
+`src/nat_density_disjoint.ac`, with the limit inferior half in `src/real_liminf_add.ac`. The
+lower density is superadditive over a disjoint union, mirroring the subadditivity of the upper
+density over an arbitrary one.
+
+Disjointness turns the counting inequality into an equality, which is what makes the density
+fractions add exactly rather than only bound each other.
+
+- [x] Prove the lower density superadditive over a disjoint union.
