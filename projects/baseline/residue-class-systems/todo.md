@@ -44,21 +44,24 @@ Remaining:
       unfolding it needs `c * m = z` rather than `m * c = z`. And the two rearrangements of the
       form `(a - b) - a = -b` both time out written directly; citing `add_swap_inner` with a
       zero padding term settles them, the same fix the density reflection identity needed.
-- [ ] Prove a covering system has density at least one, and a disjoint system at most one. The
-      count of integers in a residue class below a bound now exists, in
-      `src/nat_residue_count.ac`: a residue class is hit exactly once per block, so the count over
-      a whole number of periods is the number of periods. What remains is summing that over a
-      system and passing to the density.
+- [x] Prove a covering system has density at least one, and a disjoint system at most one. Both
+      halves are done, over the reals: `src/nat_covering_bridge.ac` for the covering direction
+      and `src/nat_disjoint_system.ac` for the disjoint one. Together they pin the density of a
+      system that is both at exactly one.
 
-      Two things about the shape. `mod_lt`, `div_of_decomp` and `mod_of_decomp` were all proved in
-      `src/nat/division.ac` and unexported; `mod` is barely usable from outside without them, and
-      they are exported now.
+      The covering direction needed the count of a residue class below a bound
+      (`src/nat_residue_count.ac`), its density (`src/nat_residue_density_value.ac`),
+      subadditivity of the upper density (`src/nat_density_subadditive.ac`), and the Nat-to-Int
+      congruence bridge. The disjoint direction needed superadditivity of the lower density over
+      a disjoint union (`src/nat_density_disjoint.ac`), which is where disjointness turns the
+      counting inequality into an equality.
 
-      The counting lemma was first written as a single statement with a conditional term,
-      `count(q * m + j) = count(q * m) + (if a < j { 1 } else { 0 })`. That form sent proof search
-      into a blowup — the module did not verify in twenty minutes. Split into the two cases it
-      verifies in seconds, with a 36 ms average search. Conditional terms inside an arithmetic
-      identity look worth avoiding entirely.
+      Disjointness of a system is written as a quantifier over suffixes rather than as a
+      recursion returning `Bool`, since a `Bool`-valued `match` whose cons case is a conjunction
+      sends proof search into a shallow explosion when unfolded.
+
+      What remains is the `Rat` to `Real` conversion, so that these read as statements about
+      `system_density` in `src/residue_class_density.ac` rather than its real-valued twin.
 - [ ] Prove the density of a system bounded by `N` is attained by an explicit construction.
 - [x] Add the least common modulus of a system, as `system_lcm`, and prove every modulus divides
       it. `system_modulus` in `crt_list.ac` is the product of the moduli, which is a common multiple
