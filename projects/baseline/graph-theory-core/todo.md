@@ -60,7 +60,7 @@ uniqueness condition, `src/simple_graph_domination_extremes.ac` the extremal gra
 
 Remaining:
 
-- [ ] Compute the domination number for path and cycle graphs. The graphs now exist:
+- [x] Compute the domination number for path and cycle graphs. The graphs now exist:
       `src/simple_graph_path.ac` and `src/simple_graph_cycle.ac`.
 
       The lower bound for the path is done, in `src/simple_graph_path_domination.ac`:
@@ -116,7 +116,20 @@ Remaining:
       that inserting a present element changes nothing, and the bound `|s + x| <= |s| + 1`,
       which avoids a case analysis on whether the element was already there.
 
-      What remains is the upper bound for the cycle, which should follow the same recursion.
+      The cycle upper bound does not need the recursion at all. Inside its range, the cycle has
+      every edge the path has — two consecutive naturals below `n` are consecutive modulo `n` as
+      well, and distinct — so a cycle is no harder to dominate than the path of the same length,
+      and the path bound carries over. `src/simple_graph_cycle_domination_upper.ac`.
+
+      This needed `has_all_edges_of` restricted to a vertex set, in
+      `src/simple_graph_domination_monotone_on.ac`. The unrestricted relation is false here: the
+      path edge from `n - 1` to `n` has one endpoint outside the cycle, where the cycle relation
+      is not the intended one. The restricted version also needs the dominating set to lie
+      inside the vertex set, since the witness making a vertex dominated is one of its members
+      and the edge to it is only guaranteed there — which costs nothing, because the domination
+      number is defined through dominating *subsets* of the vertex set.
+
+      Both graphs now have `n <= 3 * gamma <= n + 2`, which pins the domination number exactly.
 - [x] Prove every vertex set has a maximal independent subset, and hence an independent dominating
       set. Done without a greedy construction: `src/simple_graph_max_independent.ac` defines the
       independence number as the largest size of an independent subset, using `has_max` from
