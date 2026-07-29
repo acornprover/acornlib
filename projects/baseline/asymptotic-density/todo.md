@@ -127,5 +127,12 @@ property, the same pattern the reflection lemmas use. Lifting to the invariants 
 `seq_lte_preserves_limit`, which was proved in `src/real/real_series.ac` and unexported.
 
 - [x] Prove both one-sided densities monotone in the predicate.
-- [ ] Prove the upper density subadditive over a disjunction, which with monotonicity is what a
-      covering-system density bound needs.
+- [x] Prove the upper density subadditive over a disjunction, in
+      `src/nat_density_subadditive.ac`, with the limit superior half in `src/real_limsup_add.ac`.
+
+      The tail-level half is again the cheap one: the tail supremum of a sum is at most the sum of
+      the tail suprema, by one application of each characterising property. Lifting it needs the
+      limit of a sum and `seq_lte_preserves_limit`, both now available.
+
+      On the counting side, `or_pred` and the bound `count(p or r) <= count(p) + count(r)` did not
+      exist and are added here.
