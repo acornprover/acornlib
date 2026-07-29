@@ -210,8 +210,26 @@ Remaining:
       embed the whole infinite star on the naturals, not the four-vertex claw. Cutting the vertex
       set out with `range_set` is enough to state the combinatorial conditions and show they are
       not vacuous, which is what `src/simple_graph_four_vertex.ac` does, but it is not enough
-      here. Either a four-element type or an induced-subgraph-on-a-finite-set construction is
-      required.
+      here.
+
+      The four-element type is `Fin[4]`, which already exists. `src/simple_graph_claw_graph.ac`
+      has the claw on it, with adjacency written as a disjunction rather than as an inequality
+      of booleans, since proof search does not case split on a boolean.
+
+      One direction is done, in `src/simple_graph_claw_embed.ac`: a center with three
+      independent neighbors carries an induced claw, so a graph free of the claw is claw-free on
+      every vertex set. The map is a nested conditional on the label, and every step reads it
+      through the four equations rather than through the conditional.
+
+      Everything here has to be case split by hand. Injectivity needs all sixteen label pairs
+      written out; without them it reports a shallow explosion, not a timeout. The nine leaf
+      pairs are the same story, and the six non-adjacencies beyond the hypothesis — three from
+      symmetry and three from irreflexivity — have to be supplied as a separate statement, since
+      a hypothesis that is a conjunction of two disjunctions is not discharged.
+
+      What remains is the converse, that a claw-free graph is free of the claw. It needs the
+      four images of an embedding assembled into a `FiniteSet` and the four `Fin[4]` elements
+      constructed, neither of which the forward direction needs. The diamond is untouched.
 - [x] Prove a diamond-free graph has every edge in at most one maximal clique, in
       `src/simple_graph_maximal_clique.ac`. This needed maximal cliques, which the library did not
       have: `is_clique_in` existed but nothing about inclusion-maximality.
