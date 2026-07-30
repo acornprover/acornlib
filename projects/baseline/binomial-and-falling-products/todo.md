@@ -101,6 +101,18 @@ Remaining:
       `Bool`: the recursion whose cons case is a conjunction times out when unfolded, the same
       shape the residue-class systems ran into.
 
-      What remains is a size estimate for the central binomial coefficient, and the list of primes
-      in an interval, which nothing constructs yet.
+      The list of primes in an interval turns out not to be needed. `src/nat_prime_interval_product.ac`
+      takes the product over the whole interval of `prime_or_one`, which is a natural at a prime
+      position and one elsewhere. A factor of one is coprime to everything and divides everything,
+      so composite positions ride along at no cost, and the product over `[a, a + n)` divides
+      anything every prime in that interval divides. No list has to be built and no primality
+      test has to be decided.
+
+      `central_binom_prime_interval_product_divides` is that at the interval Bertrand uses: the
+      product of the primes above `n` and at most `2n` divides `central_binom(n)`.
+
+      So the divisibility half of Bertrand is complete. What remains is only the size estimate:
+      an upper bound on the product of primes in the interval, or equivalently a bound on
+      `central_binom` making it too small to be divisible by that product once the interval is
+      assumed empty.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.
