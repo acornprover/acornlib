@@ -52,7 +52,7 @@ Remaining, with what each actually needs:
       were it nonzero it would have fewer than `n` distinct roots, and `n` points of agreement
       is already too many. This is the statement that `n` evaluations decide an identity between
       polynomials of degree below `n`, with no bound on the size of the coefficients.
-- [ ] Support integer-root and rational-root tests. Note that CONTRIBUTING forbids extending these
+- [x] Support integer-root and rational-root tests. Note that CONTRIBUTING forbids extending these
       as a family indexed by degree; a general statement is wanted, not cases through degree three.
 
       The integer half is done, in `src/polynomial_int_root_test.ac`, as a general statement over
@@ -99,9 +99,17 @@ Remaining, with what each actually needs:
       denominator, which is an induction along the coefficient list generalised over the
       coefficient function, since the step applies it at the tail.
 
-      What is left is only the bridge: that `a / b` being a root of the rationalised polynomial
-      is equivalent to the cleared value vanishing. That is multiplication of `coeff_eval` over
-      `Rat` by `b^n`, and it is the one part of this that touches rationals.
+      The bridge is in `src/polynomial_rational_root_bridge.ac`, so the test now reads at the
+      fraction itself: with `b` nonzero and `a`, `b` coprime, a vanishing value at
+      `Rat.from_int(a) / Rat.from_int(b)` gives the numerator dividing the constant coefficient
+      and the denominator dividing the leading one. `monic_rat_root_denominator_divides_one` is
+      the corollary the test is usually wanted for: a rational root of a monic polynomial has
+      unit denominator, so it is an integer.
+
+      Clearing the denominators is an induction generalised over the coefficient function, with
+      `mul_swap_inner` doing the regrouping at each step. That a power of a nonzero denominator is
+      nonzero has to be proved: neither `src/int/` nor `src/rat/` states that a product of
+      nonzeros is nonzero, so it goes through the field inverse.
 
       A match on `Nat` unfolds against `Nat.zero` but not against `Nat.0` from outside its own
       module. `coeff_eval(d, a, Nat.0) = Int.0` times out where the same statement written
