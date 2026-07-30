@@ -135,4 +135,14 @@ Remaining:
       power of two. That needed the binomial theorem at one and one, where every power collapses,
       and the fact that a term of a natural-number sum never exceeds the sum — which nothing
       states, though every bound of one term by a total needs it.
+
+      `src/nat_odd_binom_bound.ac` sharpens that to the bound the argument actually uses:
+      `binom(2m + 1, m) <= 4^m`. The two middle coefficients of an odd row are equal, so together
+      they are twice one of them, and together they are at most the row total of `2 * 4^m`. That
+      needed the two-term version of the same sum bound.
+
+      What is still missing for the primorial is the product of the primes in `(m + 1, 2m + 1]`
+      dividing `binom(2m + 1, m)` — the odd analogue of
+      `central_binom_prime_interval_product_divides` — and a strong induction to assemble the
+      pieces.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.
