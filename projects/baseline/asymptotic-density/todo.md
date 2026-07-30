@@ -157,8 +157,19 @@ Remaining:
       integers, `a < b + 1 implies a <= b` is the other half of discreteness, which needs the
       order unfolded rather than any existing lemma.
 
-      What remains is the agreement statement itself and the reconstruction of a real in the unit
-      interval from its digit series.
+      The natural-number side is in `src/nat_div_div.ac`. `nat_digit(b, n, k)` shifts past the
+      lower places and takes the remainder, with its range and the recursion the agreement will
+      run on.
+
+      That needed the iterated division law, `n.div(a * b) = (n.div(a)).div(b)`, which `src/nat/`
+      does not state — a surprising gap, since it is what says a base expansion can be read one
+      place at a time. It goes by writing each division through its decomposition: the two-step
+      quotient becomes a single one, and the combined remainder is below the product because the
+      inner remainder is below its own modulus by at least one step. `nat_mod_mul` records the
+      matching remainder.
+
+      What remains is the agreement statement itself, which now has both sides available, and the
+      reconstruction of a real in the unit interval from its digit series.
 
 ## Monotonicity
 
