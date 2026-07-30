@@ -146,8 +146,19 @@ Remaining:
       `a + 1 <= b`, which every floor argument needs, so `int_lt_imp_add_one_lte` is proved from
       the definition of the order.
 
-      What remains is the agreement with the natural-number API and the reconstruction of a real
-      in the unit interval from its digit series.
+      The bridge to natural division is in `src/real_floor_div.ac`: the floor of a quotient of
+      naturals is their quotient. That is what carries a statement about real digits to the
+      natural-number base-`b` API, since a digit there is a division and a remainder. The division
+      algorithm puts the quotient below the ratio and its successor above, which is exactly the
+      characterisation of the floor.
+
+      Four more order lemmas were missing and are proved there. `src/real/` has `div_le_of_mul_le`
+      but not the strict mirror, and no strict order preservation for `Real.from_int`. Over the
+      integers, `a < b + 1 implies a <= b` is the other half of discreteness, which needs the
+      order unfolded rather than any existing lemma.
+
+      What remains is the agreement statement itself and the reconstruction of a real in the unit
+      interval from its digit series.
 
 ## Monotonicity
 
