@@ -49,9 +49,15 @@ Remaining:
       `src/nat_range_sum_reverse.ac` supplies; the identity laws fall out because the convolution
       against one is a point summand, so `range_sum_point_fn` collapses it to a single term.
 
-      Associativity and distributivity remain. Associativity is a double-sum rearrangement and is
-      the real work: nothing in `src/` interchanges the order of a nested range sum, so that has
-      to come first.
+      Associativity and distributivity remain. The two general tools associativity needs are now
+      in `src/nat_range_sum_interchange.ac`: `range_sum_interchange` is Fubini for range sums, so
+      a double sum may be taken in either order, and `range_sum_scale` takes a constant factor
+      out of a sum. Both are also stated for `partial`, or reachable through the bridge.
+
+      What those two do not supply is the reindexing. Associativity of the convolution is not a
+      rectangular interchange: both sides are a sum over triples with a fixed total, and the
+      inner range depends on the outer index. Turning a triangular double sum into a rectangular
+      one is the step still missing, and it is where the truncated subtraction bites.
 
       `polynomial_mul_coeff` writes its summand as an inline lambda, so `mul_coeff_eq_range_sum`
       bridges it to the partial application once and everything downstream works with the named
