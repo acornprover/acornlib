@@ -70,10 +70,20 @@ Remaining:
       on the right. And `sub_sub_diag` is the index identity `k - j - (i - j) = k - i` for
       `j <= i <= k`, written through additions since neither cancellation is found on its own.
 
-      Only distributivity is left before `Polynomial[R]` can carry `Mul` and a `CommRing`
-      instance. That is the easy axiom — it is the pointwise sum of two convolutions, so
-      `range_sum_add` should do it — but the instance declaration itself is still worth settling
-      with a maintainer, since the determinant and everything below it would build on it.
+      Distributivity is done too, in `src/polynomial_mul_distrib.ac`, and it is the cheapest of
+      the four: the convolution against a sum is the pointwise sum of the two convolutions, so
+      `range_sum_add` splits it with no reindexing at all.
+
+      So all four *multiplicative* axioms hold: commutativity, both identities, associativity,
+      distributivity. That is less than it sounds, and an earlier note here overstated it. The
+      determinant needs `R: Ring`, and a ring is an additive group as well as a multiplicative
+      monoid. `Polynomial` has `Add`, `Zero`, and `One` instances and a `neg` *attribute*, but no
+      `Neg` instance and no additive-group instance, so the additive side has to be built out too.
+
+      What remains, then, is not one axiom but a chain of instance declarations — `Neg`,
+      `AddCommGroup`, `Mul`, `Semiring`, `Ring`, `CommRing` — together with whichever additive
+      axioms are not already proved. The multiplicative content is no longer the obstacle. This is
+      structural enough to be worth agreeing with a maintainer before building.
 
       `polynomial_mul_coeff` writes its summand as an inline lambda, so `mul_coeff_eq_range_sum`
       bridges it to the partial application once and everything downstream works with the named
