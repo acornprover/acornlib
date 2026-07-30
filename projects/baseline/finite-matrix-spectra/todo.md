@@ -54,10 +54,18 @@ Remaining:
       a double sum may be taken in either order, and `range_sum_scale` takes a constant factor
       out of a sum. Both are also stated for `partial`, or reachable through the bridge.
 
-      What those two do not supply is the reindexing. Associativity of the convolution is not a
-      rectangular interchange: both sides are a sum over triples with a fixed total, and the
-      inner range depends on the outer index. Turning a triangular double sum into a rectangular
-      one is the step still missing, and it is where the truncated subtraction bites.
+      The reindexing is in `src/nat_triangular_sum.ac`: a triangle of pairs with total at most
+      `k` may be summed by anti-diagonals or by rows, which is the shape both sides of
+      associativity have and the shape a rectangular interchange does not give. Raising the total
+      by one adds a whole anti-diagonal on one side and lengthens every earlier row by exactly one
+      term on the other, and those terms are the same, which is what makes the induction close.
+
+      What is left for associativity is the bookkeeping around it. Taking `h(a)(b)` to be
+      `p_a * q_b * r_(k - a - b)`, the row form is the right-associated product once a constant
+      comes out of the inner sum, and the anti-diagonal form is the left-associated one once a
+      constant comes out on the *right* — `range_sum_scale` covers the left only, so the right
+      version is still needed. The other piece is `k - j - (i - j) = k - i` for `j <= i <= k`,
+      which is where the truncated subtraction bites.
 
       `polynomial_mul_coeff` writes its summand as an inline lambda, so `mul_coeff_eq_range_sum`
       bridges it to the partial application once and everything downstream works with the named
