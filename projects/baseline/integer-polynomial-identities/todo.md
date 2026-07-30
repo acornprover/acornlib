@@ -54,3 +54,23 @@ Remaining, with what each actually needs:
       polynomials of degree below `n`, with no bound on the size of the coefficients.
 - [ ] Support integer-root and rational-root tests. Note that CONTRIBUTING forbids extending these
       as a family indexed by degree; a general statement is wanted, not cases through degree three.
+
+      The integer half is done, in `src/polynomial_int_root_test.ac`, as a general statement over
+      any integer polynomial with no bound on its degree. An integer root divides the constant
+      coefficient; the contrapositive discards a candidate without evaluating anything; zero is a
+      root exactly when the constant coefficient vanishes; and with a nonzero constant
+      coefficient a root is no larger in size than it, which is what makes the divisor search
+      finite.
+
+      The whole content is Horner's rule read once: the value is the constant coefficient plus
+      the point times the value of the polynomial with that coefficient dropped, which
+      `coeff_eval` already computes. `polynomial_eval` is total, so no degree bound appears in
+      the statements — `polynomial_support_bound_exists` supplies one inside the proof, raised by
+      one so that the split has a coefficient to peel off.
+
+      `Int.divides` puts the multiplier first, so the witness is `-tail * r`, not `r * -tail`.
+
+      What remains is the rational half. `p / q` in lowest terms being a root gives `p` dividing
+      the constant coefficient and `q` dividing the leading one, which needs the polynomial
+      evaluated over the rationals and the denominators cleared. `src/polynomial_int_roots.ac`
+      already transports along `int_to_rat_hom`, so the transport exists; the clearing does not.
