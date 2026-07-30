@@ -60,12 +60,20 @@ Remaining:
       by one adds a whole anti-diagonal on one side and lengthens every earlier row by exactly one
       term on the other, and those terms are the same, which is what makes the induction close.
 
-      What is left for associativity is the bookkeeping around it. Taking `h(a)(b)` to be
-      `p_a * q_b * r_(k - a - b)`, the row form is the right-associated product once a constant
-      comes out of the inner sum, and the anti-diagonal form is the left-associated one once a
-      constant comes out on the *right* — `range_sum_scale` covers the left only, so the right
-      version is still needed. The other piece is `k - j - (i - j) = k - i` for `j <= i <= k`,
-      which is where the truncated subtraction bites.
+      Associativity is now proved, in `src/polynomial_mul_assoc.ac`. Taking the summand to be
+      `p_a * (q_b * r_(k - a - b))`, the triangle of pairs with total at most `k` runs over
+      exactly the triples of exponents summing to `k`; its rows are the right-associated product
+      and its anti-diagonals the left-associated one, so the two are equal by `tri_sum_eq`.
+
+      Two small pieces were needed and are in that file. `range_sum_scale_right` mirrors
+      `range_sum_scale`, because one association leaves the spare factor on the left and the other
+      on the right. And `sub_sub_diag` is the index identity `k - j - (i - j) = k - i` for
+      `j <= i <= k`, written through additions since neither cancellation is found on its own.
+
+      Only distributivity is left before `Polynomial[R]` can carry `Mul` and a `CommRing`
+      instance. That is the easy axiom — it is the pointwise sum of two convolutions, so
+      `range_sum_add` should do it — but the instance declaration itself is still worth settling
+      with a maintainer, since the determinant and everything below it would build on it.
 
       `polynomial_mul_coeff` writes its summand as an inline lambda, so `mul_coeff_eq_range_sum`
       bridges it to the partial application once and everything downstream works with the named
