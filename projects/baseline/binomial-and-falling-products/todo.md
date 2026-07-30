@@ -141,8 +141,16 @@ Remaining:
       they are twice one of them, and together they are at most the row total of `2 * 4^m`. That
       needed the two-term version of the same sum bound.
 
-      What is still missing for the primorial is the product of the primes in `(m + 1, 2m + 1]`
-      dividing `binom(2m + 1, m)` — the odd analogue of
-      `central_binom_prime_interval_product_divides` — and a strong induction to assemble the
-      pieces.
+      The odd analogue is in `src/nat_odd_prime_product.ac`, and with it the step a primorial
+      induction turns on: the product of the primes above `m + 1` and at most `2m + 1` is at most
+      `4^m`. It divides the middle coefficient of that row, and that coefficient is bounded.
+
+      The divisibility mirrors `prime_in_interval_divides_central_binom` — such a prime is a
+      factor of the falling product, which is the coefficient times `(m + 1)!`, and the prime is
+      too large to have come from the factorial. Symmetry then moves it from index `m + 1` to the
+      middle index `m`.
+
+      What is still missing is the strong induction assembling the steps: a primorial over all
+      primes up to `n`, with the even case dropping to `n - 1` and the odd case splitting at the
+      midpoint and applying this bound to the upper half.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.
