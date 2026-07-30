@@ -74,3 +74,15 @@ Remaining, with what each actually needs:
       the constant coefficient and `q` dividing the leading one, which needs the polynomial
       evaluated over the rationals and the denominators cleared. `src/polynomial_int_roots.ac`
       already transports along `int_to_rat_hom`, so the transport exists; the clearing does not.
+
+      The number theory that half turns on is now in `src/int_coprime.ac`, and none of it existed
+      over the integers: coprimality as a named condition, Bezout in both directions, Gauss's
+      lemma for divisibility, coprimality of a product, coprimality of a power, and the combined
+      form that strips a whole power of the denominator from a divisibility at once. `src/int/`
+      exports `spans_gcd`, which is Bezout, but nothing built on it.
+
+      Two notes. Recovering `gcd = 1` from `gcd` dividing one is not immediate: there is no
+      integer lemma taking positivity to `1 <= x`, so it goes through `abs` and the natural
+      divisibility bound instead. And expanding a product of two Bezout identities as four terms
+      times out; substituting one identity into a single term of the other keeps every step to
+      two factors, and `mul_swap_inner` handles the rearrangements.
