@@ -34,6 +34,22 @@ Remaining:
 - [ ] Define the characteristic polynomial of a finite matrix from the existing determinant, prove
       it is monic of degree the matrix size, and prove its roots are exactly the eigenvalues defined
       above. This is the missing bridge, and everything below waits on it.
+
+      It is blocked one level lower than this reads. The determinant is stated over `R: Ring`, and
+      the characteristic polynomial is the determinant of a matrix over `Polynomial[R]`. But
+      `Polynomial` carries only `Add`, `Zero`, and `One` instances — there is no `Mul` and no
+      `Ring`. So `matrix_det_suc` cannot be applied to it at all.
+
+      The ingredients exist. `polynomial_mul` and `polynomial_mul_coeff` are defined and
+      `polynomial_eval_mul` proves evaluation multiplicative. What is missing is the ring axioms
+      for that product: commutativity, associativity, and distributivity. Commutativity is a
+      reversal of the convolution index, and `src/nat_range_sum_reverse.ac` now supplies the
+      reversal for both `range_sum` and `partial`, which is the form the convolution is written in.
+      Associativity is a double-sum rearrangement and is the real work.
+
+      Making `Polynomial[R]` a commutative ring is a foundational instance declaration that
+      everything downstream would build on, so it is worth settling with a maintainer rather than
+      adding in passing.
 - [ ] Prove the spectrum is invariant under similarity. This needs matrix inverses, which
       `src/fin_matrix.ac` does not supply.
 - [x] Prove every eigenvalue of a row-stochastic matrix has modulus at most one, in
