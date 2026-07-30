@@ -168,8 +168,22 @@ Remaining:
       inner remainder is below its own modulus by at least one step. `nat_mod_mul` records the
       matching remainder.
 
-      What remains is the agreement statement itself, which now has both sides available, and the
-      reconstruction of a real in the unit interval from its digit series.
+      The agreement is in `src/real_digit_agreement.ac`: the digits of `n / b^m` after the point
+      are the digits of `n` before it, read in the opposite direction. Place `k` of the real
+      expansion is place `m - k - 1` of the natural one, since one runs outward from the point and
+      the other inward.
+
+      It goes through the scaled floor. Multiplying `n / b^m` by `b^k` lowers the denominator to
+      `b^(m - k)`, so the floor is `n.div(b^(m - k))` by the bridge, and the digit is the
+      difference of two such quotients — which `nat_div_pow_suc` and `nat_digit_eq_div_sub` say is
+      the natural digit.
+
+      Three more small identities were needed: cancelling one factor of a denominator, the
+      embedding of a natural into the reals commuting with powers, and `(x + y) - x = y` over the
+      integers.
+
+      What remains is the reconstruction of a real in the unit interval from its digit series,
+      which is the one part needing convergence.
 
 ## Monotonicity
 
