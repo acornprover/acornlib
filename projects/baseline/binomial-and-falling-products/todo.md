@@ -86,4 +86,21 @@ Remaining:
       the primes in `(n, 2n]` are distinct and each divides the central binomial coefficient, so
       their product does, which needs products over a set of primes and a size estimate for the
       central binomial coefficient.
+
+      The product bound itself is done, in `src/nat_pairwise_coprime_divides.ac`, in both a list
+      and a range form: a product of pairwise coprime divisors is a divisor. Distinctness alone
+      says nothing about a product, and `coprime_of_distinct_primes` is what turns distinct primes
+      into coprime ones, so this is the missing link rather than the size estimate.
+
+      Everything it needs existed inside `src/number_theory/` and none of it was exported:
+      `coprime_mul`, `coprime_comm`, `coprime_one_right`, `pairwise_coprime_cons_imp`, and
+      `coprime_with_all_imp_coprime_product`. `coprime_divisors_product_divides` in
+      `src/nat_least_non_divisor.ac` is the two-factor case and was already reachable.
+
+      `all_divide` is written as a quantifier over membership, not as a recursion returning
+      `Bool`: the recursion whose cons case is a conjunction times out when unfolded, the same
+      shape the residue-class systems ran into.
+
+      What remains is a size estimate for the central binomial coefficient, and the list of primes
+      in an interval, which nothing constructs yet.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.
