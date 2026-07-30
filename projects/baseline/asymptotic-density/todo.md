@@ -130,6 +130,25 @@ Remaining:
 - [ ] Add the base-`b` digit expansion of a real number in the unit interval, and prove it agrees
       with the natural-number base-`b` API.
 
+      The digits and their range are in `src/real_base_digits.ac`: `real_digit(b, x, k)` is the
+      scaled floor at one more power less `b` times the scaled floor at this one, and it always
+      lies between zero and the base. The base is taken as a positive *integer* rather than a
+      natural, since `floor` already lands in the integers and no embedding is then needed. No
+      restriction to the unit interval is required for the range — it is only the reconstruction
+      of `x` from its digits that wants it.
+
+      Everything rests on one lemma, `floor_scale_bounds`: scaling by a positive integer moves
+      the floor by that factor, up to a remainder below it. That remainder is the digit.
+
+      Three gaps in the existing order API had to be filled. `src/real/` has no monotonicity or
+      multiplicativity for `Real.from_int`, only the cancelling directions, so both are proved here
+      through `Rat`. And `src/int/` has no discreteness: nothing turns `a < b` into
+      `a + 1 <= b`, which every floor argument needs, so `int_lt_imp_add_one_lte` is proved from
+      the definition of the order.
+
+      What remains is the agreement with the natural-number API and the reconstruction of a real
+      in the unit interval from its digit series.
+
 ## Monotonicity
 
 `src/nat_density_mono.ac`. Both one-sided densities are monotone in the predicate, via monotonicity
