@@ -67,7 +67,16 @@ Remaining:
       The conversion rests on `Real.from_rat(modulus_weight(m)) = Real.1 / from_nat[Real](m)`,
       which needs no hypothesis on the modulus: the rational inverse of zero and the real
       quotient by zero are both zero by convention, so the two conventions agree on the nose.
-- [ ] Prove the density of a system bounded by `N` is attained by an explicit construction.
+- [x] Prove the density of a system bounded by `N` is attained by an explicit construction.
+      `src/residue_full_system.ac` builds the system of every residue modulo `m` and computes its
+      density directly: `full_residue_system(m, m)` has density exactly one whenever `m` is
+      positive.
+
+      No covering or disjointness argument is needed for it. The weights are all the same and
+      there are exactly as many classes as the modulus, so the density is `m` copies of `1 / m` by
+      a plain induction along the construction. Together with the bounds in
+      `src/system_density_real_eq.ac`, which say a covering and disjoint system has density one,
+      this shows that value is attained rather than merely bounded.
 - [x] Add the least common modulus of a system, as `system_lcm`, and prove every modulus divides
       it. `system_modulus` in `crt_list.ac` is the product of the moduli, which is a common multiple
       but usually far from the least. With `all_moduli_divide_system_lcm`, `system_periodic` applies

@@ -80,10 +80,17 @@ Remaining:
       monoid. `Polynomial` has `Add`, `Zero`, and `One` instances and a `neg` *attribute*, but no
       `Neg` instance and no additive-group instance, so the additive side has to be built out too.
 
-      What remains, then, is not one axiom but a chain of instance declarations — `Neg`,
-      `AddCommGroup`, `Mul`, `Semiring`, `Ring`, `CommRing` — together with whichever additive
-      axioms are not already proved. The multiplicative content is no longer the obstacle. This is
-      structural enough to be worth agreeing with a maintainer before building.
+      What remains, then, is not one axiom but a chain of instance declarations — `AddSemigroup`,
+      `AddCommSemigroup`, `AddMonoid`, `AddCommMonoid`, `Neg`, `AddGroup`, `AddCommGroup`,
+      `Semigroup`, `CommSemigroup`, `Monoid`, `CommMonoid`, `Semiring`, `Ring`, `CommRing`. The
+      multiplicative content is no longer the obstacle: every axiom those need is proved.
+
+      There is one concrete conflict, and it is why this should not be added in passing.
+      `AddGroup` supplies a `sub` attribute and `Polynomial[R: Ring]` already defines its own,
+      as it does `neg`. Declaring the instances means reconciling those two, which changes
+      definitions that merged modules already use — `polynomial_sub_coeff` and
+      `polynomial_sub_support.ac` among them. That is a maintainer decision about the existing
+      API, not a new definition.
 
       `polynomial_mul_coeff` writes its summand as an inline lambda, so `mul_coeff_eq_range_sum`
       bridges it to the partial application once and everything downstream works with the named
