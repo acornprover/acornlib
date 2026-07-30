@@ -111,8 +111,22 @@ Remaining:
       `central_binom_prime_interval_product_divides` is that at the interval Bertrand uses: the
       product of the primes above `n` and at most `2n` divides `central_binom(n)`.
 
-      So the divisibility half of Bertrand is complete. What remains is only the size estimate:
-      an upper bound on the product of primes in the interval, or equivalently a bound on
-      `central_binom` making it too small to be divisible by that product once the interval is
-      assumed empty.
+      So the divisibility half of Bertrand is complete, and the upper bound on the central
+      binomial coefficient is in `src/nat_central_binom_bound.ac`:
+      `central_binom(n) <= 4^n`.
+
+      That goes by the recursion `central_binom(n + 1) <= 4 * central_binom(n)` rather than
+      through the binomial theorem, so no sum over a row is needed. Pascal twice and the symmetry
+      of an odd row reduce it to the one piece of unimodality required, that the coefficient just
+      past the middle of an even row is no larger than the central one, and
+      `binom_complement_absorption` gives that: `n` times the central coefficient is `n + 1` times
+      the next one.
+
+      Cancelling a positive factor from an inequality has to go through the strict version by
+      contradiction — `src/nat/` has `lte_mul_both` and `lt_mul_both` but no cancellation
+      direction for `<=`.
+
+      What remains is the *lower* bound on the product side: a bound on the primorial or on the
+      prime-power contributions large enough that assuming the interval empty contradicts
+      `4^n`.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.
