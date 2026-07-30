@@ -42,10 +42,20 @@ Remaining:
 
       The ingredients exist. `polynomial_mul` and `polynomial_mul_coeff` are defined and
       `polynomial_eval_mul` proves evaluation multiplicative. What is missing is the ring axioms
-      for that product: commutativity, associativity, and distributivity. Commutativity is a
-      reversal of the convolution index, and `src/nat_range_sum_reverse.ac` now supplies the
-      reversal for both `range_sum` and `partial`, which is the form the convolution is written in.
-      Associativity is a double-sum rearrangement and is the real work.
+      for that product: commutativity, associativity, and distributivity.
+
+      Commutativity and both identity laws are done, in `src/polynomial_mul_comm.ac`.
+      Commutativity is exactly the reversal of the convolution index, which
+      `src/nat_range_sum_reverse.ac` supplies; the identity laws fall out because the convolution
+      against one is a point summand, so `range_sum_point_fn` collapses it to a single term.
+
+      Associativity and distributivity remain. Associativity is a double-sum rearrangement and is
+      the real work: nothing in `src/` interchanges the order of a nested range sum, so that has
+      to come first.
+
+      `polynomial_mul_coeff` writes its summand as an inline lambda, so `mul_coeff_eq_range_sum`
+      bridges it to the partial application once and everything downstream works with the named
+      form.
 
       Making `Polynomial[R]` a commutative ring is a foundational instance declaration that
       everything downstream would build on, so it is worth settling with a maintainer rather than
