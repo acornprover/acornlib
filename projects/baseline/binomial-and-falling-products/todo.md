@@ -150,7 +150,16 @@ Remaining:
       too large to have come from the factorial. Symmetry then moves it from index `m + 1` to the
       middle index `m`.
 
-      What is still missing is the strong induction assembling the steps: a primorial over all
-      primes up to `n`, with the even case dropping to `n - 1` and the odd case splitting at the
-      midpoint and applying this bound to the upper half.
+      The primorial itself is in `src/nat_primorial.ac`, again over the whole range with
+      `prime_or_one` contributing one at composite positions, so nothing is enumerated. It has the
+      two steps the induction needs: `primorial_odd_split` cuts the primes up to `2m + 1` into
+      those up to `m + 1` and the interval above it, which is exactly what the odd bound covers;
+      and `primorial_composite_step` says a composite position does not grow the product, with
+      `double_is_composite` supplying the even case.
+
+      Both are stated at a successor rather than through a predecessor, since `Nat` has none.
+
+      What is still missing is only the strong induction that assembles them: at `0` and `1` the
+      primorial is one, an even position above two drops to the one below, and an odd position
+      splits.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.
