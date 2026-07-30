@@ -48,6 +48,23 @@ Remaining:
       `src/number_theory/` supplied. `falling_product_eq_binom_mul_factorial` existed but was
       unexported, and is now.
 - [ ] Strengthen finite interval sums and products, including partial sums over residue classes.
+
+      The residue-class half is in `src/nat_residue_range_sum.ac`, over any commutative additive
+      monoid. `residue_range_sum` is the partial sum of a summand masked to one class, and
+      `range_sum_eq_residue_class_sums` decomposes a range sum into the sum of its class partial
+      sums: every index below the limit lies in exactly one class, so summing the classes recovers
+      the whole.
+
+      The induction is on the limit, where the new index lands in a single class. What makes that
+      step cheap is `point_fn`, the summand supported at one index: the increments the classes
+      receive are exactly the point summand at the residue of the new index, so summing them
+      collapses to one term. `range_sum_point_fn` needs no fresh induction — the range splits at
+      the point and just past it, the two outer parts vanish termwise, and the middle is a single
+      term.
+
+      Two conditionals appear, in `point_fn` and `residue_summand`, and each is confined to its
+      own definition with an in-case and an out-of-case lemma. Nothing downstream unfolds either,
+      which is what keeps a conditional summand from sending proof search into a blowup.
 - [ ] Prove Bertrand's postulate, or the existence of a prime in `(k, 2k)`. The entry point is now
       available as `prime_in_interval_divides_central_binom`. What remains is the product bound:
       the primes in `(n, 2n]` are distinct and each divides the central binomial coefficient, so
