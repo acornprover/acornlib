@@ -86,3 +86,23 @@ Remaining, with what each actually needs:
       divisibility bound instead. And expanding a product of two Bezout identities as four terms
       times out; substituting one identity into a single term of the other keeps every step to
       two factors, and `mul_swap_inner` handles the rearrangements.
+
+      Both divisibility conclusions are now proved, in `src/polynomial_rational_root.ac`, over
+      the *cleared* equation rather than over a rational root. `coeff_hom_eval` is the value at a
+      fraction with numerator `a` and denominator `b` multiplied through by the power of the
+      denominator, so it needs no rationals at all: with a vanishing cleared value and the two
+      coprime, the numerator divides the constant coefficient and the denominator divides the
+      leading one. `coeff_hom_eval_one` grounds the definition — at denominator one it is
+      `coeff_eval`, so the numerator half contains the integer root test.
+
+      The denominator half needs that every term but the leading one carries a factor of the
+      denominator, which is an induction along the coefficient list generalised over the
+      coefficient function, since the step applies it at the tail.
+
+      What is left is only the bridge: that `a / b` being a root of the rationalised polynomial
+      is equivalent to the cleared value vanishing. That is multiplication of `coeff_eval` over
+      `Rat` by `b^n`, and it is the one part of this that touches rationals.
+
+      A match on `Nat` unfolds against `Nat.zero` but not against `Nat.0` from outside its own
+      module. `coeff_eval(d, a, Nat.0) = Int.0` times out where the same statement written
+      `Nat.zero` verifies at once.
