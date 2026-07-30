@@ -65,6 +65,22 @@ Remaining:
       Two conditionals appear, in `point_fn` and `residue_summand`, and each is confined to its
       own definition with an in-case and an out-of-case lemma. Nothing downstream unfolds either,
       which is what keeps a conditional summand from sending proof search into a blowup.
+
+      The products half is in `src/nat_range_prod.ac`. Nothing in `src/` had a product of values
+      over a range or over a finite set — only the Cartesian `finite_set_product` — so
+      `range_prod` is new, stated over any commutative monoid, with the recurrence, congruence,
+      the split at a midpoint, the pointwise product, and the one factor.
+
+      Two statements are specific to the naturals and are what a divisibility argument over an
+      interval runs on: every factor divides the product, and a product of positive factors is
+      positive. The first is the entry point for the Bertrand target, where the primes in
+      `(n, 2n]` each have to divide the central binomial coefficient and then so does their
+      product — though that step still needs their distinctness turned into coprimality.
+
+      `shift_fn` in `src/nat_range_sum.ac` is pure reindexing but carries an `AddCommMonoid`
+      constraint it never uses, so the multiplicative split needs its own `prod_shift_fn`.
+      Relaxing the constraint on `shift_fn` would remove the duplication and is worth doing, but
+      it touches a definition other modules already use.
 - [ ] Prove Bertrand's postulate, or the existence of a prime in `(k, 2k)`. The entry point is now
       available as `prime_in_interval_divides_central_binom`. What remains is the product bound:
       the primes in `(n, 2n]` are distinct and each divides the central binomial coefficient, so
