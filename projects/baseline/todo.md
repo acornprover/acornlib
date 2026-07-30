@@ -58,7 +58,7 @@ Ordered by leverage. Work top to bottom.
 - [ ] [Multiplicative predicates](multiplicative-predicates/todo.md)
   Squares, squarefree parts, smooth and rough numbers, and prime factors restricted to an interval.
 
-- [ ] [Residue class systems](residue-class-systems/todo.md)
+- [x] [Residue class systems](residue-class-systems/todo.md)
   Covering and disjoint systems of residue classes, and their density.
 
 - [ ] [Integer polynomial identities](integer-polynomial-identities/todo.md)
@@ -71,5 +71,5 @@ Ordered by leverage. Work top to bottom.
   Density, almost-all quantification, and digit expansions of real numbers. Density has no direct
   Mathlib module.
 
-- [ ] [Planar distance configurations](planar-distance-configurations/todo.md)
+- [x] [Planar distance configurations](planar-distance-configurations/todo.md)
   Distance counts and general position for finite planar point sets.

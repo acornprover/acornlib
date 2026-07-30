@@ -129,4 +129,10 @@ Remaining:
       What remains is the *lower* bound on the product side: a bound on the primorial or on the
       prime-power contributions large enough that assuming the interval empty contradicts
       `4^n`.
+
+      The entry point for the primorial bound is in `src/nat_binom_row_bound.ac`: every binomial
+      coefficient is at most two to its row index, since it is one term of a row summing to a
+      power of two. That needed the binomial theorem at one and one, where every power collapses,
+      and the fact that a term of a natural-number sum never exceeds the sum — which nothing
+      states, though every bound of one term by a total needs it.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.
