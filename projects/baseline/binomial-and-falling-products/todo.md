@@ -159,7 +159,15 @@ Remaining:
 
       Both are stated at a successor rather than through a predecessor, since `Nat` has none.
 
-      What is still missing is only the strong induction that assembles them: at `0` and `1` the
-      primorial is one, an even position above two drops to the one below, and an odd position
-      splits.
+      The induction that assembles them is written out in `src/nat_primorial_bound.ac` but is
+      commented out, because its last step does not go through. Every case verifies on its own —
+      the parity split, the three even sub-cases, the two odd ones — and so do the three
+      supporting lemmas the file exports: `nat_parity`, `four_pow_mono`, and `lte_mul_pair`.
+
+      What fails is only the final application of `strong_induction`: the hypothesis the block
+      establishes is not recognised as the one the theorem asks for, and `forall(k) { p(k) }`
+      after the citation times out. The block's shape matches `nat_lt_relation_induction` in
+      `src/well_founded.ac`, which is the library's one working use of `strong_induction`, so the
+      difference is not obvious. Trying `nat_lt_relation_induction` directly is the next thing to
+      attempt — its hypothesis is stated through `nat_lt_relation` rather than `true_below`.
 - [ ] Add valuation sums over residue classes, the tool shared by these two targets.
