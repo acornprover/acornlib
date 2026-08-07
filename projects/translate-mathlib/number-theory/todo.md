@@ -25,8 +25,8 @@ Group A is complete and no longer tracked as an active checklist.
 
 ## Group B — Other standard number theory
 
+- [ ] Add analytic-number-theory preliminaries when a concrete downstream theorem selects the required API
 - [ ] [Add continued fractions and their approximation theory](continued-fractions/todo.md)
+- [ ] Add Pell equations after choosing the solution representation and recurrence API
+- [ ] Build Bernoulli numbers after choosing the coefficient domain and normalization
 - [ ] [Develop quadratic residues and quadratic reciprocity](quadratic-residues/todo.md)
-- [ ] Add Pell equations and related Diophantine techniques
-- [ ] Build infrastructure for Bernoulli numbers and classical arithmetic sequences
-- [ ] Add analytic-number-theory preliminaries where they naturally fit

@@ -2,14 +2,12 @@
 
 Goal: cover the finite and enumerative mathematics that Mathlib collects under combinatorics.
 
-- [ ] Finish counting principles and bijective-combinatorics lemmas
-  - [ ] Vandermonde's identity (definitions, m=0 base case, and inductive step `vandermonde_step` are in place; final assembly via induction on m is open)
-- [ ] Develop more binomial identities and basic generating-function tools
-- [ ] Support inclusion-exclusion and Mobius inversion
-- [ ] Add partitions, compositions, and Ferrers-diagram style objects
-- [ ] Develop posets, chains, and antichain theorems
 - [ ] Add Ramsey-theoretic basics
 - [ ] Support extremal set theory
 - [ ] Add incidence structures and block designs
 - [ ] Develop matroids and their basic API
 - [ ] Add recurrence solving and other enumerative-combinatorics tools
+- [ ] [Binomial identities and generating functions](binomial-and-generating-functions/todo.md)
+- [ ] [Inclusion-exclusion and Mobius inversion](inclusion-exclusion-and-mobius-inversion/todo.md)
+- [ ] [Partitions, compositions, and Ferrers diagrams](partitions-compositions-and-ferrers-diagrams/todo.md)
+- [ ] [Posets, chains, and antichains](posets-chains-and-antichains/todo.md)

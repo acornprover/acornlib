@@ -12,7 +12,7 @@ This skill helps install the Acorn theorem prover CLI in various environments.
 Simply run the installation script:
 
 ```bash
-bash .Codex/skills/acorn-installation/install-acorn.sh
+bash .agents/skills/acorn-installation/install-acorn.sh
 ```
 
 The script will:
@@ -35,6 +35,6 @@ This should be run after every change to ensure proofs are verifiable.
 
 When this skill is invoked:
 
-1. Run the installation script: `bash .Codex/skills/acorn-installation/install-acorn.sh`
+1. Run the installation script: `bash .agents/skills/acorn-installation/install-acorn.sh`
 2. The script handles checking for existing installation automatically
 3. After the script completes successfully, run `acorn` to verify proofs in the current project

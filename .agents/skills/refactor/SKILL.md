@@ -114,4 +114,4 @@ Before opening a PR:
 - Read `CONTRIBUTING.md`.
 - Run full `acorn check` and report the `0 searches performed` result.
 - Ensure unrelated local changes are either intentionally included or left out. For path refactors, hard problem import updates usually should be included.
-- Set `maintainerCanModify` to true. If the GitHub connector or CLI does not stick, use the GitHub API directly.
+- Set `maintainerCanModify` to true. If `gh pr create` does not stick, use `gh api` directly.
