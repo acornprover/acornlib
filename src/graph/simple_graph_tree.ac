@@ -1,20 +1,28 @@
-from nat import Nat, only_zero_lte_zero, lte_and_lt, lte_trans, lt_suc, lt_trans
-from list import List
+from nat import Nat, only_zero_lte_zero, lte_and_lt, lte_trans, lt_suc, lt_trans,
+    lt_imp_lte_suc, pos_of_ne_zero, add_one_right
+from list import List, singleton_unique, singleton_contains_imp_eq
 from finite_set import FiniteSet, fs_remove, fs_insert, finite_set_subset_contains,
-    finite_set_empty_contains_eq
-from data.finite.finite_set_membership import fs_insert_contains_eq
+    finite_set_empty_contains_eq, fs_from_list, finite_set_from_unique_list_cardinality_is_length
+from data.finite.finite_set_membership import fs_insert_contains_eq, fs_from_list_contains_eq
 from data.finite.finite_set_filter import finite_set_filter, finite_set_filter_contains_eq
-from data.finite.finite_set_card import fs_card, fs_card_empty
+from data.finite.finite_set_card import fs_card, fs_card_empty, fs_card_eq_of_cardinality_is
 from data.finite.finite_set_card_ops import fs_card_insert_of_not_contains
 from data.finite.finite_set_card_compare import fs_card_mono
 from data.finite.finite_set_card_members import fs_two_distinct_members
 from data.finite.finite_set_subset_intro import fs_subset_eq_intro
+from data.nat.nat_bounded_max import is_max, is_max_apply, is_max_is_upper_bound, is_max_intro,
+    has_max, is_upper_bound_of, is_upper_bound_of_intro
+from data.basic.logic import false_implies, eq_true_elim
 from data.list.list_unique_cons import unique_cons_head_not_in_tail, unique_cons_head_fresh
 from graph.simple_graph import SimpleGraph, induced_subgraph, induced_subgraph_adj_eq,
-    simple_graph_adj_ne
+    induced_subgraph_adj_imp_base_adj, induced_subgraph_adj_imp_left_mem,
+    induced_subgraph_adj_imp_right_mem, simple_graph_adj_ne, simple_graph_adj_symmetric
 from graph.simple_graph_connectivity import simple_graph_reachable
 from graph.simple_graph_walks import simple_graph_walk, simple_graph_closed_walk,
-    simple_graph_reachable_has_walk, simple_graph_walk_cons_iff, simple_graph_walk_nil
+    simple_graph_reachable_has_walk, simple_graph_walk_cons_iff, simple_graph_walk_nil,
+    simple_graph_walk_refl, simple_graph_walk_of_adj, simple_graph_walk_vertices,
+    simple_graph_walk_append_adj, simple_graph_path, simple_graph_path_walk,
+    simple_graph_path_vertices_unique
 from graph.simple_graph_degree import degree
 from graph.simple_graph_edges import directed_edges
 
@@ -432,3 +440,241 @@ theorem tree_has_edge[V](g: SimpleGraph[V], s: FiniteSet[V]) {
         }
     }
 }
+
+/// True of the lengths achieved by paths of the subgraph of `g` induced by `s`.
+/// True of the lengths achieved by paths of `g` whose vertices all lie in `s`.
+define path_length_pred[V](g: SimpleGraph[V], s: FiniteSet[V]) -> (Nat -> Bool) {
+    function(n: Nat) {
+        exists(start: V, finish: V, steps: List[V]) {
+            simple_graph_path(g, start, finish, steps) and
+            s.contains(start) and
+            (forall(x: V) { steps.contains(x) implies s.contains(x) }) and
+            steps.length = n
+        }
+    }
+}
+
+/// Zero is an achieved path length: the trivial path stays at its start vertex.
+theorem path_length_pred_zero_at[V](g: SimpleGraph[V], s: FiniteSet[V], start: V) {
+    s.contains(start) implies path_length_pred(g, s)(Nat.0)
+} by {
+    if s.contains(start) {
+        path_length_pred(g, s)(Nat.0) = exists(a: V, b: V, steps: List[V]) {
+            simple_graph_path(g, a, b, steps) and
+            s.contains(a) and
+            (forall(x: V) { steps.contains(x) implies s.contains(x) }) and
+            steps.length = Nat.0
+        }
+        simple_graph_walk_refl(g, start)
+        simple_graph_walk(g, start, start, List.nil[V])
+        simple_graph_walk_vertices(start, List.nil[V]) = List.cons(start, List.nil[V])
+        List.singleton(start) = List.cons(start, List.nil[V])
+        simple_graph_walk_vertices(start, List.nil[V]) = List.singleton(start)
+        singleton_unique(start)
+        List.singleton(start).is_unique
+        simple_graph_walk_vertices(start, List.nil[V]).is_unique
+        simple_graph_path(g, start, start, List.nil[V])
+        List.nil[V].length = Nat.0
+        (forall(x: V) { List.nil[V].contains(x) implies s.contains(x) }) = true
+        eq_true_elim(forall(x: V) { List.nil[V].contains(x) implies s.contains(x) })
+        forall(x: V) { List.nil[V].contains(x) implies s.contains(x) }
+        exists(a: V, b: V, steps: List[V]) {
+            simple_graph_path(g, a, b, steps) and
+            s.contains(a) and
+            (forall(x: V) { steps.contains(x) implies s.contains(x) }) and
+            steps.length = Nat.0
+        }
+        path_length_pred(g, s)(Nat.0)
+    }
+}
+
+/// Prepending a fresh element to a unique list keeps it unique.
+theorem unique_cons_intro[T](head: T, tail: List[T]) {
+    not tail.contains(head) and tail.is_unique implies List.cons(head, tail).is_unique
+} by {
+    if not tail.contains(head) and tail.is_unique {
+        List.cons(head, tail).unique = List.cons(head, tail.unique)
+        tail.unique = tail
+        List.cons(head, tail.unique) = List.cons(head, tail)
+        List.cons(head, tail).unique = List.cons(head, tail)
+        List.cons(head, tail).is_unique
+    }
+}
+
+/// An edge of `s` gives a path of length one.
+theorem path_length_pred_of_edge[V](g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V) {
+    s.contains(x) and s.contains(y) and g.adj(x, y) implies path_length_pred(g, s)(Nat.1)
+} by {
+    if s.contains(x) and s.contains(y) and g.adj(x, y) {
+        simple_graph_walk_of_adj(g, x, y)
+        simple_graph_walk(g, x, y, List.singleton(y))
+        simple_graph_adj_ne(g, x, y)
+        g.adj(x, y) implies x != y
+        x != y
+        simple_graph_walk_vertices(x, List.singleton(y)) = List.cons(x, List.singleton(y))
+        List.singleton(y) = List.cons(y, List.nil[V])
+        simple_graph_walk_vertices(x, List.singleton(y)) = List.cons(x, List.cons(y, List.nil[V]))
+        if List.singleton(y).contains(x) {
+            singleton_contains_imp_eq(y, x)
+            List.singleton(y).contains(x) implies x = y
+            x = y
+            x != y
+            false
+        }
+        not List.singleton(y).contains(x)
+        singleton_unique(y)
+        List.singleton(y).is_unique
+        unique_cons_intro(x, List.singleton(y))
+        List.cons(x, List.singleton(y)).is_unique
+        List.cons(x, List.cons(y, List.nil[V])).is_unique
+        simple_graph_walk_vertices(x, List.singleton(y)).is_unique
+        simple_graph_path(g, x, y, List.singleton(y))
+        List.cons(y, List.nil[V]).length = List.nil[V].length + Nat.1
+        List.nil[V].length = Nat.0
+        List.cons(y, List.nil[V]).length = Nat.0 + Nat.1
+        List.cons(y, List.nil[V]).length = Nat.1
+        List.singleton(y) = List.cons(y, List.nil[V])
+        List.singleton(y).length = Nat.1
+        forall(z: V) {
+            if List.singleton(y).contains(z) {
+                singleton_contains_imp_eq(y, z)
+                List.singleton(y).contains(z) implies z = y
+                z = y
+                s.contains(y)
+                z = y
+                s.contains(z)
+            }
+            List.singleton(y).contains(z) implies s.contains(z)
+        }
+        path_length_pred(g, s)(Nat.1) = exists(a: V, b: V, steps: List[V]) {
+            simple_graph_path(g, a, b, steps) and
+            s.contains(a) and
+            (forall(u: V) { steps.contains(u) implies s.contains(u) }) and
+            steps.length = Nat.1
+        }
+        exists(a: V, b: V, steps: List[V]) {
+            simple_graph_path(g, a, b, steps) and
+            s.contains(a) and
+            (forall(u: V) { steps.contains(u) implies s.contains(u) }) and
+            steps.length = Nat.1
+        }
+        path_length_pred(g, s)(Nat.1)
+    }
+}
+
+/// Path lengths are bounded by the number of vertices of `s`.
+theorem path_length_pred_bounded[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_upper_bound_of(path_length_pred(g, s), fs_card(s))
+} by {
+    forall(n: Nat) {
+        if path_length_pred(g, s)(n) {
+            path_length_pred(g, s)(n) = exists(a: V, b: V, steps: List[V]) {
+                simple_graph_path(g, a, b, steps) and
+                s.contains(a) and
+                (forall(x: V) { steps.contains(x) implies s.contains(x) }) and
+                steps.length = n
+            }
+            let (a: V, b: V, steps: List[V]) satisfy {
+                simple_graph_path(g, a, b, steps) and
+                s.contains(a) and
+                (forall(x: V) { steps.contains(x) implies s.contains(x) }) and
+                steps.length = n
+            }
+            if steps.length = Nat.0 {
+                steps.length = n
+                n = Nat.0
+                Nat.0 <= fs_card(s)
+                n <= fs_card(s)
+            }
+            if not (steps.length = Nat.0) {
+                steps.length != Nat.0
+                pos_of_ne_zero(steps.length)
+                Nat.0 < steps.length
+                lt_imp_lte_suc(Nat.0, steps.length)
+                Nat.1 <= steps.length
+                simple_graph_path_vertices_unique(g, a, b, steps)
+                simple_graph_walk_vertices(a, steps).is_unique
+                simple_graph_walk_vertices(a, steps) = List.cons(a, steps)
+                List.cons(a, steps).is_unique
+                forall(x: V) {
+                    if List.cons(a, steps).contains(x) {
+                        if x = a {
+                            s.contains(a)
+                            x = a
+                            s.contains(x)
+                        }
+                        if x != a {
+                            List.cons(a, steps).contains(x) = (a = x or steps.contains(x))
+                            steps.contains(x)
+                            steps.contains(x) implies s.contains(x)
+                            s.contains(x)
+                        }
+                        s.contains(x)
+                    }
+                    List.cons(a, steps).contains(x) implies s.contains(x)
+                }
+                finite_set_from_unique_list_cardinality_is_length(List.cons(a, steps))
+                fs_from_list(List.cons(a, steps)).cardinality_is(List.cons(a, steps).length)
+                fs_card_eq_of_cardinality_is(fs_from_list(List.cons(a, steps)), List.cons(a, steps).length)
+                fs_card(fs_from_list(List.cons(a, steps))) = List.cons(a, steps).length
+                forall(x: V) {
+                    if fs_from_list(List.cons(a, steps)).contains(x) {
+                        fs_from_list_contains_eq(List.cons(a, steps), x)
+                        fs_from_list(List.cons(a, steps)).contains(x) = List.cons(a, steps).contains(x)
+                        List.cons(a, steps).contains(x) implies s.contains(x)
+                        s.contains(x)
+                    }
+                    fs_from_list(List.cons(a, steps)).contains(x) implies s.contains(x)
+                }
+                fs_subset_eq_intro(fs_from_list(List.cons(a, steps)), s)
+                fs_from_list(List.cons(a, steps)).subset_eq(s)
+                fs_card_mono(fs_from_list(List.cons(a, steps)), s)
+                fs_card(fs_from_list(List.cons(a, steps))) <= fs_card(s)
+                List.cons(a, steps).length = steps.length + Nat.1
+                fs_card(fs_from_list(List.cons(a, steps))) = steps.length + Nat.1
+                steps.length + Nat.1 <= fs_card(s)
+                steps.length = n
+                n + Nat.1 <= fs_card(s)
+                n <= n.suc
+                add_one_right(n)
+                n + Nat.1 = n.suc
+                n <= n + Nat.1
+                lte_trans(n, n + Nat.1, fs_card(s))
+                n <= fs_card(s)
+            }
+            n <= fs_card(s)
+        }
+        path_length_pred(g, s)(n) implies n <= fs_card(s)
+    }
+    is_upper_bound_of_intro(path_length_pred(g, s), fs_card(s))
+    is_upper_bound_of(path_length_pred(g, s), fs_card(s))
+}
+
+/// A tree with at least two vertices has a path of maximal length.
+///
+/// The edge of the tree gives a path of length one, and every path length is bounded by
+/// the number of vertices, so a greatest achieved length exists.
+theorem maximum_path_length_exists[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_tree(g, s) and Nat.2 <= fs_card(s) implies
+        exists(m: Nat) {
+            is_max(path_length_pred(g, s), m)
+        }
+} by {
+    if is_tree(g, s) and Nat.2 <= fs_card(s) {
+        tree_has_edge(g, s)
+        exists(x: V, y: V) {
+            s.contains(x) and s.contains(y) and x != y and g.adj(x, y)
+        }
+        let (x: V, y: V) satisfy {
+            s.contains(x) and s.contains(y) and x != y and g.adj(x, y)
+        }
+        path_length_pred_of_edge(g, s, x, y)
+        path_length_pred(g, s)(Nat.1)
+        path_length_pred_bounded(g, s)
+        has_max(path_length_pred(g, s), Nat.1, fs_card(s))
+        exists(m: Nat) {
+            is_max(path_length_pred(g, s), m)
+        }
+    }
+}
+
