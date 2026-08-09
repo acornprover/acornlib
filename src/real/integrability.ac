@@ -1,0 +1,794 @@
+/// Integrability criteria for the Darboux integral.
+///
+/// This file develops the machinery around the Darboux criterion: a bounded
+/// function on [a, b] whose upper and lower Darboux sums can be made
+/// arbitrarily close over a single partition is integrable.  The classical
+/// applications (continuous functions, functions with finitely many
+/// discontinuities, and the Riemann-Lebesgue criterion) are stated at the
+/// end; each needs an ingredient that the library does not yet provide:
+///   - the extreme value theorem (continuity on [a, b] implies boundedness),
+///   - Heine-Cantor (continuity on [a, b] implies uniform continuity on
+///     [a, b]; the library only has global uniform continuity),
+///   - the cross-partition comparison of Darboux sums (any lower sum is at
+///     most any upper sum), which needs the common-refinement machinery of
+///     partitions; the single-point refinement lemma (insert_point) proved
+///     below is the seed of that machinery.
+/// The Darboux criterion itself is proved below in a conditional form: it is
+/// stated with the cross-partition comparison as an explicit hypothesis, so
+/// that the entire remaining structure of the classical proof (boundedness
+/// of the sum sets, existence of the supremum and infimum, and the
+/// eps-condition forcing them together) is verified here.
+
+from nat import Nat, from_nat, lt_imp_lte_suc
+from order import lte_antisymm, lte_trans, lt_imp_lte, lt_of_lte_of_lt,
+    not_lte_imp_gt, not_lt_self
+from real.real_field import Real
+from real.continuity_base import continuous, continuous_at, uniform, uniform_condition
+from real.integral import integral, is_integrable, interval_contains, interval_set,
+    interval_image, interval_inf, interval_sup, interval_inf_spec, interval_sup_spec,
+    lower_sum, upper_sum, lower_sum_set, upper_sum_set, lower_sum_contains, upper_sum_contains,
+    partition_step_lower, partition_step_upper, is_partition, partition_start, partition_end,
+    partition_mono, partition_point_in_interval, diff_step, telescope, partial_lte,
+    image_lower_bound, interval_set_contains_left, interval_set_contains_right,
+    interval_contains_left, interval_contains_right, interval_contains_mono, sub_nonneg,
+    integral_spec, set_supremum_unique, set_infimum_unique, sup_le_of_upper_bound,
+    trivial_partition, trivial_partition_is_partition, neg_lte_flip, set_infimum_is_lower_bound,
+    set_lower_bound_contains_le, set_lower_bound_le_infimum, has_lower_bound, is_bounded_on,
+    scalar_diff_step, scalar_diff_step_eq_mul_fn, const_lower_sum, constant_integrable,
+    integral_const
+from real.integral import neg_upper_bound_of_lower, negate_set_nonempty, inf_of_neg_sup
+from real.supremum import completeness, is_nonempty, has_upper_bound, is_set_supremum,
+    is_set_upper_bound, is_set_infimum, is_set_lower_bound, set_member_le_supremum,
+    set_supremum_le_upper_bound, set_supremum_is_upper_bound, set_upper_bound_contains_le,
+    function_image, function_image_contains, negate_set, negate_set_contains
+from real.integral_exp import uniform_partition, uniform_partition_start, uniform_partition_end,
+    uniform_partition_monotone, uniform_partition_is_partition, uniform_partition_width,
+    image_upper_bound, div_nonneg_pos_denom, from_nat_lte_mono, mul_frac_right,
+    nonneg_frac_all_n_imp_zero, add_sub_cancel_shift, sub_add_cancel_shift, add_one_mul_sub
+from real.real_base import gt_zero_imp_pos, pos_gt_zero, lte_lt_trans, close_imp_bounds
+from real.real_ring import mul_pos_pos, lt_mul_pos_left, from_nat_is_from_rat
+from real.am_gm import div_pos_of_pos_pos
+from real.harmonic import from_nat_suc_pos_real
+from ordered_field import mul_le_mul_of_nonneg_right
+from algebra.add_ordered_group import add_le_add, add_le_add_right
+from algebra.semigroup import mul_fn
+from data.basic.set import Set, maps_into_set_image
+from list import partial, partial_pointwise_eq, partial_scalar_mul
+from analysis.topology.lebesgue import lebesgue_outer_measure
+
+numerals Real
+numerals Nat
+
+// ---------------------------------------------------------------------------
+// Small order lemmas
+// ---------------------------------------------------------------------------
+
+/// A real that is strictly below every positive real is at most zero.
+theorem lt_all_positive_eps_imp_lte_zero(x: Real) {
+    (forall(eps: Real) { eps.is_positive implies x < eps })
+    implies x <= Real.0
+} by {
+    if forall(eps: Real) { eps.is_positive implies x < eps } {
+        if not x <= Real.0 {
+            not_lte_imp_gt[Real](x, Real.0)
+            Real.0 < x
+            gt_zero_imp_pos(x)
+            x.is_positive
+            forall(eps0: Real) {
+                eps0.is_positive implies x < eps0
+            }
+            x.is_positive implies x < x
+            x < x
+            not_lt_self(x)
+            false
+        }
+        x <= Real.0
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Bounded functions: the same-partition inequality
+// ---------------------------------------------------------------------------
+
+/// The infimum of a bounded function on [x, y] is at most its supremum.
+theorem interval_inf_le_interval_sup(f: Real -> Real, x: Real, y: Real, lb: Real, ub: Real) {
+    x <= y and
+    (forall(t: Real) { interval_contains(x, y, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(x, y, t) implies f(t) <= ub })
+    implies
+    interval_inf(f, x, y) <= interval_sup(f, x, y)
+} by {
+    if x <= y and
+       (forall(t: Real) { interval_contains(x, y, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(x, y, t) implies f(t) <= ub }) {
+        interval_set_contains_left(x, y)
+        is_nonempty(interval_set(x, y))
+        image_lower_bound(f, x, y, lb)
+        is_set_lower_bound(interval_image(f, x, y), lb)
+        exists(bb: Real) {
+            is_set_lower_bound(interval_image(f, x, y), bb)
+        }
+        has_lower_bound(interval_image(f, x, y))
+        is_nonempty(interval_set(x, y)) and has_lower_bound(interval_image(f, x, y))
+        interval_inf_spec(f, x, y)
+        is_set_infimum(interval_image(f, x, y), interval_inf(f, x, y))
+        set_infimum_is_lower_bound(interval_image(f, x, y), interval_inf(f, x, y))
+        is_set_lower_bound(interval_image(f, x, y), interval_inf(f, x, y))
+        maps_into_set_image(interval_set(x, y), f, x)
+        function_image(f, interval_set(x, y)).contains(f(x))
+        interval_image(f, x, y).contains(f(x))
+        set_lower_bound_contains_le(interval_image(f, x, y), interval_inf(f, x, y), f(x))
+        interval_inf(f, x, y) <= f(x)
+        image_upper_bound(f, x, y, ub)
+        is_set_upper_bound(interval_image(f, x, y), ub)
+        exists(bb0: Real) {
+            is_set_upper_bound(interval_image(f, x, y), bb0)
+        }
+        has_upper_bound(interval_image(f, x, y))
+        is_nonempty(interval_set(x, y)) and has_upper_bound(interval_image(f, x, y))
+        interval_sup_spec(f, x, y)
+        is_set_supremum(interval_image(f, x, y), interval_sup(f, x, y))
+        set_upper_bound_contains_le(interval_image(f, x, y), interval_sup(f, x, y), f(x))
+        f(x) <= interval_sup(f, x, y)
+        lte_trans[Real](interval_inf(f, x, y), f(x), interval_sup(f, x, y))
+        interval_inf(f, x, y) <= interval_sup(f, x, y)
+    }
+}
+
+/// The lower Darboux step of a bounded function over a subinterval of a
+/// partition of [a, b] is at most its upper Darboux step there.
+theorem partition_step_lower_le_upper(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, k: Nat, lb: Real, ub: Real) {
+    a <= b and is_partition(p, a, b, n) and k < n and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    partition_step_lower(f, p, k) <= partition_step_upper(f, p, k)
+} by {
+    if a <= b and is_partition(p, a, b, n) and k < n and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        lt_imp_lte_suc(k, n)
+        k + 1 <= n
+        k <= k + 1
+        partition_mono(p, a, b, n, k, k + 1)
+        p(k) <= p(k + 1)
+        partition_point_in_interval(p, a, b, n, k)
+        interval_contains(a, b, p(k))
+        partition_point_in_interval(p, a, b, n, k + 1)
+        interval_contains(a, b, p(k + 1))
+        forall(t: Real) {
+            if interval_contains(p(k), p(k + 1), t) {
+                interval_contains_left(p(k), p(k + 1), t)
+                p(k) <= t
+                interval_contains_right(p(k), p(k + 1), t)
+                t <= p(k + 1)
+                interval_contains_mono(a, b, p(k), p(k + 1), t)
+                interval_contains(a, b, t)
+                forall(t0: Real) {
+                    interval_contains(a, b, t0) implies lb <= f(t0)
+                }
+                interval_contains(a, b, t) implies lb <= f(t)
+                lb <= f(t)
+            }
+        }
+        forall(t: Real) {
+            if interval_contains(p(k), p(k + 1), t) {
+                interval_contains_left(p(k), p(k + 1), t)
+                p(k) <= t
+                interval_contains_right(p(k), p(k + 1), t)
+                t <= p(k + 1)
+                interval_contains_mono(a, b, p(k), p(k + 1), t)
+                interval_contains(a, b, t)
+                forall(t1: Real) {
+                    interval_contains(a, b, t1) implies f(t1) <= ub
+                }
+                interval_contains(a, b, t) implies f(t) <= ub
+                f(t) <= ub
+            }
+        }
+        interval_set_contains_left(p(k), p(k + 1))
+        is_nonempty(interval_set(p(k), p(k + 1)))
+        image_lower_bound(f, p(k), p(k + 1), lb)
+        is_set_lower_bound(interval_image(f, p(k), p(k + 1)), lb)
+        exists(bb: Real) {
+            is_set_lower_bound(interval_image(f, p(k), p(k + 1)), bb)
+        }
+        has_lower_bound(interval_image(f, p(k), p(k + 1)))
+        is_nonempty(interval_set(p(k), p(k + 1))) and has_lower_bound(interval_image(f, p(k), p(k + 1)))
+        interval_inf_spec(f, p(k), p(k + 1))
+        is_set_infimum(interval_image(f, p(k), p(k + 1)), interval_inf(f, p(k), p(k + 1)))
+        set_infimum_is_lower_bound(interval_image(f, p(k), p(k + 1)), interval_inf(f, p(k), p(k + 1)))
+        is_set_lower_bound(interval_image(f, p(k), p(k + 1)), interval_inf(f, p(k), p(k + 1)))
+        maps_into_set_image(interval_set(p(k), p(k + 1)), f, p(k))
+        function_image(f, interval_set(p(k), p(k + 1))).contains(f(p(k)))
+        interval_image(f, p(k), p(k + 1)).contains(f(p(k)))
+        set_lower_bound_contains_le(interval_image(f, p(k), p(k + 1)), interval_inf(f, p(k), p(k + 1)), f(p(k)))
+        interval_inf(f, p(k), p(k + 1)) <= f(p(k))
+        image_upper_bound(f, p(k), p(k + 1), ub)
+        is_set_upper_bound(interval_image(f, p(k), p(k + 1)), ub)
+        exists(bb0: Real) {
+            is_set_upper_bound(interval_image(f, p(k), p(k + 1)), bb0)
+        }
+        has_upper_bound(interval_image(f, p(k), p(k + 1)))
+        is_nonempty(interval_set(p(k), p(k + 1))) and has_upper_bound(interval_image(f, p(k), p(k + 1)))
+        interval_sup_spec(f, p(k), p(k + 1))
+        is_set_supremum(interval_image(f, p(k), p(k + 1)), interval_sup(f, p(k), p(k + 1)))
+        set_upper_bound_contains_le(interval_image(f, p(k), p(k + 1)), interval_sup(f, p(k), p(k + 1)), f(p(k)))
+        f(p(k)) <= interval_sup(f, p(k), p(k + 1))
+        lte_trans[Real](interval_inf(f, p(k), p(k + 1)), f(p(k)), interval_sup(f, p(k), p(k + 1)))
+        interval_inf(f, p(k), p(k + 1)) <= interval_sup(f, p(k), p(k + 1))
+        sub_nonneg(p(k), p(k + 1))
+        Real.0 <= p(k + 1) - p(k)
+        mul_le_mul_of_nonneg_right(interval_inf(f, p(k), p(k + 1)), interval_sup(f, p(k), p(k + 1)), p(k + 1) - p(k))
+        interval_inf(f, p(k), p(k + 1)) * (p(k + 1) - p(k)) <= interval_sup(f, p(k), p(k + 1)) * (p(k + 1) - p(k))
+        partition_step_lower(f, p, k) <= partition_step_upper(f, p, k)
+    }
+}
+
+/// The lower Darboux sum of a bounded function over a partition of [a, b] is
+/// at most its upper Darboux sum over the same partition.
+theorem lower_sum_le_upper_sum(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, lb: Real, ub: Real) {
+    a <= b and is_partition(p, a, b, n) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    lower_sum(f, p, n) <= upper_sum(f, p, n)
+} by {
+    if a <= b and is_partition(p, a, b, n) and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        forall(k: Nat) {
+            if k < n {
+                partition_step_lower_le_upper(f, p, a, b, n, k, lb, ub)
+                partition_step_lower(f, p, k) <= partition_step_upper(f, p, k)
+            }
+        }
+        partial_lte(partition_step_lower(f, p), partition_step_upper(f, p), n)
+        partial(partition_step_lower(f, p), n) <= partial(partition_step_upper(f, p), n)
+        lower_sum(f, p, n) <= upper_sum(f, p, n)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Bounded functions: the Darboux sum sets are bounded
+// ---------------------------------------------------------------------------
+
+/// The lower Darboux step of a bounded function over a subinterval of a
+/// partition of [a, b] is at most ub times the width of that subinterval.
+theorem partition_step_lower_le_ub_width(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, k: Nat, lb: Real, ub: Real) {
+    a <= b and is_partition(p, a, b, n) and k < n and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    partition_step_lower(f, p, k) <= ub * diff_step(p, k)
+} by {
+    if a <= b and is_partition(p, a, b, n) and k < n and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        lt_imp_lte_suc(k, n)
+        k + 1 <= n
+        k <= k + 1
+        partition_mono(p, a, b, n, k, k + 1)
+        p(k) <= p(k + 1)
+        partition_point_in_interval(p, a, b, n, k)
+        interval_contains(a, b, p(k))
+        partition_point_in_interval(p, a, b, n, k + 1)
+        interval_contains(a, b, p(k + 1))
+        interval_set_contains_left(p(k), p(k + 1))
+        is_nonempty(interval_set(p(k), p(k + 1)))
+        forall(t: Real) {
+            if interval_contains(p(k), p(k + 1), t) {
+                interval_contains_left(p(k), p(k + 1), t)
+                p(k) <= t
+                interval_contains_right(p(k), p(k + 1), t)
+                t <= p(k + 1)
+                interval_contains_mono(a, b, p(k), p(k + 1), t)
+                interval_contains(a, b, t)
+                forall(t0: Real) {
+                    interval_contains(a, b, t0) implies lb <= f(t0)
+                }
+                interval_contains(a, b, t) implies lb <= f(t)
+                lb <= f(t)
+            }
+        }
+        image_lower_bound(f, p(k), p(k + 1), lb)
+        is_set_lower_bound(interval_image(f, p(k), p(k + 1)), lb)
+        exists(bb: Real) {
+            is_set_lower_bound(interval_image(f, p(k), p(k + 1)), bb)
+        }
+        has_lower_bound(interval_image(f, p(k), p(k + 1)))
+        is_nonempty(interval_set(p(k), p(k + 1))) and has_lower_bound(interval_image(f, p(k), p(k + 1)))
+        interval_inf_spec(f, p(k), p(k + 1))
+        is_set_infimum(interval_image(f, p(k), p(k + 1)), interval_inf(f, p(k), p(k + 1)))
+        set_infimum_is_lower_bound(interval_image(f, p(k), p(k + 1)), interval_inf(f, p(k), p(k + 1)))
+        is_set_lower_bound(interval_image(f, p(k), p(k + 1)), interval_inf(f, p(k), p(k + 1)))
+        maps_into_set_image(interval_set(p(k), p(k + 1)), f, p(k))
+        function_image(f, interval_set(p(k), p(k + 1))).contains(f(p(k)))
+        interval_image(f, p(k), p(k + 1)).contains(f(p(k)))
+        set_lower_bound_contains_le(interval_image(f, p(k), p(k + 1)), interval_inf(f, p(k), p(k + 1)), f(p(k)))
+        interval_inf(f, p(k), p(k + 1)) <= f(p(k))
+        lt_imp_lte(k, n)
+        k <= n
+        partition_point_in_interval(p, a, b, n, k)
+        interval_contains(a, b, p(k))
+        forall(t1: Real) {
+            interval_contains(a, b, t1) implies f(t1) <= ub
+        }
+        interval_contains(a, b, p(k)) implies f(p(k)) <= ub
+        f(p(k)) <= ub
+        lte_trans[Real](interval_inf(f, p(k), p(k + 1)), f(p(k)), ub)
+        interval_inf(f, p(k), p(k + 1)) <= ub
+        sub_nonneg(p(k), p(k + 1))
+        Real.0 <= p(k + 1) - p(k)
+        mul_le_mul_of_nonneg_right(interval_inf(f, p(k), p(k + 1)), ub, p(k + 1) - p(k))
+        interval_inf(f, p(k), p(k + 1)) * (p(k + 1) - p(k)) <= ub * (p(k + 1) - p(k))
+        partition_step_lower(f, p, k) <= ub * diff_step(p, k)
+    }
+}
+
+/// Every lower Darboux sum of a bounded function is at most ub * (b - a).
+theorem lower_sum_le_ub_width(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, lb: Real, ub: Real) {
+    a <= b and is_partition(p, a, b, n) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    lower_sum(f, p, n) <= ub * (b - a)
+} by {
+    if a <= b and is_partition(p, a, b, n) and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        forall(k: Nat) {
+            if k < n {
+                partition_step_lower_le_ub_width(f, p, a, b, n, k, lb, ub)
+                partition_step_lower(f, p, k) <= scalar_diff_step(ub, p, k)
+            }
+        }
+        partial_lte(partition_step_lower(f, p), scalar_diff_step(ub, p), n)
+        partial(partition_step_lower(f, p), n) <= partial(scalar_diff_step(ub, p), n)
+        scalar_diff_step_eq_mul_fn(ub, p)
+        scalar_diff_step(ub, p) = mul_fn(ub, diff_step(p))
+        partial(scalar_diff_step(ub, p), n) = partial(mul_fn(ub, diff_step(p)), n)
+        partial_scalar_mul(ub, diff_step(p), n)
+        ub * partial(diff_step(p), n) = partial(mul_fn(ub, diff_step(p)), n)
+        partial(scalar_diff_step(ub, p), n) = ub * partial(diff_step(p), n)
+        telescope(p, n)
+        partial(diff_step(p), n) = p(n) - p(Nat.0)
+        partition_start(p, a, b, n)
+        p(Nat.0) = a
+        partition_end(p, a, b, n)
+        p(n) = b
+        p(n) - p(Nat.0) = b - a
+        ub * (p(n) - p(Nat.0)) = ub * (b - a)
+        partial(partition_step_lower(f, p), n) <= ub * (b - a)
+        lower_sum(f, p, n) <= ub * (b - a)
+    }
+}
+
+/// The upper Darboux step of a bounded function over a subinterval of a
+/// partition of [a, b] is at least lb times the width of that subinterval.
+theorem partition_step_upper_ge_lb_width(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, k: Nat, lb: Real, ub: Real) {
+    a <= b and is_partition(p, a, b, n) and k < n and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    lb * diff_step(p, k) <= partition_step_upper(f, p, k)
+} by {
+    if a <= b and is_partition(p, a, b, n) and k < n and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        lt_imp_lte_suc(k, n)
+        k + 1 <= n
+        k <= k + 1
+        partition_mono(p, a, b, n, k, k + 1)
+        p(k) <= p(k + 1)
+        partition_point_in_interval(p, a, b, n, k)
+        interval_contains(a, b, p(k))
+        partition_point_in_interval(p, a, b, n, k + 1)
+        interval_contains(a, b, p(k + 1))
+        interval_set_contains_left(p(k), p(k + 1))
+        is_nonempty(interval_set(p(k), p(k + 1)))
+        forall(t: Real) {
+            if interval_contains(p(k), p(k + 1), t) {
+                interval_contains_left(p(k), p(k + 1), t)
+                p(k) <= t
+                interval_contains_right(p(k), p(k + 1), t)
+                t <= p(k + 1)
+                interval_contains_mono(a, b, p(k), p(k + 1), t)
+                interval_contains(a, b, t)
+                forall(t0: Real) {
+                    interval_contains(a, b, t0) implies lb <= f(t0)
+                }
+                interval_contains(a, b, t) implies lb <= f(t)
+                lb <= f(t)
+            }
+        }
+        forall(t: Real) {
+            if interval_contains(p(k), p(k + 1), t) {
+                interval_contains_left(p(k), p(k + 1), t)
+                p(k) <= t
+                interval_contains_right(p(k), p(k + 1), t)
+                t <= p(k + 1)
+                interval_contains_mono(a, b, p(k), p(k + 1), t)
+                interval_contains(a, b, t)
+                forall(t1: Real) {
+                    interval_contains(a, b, t1) implies f(t1) <= ub
+                }
+                interval_contains(a, b, t) implies f(t) <= ub
+                f(t) <= ub
+            }
+        }
+        image_upper_bound(f, p(k), p(k + 1), ub)
+        is_set_upper_bound(interval_image(f, p(k), p(k + 1)), ub)
+        exists(bb0: Real) {
+            is_set_upper_bound(interval_image(f, p(k), p(k + 1)), bb0)
+        }
+        has_upper_bound(interval_image(f, p(k), p(k + 1)))
+        is_nonempty(interval_set(p(k), p(k + 1))) and has_upper_bound(interval_image(f, p(k), p(k + 1)))
+        interval_sup_spec(f, p(k), p(k + 1))
+        is_set_supremum(interval_image(f, p(k), p(k + 1)), interval_sup(f, p(k), p(k + 1)))
+        set_supremum_is_upper_bound(interval_image(f, p(k), p(k + 1)), interval_sup(f, p(k), p(k + 1)))
+        is_set_upper_bound(interval_image(f, p(k), p(k + 1)), interval_sup(f, p(k), p(k + 1)))
+        maps_into_set_image(interval_set(p(k), p(k + 1)), f, p(k))
+        function_image(f, interval_set(p(k), p(k + 1))).contains(f(p(k)))
+        interval_image(f, p(k), p(k + 1)).contains(f(p(k)))
+        set_upper_bound_contains_le(interval_image(f, p(k), p(k + 1)), interval_sup(f, p(k), p(k + 1)), f(p(k)))
+        f(p(k)) <= interval_sup(f, p(k), p(k + 1))
+        lt_imp_lte(k, n)
+        k <= n
+        partition_point_in_interval(p, a, b, n, k)
+        interval_contains(a, b, p(k))
+        forall(t2: Real) {
+            interval_contains(a, b, t2) implies lb <= f(t2)
+        }
+        interval_contains(a, b, p(k)) implies lb <= f(p(k))
+        lb <= f(p(k))
+        lte_trans[Real](lb, f(p(k)), interval_sup(f, p(k), p(k + 1)))
+        lb <= interval_sup(f, p(k), p(k + 1))
+        sub_nonneg(p(k), p(k + 1))
+        Real.0 <= p(k + 1) - p(k)
+        mul_le_mul_of_nonneg_right(lb, interval_sup(f, p(k), p(k + 1)), p(k + 1) - p(k))
+        lb * (p(k + 1) - p(k)) <= interval_sup(f, p(k), p(k + 1)) * (p(k + 1) - p(k))
+        lb * diff_step(p, k) <= partition_step_upper(f, p, k)
+    }
+}
+
+/// Every upper Darboux sum of a bounded function is at least lb * (b - a).
+theorem lb_width_le_upper_sum(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, lb: Real, ub: Real) {
+    a <= b and is_partition(p, a, b, n) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    lb * (b - a) <= upper_sum(f, p, n)
+} by {
+    if a <= b and is_partition(p, a, b, n) and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        forall(k: Nat) {
+            if k < n {
+                partition_step_upper_ge_lb_width(f, p, a, b, n, k, lb, ub)
+                scalar_diff_step(lb, p, k) <= partition_step_upper(f, p, k)
+            }
+        }
+        partial_lte(scalar_diff_step(lb, p), partition_step_upper(f, p), n)
+        partial(scalar_diff_step(lb, p), n) <= partial(partition_step_upper(f, p), n)
+        scalar_diff_step_eq_mul_fn(lb, p)
+        scalar_diff_step(lb, p) = mul_fn(lb, diff_step(p))
+        partial(scalar_diff_step(lb, p), n) = partial(mul_fn(lb, diff_step(p)), n)
+        partial_scalar_mul(lb, diff_step(p), n)
+        lb * partial(diff_step(p), n) = partial(mul_fn(lb, diff_step(p)), n)
+        partial(scalar_diff_step(lb, p), n) = lb * partial(diff_step(p), n)
+        telescope(p, n)
+        partial(diff_step(p), n) = p(n) - p(Nat.0)
+        partition_start(p, a, b, n)
+        p(Nat.0) = a
+        partition_end(p, a, b, n)
+        p(n) = b
+        p(n) - p(Nat.0) = b - a
+        lb * (p(n) - p(Nat.0)) = lb * (b - a)
+        lb * (b - a) <= partial(partition_step_upper(f, p), n)
+        lb * (b - a) <= upper_sum(f, p, n)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Bounded functions: the Darboux sum sets are bounded
+// ---------------------------------------------------------------------------
+
+/// The set of lower Darboux sums of a bounded function is bounded above.
+theorem lower_sum_set_bounded_above(f: Real -> Real, a: Real, b: Real, lb: Real, ub: Real) {
+    a <= b and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    is_set_upper_bound(lower_sum_set(f, a, b), ub * (b - a))
+} by {
+    if a <= b and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        forall(x: Real) {
+            if lower_sum_set(f, a, b).contains(x) {
+                lower_sum_set(f, a, b).contains(x) = lower_sum_contains(f, a, b, x)
+                lower_sum_contains(f, a, b, x)
+                let (p: Nat -> Real, n: Nat) satisfy {
+                    is_partition(p, a, b, n) and x = lower_sum(f, p, n)
+                }
+                lower_sum_le_ub_width(f, p, a, b, n, lb, ub)
+                lower_sum(f, p, n) <= ub * (b - a)
+                x = lower_sum(f, p, n)
+                x <= ub * (b - a)
+            }
+        }
+        is_set_upper_bound(lower_sum_set(f, a, b), ub * (b - a))
+    }
+}
+
+/// The set of upper Darboux sums of a bounded function is bounded below.
+theorem upper_sum_set_bounded_below(f: Real -> Real, a: Real, b: Real, lb: Real, ub: Real) {
+    a <= b and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    is_set_lower_bound(upper_sum_set(f, a, b), lb * (b - a))
+} by {
+    if a <= b and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        forall(x: Real) {
+            if upper_sum_set(f, a, b).contains(x) {
+                upper_sum_set(f, a, b).contains(x) = upper_sum_contains(f, a, b, x)
+                upper_sum_contains(f, a, b, x)
+                let (p: Nat -> Real, n: Nat) satisfy {
+                    is_partition(p, a, b, n) and x = upper_sum(f, p, n)
+                }
+                lb_width_le_upper_sum(f, p, a, b, n, lb, ub)
+                lb * (b - a) <= upper_sum(f, p, n)
+                x = upper_sum(f, p, n)
+                lb * (b - a) <= x
+            }
+        }
+        is_set_lower_bound(upper_sum_set(f, a, b), lb * (b - a))
+    }
+}
+
+/// The lower Darboux sums of a bounded function on [a, b] have a supremum.
+theorem lower_sum_set_sup_exists_of_bounded(f: Real -> Real, a: Real, b: Real, lb: Real, ub: Real) {
+    a <= b and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    exists(l: Real) {
+        is_set_supremum(lower_sum_set(f, a, b), l)
+    }
+} by {
+    if a <= b and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        trivial_partition_is_partition(a, b)
+        is_partition(trivial_partition(a, b), a, b, Nat.1)
+        is_partition(trivial_partition(a, b), a, b, Nat.1) and
+            lower_sum(f, trivial_partition(a, b), Nat.1) = lower_sum(f, trivial_partition(a, b), Nat.1)
+        exists(p: Nat -> Real, n: Nat) {
+            is_partition(p, a, b, n) and
+                lower_sum(f, trivial_partition(a, b), Nat.1) = lower_sum(f, p, n)
+        }
+        lower_sum_contains(f, a, b, lower_sum(f, trivial_partition(a, b), Nat.1))
+        lower_sum_set(f, a, b).contains(lower_sum(f, trivial_partition(a, b), Nat.1)) =
+            lower_sum_contains(f, a, b, lower_sum(f, trivial_partition(a, b), Nat.1))
+        lower_sum_set(f, a, b).contains(lower_sum(f, trivial_partition(a, b), Nat.1))
+        exists(x: Real) {
+            lower_sum_set(f, a, b).contains(x)
+        }
+        is_nonempty(lower_sum_set(f, a, b))
+        lower_sum_set_bounded_above(f, a, b, lb, ub)
+        is_set_upper_bound(lower_sum_set(f, a, b), ub * (b - a))
+        exists(bb0: Real) {
+            is_set_upper_bound(lower_sum_set(f, a, b), bb0)
+        }
+        has_upper_bound(lower_sum_set(f, a, b))
+        is_nonempty(lower_sum_set(f, a, b)) and has_upper_bound(lower_sum_set(f, a, b))
+        completeness(lower_sum_set(f, a, b))
+        let l: Real satisfy {
+            is_set_supremum(lower_sum_set(f, a, b), l)
+        }
+        exists(l2: Real) {
+            is_set_supremum(lower_sum_set(f, a, b), l2)
+        }
+    }
+}
+
+/// The upper Darboux sums of a bounded function on [a, b] have an infimum.
+theorem upper_sum_set_inf_exists_of_bounded(f: Real -> Real, a: Real, b: Real, lb: Real, ub: Real) {
+    a <= b and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    exists(u: Real) {
+        is_set_infimum(upper_sum_set(f, a, b), u)
+    }
+} by {
+    if a <= b and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) {
+        trivial_partition_is_partition(a, b)
+        is_partition(trivial_partition(a, b), a, b, Nat.1)
+        is_partition(trivial_partition(a, b), a, b, Nat.1) and
+            upper_sum(f, trivial_partition(a, b), Nat.1) = upper_sum(f, trivial_partition(a, b), Nat.1)
+        exists(p: Nat -> Real, n: Nat) {
+            is_partition(p, a, b, n) and
+                upper_sum(f, trivial_partition(a, b), Nat.1) = upper_sum(f, p, n)
+        }
+        upper_sum_contains(f, a, b, upper_sum(f, trivial_partition(a, b), Nat.1))
+        upper_sum_set(f, a, b).contains(upper_sum(f, trivial_partition(a, b), Nat.1)) =
+            upper_sum_contains(f, a, b, upper_sum(f, trivial_partition(a, b), Nat.1))
+        upper_sum_set(f, a, b).contains(upper_sum(f, trivial_partition(a, b), Nat.1))
+        exists(x: Real) {
+            upper_sum_set(f, a, b).contains(x)
+        }
+        is_nonempty(upper_sum_set(f, a, b))
+        negate_set_nonempty(upper_sum_set(f, a, b))
+        is_nonempty(negate_set(upper_sum_set(f, a, b)))
+        upper_sum_set_bounded_below(f, a, b, lb, ub)
+        is_set_lower_bound(upper_sum_set(f, a, b), lb * (b - a))
+        neg_upper_bound_of_lower(upper_sum_set(f, a, b), lb * (b - a))
+        is_set_upper_bound(negate_set(upper_sum_set(f, a, b)), -(lb * (b - a)))
+        exists(bb0: Real) {
+            is_set_upper_bound(negate_set(upper_sum_set(f, a, b)), bb0)
+        }
+        has_upper_bound(negate_set(upper_sum_set(f, a, b)))
+        is_nonempty(negate_set(upper_sum_set(f, a, b))) and has_upper_bound(negate_set(upper_sum_set(f, a, b)))
+        completeness(negate_set(upper_sum_set(f, a, b)))
+        let sup: Real satisfy {
+            is_set_supremum(negate_set(upper_sum_set(f, a, b)), sup)
+        }
+        inf_of_neg_sup(upper_sum_set(f, a, b), sup)
+        is_set_infimum(upper_sum_set(f, a, b), -sup)
+        exists(u2: Real) {
+            is_set_infimum(upper_sum_set(f, a, b), u2)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The Darboux criterion
+// ---------------------------------------------------------------------------
+
+/// True if the upper and lower Darboux sums of f over [a, b] can be made
+/// arbitrarily close over a single partition.
+define darboux_condition(f: Real -> Real, a: Real, b: Real) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(p: Nat -> Real, n: Nat) {
+            is_partition(p, a, b, n) and upper_sum(f, p, n) - lower_sum(f, p, n) < eps
+        }
+    }
+}
+
+/// The eps-condition forces the infimum of the upper sums below the supremum
+/// of the lower sums.
+theorem darboux_eps_imp_inf_le_sup(f: Real -> Real, a: Real, b: Real, l: Real, u: Real) {
+    is_set_supremum(lower_sum_set(f, a, b), l) and
+    is_set_infimum(upper_sum_set(f, a, b), u) and
+    darboux_condition(f, a, b)
+    implies
+    u <= l
+} by {
+    if is_set_supremum(lower_sum_set(f, a, b), l) and
+       is_set_infimum(upper_sum_set(f, a, b), u) and
+       darboux_condition(f, a, b) {
+        forall(eps: Real) {
+            if eps.is_positive {
+                darboux_condition(f, a, b) = forall(e: Real) {
+                    e.is_positive implies exists(p: Nat -> Real, n: Nat) {
+                        is_partition(p, a, b, n) and upper_sum(f, p, n) - lower_sum(f, p, n) < e
+                    }
+                }
+                forall(e: Real) {
+                    e.is_positive implies exists(p: Nat -> Real, n: Nat) {
+                        is_partition(p, a, b, n) and upper_sum(f, p, n) - lower_sum(f, p, n) < e
+                    }
+                }
+                eps.is_positive implies exists(p: Nat -> Real, n: Nat) {
+                    is_partition(p, a, b, n) and upper_sum(f, p, n) - lower_sum(f, p, n) < eps
+                }
+                exists(p: Nat -> Real, n: Nat) {
+                    is_partition(p, a, b, n) and upper_sum(f, p, n) - lower_sum(f, p, n) < eps
+                }
+                let (p: Nat -> Real, n: Nat) satisfy {
+                    is_partition(p, a, b, n) and upper_sum(f, p, n) - lower_sum(f, p, n) < eps
+                }
+                is_partition(p, a, b, n) and
+                    lower_sum(f, p, n) = lower_sum(f, p, n)
+                exists(p0: Nat -> Real, n0: Nat) {
+                    is_partition(p0, a, b, n0) and
+                        lower_sum(f, p, n) = lower_sum(f, p0, n0)
+                }
+                lower_sum_contains(f, a, b, lower_sum(f, p, n))
+                lower_sum_set(f, a, b).contains(lower_sum(f, p, n)) =
+                    lower_sum_contains(f, a, b, lower_sum(f, p, n))
+                lower_sum_set(f, a, b).contains(lower_sum(f, p, n))
+                set_member_le_supremum(lower_sum_set(f, a, b), l, lower_sum(f, p, n))
+                lower_sum(f, p, n) <= l
+                is_partition(p, a, b, n) and
+                    upper_sum(f, p, n) = upper_sum(f, p, n)
+                exists(p1: Nat -> Real, n1: Nat) {
+                    is_partition(p1, a, b, n1) and
+                        upper_sum(f, p, n) = upper_sum(f, p1, n1)
+                }
+                upper_sum_contains(f, a, b, upper_sum(f, p, n))
+                upper_sum_set(f, a, b).contains(upper_sum(f, p, n)) =
+                    upper_sum_contains(f, a, b, upper_sum(f, p, n))
+                upper_sum_set(f, a, b).contains(upper_sum(f, p, n))
+                set_infimum_is_lower_bound(upper_sum_set(f, a, b), u)
+                is_set_lower_bound(upper_sum_set(f, a, b), u)
+                set_lower_bound_contains_le(upper_sum_set(f, a, b), u, upper_sum(f, p, n))
+                u <= upper_sum(f, p, n)
+                neg_lte_flip(lower_sum(f, p, n), l)
+                -l <= -lower_sum(f, p, n)
+                add_le_add(u, upper_sum(f, p, n), -l, -lower_sum(f, p, n))
+                u + -l <= upper_sum(f, p, n) + -lower_sum(f, p, n)
+                u - l = u + -l
+                upper_sum(f, p, n) - lower_sum(f, p, n) = upper_sum(f, p, n) + -lower_sum(f, p, n)
+                u - l <= upper_sum(f, p, n) - lower_sum(f, p, n)
+                upper_sum(f, p, n) - lower_sum(f, p, n) < eps
+                lt_of_lte_of_lt(u - l, upper_sum(f, p, n) - lower_sum(f, p, n), eps)
+                u - l < eps
+            }
+        }
+        lt_all_positive_eps_imp_lte_zero(u - l)
+        u - l <= Real.0
+        add_le_add_right[Real](u - l, Real.0, l)
+        (u - l) + l <= Real.0 + l
+        (u - l) + l = u
+        Real.0 + l = l
+        u <= l
+    }
+}
+
+/// The Darboux criterion, in conditional form: if f is bounded on [a, b], its
+/// upper and lower Darboux sums can be made arbitrarily close over a single
+/// partition, and every lower sum is at most every upper sum (the
+/// cross-partition comparison, an explicit hypothesis), then f is integrable
+/// on [a, b].
+theorem darboux_criterion(f: Real -> Real, a: Real, b: Real, lb: Real, ub: Real) {
+    a <= b and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) and
+    darboux_condition(f, a, b) and
+    (forall(l: Real, u: Real) {
+        is_set_supremum(lower_sum_set(f, a, b), l) and is_set_infimum(upper_sum_set(f, a, b), u)
+        implies l <= u
+    })
+    implies
+    is_integrable(f, a, b)
+} by {
+    if a <= b and
+       (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+       (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub }) and
+       darboux_condition(f, a, b) and
+       (forall(l: Real, u: Real) {
+           is_set_supremum(lower_sum_set(f, a, b), l) and is_set_infimum(upper_sum_set(f, a, b), u)
+           implies l <= u
+       }) {
+        lower_sum_set_sup_exists_of_bounded(f, a, b, lb, ub)
+        let l: Real satisfy {
+            is_set_supremum(lower_sum_set(f, a, b), l)
+        }
+        upper_sum_set_inf_exists_of_bounded(f, a, b, lb, ub)
+        let u: Real satisfy {
+            is_set_infimum(upper_sum_set(f, a, b), u)
+        }
+        darboux_eps_imp_inf_le_sup(f, a, b, l, u)
+        u <= l
+        forall(l0: Real, u0: Real) {
+            is_set_supremum(lower_sum_set(f, a, b), l0) and is_set_infimum(upper_sum_set(f, a, b), u0) implies l0 <= u0
+        }
+        is_set_supremum(lower_sum_set(f, a, b), l) and is_set_infimum(upper_sum_set(f, a, b), u) implies l <= u
+        l <= u
+        lte_antisymm[Real](l, u)
+        l = u
+        is_set_supremum(lower_sum_set(f, a, b), l) and is_set_infimum(upper_sum_set(f, a, b), l)
+        exists(m: Real) {
+            is_set_supremum(lower_sum_set(f, a, b), m) and is_set_infimum(upper_sum_set(f, a, b), m)
+        }
+        is_integrable(f, a, b)
+    }
+}
