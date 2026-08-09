@@ -2,7 +2,7 @@ from pair import Pair
 from nat import Nat, alt_induction, only_zero_lte_zero, lte_and_lt, lte_trans, lt_suc, lt_trans,
     lte_cancel_suc, add_sub, add_imp_sub, add_assoc, suc_sub_one, sub_zero, lt_imp_lte_suc,
     add_cancels_left, add_cancels_right, sub_lt, lt_cancel_suc, lte_add_right, lt_add_left,
-    lt_and_lte, add_comm, add_suc_left, lte_antisymm, lt_suc_right
+    lt_and_lte, add_comm, add_suc_left, lte_antisymm, lt_suc_right, pos_of_ne_zero
 from list import List, drop_zero, drop_one, drop_twice, unique_implies_tail_unique,
     singleton_unique, singleton_contains_imp_eq, cons_unique_of_tail_unique_not_contains,
     add_length, add_contains_or, add_contains_left, tail_cancels_cons
@@ -10,22 +10,26 @@ from data.basic.witness import choose_or_default, choose_or_default_spec
 from finite_set import FiniteSet, fs_remove, fs_insert, fs_from_list, finite_set_subset_contains,
     finite_set_empty_contains_eq, fs_union
 from data.finite.finite_set_membership import fs_insert_contains_eq, fs_remove_contains_eq,
-    fs_from_list_contains_eq
+    fs_from_list_contains_eq, fs_insert_contains_self, fs_insert_contains_of_contains, fs_remove_subset
 from data.finite.finite_set_filter import finite_set_filter_contains_eq
 from data.finite.finite_set_product import finite_set_product, finite_set_product_contains_eq
 from data.finite.finite_set_card import fs_card, fs_card_empty, fs_card_eq_of_cardinality_is
 from data.finite.finite_set_card_ops import fs_card_insert_of_not_contains
 from data.finite.finite_set_card_compare import fs_card_mono
+from data.finite.finite_set_card_bounds import fs_card_eq_of_mutual_subset
+from data.finite.finite_set_card_ops import fs_card_remove_of_contains
 from finite_set import finite_set_from_unique_list_cardinality_is_length
+from data.finite.finite_set_from_list_structure import fs_from_list_nil
 from data.finite.finite_set_card_members import fs_two_distinct_members, fs_card_pos_of_contains,
     fs_member_of_card_pos, fs_card_two_of_distinct_members, finite_set_cardinality_has_exact_unique_list
 from data.finite.finite_set_subset_intro import fs_subset_eq_intro
 from data.finite.finite_set_unique_induction import finite_set_strong_induction
+from data.finite.finite_set_nonempty import finite_set_empty_or_inhabited, finite_set_has_member_of_ne_empty
 from data.list.list_unique_cons import unique_cons_head_fresh, unique_cons_head_not_in_tail
 from data.basic.relation_basic import relation_subset, relation_subset_step
 from data.basic.relation import relation_refl_trans_closure, relation_refl_trans_closure_monotone
 from graph.simple_graph import SimpleGraph, induced_subgraph, induced_subgraph_adj_eq,
-    simple_graph_adj_ne
+    simple_graph_adj_ne, simple_graph_adj_comm
 from graph.simple_graph_tree import is_acyclic, is_acyclic_subset, is_leaf, is_tree,
     is_acyclic_of_card_le_two, simple_graph_cycle, simple_graph_connected_on, tree_has_edge
 from graph.simple_graph_connectivity import simple_graph_reachable, simple_graph_reachable_refl,
@@ -2442,4 +2446,529 @@ theorem forest_has_leaf[V](g: SimpleGraph[V], s: FiniteSet[V]) {
         path_endpoint_leaf(g, s, p.first, greedy_path(g, s, p.first, List.singleton(p.second), fs_card(s)))
         exists(v: V) { s.contains(v) and is_leaf(g, s, v) }
     }
+}
+
+/// Directed edges are monotone in the ambient vertex set.
+theorem directed_edges_mono[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]) {
+    s.subset_eq(t) implies directed_edges(g, s).subset_eq(directed_edges(g, t))
+} by {
+    if s.subset_eq(t) {
+        forall(p: Pair[V, V]) {
+            if directed_edges(g, s).contains(p) {
+                directed_edges_contains_eq(g, s, p)
+                directed_edges(g, s).contains(p) =
+                    (s.contains(p.first) and s.contains(p.second) and g.adj(p.first, p.second))
+                s.contains(p.first)
+                s.contains(p.second)
+                g.adj(p.first, p.second)
+                finite_set_subset_contains(s, t, p.first)
+                s.contains(p.first) implies t.contains(p.first)
+                t.contains(p.first)
+                finite_set_subset_contains(s, t, p.second)
+                s.contains(p.second) implies t.contains(p.second)
+                t.contains(p.second)
+                directed_edges_contains_pair(g, t, p.first, p.second)
+                (t.contains(p.first) and t.contains(p.second) and g.adj(p.first, p.second) implies
+                    directed_edges(g, t).contains(Pair.new(p.first, p.second)))
+                directed_edges(g, t).contains(Pair.new(p.first, p.second))
+                Pair.new(p.first, p.second) = p
+                directed_edges(g, t).contains(p)
+            }
+            directed_edges(g, s).contains(p) implies directed_edges(g, t).contains(p)
+        }
+        fs_subset_eq_intro(directed_edges(g, s), directed_edges(g, t))
+        directed_edges(g, s).subset_eq(directed_edges(g, t))
+    }
+}
+
+/// Removing a leaf removes exactly its two directed edges.
+theorem edges_remove_leaf[V](g: SimpleGraph[V], s: FiniteSet[V], v: V) {
+    is_leaf(g, s, v) and s.contains(v) implies
+        directed_edge_count(g, s) = directed_edge_count(g, fs_remove(s, v)) + Nat.2
+} by {
+    if is_leaf(g, s, v) and s.contains(v) {
+        is_leaf(g, s, v) = exists(u: V) {
+            s.contains(u) and g.adj(v, u) and
+                forall(w: V) {
+                    s.contains(w) and g.adj(v, w) implies w = u
+                }
+        }
+        exists(u: V) {
+            s.contains(u) and g.adj(v, u) and
+                forall(w: V) {
+                    s.contains(w) and g.adj(v, w) implies w = u
+                }
+        }
+        let u: V satisfy {
+            s.contains(u) and g.adj(v, u) and
+                forall(w: V) {
+                    s.contains(w) and g.adj(v, w) implies w = u
+                }
+        }
+        s.contains(u)
+        g.adj(v, u)
+        simple_graph_adj_ne(g, v, u)
+        g.adj(v, u) implies v != u
+        v != u
+        s.contains(v)
+        // s' = fs_remove(s, v)
+        fs_remove_contains_eq(s, v, v)
+        fs_remove(s, v).contains(v) = (s.contains(v) and v != v)
+        not fs_remove(s, v).contains(v)
+        // edges(s) = edges(s') ∪ {(v,u)} ∪ {(u,v)}:
+        forall(p: Pair[V, V]) {
+            if directed_edges(g, s).contains(p) {
+                directed_edges_contains_eq(g, s, p)
+                directed_edges(g, s).contains(p) =
+                    (s.contains(p.first) and s.contains(p.second) and g.adj(p.first, p.second))
+                s.contains(p.first)
+                s.contains(p.second)
+                g.adj(p.first, p.second)
+                if p.first = v {
+                    forall(w: V) {
+                        s.contains(w) and g.adj(v, w) implies w = u
+                    }
+                    (s.contains(p.second) and g.adj(v, p.second) implies p.second = u)
+                    p.second = u
+                    Pair.new(p.first, p.second) = Pair.new(v, u)
+                    fs_insert_contains_self(directed_edges(g, fs_remove(s, v)), Pair.new(v, u))
+                    fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)).contains(Pair.new(v, u))
+                    fs_insert_contains_eq(directed_edges(g, fs_remove(s, v)), Pair.new(v, u), p)
+                    fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)).contains(p) =
+                        (p = Pair.new(v, u) or directed_edges(g, fs_remove(s, v)).contains(p))
+                    p = Pair.new(v, u)
+                    fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)).contains(p)
+                    fs_insert_contains_of_contains(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v), p)
+                    fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p)
+                }
+                if not p.first = v {
+                    p.first != v
+                    if p.second = v {
+                        simple_graph_adj_comm(g, p.first, p.second)
+                        g.adj(p.second, p.first)
+                        g.adj(v, p.first)
+                        forall(w: V) {
+                            s.contains(w) and g.adj(v, w) implies w = u
+                        }
+                        (s.contains(p.first) and g.adj(v, p.first) implies p.first = u)
+                        p.first = u
+                        Pair.new(p.first, p.second) = Pair.new(u, v)
+                        p = Pair.new(u, v)
+                        fs_insert_contains_self(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v))
+                        fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(Pair.new(u, v))
+                        (p = Pair.new(u, v) implies
+                            fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p))
+                        fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p)
+                    }
+                    if not p.second = v {
+                        p.second != v
+                        fs_remove_contains_eq(s, v, p.first)
+                        fs_remove(s, v).contains(p.first) = (s.contains(p.first) and p.first != v)
+                        fs_remove(s, v).contains(p.first)
+                        fs_remove_contains_eq(s, v, p.second)
+                        fs_remove(s, v).contains(p.second) = (s.contains(p.second) and p.second != v)
+                        fs_remove(s, v).contains(p.second)
+                        directed_edges_contains_pair(g, fs_remove(s, v), p.first, p.second)
+                        directed_edges(g, fs_remove(s, v)).contains(Pair.new(p.first, p.second))
+                        fs_insert_contains_of_contains(directed_edges(g, fs_remove(s, v)), Pair.new(v, u), p)
+                        fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)).contains(p)
+                        fs_insert_contains_of_contains(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v), p)
+                        fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p)
+                    }
+                    fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p)
+                }
+                fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p)
+            }
+            (directed_edges(g, s).contains(p) implies
+                fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p))
+        }
+        forall(p: Pair[V, V]) {
+            if fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p) {
+                fs_insert_contains_eq(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v), p)
+                fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p) =
+                    (p = Pair.new(u, v) or fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)).contains(p))
+                if p = Pair.new(u, v) {
+                    fs_remove_subset(s, v)
+                    fs_remove(s, v).subset_eq(s)
+                    directed_edges_contains_pair(g, s, u, v)
+                    (s.contains(u) and s.contains(v) and g.adj(u, v) implies
+                        directed_edges(g, s).contains(Pair.new(u, v)))
+                    simple_graph_adj_comm(g, v, u)
+                    g.adj(u, v)
+                    directed_edges(g, s).contains(Pair.new(u, v))
+                    Pair.new(u, v) = p
+                    directed_edges(g, s).contains(p)
+                }
+                if not p = Pair.new(u, v) {
+                    fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)).contains(p)
+                    fs_insert_contains_eq(directed_edges(g, fs_remove(s, v)), Pair.new(v, u), p)
+                    fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)).contains(p) =
+                        (p = Pair.new(v, u) or directed_edges(g, fs_remove(s, v)).contains(p))
+                    if p = Pair.new(v, u) {
+                        directed_edges_contains_pair(g, s, v, u)
+                        (s.contains(v) and s.contains(u) and g.adj(v, u) implies
+                            directed_edges(g, s).contains(Pair.new(v, u)))
+                        directed_edges(g, s).contains(Pair.new(v, u))
+                        Pair.new(v, u) = p
+                        directed_edges(g, s).contains(p)
+                    }
+                    if not p = Pair.new(v, u) {
+                        directed_edges(g, fs_remove(s, v)).contains(p)
+                        directed_edges_mono(g, fs_remove(s, v), s)
+                        fs_remove_subset(s, v)
+                        fs_remove(s, v).subset_eq(s)
+                        (fs_remove(s, v).subset_eq(s) implies
+                            directed_edges(g, fs_remove(s, v)).subset_eq(directed_edges(g, s)))
+                        directed_edges(g, fs_remove(s, v)).subset_eq(directed_edges(g, s))
+                        finite_set_subset_contains(directed_edges(g, fs_remove(s, v)), directed_edges(g, s), p)
+                        (directed_edges(g, fs_remove(s, v)).subset_eq(directed_edges(g, s)) implies
+                            (directed_edges(g, fs_remove(s, v)).contains(p) implies directed_edges(g, s).contains(p)))
+                        directed_edges(g, fs_remove(s, v)).contains(p) implies directed_edges(g, s).contains(p)
+                        directed_edges(g, s).contains(p)
+                    }
+                    directed_edges(g, s).contains(p)
+                }
+                directed_edges(g, s).contains(p)
+            }
+            (fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).contains(p) implies
+                directed_edges(g, s).contains(p))
+        }
+        fs_subset_eq_intro(directed_edges(g, s),
+            fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)))
+        directed_edges(g, s).subset_eq(
+            fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)))
+        fs_subset_eq_intro(
+            fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)),
+            directed_edges(g, s))
+        fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)).subset_eq(directed_edges(g, s))
+        fs_card_eq_of_mutual_subset(directed_edges(g, s),
+            fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)))
+        fs_card(directed_edges(g, s)) = fs_card(
+            fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)))
+        // |{(v,u)} ∪ {(u,v)}| = 2 and disjoint from edges(s'):
+        fs_card_insert_of_not_contains(FiniteSet.empty[Pair[V, V]], Pair.new(v, u))
+        fs_card(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u))) =
+            fs_card(FiniteSet.empty[Pair[V, V]]) + Nat.1
+        fs_card_empty[Pair[V, V]]
+        fs_card(FiniteSet.empty[Pair[V, V]]) = Nat.0
+        fs_card(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u))) = Nat.1
+        fs_insert_contains_eq(FiniteSet.empty[Pair[V, V]], Pair.new(v, u), Pair.new(u, v))
+        fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)).contains(Pair.new(u, v)) =
+            (Pair.new(u, v) = Pair.new(v, u) or FiniteSet.empty[Pair[V, V]].contains(Pair.new(u, v)))
+        if Pair.new(u, v) = Pair.new(v, u) {
+            Pair.new(u, v).first = Pair.new(v, u).first
+            u = v
+            v != u
+            false
+        }
+        not fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)).contains(Pair.new(u, v))
+        fs_card_insert_of_not_contains(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)), Pair.new(u, v))
+        fs_card(fs_insert(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)), Pair.new(u, v))) =
+            fs_card(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u))) + Nat.1
+        fs_card(fs_insert(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)), Pair.new(u, v))) = Nat.2
+        // (v, u) not in edges(s'):
+        directed_edges_contains_eq(g, fs_remove(s, v), Pair.new(v, u))
+        directed_edges(g, fs_remove(s, v)).contains(Pair.new(v, u)) =
+            (fs_remove(s, v).contains(v) and fs_remove(s, v).contains(u) and g.adj(v, u))
+        if directed_edges(g, fs_remove(s, v)).contains(Pair.new(v, u)) {
+            fs_remove(s, v).contains(v)
+            not fs_remove(s, v).contains(v)
+            false
+        }
+        not directed_edges(g, fs_remove(s, v)).contains(Pair.new(v, u))
+        // (u, v) not in edges(s'):
+        directed_edges_contains_eq(g, fs_remove(s, v), Pair.new(u, v))
+        directed_edges(g, fs_remove(s, v)).contains(Pair.new(u, v)) =
+            (fs_remove(s, v).contains(u) and fs_remove(s, v).contains(v) and g.adj(u, v))
+        if directed_edges(g, fs_remove(s, v)).contains(Pair.new(u, v)) {
+            fs_remove(s, v).contains(v)
+            not fs_remove(s, v).contains(v)
+            false
+        }
+        not directed_edges(g, fs_remove(s, v)).contains(Pair.new(u, v))
+        // (u, v) not in {(v, u)}:
+        fs_insert_contains_eq(FiniteSet.empty[Pair[V, V]], Pair.new(v, u), Pair.new(u, v))
+        fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)).contains(Pair.new(u, v)) =
+            (Pair.new(u, v) = Pair.new(v, u) or FiniteSet.empty[Pair[V, V]].contains(Pair.new(u, v)))
+        if Pair.new(u, v) = Pair.new(v, u) {
+            Pair.new(u, v).first = Pair.new(v, u).first
+            u = v
+            v != u
+            false
+        }
+        not fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)).contains(Pair.new(u, v))
+        // |{(v,u)}| = 1 and |{(v,u),(u,v)}| = 2:
+        fs_card_insert_of_not_contains(FiniteSet.empty[Pair[V, V]], Pair.new(v, u))
+        fs_card(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u))) =
+            fs_card(FiniteSet.empty[Pair[V, V]]) + Nat.1
+        fs_card_empty[Pair[V, V]]
+        fs_card(FiniteSet.empty[Pair[V, V]]) = Nat.0
+        fs_card(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u))) = Nat.1
+        fs_card_insert_of_not_contains(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)), Pair.new(u, v))
+        fs_card(fs_insert(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)), Pair.new(u, v))) =
+            fs_card(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u))) + Nat.1
+        fs_card(fs_insert(fs_insert(FiniteSet.empty[Pair[V, V]], Pair.new(v, u)), Pair.new(u, v))) = Nat.2
+        // |edges(s)| = |fs_insert(fs_insert(edges(s'), (v,u)), (u,v))|:
+        fs_card_eq_of_mutual_subset(directed_edges(g, s),
+            fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)))
+        fs_card(directed_edges(g, s)) = fs_card(
+            fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v)))
+        // |fs_insert(fs_insert(E, a), b)| = |E| + 1 + 1:
+        fs_card_insert_of_not_contains(directed_edges(g, fs_remove(s, v)), Pair.new(v, u))
+        fs_card(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u))) =
+            fs_card(directed_edges(g, fs_remove(s, v))) + Nat.1
+        fs_card_insert_of_not_contains(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v))
+        fs_card(fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v))) =
+            fs_card(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u))) + Nat.1
+        fs_card(fs_insert(fs_insert(directed_edges(g, fs_remove(s, v)), Pair.new(v, u)), Pair.new(u, v))) =
+            fs_card(directed_edges(g, fs_remove(s, v))) + Nat.2
+        fs_card(directed_edges(g, s)) =
+            fs_card(directed_edges(g, fs_remove(s, v))) + Nat.2
+        directed_edge_count_eq(g, s)
+        directed_edge_count(g, s) = fs_card(directed_edges(g, s))
+        directed_edge_count_eq(g, fs_remove(s, v))
+        directed_edge_count(g, fs_remove(s, v)) = fs_card(directed_edges(g, fs_remove(s, v)))
+        directed_edge_count(g, s) = directed_edge_count(g, fs_remove(s, v)) + Nat.2
+    }
+}
+
+/// A finite set of cardinality zero is empty.
+theorem fs_card_zero_imp_empty[T](s: FiniteSet[T]) {
+    fs_card(s) = Nat.0 implies s = FiniteSet.empty[T]
+} by {
+    if fs_card(s) = Nat.0 {
+        finite_set_cardinality_has_exact_unique_list(s, Nat.0)
+        exists(rep: List[T]) { fs_from_list(rep) = s and rep.is_unique and rep.length = fs_card(s) }
+        let rep: List[T] satisfy { fs_from_list(rep) = s and rep.is_unique and rep.length = fs_card(s) }
+        rep.length = Nat.0
+        length_zero_imp_nil(rep)
+        rep = List.nil[T]
+        fs_from_list_nil[T]
+        fs_from_list(List.nil[T]) = FiniteSet.empty[T]
+        fs_from_list(rep) = FiniteSet.empty[T]
+        fs_from_list(rep) = s
+        s = FiniteSet.empty[T]
+    }
+}
+
+/// A set with no members has cardinality zero.
+theorem fs_card_zero_of_no_members[T](s: FiniteSet[T]) {
+    (forall(x: T) { not s.contains(x) }) implies fs_card(s) = Nat.0
+} by {
+    if forall(x: T) { not s.contains(x) } {
+        finite_set_empty_or_inhabited(s)
+        s = FiniteSet.empty[T] or exists(x: T) { s.contains(x) }
+        if s = FiniteSet.empty[T] {
+            fs_card_empty[T]
+            fs_card(FiniteSet.empty[T]) = Nat.0
+            fs_card(s) = Nat.0
+        }
+        if not s = FiniteSet.empty[T] {
+            finite_set_has_member_of_ne_empty(s)
+            exists(x: T) { s.contains(x) }
+            let x: T satisfy { s.contains(x) }
+            not s.contains(x)
+            false
+        }
+        fs_card(s) = Nat.0
+    }
+}
+
+/// Not being at least one means being zero.
+theorem not_one_lte_imp_zero(x: Nat) {
+    not (Nat.1 <= x) implies x = Nat.0
+} by {
+    if not (Nat.1 <= x) {
+        if x = Nat.0 {
+            x = Nat.0
+        }
+        if not x = Nat.0 {
+            x != Nat.0
+            pos_of_ne_zero(x)
+            Nat.0 < x
+            lt_imp_lte_suc(Nat.0, x)
+            Nat.1 <= x
+            not (Nat.1 <= x)
+            false
+        }
+        x = Nat.0
+    }
+}
+
+/// The empty vertex set carries no directed edges.
+theorem edges_empty_card[V](g: SimpleGraph[V]) {
+    fs_card(directed_edges(g, FiniteSet.empty[V])) = Nat.0
+} by {
+    forall(p: Pair[V, V]) {
+        if directed_edges(g, FiniteSet.empty[V]).contains(p) {
+            directed_edges_contains_eq(g, FiniteSet.empty[V], p)
+            directed_edges(g, FiniteSet.empty[V]).contains(p) =
+                (FiniteSet.empty[V].contains(p.first) and FiniteSet.empty[V].contains(p.second) and g.adj(p.first, p.second))
+            FiniteSet.empty[V].contains(p.first)
+            finite_set_empty_contains_eq(p.first)
+            not FiniteSet.empty[V].contains(p.first)
+            false
+        }
+        not directed_edges(g, FiniteSet.empty[V]).contains(p)
+    }
+    fs_card_zero_of_no_members(directed_edges(g, FiniteSet.empty[V]))
+    fs_card(directed_edges(g, FiniteSet.empty[V])) = Nat.0
+}
+
+/// The edge-bound claim at a fixed vertex count.
+define forest_edges_bound_at[V](g: SimpleGraph[V], n: Nat) -> Bool {
+    forall(s: FiniteSet[V]) {
+        fs_card(s) = n implies (is_acyclic(g, s) implies
+            directed_edge_count(g, s) <= Nat.2 * fs_card(s) - Nat.2)
+    }
+}
+
+/// A forest on `n` vertices has at most `n - 1` edges.
+theorem forest_edges_bound[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_acyclic(g, s) implies directed_edge_count(g, s) <= Nat.2 * fs_card(s) - Nat.2
+} by {
+    forall(s2: FiniteSet[V]) {
+        if fs_card(s2) = Nat.0 {
+            forall(p: Pair[V, V]) {
+                if directed_edges(g, s2).contains(p) {
+                    directed_edges_contains_eq(g, s2, p)
+                    directed_edges(g, s2).contains(p) =
+                        (s2.contains(p.first) and s2.contains(p.second) and g.adj(p.first, p.second))
+                    s2.contains(p.first)
+                    fs_card_pos_of_contains(s2, p.first)
+                    Nat.1 <= fs_card(s2)
+                    fs_card(s2) = Nat.0
+                    Nat.1 <= Nat.0
+                    only_zero_lte_zero(Nat.1)
+                    Nat.1 = Nat.0
+                    false
+                }
+                not directed_edges(g, s2).contains(p)
+            }
+            fs_card_zero_of_no_members(directed_edges(g, s2))
+            fs_card(directed_edges(g, s2)) = Nat.0
+            directed_edge_count_eq(g, s2)
+            directed_edge_count(g, s2) = fs_card(directed_edges(g, s2))
+            directed_edge_count(g, s2) = Nat.0
+            Nat.0 <= Nat.2 * Nat.0 - Nat.2
+            Nat.2 * fs_card(s2) - Nat.2 = Nat.2 * Nat.0 - Nat.2
+            directed_edge_count(g, s2) <= Nat.2 * fs_card(s2) - Nat.2
+        }
+        fs_card(s2) = Nat.0 implies (is_acyclic(g, s2) implies
+            directed_edge_count(g, s2) <= Nat.2 * fs_card(s2) - Nat.2)
+    }
+    forest_edges_bound_at(g, Nat.0) = forall(s3: FiniteSet[V]) {
+        fs_card(s3) = Nat.0 implies (is_acyclic(g, s3) implies
+            directed_edge_count(g, s3) <= Nat.2 * fs_card(s3) - Nat.2)
+    }
+    forest_edges_bound_at(g, Nat.0)
+    forall(n: Nat) {
+        if forest_edges_bound_at(g, n) {
+            forall(s2: FiniteSet[V]) {
+                if fs_card(s2) = n + Nat.1 {
+                    if is_acyclic(g, s2) {
+                        if Nat.1 <= directed_edge_count(g, s2) {
+                            directed_edge_count_eq(g, s2)
+                            directed_edge_count(g, s2) = fs_card(directed_edges(g, s2))
+                            fs_member_of_card_pos(directed_edges(g, s2))
+                            exists(p: Pair[V, V]) { directed_edges(g, s2).contains(p) }
+                            let p: Pair[V, V] satisfy { directed_edges(g, s2).contains(p) }
+                            directed_edges_contains_eq(g, s2, p)
+                            directed_edges(g, s2).contains(p) =
+                                (s2.contains(p.first) and s2.contains(p.second) and g.adj(p.first, p.second))
+                            s2.contains(p.first)
+                            s2.contains(p.second)
+                            g.adj(p.first, p.second)
+                            directed_edges_ne(g, s2, p)
+                            p.first != p.second
+                            fs_card_two_of_distinct_members(s2, p.first, p.second)
+                            Nat.2 <= fs_card(s2)
+                            fs_card(s2) = n + Nat.1
+                            Nat.2 <= n + Nat.1
+                            n + Nat.1 = n.suc
+                            Nat.2 = Nat.1.suc
+                            Nat.1.suc <= n.suc
+                            lte_cancel_suc(Nat.1, n)
+                            Nat.1 <= n
+                            forest_has_leaf(g, s2)
+                            ((is_acyclic(g, s2) and Nat.1 <= directed_edge_count(g, s2)) implies
+                                exists(v: V) { s2.contains(v) and is_leaf(g, s2, v) })
+                            exists(v: V) { s2.contains(v) and is_leaf(g, s2, v) }
+                            let v: V satisfy { s2.contains(v) and is_leaf(g, s2, v) }
+                            s2.contains(v)
+                            is_leaf(g, s2, v)
+                            edges_remove_leaf(g, s2, v)
+                            ((is_leaf(g, s2, v) and s2.contains(v)) implies
+                                directed_edge_count(g, s2) = directed_edge_count(g, fs_remove(s2, v)) + Nat.2)
+                            directed_edge_count(g, s2) = directed_edge_count(g, fs_remove(s2, v)) + Nat.2
+                            fs_card_remove_of_contains(s2, v)
+                            fs_card(s2) = fs_card(fs_remove(s2, v)) + Nat.1
+                            fs_card(s2) = n + Nat.1
+                            fs_card(fs_remove(s2, v)) + Nat.1 = n + Nat.1
+                            add_cancels_left(fs_card(fs_remove(s2, v)), n, Nat.1)
+                            fs_card(fs_remove(s2, v)) = n
+                            is_acyclic_subset(g, s2, fs_remove(s2, v))
+                            fs_remove_subset(s2, v)
+                            fs_remove(s2, v).subset_eq(s2)
+                            is_acyclic(g, fs_remove(s2, v))
+                            forest_edges_bound_at(g, n) = forall(s3: FiniteSet[V]) {
+                                fs_card(s3) = n implies (is_acyclic(g, s3) implies
+                                    directed_edge_count(g, s3) <= Nat.2 * fs_card(s3) - Nat.2)
+                            }
+                            forest_edges_bound_at(g, n)
+                            fs_card(fs_remove(s2, v)) = n
+                            is_acyclic(g, fs_remove(s2, v))
+                            directed_edge_count(g, fs_remove(s2, v)) <= Nat.2 * fs_card(fs_remove(s2, v)) - Nat.2
+                            fs_card(fs_remove(s2, v)) = n
+                            Nat.2 * fs_card(fs_remove(s2, v)) - Nat.2 = Nat.2 * n - Nat.2
+                            directed_edge_count(g, fs_remove(s2, v)) <= Nat.2 * n - Nat.2
+                            directed_edge_count(g, fs_remove(s2, v)) + Nat.2 <= Nat.2 * n - Nat.2 + Nat.2
+                            directed_edge_count(g, s2) <= Nat.2 * n - Nat.2 + Nat.2
+                            Nat.1 <= n
+                            Nat.2 <= Nat.2 * n
+                            add_sub(Nat.2 * n, Nat.2)
+                            Nat.2 <= Nat.2 * n implies Nat.2 * n - Nat.2 + Nat.2 = Nat.2 * n
+                            Nat.2 * n - Nat.2 + Nat.2 = Nat.2 * n
+                            Nat.2 * (n + Nat.1) = Nat.2 * n + Nat.2
+                            Nat.2 * n + Nat.2 - Nat.2 = Nat.2 * n
+                            add_imp_sub(Nat.2 * n, Nat.2, Nat.2 * (n + Nat.1))
+                            Nat.2 * (n + Nat.1) - Nat.2 = Nat.2 * n
+                            directed_edge_count(g, s2) <= Nat.2 * (n + Nat.1) - Nat.2
+                            fs_card(s2) = n + Nat.1
+                            Nat.2 * fs_card(s2) - Nat.2 = Nat.2 * (n + Nat.1) - Nat.2
+                            directed_edge_count(g, s2) <= Nat.2 * fs_card(s2) - Nat.2
+                        }
+                        if not Nat.1 <= directed_edge_count(g, s2) {
+                            not_one_lte_imp_zero(directed_edge_count(g, s2))
+                            directed_edge_count(g, s2) = Nat.0
+                            Nat.0 <= Nat.2 * fs_card(s2) - Nat.2
+                            directed_edge_count(g, s2) <= Nat.2 * fs_card(s2) - Nat.2
+                        }
+                        directed_edge_count(g, s2) <= Nat.2 * fs_card(s2) - Nat.2
+                    }
+                    is_acyclic(g, s2) implies directed_edge_count(g, s2) <= Nat.2 * fs_card(s2) - Nat.2
+                }
+                fs_card(s2) = n + Nat.1 implies (is_acyclic(g, s2) implies
+                    directed_edge_count(g, s2) <= Nat.2 * fs_card(s2) - Nat.2)
+            }
+            forest_edges_bound_at(g, n + Nat.1) = forall(s3: FiniteSet[V]) {
+                fs_card(s3) = n + Nat.1 implies (is_acyclic(g, s3) implies
+                    directed_edge_count(g, s3) <= Nat.2 * fs_card(s3) - Nat.2)
+            }
+            forest_edges_bound_at(g, n + Nat.1)
+        }
+    }
+    forall(n: Nat) { forest_edges_bound_at(g, n) implies forest_edges_bound_at(g, n + Nat.1) }
+    forall(n: Nat) { forest_edges_bound_at(g, n) implies forest_edges_bound_at(g, n.suc) }
+    forest_edges_bound_at(g, Nat.0) and
+        forall(n: Nat) { forest_edges_bound_at(g, n) implies forest_edges_bound_at(g, n.suc) }
+    alt_induction(forest_edges_bound_at(g))
+    forall(n: Nat) { forest_edges_bound_at(g, n) }
+    forest_edges_bound_at(g, fs_card(s))
+    forest_edges_bound_at(g, fs_card(s)) = forall(s3: FiniteSet[V]) {
+        fs_card(s3) = fs_card(s) implies (is_acyclic(g, s3) implies
+            directed_edge_count(g, s3) <= Nat.2 * fs_card(s3) - Nat.2)
+    }
+    fs_card(s) = fs_card(s)
+    is_acyclic(g, s) implies directed_edge_count(g, s) <= Nat.2 * fs_card(s) - Nat.2
 }
