@@ -1,5 +1,5 @@
 from real import Real
-from list import List, map, sum, sum_scalar_mul, map_map, scalar_mul,
+from list import List, map, sum, sum_scalar_mul, map_map, scalar_mul, sum_map_of_pointwise,
     list_contains_implies_count_geq_one, unique_implies_tail_unique, unique_implies_no_duplicate
 from nat import Nat, sum_lte, lt_suc, lt_and_lte, lte_imp_not_lt
 from algebra.semigroup import mul_fn
@@ -8,10 +8,13 @@ from finite_set import FiniteSet, fs_empty, fs_insert, fs_union, fs_intersection
     fs_difference, finite_set_ext, finite_set_eq_of_underlying_set_eq,
     finite_set_intersection_assoc, finite_set_intersection_comm,
     finite_set_intersection_contains_eq, finite_set_intersection_idemp,
-    finite_set_difference_contains_eq,
+    finite_set_difference_contains_eq, finite_set_intersection_union_difference_is_self,
+    finite_set_intersection_is_disjoint_difference, finite_set_subset_trans,
+    finite_set_subset_refl, finite_set_subset_intersection_eq,
     finite_set_sum, finite_set_sum_empty, finite_set_sum_insert,
     finite_set_sum_disjoint_union, finite_set_sum_add, finite_set_sum_scalar_mul
-from data.basic.set import Set, set_ext, empty_set_contains_eq, insert_contains_eq
+from data.basic.set import Set, set_ext, empty_set_contains_eq, insert_contains_eq,
+    intersection_comm, intersection_with_superset_is_self
 from data.basic.functions import function_extensionality, compose
 from data.finite.finite_set_filter import finite_set_filter, finite_set_filter_contains_eq,
     finite_set_filter_subset
@@ -24,7 +27,7 @@ from probability.discrete_pmf import DiscretePMF, is_pmf, pmf_event_prob,
     discrete_expectation, discrete_variance, discrete_variance_formula,
     discrete_expectation_indicator_eq_event_prob, square_fn, mass_weighted_value,
     discrete_events_independent, discrete_events_independent_comm,
-    discrete_pmf_mass_zero_outside, const_real_fn
+    discrete_pmf_mass_zero_outside, const_real_fn, discrete_expectation_monotone
 from probability.bernoulli_pmf import bernoulli_support, bernoulli_mass,
     bernoulli_mass_true
 
@@ -776,3 +779,859 @@ lemma finite_set_sum_list_sum_swap[T, U](s: FiniteSet[T], items: List[U], g: U -
     }(items)
     finite_set_sum(s, list_sum_fn(items, g)) = sum[Real](map(items, finite_set_sum_fn(s, g)))
 }
+
+/// A subset of a finite set intersects it to itself.
+lemma finite_set_intersection_eq_right_of_subset[T](left: FiniteSet[T], right: FiniteSet[T]) {
+    right.subset_eq(left) implies fs_intersection(left, right) = right
+} by {
+    if right.subset_eq(left) {
+        intersection_with_superset_is_self(right.underlying_set, left.underlying_set)
+        right.underlying_set.intersection(left.underlying_set) = right.underlying_set
+        intersection_comm(left.underlying_set, right.underlying_set)
+        left.underlying_set.intersection(right.underlying_set) = right.underlying_set
+        fs_intersection(left, right).underlying_set =
+            left.underlying_set.intersection(right.underlying_set)
+        fs_intersection(left, right).underlying_set = right.underlying_set
+        finite_set_ext(fs_intersection(left, right), right)
+        fs_intersection(left, right) = right
+    }
+}
+
+/// The finite-set sum of a function vanishing on the finite set is zero.
+lemma finite_set_sum_zero_of_contains[T](s: FiniteSet[T], f: T -> Real) {
+    (forall(x: T) { s.contains(x) implies f(x) = Real.0 }) implies finite_set_sum(s, f) = Real.0
+} by {
+    if forall(x: T) { s.contains(x) implies f(x) = Real.0 } {
+        finite_set_sum_eq_of_pointwise_on_set(s, f, const_real_fn[T](Real.0))
+        finite_set_sum(s, f) = finite_set_sum(s, const_real_fn[T](Real.0))
+        finite_set_sum_const_zero(s)
+        finite_set_sum(s, const_real_fn[T](Real.0)) = Real.0
+        finite_set_sum(s, f) = Real.0
+    }
+}
+
+/// The mass-weighted indicator that a random variable takes the value `a` at `t`.
+define mass_value_indicator[T](mass: T -> Real, rv: T -> Real, a: Real, t: T) -> Real {
+    mass(t) * rv_value_indicator(rv, t, a)
+}
+
+/// The `a`-weighted mass-value indicator used to expand an expectation over values.
+define mass_weighted_expansion_term[T](mass: T -> Real, rv: T -> Real, a: Real, t: T) -> Real {
+    a * mass_value_indicator(mass, rv, a, t)
+}
+
+/// The value times the probability of the value event.
+define rv_value_mass_term[T](pmf: DiscretePMF[T], rv: T -> Real, a: Real) -> Real {
+    a * pmf_event_prob(pmf, rv_value_event(pmf, rv, a))
+}
+
+/// Summing the mass-weighted value indicator over the support gives the probability
+/// of the value event.
+theorem finite_set_sum_mass_value_indicator_eq_event_prob[T](pmf: DiscretePMF[T], rv: T -> Real, a: Real) {
+    finite_set_sum(pmf.support, mass_value_indicator(pmf.mass, rv, a)) =
+        pmf_event_prob(pmf, rv_value_event(pmf, rv, a))
+} by {
+    let inside = rv_value_event(pmf, rv, a)
+    let outside = fs_difference(pmf.support, inside)
+    let mvi = mass_value_indicator(pmf.mass, rv, a)
+
+    finite_set_intersection_union_difference_is_self[T](pmf.support, inside)
+    finite_set_intersection_is_disjoint_difference[T](pmf.support, inside)
+    rv_value_event_subset_support(pmf, rv, a)
+    inside.subset_eq(pmf.support)
+    finite_set_intersection_eq_right_of_subset(pmf.support, inside)
+    fs_intersection(pmf.support, inside) = inside
+    finite_set_sum_disjoint_union[T, Real](inside, outside, mvi)
+    finite_set_sum(fs_union(inside, outside), mvi) =
+        finite_set_sum(inside, mvi) + finite_set_sum(outside, mvi)
+
+    forall(x: T) {
+        if inside.contains(x) {
+            rv_value_event_contains_eq(pmf, rv, a, x)
+            rv(x) = a
+            rv_value_indicator_one_of_eq(rv, x, a)
+            rv_value_indicator(rv, x, a) = Real.1
+            mvi(x) = pmf.mass(x) * rv_value_indicator(rv, x, a)
+            pmf.mass(x) * Real.1 = pmf.mass(x)
+            mvi(x) = pmf.mass(x)
+        }
+    }
+    forall(x: T) { inside.contains(x) implies mvi(x) = pmf.mass(x) }
+    finite_set_sum_eq_of_pointwise_on_set[T, Real](inside, mvi, pmf.mass)
+    finite_set_sum(inside, mvi) = finite_set_sum(inside, pmf.mass)
+
+    forall(x: T) {
+        if outside.contains(x) {
+            finite_set_difference_contains_eq(pmf.support, inside, x)
+            outside.contains(x) = (pmf.support.contains(x) and not inside.contains(x))
+            pmf.support.contains(x)
+            rv_value_event_contains_eq(pmf, rv, a, x)
+            inside.contains(x) = (pmf.support.contains(x) and rv(x) = a)
+            if rv(x) = a {
+                inside.contains(x)
+                false
+            }
+            rv(x) != a
+            rv_value_indicator_zero_of_not_eq(rv, x, a)
+            rv_value_indicator(rv, x, a) = Real.0
+            mvi(x) = pmf.mass(x) * rv_value_indicator(rv, x, a)
+            pmf.mass(x) * Real.0 = Real.0
+            mvi(x) = Real.0
+        }
+    }
+    forall(x: T) { outside.contains(x) implies mvi(x) = Real.0 }
+    finite_set_sum_zero_of_contains(outside, mvi)
+    finite_set_sum(outside, mvi) = Real.0
+
+    finite_set_sum(inside, pmf.mass) + Real.0 = finite_set_sum(inside, pmf.mass)
+    finite_set_sum(fs_union(inside, outside), mvi) =
+        finite_set_sum(inside, pmf.mass) + Real.0
+    finite_set_sum(fs_union(inside, outside), mvi) = finite_set_sum(inside, pmf.mass)
+    fs_union(fs_intersection(pmf.support, inside), outside) = pmf.support
+    fs_union(inside, outside) = pmf.support
+    finite_set_sum(pmf.support, mvi) = finite_set_sum(inside, pmf.mass)
+    pmf_event_prob(pmf, inside) = finite_set_sum(inside, pmf.mass)
+    finite_set_sum(pmf.support, mvi) = pmf_event_prob(pmf, inside)
+    finite_set_sum(pmf.support, mvi) = pmf_event_prob(pmf, rv_value_event(pmf, rv, a))
+}
+
+/// The law of the unconscious statistician: the expectation of a random variable
+/// is the sum over its image values of the value times the probability of that value.
+theorem discrete_expectation_eq_value_sum[T](pmf: DiscretePMF[T], rv: T -> Real) {
+    discrete_expectation(pmf, rv) =
+        sum[Real](map(finite_fiber_partition_values(pmf.support, rv), rv_value_mass_term(pmf, rv)))
+} by {
+    let values = finite_fiber_partition_values(pmf.support, rv)
+    let mwet = mass_weighted_expansion_term(pmf.mass, rv)
+    let mwv = mass_weighted_value(pmf.mass, rv)
+
+    forall(t: T) {
+        if pmf.support.contains(t) {
+            rv_expansion_at_point(pmf, rv, t)
+            sum[Real](map(values, rv_expansion_term(rv, t))) = rv(t)
+            mwv(t) = pmf.mass(t) * rv(t)
+            list_sum_scalar_mul[Real](pmf.mass(t), values, rv_expansion_term(rv, t))
+            pmf.mass(t) * sum[Real](map(values, rv_expansion_term(rv, t))) =
+                sum[Real](map(values, mul_fn(pmf.mass(t), rv_expansion_term(rv, t))))
+            forall(a: Real) {
+                mul_fn(pmf.mass(t), rv_expansion_term(rv, t), a) =
+                    pmf.mass(t) * rv_expansion_term(rv, t, a)
+                rv_expansion_term(rv, t, a) = a * rv_value_indicator(rv, t, a)
+                pmf.mass(t) * rv_expansion_term(rv, t, a) =
+                    pmf.mass(t) * (a * rv_value_indicator(rv, t, a))
+                pmf.mass(t) * (a * rv_value_indicator(rv, t, a)) =
+                    a * (pmf.mass(t) * rv_value_indicator(rv, t, a))
+                mass_value_indicator(pmf.mass, rv, a, t) =
+                    pmf.mass(t) * rv_value_indicator(rv, t, a)
+                pmf.mass(t) * rv_expansion_term(rv, t, a) =
+                    a * mass_value_indicator(pmf.mass, rv, a, t)
+                mass_weighted_expansion_term(pmf.mass, rv, a, t) =
+                    a * mass_value_indicator(pmf.mass, rv, a, t)
+                pmf.mass(t) * rv_expansion_term(rv, t, a) =
+                    mass_weighted_expansion_term(pmf.mass, rv, a, t)
+                mul_fn(pmf.mass(t), rv_expansion_term(rv, t), a) =
+                    mass_weighted_expansion_term(pmf.mass, rv, a, t)
+                mass_weighted_expansion_term(pmf.mass, rv, a, t) = mwet(a, t)
+                mul_fn(pmf.mass(t), rv_expansion_term(rv, t), a) = mwet(a, t)
+            }
+            function_extensionality[Real, Real](mul_fn(pmf.mass(t), rv_expansion_term(rv, t)),
+                function(a: Real) { mwet(a, t) })
+            mul_fn(pmf.mass(t), rv_expansion_term(rv, t)) = function(a: Real) { mwet(a, t) }
+            sum_map_of_pointwise[Real, Real](values, mul_fn(pmf.mass(t), rv_expansion_term(rv, t)),
+                function(a: Real) { mwet(a, t) })
+            sum[Real](map(values, mul_fn(pmf.mass(t), rv_expansion_term(rv, t)))) =
+                sum[Real](map(values, function(a: Real) { mwet(a, t) }))
+            pmf.mass(t) * sum[Real](map(values, rv_expansion_term(rv, t))) =
+                sum[Real](map(values, function(a: Real) { mwet(a, t) }))
+            mwv(t) = sum[Real](map(values, function(a: Real) { mwet(a, t) }))
+            list_sum_fn(values, mwet, t) =
+                sum[Real](map(values, function(a: Real) { mwet(a, t) }))
+            sum[Real](map(values, function(a: Real) { mwet(a, t) })) =
+                list_sum_fn(values, mwet, t)
+            mwv(t) = list_sum_fn(values, mwet, t)
+        }
+    }
+    forall(t: T) { pmf.support.contains(t) implies mwv(t) = list_sum_fn(values, mwet, t) }
+    finite_set_sum_eq_of_pointwise_on_set[T, Real](pmf.support, mwv, list_sum_fn(values, mwet))
+    finite_set_sum(pmf.support, mwv) = finite_set_sum(pmf.support, list_sum_fn(values, mwet))
+    discrete_expectation(pmf, rv) = finite_set_sum(pmf.support, mwv)
+    discrete_expectation(pmf, rv) = finite_set_sum(pmf.support, list_sum_fn(values, mwet))
+    finite_set_sum_list_sum_swap(pmf.support, values, mwet)
+    finite_set_sum(pmf.support, list_sum_fn(values, mwet)) =
+        sum[Real](map(values, finite_set_sum_fn(pmf.support, mwet)))
+    discrete_expectation(pmf, rv) = sum[Real](map(values, finite_set_sum_fn(pmf.support, mwet)))
+
+    forall(a: Real) {
+        finite_set_sum_fn(pmf.support, mwet, a) = finite_set_sum(pmf.support, mwet(a))
+        mwet(a) = mass_weighted_expansion_term(pmf.mass, rv, a)
+        finite_set_sum(pmf.support, mwet(a)) =
+            finite_set_sum(pmf.support, mass_weighted_expansion_term(pmf.mass, rv, a))
+        forall(t: T) {
+            mass_weighted_expansion_term(pmf.mass, rv, a, t) =
+                a * mass_value_indicator(pmf.mass, rv, a, t)
+            mul_fn(a, mass_value_indicator(pmf.mass, rv, a), t) =
+                a * mass_value_indicator(pmf.mass, rv, a, t)
+            mass_weighted_expansion_term(pmf.mass, rv, a, t) =
+                mul_fn(a, mass_value_indicator(pmf.mass, rv, a), t)
+        }
+        function_extensionality[T, Real](mass_weighted_expansion_term(pmf.mass, rv, a),
+            mul_fn(a, mass_value_indicator(pmf.mass, rv, a)))
+        mass_weighted_expansion_term(pmf.mass, rv, a) =
+            mul_fn(a, mass_value_indicator(pmf.mass, rv, a))
+        finite_set_sum(pmf.support, mass_weighted_expansion_term(pmf.mass, rv, a)) =
+            finite_set_sum(pmf.support, mul_fn(a, mass_value_indicator(pmf.mass, rv, a)))
+        finite_set_sum_scalar_mul[T, Real](a, pmf.support, mass_value_indicator(pmf.mass, rv, a))
+        a * finite_set_sum(pmf.support, mass_value_indicator(pmf.mass, rv, a)) =
+            finite_set_sum(pmf.support, mul_fn(a, mass_value_indicator(pmf.mass, rv, a)))
+        finite_set_sum(pmf.support, mass_weighted_expansion_term(pmf.mass, rv, a)) =
+            a * finite_set_sum(pmf.support, mass_value_indicator(pmf.mass, rv, a))
+        finite_set_sum_mass_value_indicator_eq_event_prob(pmf, rv, a)
+        finite_set_sum(pmf.support, mass_value_indicator(pmf.mass, rv, a)) =
+            pmf_event_prob(pmf, rv_value_event(pmf, rv, a))
+        a * finite_set_sum(pmf.support, mass_value_indicator(pmf.mass, rv, a)) =
+            a * pmf_event_prob(pmf, rv_value_event(pmf, rv, a))
+        finite_set_sum(pmf.support, mass_weighted_expansion_term(pmf.mass, rv, a)) =
+            a * pmf_event_prob(pmf, rv_value_event(pmf, rv, a))
+        rv_value_mass_term(pmf, rv, a) = a * pmf_event_prob(pmf, rv_value_event(pmf, rv, a))
+        finite_set_sum(pmf.support, mass_weighted_expansion_term(pmf.mass, rv, a)) =
+            rv_value_mass_term(pmf, rv, a)
+        finite_set_sum_fn(pmf.support, mwet, a) = rv_value_mass_term(pmf, rv, a)
+    }
+    forall(a: Real) {
+        finite_set_sum_fn(pmf.support, mwet, a) = rv_value_mass_term(pmf, rv, a)
+    }
+    sum_map_of_pointwise[Real, Real](values, finite_set_sum_fn(pmf.support, mwet),
+        rv_value_mass_term(pmf, rv))
+    sum[Real](map(values, finite_set_sum_fn(pmf.support, mwet))) =
+        sum[Real](map(values, rv_value_mass_term(pmf, rv)))
+    discrete_expectation(pmf, rv) =
+        sum[Real](map(values, rv_value_mass_term(pmf, rv)))
+    discrete_expectation(pmf, rv) =
+        sum[Real](map(finite_fiber_partition_values(pmf.support, rv), rv_value_mass_term(pmf, rv)))
+}
+
+/// The pointwise product of two real-valued random variables.
+define pointwise_mul_fn[T](x: T -> Real, y: T -> Real, t: T) -> Real {
+    x(t) * y(t)
+}
+
+/// The joint value indicator of two random variables: one when both values are attained.
+define rv_pair_value_indicator[T](x: T -> Real, y: T -> Real, a: Real, b: Real, t: T) -> Real {
+    rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b)
+}
+
+/// A joint value indicator is one when both values are attained.
+theorem rv_pair_value_indicator_one_of_pair[T](x: T -> Real, y: T -> Real, a: Real, b: Real, t: T) {
+    x(t) = a and y(t) = b implies rv_pair_value_indicator(x, y, a, b, t) = Real.1
+} by {
+    if x(t) = a and y(t) = b {
+        rv_value_indicator_one_of_eq(x, t, a)
+        rv_value_indicator_one_of_eq(y, t, b)
+        rv_value_indicator(x, t, a) = Real.1
+        rv_value_indicator(y, t, b) = Real.1
+        rv_pair_value_indicator(x, y, a, b, t) =
+            rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b)
+        rv_pair_value_indicator(x, y, a, b, t) = Real.1 * Real.1
+        Real.1 * Real.1 = Real.1
+        rv_pair_value_indicator(x, y, a, b, t) = Real.1
+    }
+}
+
+/// A joint value indicator is zero when not both values are attained.
+theorem rv_pair_value_indicator_zero_of_not_pair[T](x: T -> Real, y: T -> Real, a: Real, b: Real, t: T) {
+    not (x(t) = a and y(t) = b) implies rv_pair_value_indicator(x, y, a, b, t) = Real.0
+} by {
+    if not (x(t) = a and y(t) = b) {
+        if x(t) = a {
+            if y(t) = b {
+                false
+            }
+            rv_value_indicator_one_of_eq(x, t, a)
+            rv_value_indicator_zero_of_not_eq(y, t, b)
+            rv_value_indicator(x, t, a) = Real.1
+            rv_value_indicator(y, t, b) = Real.0
+            rv_pair_value_indicator(x, y, a, b, t) =
+                rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b)
+            rv_pair_value_indicator(x, y, a, b, t) = Real.1 * Real.0
+            Real.1 * Real.0 = Real.0
+            rv_pair_value_indicator(x, y, a, b, t) = Real.0
+        }
+        if x(t) != a {
+            rv_value_indicator_zero_of_not_eq(x, t, a)
+            rv_value_indicator(x, t, a) = Real.0
+            rv_pair_value_indicator(x, y, a, b, t) =
+                rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b)
+            Real.0 * rv_value_indicator(y, t, b) = Real.0
+            rv_pair_value_indicator(x, y, a, b, t) = Real.0
+        }
+        x(t) = a or x(t) != a
+        rv_pair_value_indicator(x, y, a, b, t) = Real.0
+    }
+}
+
+/// The mass-weighted joint value indicator.
+define mass_pair_value_indicator[T](mass: T -> Real, x: T -> Real, y: T -> Real, a: Real, b: Real, t: T) -> Real {
+    mass(t) * rv_pair_value_indicator(x, y, a, b, t)
+}
+
+/// The joint value-weighted mass term used to expand a product expectation.
+define mass_pair_expansion_term[T](mass: T -> Real, x: T -> Real, y: T -> Real, a: Real, b: Real, t: T) -> Real {
+    a * b * mass_pair_value_indicator(mass, x, y, a, b, t)
+}
+
+/// The row sum of products with a fixed left factor.
+define product_row_sum_fn2[U](right: List[U], g: U -> Real, c: Real) -> Real {
+    sum[Real](map(right, mul_fn(c, g)))
+}
+
+/// The iterated sum over two lists of the products of the mapped values.
+define product_double_sum_fn[T, U](left: List[T], right: List[U], f: T -> Real, g: U -> Real) -> Real {
+    sum[Real](map(left, function(a: T) { product_row_sum_fn2(right, g, f(a)) }))
+}
+
+/// The product of two list sums is the iterated sum of the products.
+lemma list_sum_product_of_sums[T, U](left: List[T], right: List[U], f: T -> Real, g: U -> Real) {
+    sum[Real](map(left, f)) * sum[Real](map(right, g)) = product_double_sum_fn(left, right, f, g)
+} by {
+    define p(l: List[T]) -> Bool {
+        sum[Real](map(l, f)) * sum[Real](map(right, g)) = product_double_sum_fn(l, right, f, g)
+    }
+
+    map(List.nil[T], f) = List.nil[Real]
+    sum[Real](List.nil[Real]) = Real.0
+    Real.0 * sum[Real](map(right, g)) = Real.0
+    product_double_sum_fn(List.nil[T], right, f, g) =
+        sum[Real](map(List.nil[T], function(a: T) { product_row_sum_fn2(right, g, f(a)) }))
+    map(List.nil[T], function(a: T) { product_row_sum_fn2(right, g, f(a)) }) = List.nil[Real]
+    sum[Real](List.nil[Real]) = Real.0
+    product_double_sum_fn(List.nil[T], right, f, g) = Real.0
+    p(List.nil[T])
+
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            map(List.cons(head, tail), f) = List.cons(f(head), map(tail, f))
+            sum[Real](List.cons(f(head), map(tail, f))) = f(head) + sum[Real](map(tail, f))
+            sum[Real](map(List.cons(head, tail), f)) = f(head) + sum[Real](map(tail, f))
+            (f(head) + sum[Real](map(tail, f))) * sum[Real](map(right, g)) =
+                f(head) * sum[Real](map(right, g)) + sum[Real](map(tail, f)) * sum[Real](map(right, g))
+            sum[Real](map(List.cons(head, tail), f)) * sum[Real](map(right, g)) =
+                f(head) * sum[Real](map(right, g)) + sum[Real](map(tail, f)) * sum[Real](map(right, g))
+            list_sum_scalar_mul[U](f(head), right, g)
+            f(head) * sum[Real](map(right, g)) = sum[Real](map(right, mul_fn(f(head), g)))
+            f(head) * sum[Real](map(right, g)) = product_row_sum_fn2(right, g, f(head))
+            p(tail) = (sum[Real](map(tail, f)) * sum[Real](map(right, g)) =
+                product_double_sum_fn(tail, right, f, g))
+            sum[Real](map(tail, f)) * sum[Real](map(right, g)) =
+                product_double_sum_fn(tail, right, f, g)
+            sum[Real](map(List.cons(head, tail), f)) * sum[Real](map(right, g)) =
+                product_row_sum_fn2(right, g, f(head)) + product_double_sum_fn(tail, right, f, g)
+            product_double_sum_fn(List.cons(head, tail), right, f, g) =
+                sum[Real](map(List.cons(head, tail), function(a: T) { product_row_sum_fn2(right, g, f(a)) }))
+            map_cons_general[T, Real](head, tail,
+                function(a: T) { product_row_sum_fn2(right, g, f(a)) })
+            map(List.cons(head, tail), function(a: T) { product_row_sum_fn2(right, g, f(a)) }) =
+                List.cons(product_row_sum_fn2(right, g, f(head)),
+                    map(tail, function(a: T) { product_row_sum_fn2(right, g, f(a)) }))
+            sum[Real](List.cons(product_row_sum_fn2(right, g, f(head)),
+                map(tail, function(a: T) { product_row_sum_fn2(right, g, f(a)) }))) =
+                product_row_sum_fn2(right, g, f(head)) + sum[Real](map(tail, function(a: T) { product_row_sum_fn2(right, g, f(a)) }))
+            product_double_sum_fn(List.cons(head, tail), right, f, g) =
+                product_row_sum_fn2(right, g, f(head)) + sum[Real](map(tail, function(a: T) { product_row_sum_fn2(right, g, f(a)) }))
+            product_double_sum_fn(tail, right, f, g) =
+                sum[Real](map(tail, function(a: T) { product_row_sum_fn2(right, g, f(a)) }))
+            sum[Real](map(tail, function(a: T) { product_row_sum_fn2(right, g, f(a)) })) =
+                product_double_sum_fn(tail, right, f, g)
+            product_double_sum_fn(List.cons(head, tail), right, f, g) =
+                product_row_sum_fn2(right, g, f(head)) + product_double_sum_fn(tail, right, f, g)
+            sum[Real](map(List.cons(head, tail), f)) * sum[Real](map(right, g)) =
+                product_double_sum_fn(List.cons(head, tail), right, f, g)
+            p(List.cons(head, tail))
+        }
+    }
+
+    List.induction(function(l: List[T]) { p(l) })
+    function[T0](x0: List[T0] -> Bool, x1: List[T0]) {
+        not x0(List.nil[T0]) or exists(k0: T0, k1: List[T0]) {
+            x0(k1) and not x0(List.cons[T0](k0, k1))
+        } or x0(x1)
+    }[T](p, left)
+    function(x0: List[T]) {
+        (sum[Real](map(x0, f)) * sum[Real](map(right, g)) =
+            product_double_sum_fn(x0, right, f, g)) = p(x0)
+    }(left)
+    sum[Real](map(left, f)) * sum[Real](map(right, g)) = product_double_sum_fn(left, right, f, g)
+}
+
+/// Summing the mass-weighted joint value indicator over the support gives the
+/// probability of the intersection of the two value events.
+theorem finite_set_sum_mass_pair_value_indicator_eq_intersection_prob[T](pmf: DiscretePMF[T],
+    x: T -> Real, y: T -> Real, a: Real, b: Real) {
+    finite_set_sum(pmf.support, mass_pair_value_indicator(pmf.mass, x, y, a, b)) =
+        pmf_event_prob(pmf, fs_intersection(rv_value_event(pmf, x, a), rv_value_event(pmf, y, b)))
+} by {
+    let ex = rv_value_event(pmf, x, a)
+    let ey = rv_value_event(pmf, y, b)
+    let inside = fs_intersection(ex, ey)
+    let outside = fs_difference(pmf.support, inside)
+    let mpvi = mass_pair_value_indicator(pmf.mass, x, y, a, b)
+
+    finite_set_subset_refl[T](inside)
+    inside.subset_eq(inside)
+    finite_set_subset_intersection_eq[T](ex, ey, inside)
+    inside.subset_eq(inside) = (inside.subset_eq(ex) and inside.subset_eq(ey))
+    inside.subset_eq(ex)
+    rv_value_event_subset_support(pmf, x, a)
+    ex.subset_eq(pmf.support)
+    finite_set_subset_trans[T](inside, ex, pmf.support)
+    inside.subset_eq(pmf.support)
+
+    finite_set_intersection_union_difference_is_self[T](pmf.support, inside)
+    finite_set_intersection_is_disjoint_difference[T](pmf.support, inside)
+    finite_set_intersection_eq_right_of_subset(pmf.support, inside)
+    fs_intersection(pmf.support, inside) = inside
+    finite_set_sum_disjoint_union[T, Real](inside, outside, mpvi)
+    finite_set_sum(fs_union(inside, outside), mpvi) =
+        finite_set_sum(inside, mpvi) + finite_set_sum(outside, mpvi)
+
+    forall(t: T) {
+        if inside.contains(t) {
+            finite_set_intersection_contains_eq(ex, ey, t)
+            inside.contains(t) = (ex.contains(t) and ey.contains(t))
+            rv_value_event_contains_eq(pmf, x, a, t)
+            ex.contains(t) = (pmf.support.contains(t) and x(t) = a)
+            rv_value_event_contains_eq(pmf, y, b, t)
+            ey.contains(t) = (pmf.support.contains(t) and y(t) = b)
+            x(t) = a
+            y(t) = b
+            rv_pair_value_indicator_one_of_pair(x, y, a, b, t)
+            rv_pair_value_indicator(x, y, a, b, t) = Real.1
+            mpvi(t) = pmf.mass(t) * rv_pair_value_indicator(x, y, a, b, t)
+            pmf.mass(t) * Real.1 = pmf.mass(t)
+            mpvi(t) = pmf.mass(t)
+        }
+    }
+    forall(t: T) { inside.contains(t) implies mpvi(t) = pmf.mass(t) }
+    finite_set_sum_eq_of_pointwise_on_set[T, Real](inside, mpvi, pmf.mass)
+    finite_set_sum(inside, mpvi) = finite_set_sum(inside, pmf.mass)
+
+    forall(t: T) {
+        if outside.contains(t) {
+            finite_set_difference_contains_eq(pmf.support, inside, t)
+            outside.contains(t) = (pmf.support.contains(t) and not inside.contains(t))
+            pmf.support.contains(t)
+            rv_value_event_contains_eq(pmf, x, a, t)
+            ex.contains(t) = (pmf.support.contains(t) and x(t) = a)
+            rv_value_event_contains_eq(pmf, y, b, t)
+            ey.contains(t) = (pmf.support.contains(t) and y(t) = b)
+            if x(t) = a {
+                if y(t) = b {
+                    ex.contains(t)
+                    ey.contains(t)
+                    inside.contains(t)
+                    false
+                }
+                y(t) != b
+                rv_pair_value_indicator_zero_of_not_pair(x, y, a, b, t)
+                rv_pair_value_indicator(x, y, a, b, t) = Real.0
+                mpvi(t) = pmf.mass(t) * rv_pair_value_indicator(x, y, a, b, t)
+                pmf.mass(t) * Real.0 = Real.0
+                mpvi(t) = Real.0
+            }
+            if x(t) != a {
+                rv_pair_value_indicator_zero_of_not_pair(x, y, a, b, t)
+                rv_pair_value_indicator(x, y, a, b, t) = Real.0
+                mpvi(t) = pmf.mass(t) * rv_pair_value_indicator(x, y, a, b, t)
+                pmf.mass(t) * Real.0 = Real.0
+                mpvi(t) = Real.0
+            }
+            x(t) = a or x(t) != a
+            mpvi(t) = Real.0
+        }
+    }
+    forall(t: T) { outside.contains(t) implies mpvi(t) = Real.0 }
+    finite_set_sum_zero_of_contains(outside, mpvi)
+    finite_set_sum(outside, mpvi) = Real.0
+
+    finite_set_sum(inside, pmf.mass) + Real.0 = finite_set_sum(inside, pmf.mass)
+    finite_set_sum(fs_union(inside, outside), mpvi) =
+        finite_set_sum(inside, pmf.mass) + Real.0
+    finite_set_sum(fs_union(inside, outside), mpvi) = finite_set_sum(inside, pmf.mass)
+    fs_union(fs_intersection(pmf.support, inside), outside) = pmf.support
+    fs_union(inside, outside) = pmf.support
+    finite_set_sum(pmf.support, mpvi) = finite_set_sum(inside, pmf.mass)
+    pmf_event_prob(pmf, inside) = finite_set_sum(inside, pmf.mass)
+    finite_set_sum(pmf.support, mpvi) = pmf_event_prob(pmf, inside)
+    finite_set_sum(pmf.support, mpvi) = pmf_event_prob(pmf, fs_intersection(ex, ey))
+    finite_set_sum(pmf.support, mpvi) =
+        pmf_event_prob(pmf, fs_intersection(rv_value_event(pmf, x, a), rv_value_event(pmf, y, b)))
+}
+
+/// The row sum of joint value-weighted mass terms over the second image list.
+define pair_row_sum_fn[T](mass: T -> Real, x: T -> Real, y: T -> Real, values_y: List[Real], a: Real, t: T) -> Real {
+    list_sum_fn(values_y, mass_pair_expansion_term(mass, x, y, a), t)
+}
+
+/// The expectation of the product of two independent discrete random variables
+/// factorizes: `E(X * Y) = E(X) * E(Y)`.
+theorem discrete_expectation_product_of_independent[T](pmf: DiscretePMF[T], x: T -> Real, y: T -> Real) {
+    discrete_rv_independent(pmf, x, y) implies
+        discrete_expectation(pmf, pointwise_mul_fn(x, y)) =
+            discrete_expectation(pmf, x) * discrete_expectation(pmf, y)
+} by {
+    if discrete_rv_independent(pmf, x, y) {
+        let values_x = finite_fiber_partition_values(pmf.support, x)
+        let values_y = finite_fiber_partition_values(pmf.support, y)
+        let mpet = mass_pair_expansion_term(pmf.mass, x, y)
+        let row = pair_row_sum_fn(pmf.mass, x, y, values_y)
+        let mwv_xy = mass_weighted_value(pmf.mass, pointwise_mul_fn(x, y))
+
+        forall(t: T) {
+            if pmf.support.contains(t) {
+                rv_expansion_at_point(pmf, x, t)
+                rv_expansion_at_point(pmf, y, t)
+                sum[Real](map(values_x, rv_expansion_term(x, t))) = x(t)
+                sum[Real](map(values_y, rv_expansion_term(y, t))) = y(t)
+                mwv_xy(t) = pmf.mass(t) * pointwise_mul_fn(x, y, t)
+                pointwise_mul_fn(x, y, t) = x(t) * y(t)
+                mwv_xy(t) = pmf.mass(t) * (x(t) * y(t))
+                pmf.mass(t) * (x(t) * y(t)) = (pmf.mass(t) * x(t)) * y(t)
+                mwv_xy(t) = (pmf.mass(t) * x(t)) * y(t)
+                list_sum_scalar_mul[Real](pmf.mass(t), values_x, rv_expansion_term(x, t))
+                pmf.mass(t) * sum[Real](map(values_x, rv_expansion_term(x, t))) =
+                    sum[Real](map(values_x, mul_fn(pmf.mass(t), rv_expansion_term(x, t))))
+                pmf.mass(t) * x(t) = sum[Real](map(values_x, mul_fn(pmf.mass(t), rv_expansion_term(x, t))))
+                mwv_xy(t) =
+                    sum[Real](map(values_x, mul_fn(pmf.mass(t), rv_expansion_term(x, t)))) * y(t)
+                mwv_xy(t) =
+                    sum[Real](map(values_x, mul_fn(pmf.mass(t), rv_expansion_term(x, t)))) * sum[Real](map(values_y, rv_expansion_term(y, t)))
+                list_sum_product_of_sums[Real, Real](values_x, values_y,
+                    mul_fn(pmf.mass(t), rv_expansion_term(x, t)), rv_expansion_term(y, t))
+                sum[Real](map(values_x, mul_fn(pmf.mass(t), rv_expansion_term(x, t)))) * sum[Real](map(values_y, rv_expansion_term(y, t))) =
+                    product_double_sum_fn(values_x, values_y,
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t)), rv_expansion_term(y, t))
+                mwv_xy(t) = product_double_sum_fn(values_x, values_y,
+                    mul_fn(pmf.mass(t), rv_expansion_term(x, t)), rv_expansion_term(y, t))
+                forall(a: Real) {
+                    product_row_sum_fn2(values_y, rv_expansion_term(y, t),
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t), a)) =
+                        sum[Real](map(values_y, mul_fn(mul_fn(pmf.mass(t), rv_expansion_term(x, t), a),
+                            rv_expansion_term(y, t))))
+                    forall(b: Real) {
+                        mul_fn(mul_fn(pmf.mass(t), rv_expansion_term(x, t), a), rv_expansion_term(y, t), b) =
+                            mul_fn(pmf.mass(t), rv_expansion_term(x, t), a) * rv_expansion_term(y, t, b)
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t), a) =
+                            pmf.mass(t) * rv_expansion_term(x, t, a)
+                        rv_expansion_term(x, t, a) = a * rv_value_indicator(x, t, a)
+                        rv_expansion_term(y, t, b) = b * rv_value_indicator(y, t, b)
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t), a) * rv_expansion_term(y, t, b) =
+                            (pmf.mass(t) * (a * rv_value_indicator(x, t, a))) * (b * rv_value_indicator(y, t, b))
+                        (pmf.mass(t) * (a * rv_value_indicator(x, t, a))) * (b * rv_value_indicator(y, t, b)) =
+                            (pmf.mass(t) * a * rv_value_indicator(x, t, a)) * (b * rv_value_indicator(y, t, b))
+                        (pmf.mass(t) * a * rv_value_indicator(x, t, a)) * (b * rv_value_indicator(y, t, b)) =
+                            pmf.mass(t) * a * rv_value_indicator(x, t, a) * b * rv_value_indicator(y, t, b)
+                        pmf.mass(t) * a * rv_value_indicator(x, t, a) * b * rv_value_indicator(y, t, b) =
+                            (pmf.mass(t) * a * rv_value_indicator(x, t, a)) * (b * rv_value_indicator(y, t, b))
+                        (pmf.mass(t) * a * rv_value_indicator(x, t, a)) * (b * rv_value_indicator(y, t, b)) =
+                            (a * (pmf.mass(t) * rv_value_indicator(x, t, a))) * (b * rv_value_indicator(y, t, b))
+                        (a * (pmf.mass(t) * rv_value_indicator(x, t, a))) * (b * rv_value_indicator(y, t, b)) =
+                            a * ((pmf.mass(t) * rv_value_indicator(x, t, a)) * (b * rv_value_indicator(y, t, b)))
+                        a * ((pmf.mass(t) * rv_value_indicator(x, t, a)) * (b * rv_value_indicator(y, t, b))) =
+                            a * (b * ((pmf.mass(t) * rv_value_indicator(x, t, a)) * rv_value_indicator(y, t, b)))
+                        a * (b * ((pmf.mass(t) * rv_value_indicator(x, t, a)) * rv_value_indicator(y, t, b))) =
+                            a * b * ((pmf.mass(t) * rv_value_indicator(x, t, a)) * rv_value_indicator(y, t, b))
+                        a * b * ((pmf.mass(t) * rv_value_indicator(x, t, a)) * rv_value_indicator(y, t, b)) =
+                            a * b * (pmf.mass(t) * rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b))
+                        a * b * (pmf.mass(t) * rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b)) =
+                            a * b * (pmf.mass(t) * (rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b)))
+                        rv_pair_value_indicator(x, y, a, b, t) =
+                            rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b)
+                        a * b * (pmf.mass(t) * (rv_value_indicator(x, t, a) * rv_value_indicator(y, t, b))) =
+                            a * b * (pmf.mass(t) * rv_pair_value_indicator(x, y, a, b, t))
+                        mass_pair_value_indicator(pmf.mass, x, y, a, b, t) =
+                            pmf.mass(t) * rv_pair_value_indicator(x, y, a, b, t)
+                        a * b * (pmf.mass(t) * rv_pair_value_indicator(x, y, a, b, t)) =
+                            a * b * mass_pair_value_indicator(pmf.mass, x, y, a, b, t)
+                        mass_pair_expansion_term(pmf.mass, x, y, a, b, t) =
+                            a * b * mass_pair_value_indicator(pmf.mass, x, y, a, b, t)
+                        a * b * mass_pair_value_indicator(pmf.mass, x, y, a, b, t) =
+                            mass_pair_expansion_term(pmf.mass, x, y, a, b, t)
+                        mul_fn(mul_fn(pmf.mass(t), rv_expansion_term(x, t), a), rv_expansion_term(y, t), b) =
+                            mass_pair_expansion_term(pmf.mass, x, y, a, b, t)
+                        mass_pair_expansion_term(pmf.mass, x, y, a, b, t) = mpet(a, b, t)
+                        mul_fn(mul_fn(pmf.mass(t), rv_expansion_term(x, t), a), rv_expansion_term(y, t), b) =
+                            mpet(a, b, t)
+                    }
+                    sum_map_of_pointwise[Real, Real](values_y,
+                        mul_fn(mul_fn(pmf.mass(t), rv_expansion_term(x, t), a), rv_expansion_term(y, t)),
+                        function(b: Real) { mpet(a, b, t) })
+                    sum[Real](map(values_y, mul_fn(mul_fn(pmf.mass(t), rv_expansion_term(x, t), a),
+                        rv_expansion_term(y, t)))) =
+                        sum[Real](map(values_y, function(b: Real) { mpet(a, b, t) }))
+                    product_row_sum_fn2(values_y, rv_expansion_term(y, t),
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t), a)) =
+                        sum[Real](map(values_y, function(b: Real) { mpet(a, b, t) }))
+                    row(a, t) = list_sum_fn(values_y, mpet(a), t)
+                    list_sum_fn(values_y, mpet(a), t) =
+                        sum[Real](map(values_y, function(b: Real) { mpet(a, b, t) }))
+                    sum[Real](map(values_y, function(b: Real) { mpet(a, b, t) })) =
+                        list_sum_fn(values_y, mpet(a), t)
+                    product_row_sum_fn2(values_y, rv_expansion_term(y, t),
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t), a)) = row(a, t)
+                }
+                function_extensionality[Real, Real](
+                    function(a: Real) { product_row_sum_fn2(values_y, rv_expansion_term(y, t),
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t), a)) },
+                    function(a: Real) { row(a, t) })
+                function(a: Real) { product_row_sum_fn2(values_y, rv_expansion_term(y, t),
+                    mul_fn(pmf.mass(t), rv_expansion_term(x, t), a)) } =
+                    function(a: Real) { row(a, t) }
+                sum_map_of_pointwise[Real, Real](values_x,
+                    function(a: Real) { product_row_sum_fn2(values_y, rv_expansion_term(y, t),
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t), a)) },
+                    function(a: Real) { row(a, t) })
+                sum[Real](map(values_x, function(a: Real) { product_row_sum_fn2(values_y, rv_expansion_term(y, t),
+                    mul_fn(pmf.mass(t), rv_expansion_term(x, t), a)) })) =
+                    sum[Real](map(values_x, function(a: Real) { row(a, t) }))
+                product_double_sum_fn(values_x, values_y,
+                    mul_fn(pmf.mass(t), rv_expansion_term(x, t)), rv_expansion_term(y, t)) =
+                    sum[Real](map(values_x, function(a: Real) { product_row_sum_fn2(values_y, rv_expansion_term(y, t),
+                        mul_fn(pmf.mass(t), rv_expansion_term(x, t), a)) }))
+                product_double_sum_fn(values_x, values_y,
+                    mul_fn(pmf.mass(t), rv_expansion_term(x, t)), rv_expansion_term(y, t)) =
+                    sum[Real](map(values_x, function(a: Real) { row(a, t) }))
+                list_sum_fn(values_x, row, t) =
+                    sum[Real](map(values_x, function(a: Real) { row(a, t) }))
+                sum[Real](map(values_x, function(a: Real) { row(a, t) })) =
+                    list_sum_fn(values_x, row, t)
+                mwv_xy(t) = list_sum_fn(values_x, row, t)
+            }
+        }
+        forall(t: T) { pmf.support.contains(t) implies mwv_xy(t) = list_sum_fn(values_x, row, t) }
+        finite_set_sum_eq_of_pointwise_on_set[T, Real](pmf.support, mwv_xy, list_sum_fn(values_x, row))
+        finite_set_sum(pmf.support, mwv_xy) = finite_set_sum(pmf.support, list_sum_fn(values_x, row))
+        discrete_expectation(pmf, pointwise_mul_fn(x, y)) = finite_set_sum(pmf.support, mwv_xy)
+        discrete_expectation(pmf, pointwise_mul_fn(x, y)) =
+            finite_set_sum(pmf.support, list_sum_fn(values_x, row))
+        finite_set_sum_list_sum_swap(pmf.support, values_x, row)
+        finite_set_sum(pmf.support, list_sum_fn(values_x, row)) =
+            sum[Real](map(values_x, finite_set_sum_fn(pmf.support, row)))
+        discrete_expectation(pmf, pointwise_mul_fn(x, y)) =
+            sum[Real](map(values_x, finite_set_sum_fn(pmf.support, row)))
+
+        forall(a: Real) {
+            finite_set_sum_fn(pmf.support, row, a) = finite_set_sum(pmf.support, row(a))
+            forall(t: T) {
+                row(a, t) = list_sum_fn(values_y, mpet(a), t)
+            }
+            function_extensionality[T, Real](row(a), list_sum_fn(values_y, mpet(a)))
+            row(a) = list_sum_fn(values_y, mpet(a))
+            finite_set_sum(pmf.support, row(a)) = finite_set_sum(pmf.support, list_sum_fn(values_y, mpet(a)))
+            finite_set_sum_list_sum_swap(pmf.support, values_y, mpet(a))
+            finite_set_sum(pmf.support, list_sum_fn(values_y, mpet(a))) =
+                sum[Real](map(values_y, finite_set_sum_fn(pmf.support, mpet(a))))
+            finite_set_sum(pmf.support, row(a)) =
+                sum[Real](map(values_y, finite_set_sum_fn(pmf.support, mpet(a))))
+            finite_set_sum_fn(pmf.support, row, a) =
+                sum[Real](map(values_y, finite_set_sum_fn(pmf.support, mpet(a))))
+
+            forall(b: Real) {
+                finite_set_sum_fn(pmf.support, mpet(a), b) = finite_set_sum(pmf.support, mpet(a, b))
+                forall(t: T) {
+                    mpet(a, b, t) = a * b * mass_pair_value_indicator(pmf.mass, x, y, a, b, t)
+                    mul_fn(a * b, mass_pair_value_indicator(pmf.mass, x, y, a, b), t) =
+                        (a * b) * mass_pair_value_indicator(pmf.mass, x, y, a, b, t)
+                    mpet(a, b, t) = mul_fn(a * b, mass_pair_value_indicator(pmf.mass, x, y, a, b), t)
+                }
+                function_extensionality[T, Real](mpet(a, b),
+                    mul_fn(a * b, mass_pair_value_indicator(pmf.mass, x, y, a, b)))
+                mpet(a, b) = mul_fn(a * b, mass_pair_value_indicator(pmf.mass, x, y, a, b))
+                finite_set_sum(pmf.support, mpet(a, b)) =
+                    finite_set_sum(pmf.support, mul_fn(a * b, mass_pair_value_indicator(pmf.mass, x, y, a, b)))
+                finite_set_sum_scalar_mul[T, Real](a * b, pmf.support,
+                    mass_pair_value_indicator(pmf.mass, x, y, a, b))
+                (a * b) * finite_set_sum(pmf.support, mass_pair_value_indicator(pmf.mass, x, y, a, b)) =
+                    finite_set_sum(pmf.support, mul_fn(a * b, mass_pair_value_indicator(pmf.mass, x, y, a, b)))
+                finite_set_sum(pmf.support, mpet(a, b)) =
+                    (a * b) * finite_set_sum(pmf.support, mass_pair_value_indicator(pmf.mass, x, y, a, b))
+                finite_set_sum_mass_pair_value_indicator_eq_intersection_prob(pmf, x, y, a, b)
+                finite_set_sum(pmf.support, mass_pair_value_indicator(pmf.mass, x, y, a, b)) =
+                    pmf_event_prob(pmf, fs_intersection(rv_value_event(pmf, x, a), rv_value_event(pmf, y, b)))
+                (a * b) * finite_set_sum(pmf.support, mass_pair_value_indicator(pmf.mass, x, y, a, b)) =
+                    (a * b) * pmf_event_prob(pmf,
+                        fs_intersection(rv_value_event(pmf, x, a), rv_value_event(pmf, y, b)))
+                finite_set_sum(pmf.support, mpet(a, b)) =
+                    (a * b) * pmf_event_prob(pmf,
+                        fs_intersection(rv_value_event(pmf, x, a), rv_value_event(pmf, y, b)))
+                discrete_rv_independent(pmf, x, y) = forall(a0: Real, b0: Real) {
+                    discrete_events_independent(pmf, rv_value_event(pmf, x, a0),
+                        rv_value_event(pmf, y, b0))
+                }
+                discrete_events_independent(pmf, rv_value_event(pmf, x, a),
+                    rv_value_event(pmf, y, b))
+                discrete_events_independent(pmf, rv_value_event(pmf, x, a),
+                    rv_value_event(pmf, y, b)) =
+                    (pmf_event_prob(pmf, fs_intersection(rv_value_event(pmf, x, a),
+                        rv_value_event(pmf, y, b))) =
+                        pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * pmf_event_prob(pmf, rv_value_event(pmf, y, b)))
+                pmf_event_prob(pmf, fs_intersection(rv_value_event(pmf, x, a),
+                    rv_value_event(pmf, y, b))) =
+                    pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * pmf_event_prob(pmf, rv_value_event(pmf, y, b))
+                (a * b) * pmf_event_prob(pmf, fs_intersection(rv_value_event(pmf, x, a),
+                    rv_value_event(pmf, y, b))) =
+                    (a * b) * (pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * pmf_event_prob(pmf, rv_value_event(pmf, y, b)))
+                finite_set_sum(pmf.support, mpet(a, b)) =
+                    (a * b) * (pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * pmf_event_prob(pmf, rv_value_event(pmf, y, b)))
+                (a * b) * (pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * pmf_event_prob(pmf, rv_value_event(pmf, y, b))) =
+                    a * (b * (pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * pmf_event_prob(pmf, rv_value_event(pmf, y, b))))
+                a * (b * (pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * pmf_event_prob(pmf, rv_value_event(pmf, y, b)))) =
+                    a * (pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * (b * pmf_event_prob(pmf, rv_value_event(pmf, y, b))))
+                a * (pmf_event_prob(pmf, rv_value_event(pmf, x, a)) * (b * pmf_event_prob(pmf, rv_value_event(pmf, y, b)))) =
+                    (a * pmf_event_prob(pmf, rv_value_event(pmf, x, a))) * (b * pmf_event_prob(pmf, rv_value_event(pmf, y, b)))
+                rv_value_mass_term(pmf, x, a) =
+                    a * pmf_event_prob(pmf, rv_value_event(pmf, x, a))
+                rv_value_mass_term(pmf, y, b) =
+                    b * pmf_event_prob(pmf, rv_value_event(pmf, y, b))
+                (a * pmf_event_prob(pmf, rv_value_event(pmf, x, a))) * (b * pmf_event_prob(pmf, rv_value_event(pmf, y, b))) =
+                    rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b)
+                finite_set_sum(pmf.support, mpet(a, b)) =
+                    rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b)
+                finite_set_sum_fn(pmf.support, mpet(a), b) =
+                    rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b)
+            }
+            forall(b: Real) {
+                finite_set_sum_fn(pmf.support, mpet(a), b) =
+                    rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b)
+            }
+            sum_map_of_pointwise[Real, Real](values_y, finite_set_sum_fn(pmf.support, mpet(a)),
+                function(b: Real) { rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b) })
+            sum[Real](map(values_y, finite_set_sum_fn(pmf.support, mpet(a)))) =
+                sum[Real](map(values_y,
+                    function(b: Real) { rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b) }))
+            product_row_sum_fn2(values_y, rv_value_mass_term(pmf, y), rv_value_mass_term(pmf, x, a)) =
+                sum[Real](map(values_y, mul_fn(rv_value_mass_term(pmf, x, a), rv_value_mass_term(pmf, y))))
+            forall(b: Real) {
+                mul_fn(rv_value_mass_term(pmf, x, a), rv_value_mass_term(pmf, y), b) =
+                    rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b)
+            }
+            sum_map_of_pointwise[Real, Real](values_y,
+                mul_fn(rv_value_mass_term(pmf, x, a), rv_value_mass_term(pmf, y)),
+                function(b: Real) { rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b) })
+            sum[Real](map(values_y, mul_fn(rv_value_mass_term(pmf, x, a), rv_value_mass_term(pmf, y)))) =
+                sum[Real](map(values_y,
+                    function(b: Real) { rv_value_mass_term(pmf, x, a) * rv_value_mass_term(pmf, y, b) }))
+            sum[Real](map(values_y, finite_set_sum_fn(pmf.support, mpet(a)))) =
+                product_row_sum_fn2(values_y, rv_value_mass_term(pmf, y), rv_value_mass_term(pmf, x, a))
+            finite_set_sum_fn(pmf.support, row, a) =
+                product_row_sum_fn2(values_y, rv_value_mass_term(pmf, y), rv_value_mass_term(pmf, x, a))
+        }
+        forall(a: Real) {
+            finite_set_sum_fn(pmf.support, row, a) =
+                product_row_sum_fn2(values_y, rv_value_mass_term(pmf, y), rv_value_mass_term(pmf, x, a))
+        }
+        sum_map_of_pointwise[Real, Real](values_x, finite_set_sum_fn(pmf.support, row),
+            function(a: Real) { product_row_sum_fn2(values_y, rv_value_mass_term(pmf, y),
+                rv_value_mass_term(pmf, x, a)) })
+        sum[Real](map(values_x, finite_set_sum_fn(pmf.support, row))) =
+            sum[Real](map(values_x, function(a: Real) { product_row_sum_fn2(values_y, rv_value_mass_term(pmf, y),
+                rv_value_mass_term(pmf, x, a)) }))
+        product_double_sum_fn(values_x, values_y, rv_value_mass_term(pmf, x), rv_value_mass_term(pmf, y)) =
+            sum[Real](map(values_x, function(a: Real) { product_row_sum_fn2(values_y, rv_value_mass_term(pmf, y),
+                rv_value_mass_term(pmf, x, a)) }))
+        sum[Real](map(values_x, function(a: Real) { product_row_sum_fn2(values_y, rv_value_mass_term(pmf, y),
+            rv_value_mass_term(pmf, x, a)) })) =
+            product_double_sum_fn(values_x, values_y, rv_value_mass_term(pmf, x), rv_value_mass_term(pmf, y))
+        sum[Real](map(values_x, finite_set_sum_fn(pmf.support, row))) =
+            product_double_sum_fn(values_x, values_y, rv_value_mass_term(pmf, x), rv_value_mass_term(pmf, y))
+        discrete_expectation(pmf, pointwise_mul_fn(x, y)) =
+            product_double_sum_fn(values_x, values_y, rv_value_mass_term(pmf, x), rv_value_mass_term(pmf, y))
+        list_sum_product_of_sums[Real, Real](values_x, values_y, rv_value_mass_term(pmf, x),
+            rv_value_mass_term(pmf, y))
+        sum[Real](map(values_x, rv_value_mass_term(pmf, x))) * sum[Real](map(values_y, rv_value_mass_term(pmf, y))) =
+            product_double_sum_fn(values_x, values_y, rv_value_mass_term(pmf, x), rv_value_mass_term(pmf, y))
+        product_double_sum_fn(values_x, values_y, rv_value_mass_term(pmf, x), rv_value_mass_term(pmf, y)) =
+            sum[Real](map(values_x, rv_value_mass_term(pmf, x))) * sum[Real](map(values_y, rv_value_mass_term(pmf, y)))
+        discrete_expectation(pmf, pointwise_mul_fn(x, y)) =
+            sum[Real](map(values_x, rv_value_mass_term(pmf, x))) * sum[Real](map(values_y, rv_value_mass_term(pmf, y)))
+        discrete_expectation_eq_value_sum(pmf, x)
+        discrete_expectation(pmf, x) = sum[Real](map(values_x, rv_value_mass_term(pmf, x)))
+        discrete_expectation_eq_value_sum(pmf, y)
+        discrete_expectation(pmf, y) = sum[Real](map(values_y, rv_value_mass_term(pmf, y)))
+        discrete_expectation(pmf, pointwise_mul_fn(x, y)) =
+            discrete_expectation(pmf, x) * discrete_expectation(pmf, y)
+    }
+}
+
+/// Expectation is monotone under pointwise order everywhere (a global corollary
+/// of the support-restricted monotonicity in `discrete_pmf`).
+theorem discrete_expectation_monotone_global[T](pmf: DiscretePMF[T], x: T -> Real, y: T -> Real) {
+    (forall(t: T) { x(t) <= y(t) }) implies discrete_expectation(pmf, x) <= discrete_expectation(pmf, y)
+} by {
+    if forall(t: T) { x(t) <= y(t) } {
+        forall(t: T) {
+            if pmf.support.contains(t) {
+                x(t) <= y(t)
+            }
+        }
+        forall(t: T) { pmf.support.contains(t) implies x(t) <= y(t) }
+        discrete_expectation_monotone(pmf, x, y)
+        discrete_expectation(pmf, x) <= discrete_expectation(pmf, y)
+    }
+}
+
+/// Expectation is extensional for random variables that agree pointwise on the support.
+theorem discrete_expectation_eq_of_pointwise_eq_on_support[T](pmf: DiscretePMF[T],
+    x: T -> Real, y: T -> Real) {
+    (forall(t: T) { pmf.support.contains(t) implies x(t) = y(t) }) implies
+        discrete_expectation(pmf, x) = discrete_expectation(pmf, y)
+} by {
+    if forall(t: T) { pmf.support.contains(t) implies x(t) = y(t) } {
+        forall(t: T) {
+            if pmf.support.contains(t) {
+                mass_weighted_value(pmf.mass, x, t) = pmf.mass(t) * x(t)
+                x(t) = y(t)
+                pmf.mass(t) * y(t) = mass_weighted_value(pmf.mass, y, t)
+                mass_weighted_value(pmf.mass, x, t) = mass_weighted_value(pmf.mass, y, t)
+            }
+        }
+        forall(t: T) {
+            pmf.support.contains(t) implies mass_weighted_value(pmf.mass, x, t) = mass_weighted_value(pmf.mass, y, t)
+        }
+        finite_set_sum_eq_of_pointwise_on_set[T, Real](pmf.support,
+            mass_weighted_value(pmf.mass, x), mass_weighted_value(pmf.mass, y))
+        finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, x)) =
+            finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, y))
+        discrete_expectation(pmf, x) = finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, x))
+        discrete_expectation(pmf, y) = finite_set_sum(pmf.support, mass_weighted_value(pmf.mass, y))
+        discrete_expectation(pmf, x) = discrete_expectation(pmf, y)
+    }
+}
+
+// The Bernoulli pmf bundled from the canonical data satisfies the Bernoulli predicate.
+// COMMENTED OUT: extracting the mass field from the bundled constructor equality
+// (`DiscretePMF.new(support, mass) = Option.some(pmf)` implies `pmf.mass = mass`)
+// is not automatic for function-valued fields in the current prover, and the
+// statement times out. The `is_bernoulli_pmf` predicate used by the theorems above
+// is instead meant to be established directly from the canonical data
+// (`pmf.support = bernoulli_support`, `pmf.mass = bernoulli_mass(p)`).
+// theorem bernoulli_pmf_exists_is_bernoulli(p: Real, pmf: DiscretePMF[Bool]) {
+//     DiscretePMF[Bool].new(bernoulli_support, bernoulli_mass(p)) = Option.some(pmf) implies
+//         is_bernoulli_pmf(p, pmf)
+// } by {
+//     if DiscretePMF[Bool].new(bernoulli_support, bernoulli_mass(p)) = Option.some(pmf) {
+//         bernoulli_pmf_new_support(p, pmf)
+//         pmf.support = bernoulli_support
+//         forall(b: Bool) {
+//             if b {
+//                 pmf.mass(b) = bernoulli_mass(p, b)
+//             }
+//             if not b {
+//                 pmf.mass(b) = bernoulli_mass(p, b)
+//             }
+//             b or not b
+//             pmf.mass(b) = bernoulli_mass(p, b)
+//         }
+//         is_bernoulli_pmf(p, pmf) =
+//             (pmf.support = bernoulli_support and forall(b: Bool) { pmf.mass(b) = bernoulli_mass(p, b) })
+//         is_bernoulli_pmf(p, pmf)
+//     }
+// }
