@@ -1,10 +1,12 @@
 /// The chromatic number of a graph: the least number of colors of a proper vertex coloring.
 
 from nat import Nat, lt_trans, lt_and_lte, lte_and_lt, lt_cancel_suc, not_lt_zero,
-    lt_suc_right, lte_antisymm, lt_or_lte, lt_not_ref, lt_imp_lte_suc, lt_suc,
-    small_mod, div_imp_mod, divides_self
-from list import List, range_pigeonhole, map, map_contains, map_length,
+    lt_suc_right, lte_antisymm, lt_or_lte, lt_not_ref, lt_imp_lte_suc, lte_cancel_suc, lt_suc,
+    small_mod, div_imp_mod, divides_self, alt_induction, sub_one_lt, add_imp_sub
+from list import List, range_pigeonhole, map, map_contains, map_length, map_add, map_singleton,
+    add_length, add_contains_or, singleton_contains_imp_eq,
     unique_is_smallest_containing_list, length_range, range_contains_iff_lt, range_is_unique
+from data.basic.functions import is_injective_fn
 from finite_set import FiniteSet, fs_from_list, finite_set_from_unique_list_cardinality_is_length
 from data.finite.finite_set_membership import fs_from_list_contains_eq
 from data.finite.finite_set_card import fs_card, fs_card_eq_of_cardinality_is
@@ -13,9 +15,13 @@ from graph.simple_graph import SimpleGraph, complete_graph, complete_graph_adj_i
 from graph.simple_graph_coloring import simple_graph_coloring
 from graph.simple_graph_bipartite import is_bipartite, is_bipartite_intro,
     is_bipartite_witness, is_bipartition, is_bipartition_apply, is_bipartition_intro
-from graph.simple_graph_bipartite_odd_cycle import nat_odd, nat_odd_zero, nat_odd_suc
+from graph.simple_graph_bipartite_odd_cycle import nat_odd, nat_odd_zero, nat_odd_suc,
+    walk_in_set, bipartition_walk_color_flip
 from graph.simple_graph_cycle import cycle_graph, cycle_graph_adj_iff, cycle_graph_adj_suc,
     cycle_graph_adj_wrap
+from graph.simple_graph_walks import simple_graph_walk, simple_graph_walk_nil,
+    simple_graph_walk_append_adj, simple_graph_closed_walk, simple_graph_closed_walk_intro,
+    simple_graph_closed_walk_is_walk
 
 numerals Nat
 
@@ -948,5 +954,351 @@ theorem cycle_graph_even_chromatic_number(n: Nat) {
             j < Nat.2 implies not is_k_colorable(cycle_graph(n), nat_range_set(n), j)
         }
         is_chromatic_number(cycle_graph(n), nat_range_set(n), Nat.2)
+    }
+}
+
+// ============================================================================
+// Odd cycles: a closed walk of odd length, so chi(C_n) >= 3 for odd n.
+// ============================================================================
+
+/// A proper two-coloring with values below two is a bipartition.
+theorem proper_two_color_imp_is_bipartition[V](
+    g: SimpleGraph[V], s: FiniteSet[V], color: V -> Nat
+) {
+    is_proper_coloring_on(g, s, color) and forall(v: V) {
+        s.contains(v) implies color(v) < Nat.2
+    } implies is_bipartition(g, s, part_of_two_color(color))
+} by {
+    if is_proper_coloring_on(g, s, color) and forall(v: V) {
+        s.contains(v) implies color(v) < Nat.2
+    } {
+        is_bipartition_intro(g, s, part_of_two_color(color))
+        forall(x: V, y: V) {
+            if s.contains(x) and s.contains(y) and g.adj(x, y) {
+                is_proper_coloring_on_apply(g, s, color, x, y)
+                color(x) != color(y)
+                color(x) < Nat.2
+                color(y) < Nat.2
+                two_color_ne_imp_one_eq_ne(color(x), color(y))
+                (color(x) = Nat.1) != (color(y) = Nat.1)
+                part_of_two_color_eq(color, x)
+                part_of_two_color(color)(x) = (color(x) = Nat.1)
+                part_of_two_color_eq(color, y)
+                part_of_two_color(color)(y) = (color(y) = Nat.1)
+                part_of_two_color(color)(x) != part_of_two_color(color)(y)
+            }
+            s.contains(x) and s.contains(y) and g.adj(x, y) implies part_of_two_color(color)(x) != part_of_two_color(color)(y)
+        }
+        is_bipartition(g, s, part_of_two_color(color))
+    }
+}
+
+/// Successor, as a named function.
+define nat_inc(v: Nat) -> Nat { v.suc }
+
+/// Successor takes a natural to its successor.
+theorem nat_inc_eq(v: Nat) {
+    nat_inc(v) = v.suc
+}
+
+/// Successor is injective.
+theorem nat_inc_injective {
+    is_injective_fn(nat_inc)
+} by {
+    is_injective_fn(nat_inc) = forall(x: Nat, y: Nat) {
+        nat_inc(x) = nat_inc(y) implies x = y
+    }
+    forall(x: Nat, y: Nat) {
+        if nat_inc(x) = nat_inc(y) {
+            nat_inc_eq(x)
+            nat_inc(x) = x.suc
+            nat_inc_eq(y)
+            nat_inc(y) = y.suc
+            x.suc = y.suc
+            x.suc <= y.suc
+            lte_cancel_suc(x, y)
+            x <= y
+            y.suc <= x.suc
+            lte_cancel_suc(y, x)
+            y <= x
+            lte_antisymm(x, y)
+            x = y
+        }
+        nat_inc(x) = nat_inc(y) implies x = y
+    }
+    is_injective_fn(nat_inc)
+}
+
+/// The predecessor of a positive natural closes the successor cycle.
+theorem nat_sub_one_suc(n: Nat) {
+    Nat.0 < n implies (n - Nat.1).suc = n
+} by {
+    if Nat.0 < n {
+        if n = Nat.0 {
+            Nat.0 < n
+            Nat.0 < Nat.0
+            lt_not_ref(Nat.0)
+            false
+        }
+        n != Nat.0
+        let (m: Nat) satisfy { m.suc = n }
+        add_imp_sub(m, Nat.1, n)
+        m + Nat.1 = n
+        n - Nat.1 = m
+        (n - Nat.1).suc = m.suc
+        (n - Nat.1).suc = n
+    }
+}
+
+/// Three vertices force at least two below the predecessor.
+theorem nat_two_le_sub_one(n: Nat) {
+    Nat.3 <= n implies Nat.2 <= n - Nat.1
+} by {
+    if Nat.3 <= n {
+        Nat.0 < Nat.3
+        lt_and_lte(Nat.0, Nat.3, n)
+        Nat.0 < n
+        if n = Nat.0 {
+            Nat.0 < n
+            Nat.0 < Nat.0
+            lt_not_ref(Nat.0)
+            false
+        }
+        n != Nat.0
+        let (m: Nat) satisfy { m.suc = n }
+        Nat.3 <= m.suc
+        lte_cancel_suc(Nat.2, m)
+        Nat.2 <= m
+        add_imp_sub(m, Nat.1, n)
+        m + Nat.1 = n
+        n - Nat.1 = m
+        Nat.2 <= n - Nat.1
+    }
+}
+
+/// The walk from zero to `k` along the cycle steps through the successors.
+theorem cycle_graph_walk_range(n: Nat, k: Nat) {
+    k < n implies simple_graph_walk(cycle_graph(n), Nat.0, k, map(k.range, nat_inc))
+} by {
+    define p(kk: Nat) -> Bool {
+        kk < n implies simple_graph_walk(cycle_graph(n), Nat.0, kk, map(kk.range, nat_inc))
+    }
+
+    if Nat.0 < n {
+        Nat.0.range = List.nil[Nat]
+        map(Nat.0.range, nat_inc) = map(List.nil[Nat], nat_inc)
+        map(List.nil[Nat], nat_inc) = List.nil[Nat]
+        map(Nat.0.range, nat_inc) = List.nil[Nat]
+        simple_graph_walk_nil(cycle_graph(n), Nat.0, Nat.0)
+        simple_graph_walk(cycle_graph(n), Nat.0, Nat.0, List.nil[Nat])
+        simple_graph_walk(cycle_graph(n), Nat.0, Nat.0, map(Nat.0.range, nat_inc))
+    }
+    p(Nat.0)
+
+    forall(kk: Nat) {
+        if p(kk) {
+            p(kk) = (kk < n implies simple_graph_walk(cycle_graph(n), Nat.0, kk, map(kk.range, nat_inc)))
+            if kk.suc < n {
+                lt_suc(kk)
+                kk < kk.suc
+                lt_trans(kk, kk.suc, n)
+                kk < n
+                simple_graph_walk(cycle_graph(n), Nat.0, kk, map(kk.range, nat_inc))
+                cycle_graph_adj_suc(n, kk)
+                cycle_graph(n).adj(kk, kk.suc)
+                simple_graph_walk_append_adj(cycle_graph(n), Nat.0, kk, kk.suc, map(kk.range, nat_inc))
+                simple_graph_walk(cycle_graph(n), Nat.0, kk.suc, map(kk.range, nat_inc).append(kk.suc))
+                kk.suc.range = kk.range.append(kk)
+                map_add(kk.range, List.singleton(kk), nat_inc)
+                map(kk.range + List.singleton(kk), nat_inc) =
+                    map(kk.range, nat_inc) + map(List.singleton(kk), nat_inc)
+                map_singleton(nat_inc, kk)
+                map(List.singleton(kk), nat_inc) = List.singleton(nat_inc(kk))
+                map(kk.range, nat_inc) + List.singleton(nat_inc(kk)) =
+                    map(kk.range, nat_inc).append(nat_inc(kk))
+                nat_inc_eq(kk)
+                nat_inc(kk) = kk.suc
+                map(kk.range, nat_inc).append(kk.suc) = map(kk.suc.range, nat_inc)
+                simple_graph_walk(cycle_graph(n), Nat.0, kk.suc, map(kk.suc.range, nat_inc))
+            }
+            p(kk.suc)
+        }
+    }
+    forall(kk: Nat) { p(kk) implies p(kk.suc) }
+    p(Nat.0) and forall(kk: Nat) { p(kk) implies p(kk.suc) }
+    alt_induction(p)
+    forall(kk: Nat) { p(kk) }
+    p(k)
+    p(k) = (k < n implies simple_graph_walk(cycle_graph(n), Nat.0, k, map(k.range, nat_inc)))
+}
+
+/// The cycle walk from zero back to zero through every vertex.
+theorem cycle_graph_closed_walk_all(n: Nat) {
+    Nat.3 <= n implies
+        simple_graph_walk(cycle_graph(n), Nat.0, Nat.0,
+            map((n - Nat.1).range, nat_inc).append(Nat.0))
+} by {
+    if Nat.3 <= n {
+        Nat.0 < Nat.3
+        lt_and_lte(Nat.0, Nat.3, n)
+        Nat.0 < n
+        sub_one_lt(n)
+        n - Nat.1 < n
+        cycle_graph_walk_range(n, n - Nat.1)
+        simple_graph_walk(cycle_graph(n), Nat.0, n - Nat.1, map((n - Nat.1).range, nat_inc))
+        nat_two_le_sub_one(n)
+        Nat.2 <= n - Nat.1
+        cycle_graph_adj_wrap(n - Nat.1)
+        cycle_graph((n - Nat.1).suc).adj(n - Nat.1, Nat.0)
+        nat_sub_one_suc(n)
+        (n - Nat.1).suc = n
+        cycle_graph(n).adj(n - Nat.1, Nat.0)
+        simple_graph_walk_append_adj(cycle_graph(n), Nat.0, n - Nat.1, Nat.0,
+            map((n - Nat.1).range, nat_inc))
+        simple_graph_walk(cycle_graph(n), Nat.0, Nat.0,
+            map((n - Nat.1).range, nat_inc).append(Nat.0))
+    }
+}
+
+/// The cycle walk stays inside the standard vertex set.
+theorem cycle_graph_walk_all_in_set(n: Nat) {
+    Nat.3 <= n implies
+        walk_in_set(nat_range_set(n), map((n - Nat.1).range, nat_inc).append(Nat.0))
+} by {
+    if Nat.3 <= n {
+        Nat.0 < Nat.3
+        lt_and_lte(Nat.0, Nat.3, n)
+        Nat.0 < n
+        forall(v: Nat) {
+            if map((n - Nat.1).range, nat_inc).append(Nat.0).contains(v) {
+                add_contains_or(map((n - Nat.1).range, nat_inc), List.singleton(Nat.0), v)
+                map((n - Nat.1).range, nat_inc).contains(v) or List.singleton(Nat.0).contains(v)
+                if map((n - Nat.1).range, nat_inc).contains(v) {
+                    map_contains((n - Nat.1).range, nat_inc, v)
+                    let (x: Nat) satisfy {
+                        (n - Nat.1).range.contains(x) and nat_inc(x) = v
+                    }
+                    nat_inc_eq(x)
+                    nat_inc(x) = x.suc
+                    v = x.suc
+                    range_contains_iff_lt(n - Nat.1, x)
+                    x < n - Nat.1
+                    lt_imp_lte_suc(x, n - Nat.1)
+                    x.suc <= n - Nat.1
+                    v <= n - Nat.1
+                    sub_one_lt(n)
+                    n - Nat.1 < n
+                    lte_and_lt(v, n - Nat.1, n)
+                    v < n
+                    nat_range_set_contains_eq(n, v)
+                    nat_range_set(n).contains(v)
+                }
+                if List.singleton(Nat.0).contains(v) {
+                    singleton_contains_imp_eq(Nat.0, v)
+                    v = Nat.0
+                    nat_range_set_contains_eq(n, Nat.0)
+                    nat_range_set(n).contains(v)
+                }
+                nat_range_set(n).contains(v)
+            }
+            map((n - Nat.1).range, nat_inc).append(Nat.0).contains(v) implies nat_range_set(n).contains(v)
+        }
+        walk_in_set(nat_range_set(n), map((n - Nat.1).range, nat_inc).append(Nat.0))
+    }
+}
+
+/// The odd cycle is a closed walk of odd length.
+theorem cycle_graph_odd_closed_walk(n: Nat) {
+    Nat.3 <= n and nat_odd(n) implies
+        simple_graph_closed_walk(cycle_graph(n), Nat.0,
+            map((n - Nat.1).range, nat_inc).append(Nat.0))
+} by {
+    if Nat.3 <= n and nat_odd(n) {
+        simple_graph_closed_walk_intro(cycle_graph(n), Nat.0,
+            map((n - Nat.1).range, nat_inc).append(Nat.0))
+        cycle_graph_closed_walk_all(n)
+        simple_graph_walk(cycle_graph(n), Nat.0, Nat.0,
+            map((n - Nat.1).range, nat_inc).append(Nat.0))
+        map_length((n - Nat.1).range, nat_inc)
+        map((n - Nat.1).range, nat_inc).length = (n - Nat.1).range.length
+        length_range(n - Nat.1)
+        (n - Nat.1).range.length = n - Nat.1
+        map((n - Nat.1).range, nat_inc).length = n - Nat.1
+        add_length(map((n - Nat.1).range, nat_inc), List.singleton(Nat.0))
+        (map((n - Nat.1).range, nat_inc) + List.singleton(Nat.0)).length =
+            map((n - Nat.1).range, nat_inc).length + List.singleton(Nat.0).length
+        List.singleton(Nat.0).length = Nat.1
+        map((n - Nat.1).range, nat_inc).append(Nat.0).length = n - Nat.1 + Nat.1
+        Nat.0 < Nat.3
+        lt_and_lte(Nat.0, Nat.3, n)
+        Nat.0 < n
+        nat_sub_one_suc(n)
+        (n - Nat.1).suc = n
+        n - Nat.1 + Nat.1 = n
+        map((n - Nat.1).range, nat_inc).append(Nat.0).length = n
+        Nat.0 < n
+        map((n - Nat.1).range, nat_inc).append(Nat.0).length > Nat.0
+        simple_graph_closed_walk(cycle_graph(n), Nat.0,
+            map((n - Nat.1).range, nat_inc).append(Nat.0))
+    }
+}
+
+/// An odd cycle is not two-colorable.
+///
+/// A two-coloring would be a bipartition, but a bipartition cannot contain a closed walk of
+/// odd length: walking the cycle flips the side once per edge, so an odd closed walk would
+/// leave a vertex on the opposite side of itself.
+theorem cycle_graph_odd_not_k_colorable_two(n: Nat) {
+    Nat.3 <= n and nat_odd(n) implies not is_k_colorable(cycle_graph(n), nat_range_set(n), Nat.2)
+} by {
+    if Nat.3 <= n and nat_odd(n) {
+        if is_k_colorable(cycle_graph(n), nat_range_set(n), Nat.2) {
+            is_k_colorable_witness(cycle_graph(n), nat_range_set(n), Nat.2)
+            let (color: Nat -> Nat) satisfy {
+                is_proper_coloring_on(cycle_graph(n), nat_range_set(n), color) and
+                    forall(v: Nat) {
+                        nat_range_set(n).contains(v) implies color(v) < Nat.2
+                    }
+            }
+            proper_two_color_imp_is_bipartition(cycle_graph(n), nat_range_set(n), color)
+            is_bipartition(cycle_graph(n), nat_range_set(n), part_of_two_color(color))
+            cycle_graph_odd_closed_walk(n)
+            simple_graph_closed_walk(cycle_graph(n), Nat.0,
+                map((n - Nat.1).range, nat_inc).append(Nat.0))
+            simple_graph_closed_walk_is_walk(cycle_graph(n), Nat.0,
+                map((n - Nat.1).range, nat_inc).append(Nat.0))
+            simple_graph_walk(cycle_graph(n), Nat.0, Nat.0,
+                map((n - Nat.1).range, nat_inc).append(Nat.0))
+            Nat.0 < Nat.3
+            lt_and_lte(Nat.0, Nat.3, n)
+            Nat.0 < n
+            nat_range_set_contains_eq(n, Nat.0)
+            nat_range_set(n).contains(Nat.0)
+            cycle_graph_walk_all_in_set(n)
+            walk_in_set(nat_range_set(n), map((n - Nat.1).range, nat_inc).append(Nat.0))
+            bipartition_walk_color_flip(cycle_graph(n), nat_range_set(n),
+                part_of_two_color(color), Nat.0, Nat.0,
+                map((n - Nat.1).range, nat_inc).append(Nat.0))
+            (part_of_two_color(color)(Nat.0) = part_of_two_color(color)(Nat.0)) =
+                not nat_odd(map((n - Nat.1).range, nat_inc).append(Nat.0).length)
+            map_length((n - Nat.1).range, nat_inc)
+            map((n - Nat.1).range, nat_inc).length = (n - Nat.1).range.length
+            length_range(n - Nat.1)
+            (n - Nat.1).range.length = n - Nat.1
+            map((n - Nat.1).range, nat_inc).length = n - Nat.1
+            add_length(map((n - Nat.1).range, nat_inc), List.singleton(Nat.0))
+            (map((n - Nat.1).range, nat_inc) + List.singleton(Nat.0)).length =
+                map((n - Nat.1).range, nat_inc).length + List.singleton(Nat.0).length
+            List.singleton(Nat.0).length = Nat.1
+            map((n - Nat.1).range, nat_inc).append(Nat.0).length = n - Nat.1 + Nat.1
+            nat_sub_one_suc(n)
+            (n - Nat.1).suc = n
+            n - Nat.1 + Nat.1 = n
+            map((n - Nat.1).range, nat_inc).append(Nat.0).length = n
+            not nat_odd(n)
+            nat_odd(n)
+            false
+        }
+        not is_k_colorable(cycle_graph(n), nat_range_set(n), Nat.2)
     }
 }
