@@ -1,10 +1,17 @@
 from algebra.field.field import Field
 from algebra.add_comm_group import AddCommGroup
 from algebra.module.module import Module, module_smul_zero_left, module_smul_zero_right, module_smul_assoc, module_smul_one, module_smul_neg_left, module_smul_add_left, module_smul_neg_right
+from algebra.module.submodule import is_submodule, submodule_zero_constraint, submodule_add_constraint,
+    submodule_neg_constraint, submodule_smul_constraint, submodule_closure_is_submodule,
+    submodule_closure_contains_eq, submodule_closure_contains, submodule_closure
+from data.basic.set import Set
+from data.basic.functions import predicate_extensionality
 
 /// Convention: a vector space over a field F is a Module[F, V] with V: AddCommGroup.
 /// We do not introduce a separate VectorSpace structure; instead we re-use the
-/// existing Module API and add field-specific lemmas here.
+/// existing Module API and add field-specific lemmas here. A subspace of a vector
+/// space is a Submodule (see algebra/module/submodule.ac); the subspace criterion,
+/// the span construction, and linear independence of singletons are developed here.
 
 /// Scalar multiplication by a nonzero element annihilates only the zero vector.
 theorem vector_space_smul_eq_zero[F: Field, V: AddCommGroup](
@@ -233,4 +240,178 @@ theorem vector_space_smul_eq_iff_eq_inverse_smul[F: Field, V: AddCommGroup](
             m.smul(r, v) = u
         }
     }
+}
+
+/// The zero scalar annihilates every vector.
+theorem vector_space_smul_zero[F: Field, V: AddCommGroup](m: Module[F, V], v: V) {
+    m.smul(F.0, v) = V.0
+} by {
+    module_smul_zero_left(m, v)
+}
+
+/// The identity scalar acts as the identity on every vector.
+theorem vector_space_smul_one[F: Field, V: AddCommGroup](m: Module[F, V], v: V) {
+    m.smul(F.1, v) = v
+} by {
+    module_smul_one(m, v)
+}
+
+/// Scaling by the additive inverse of one negates the vector.
+theorem vector_space_smul_neg_one[F: Field, V: AddCommGroup](m: Module[F, V], v: V) {
+    m.smul(-F.1, v) = -v
+} by {
+    module_smul_neg_left(m, F.1, v)
+    m.smul(-F.1, v) = -m.smul(F.1, v)
+    module_smul_one(m, v)
+    m.smul(F.1, v) = v
+    -m.smul(F.1, v) = -v
+    m.smul(-F.1, v) = -v
+}
+
+/// A nonempty subset of a vector space closed under addition and scalar multiplication is a subspace.
+theorem vector_space_subspace_criterion[F: Field, V: AddCommGroup](
+    m: Module[F, V], contains: V -> Bool
+) {
+    (exists(x: V) { contains(x) })
+    and (forall(a: V, b: V) { contains(a) and contains(b) implies contains(a + b) })
+    and (forall(r: F, a: V) { contains(a) implies contains(m.smul(r, a)) })
+    implies is_submodule(m, contains)
+} by {
+    if exists(x: V) { contains(x) }
+        and (forall(a: V, b: V) { contains(a) and contains(b) implies contains(a + b) })
+        and (forall(r: F, a: V) { contains(a) implies contains(m.smul(r, a)) }) {
+        let x0: V satisfy {
+            contains(x0)
+        }
+        // The subset contains the zero vector, since 0·x0 = 0.
+        submodule_smul_constraint(m, contains) = forall(q: F, y: V) {
+            contains(y) implies contains(m.smul(q, y))
+        }
+        contains(m.smul(F.0, x0))
+        module_smul_zero_left(m, x0)
+        m.smul(F.0, x0) = V.0
+        contains(V.0)
+        submodule_zero_constraint(m, contains) = contains(V.0)
+        submodule_zero_constraint(m, contains)
+
+        // The subset is closed under addition by hypothesis.
+        submodule_add_constraint(m, contains) = forall(a: V, b: V) {
+            contains(a) and contains(b) implies contains(a + b)
+        }
+        submodule_add_constraint(m, contains)
+
+        // The subset is closed under negation, since (-1)·a = -a.
+        forall(a: V) {
+            if contains(a) {
+                contains(m.smul(-F.1, a))
+                module_smul_neg_left(m, F.1, a)
+                m.smul(-F.1, a) = -m.smul(F.1, a)
+                module_smul_one(m, a)
+                m.smul(F.1, a) = a
+                -m.smul(F.1, a) = -a
+                m.smul(-F.1, a) = -a
+                contains(-a)
+            }
+        }
+        submodule_neg_constraint(m, contains) = forall(a: V) {
+            contains(a) implies contains(-a)
+        }
+        submodule_neg_constraint(m, contains)
+
+        // The subset is closed under scalar multiplication by hypothesis.
+        submodule_smul_constraint(m, contains)
+
+        is_submodule(m, contains) =
+            (submodule_zero_constraint(m, contains)
+             and submodule_add_constraint(m, contains)
+             and submodule_neg_constraint(m, contains)
+             and submodule_smul_constraint(m, contains))
+        is_submodule(m, contains)
+    }
+}
+
+/// The span of a set in a vector space is a subspace.
+theorem vector_space_span_is_subspace[F: Field, V: AddCommGroup](m: Module[F, V], a: Set[V]) {
+    is_submodule(m, submodule_closure(m, a).contains)
+} by {
+    submodule_closure_is_submodule(m, a)
+    is_submodule(m, submodule_closure_contains(m, a))
+    forall(x: V) {
+        submodule_closure_contains_eq(m, a, x)
+        submodule_closure(m, a).contains(x) = submodule_closure_contains(m, a, x)
+    }
+    predicate_extensionality(submodule_closure(m, a).contains, submodule_closure_contains(m, a))
+    submodule_closure(m, a).contains = submodule_closure_contains(m, a)
+    is_submodule(m, submodule_closure(m, a).contains)
+}
+
+/// True if the singleton {v} is linearly independent, i.e. no nonzero scalar annihilates v.
+define vector_space_singleton_independent[F: Field, V: AddCommGroup](
+    m: Module[F, V], v: V
+) -> Bool {
+    forall(r: F) {
+        m.smul(r, v) = V.0 implies r = F.0
+    }
+}
+
+/// A singleton {v} with v nonzero is linearly independent.
+theorem vector_space_singleton_independent_of_ne_zero[F: Field, V: AddCommGroup](
+    m: Module[F, V], v: V
+) {
+    v != V.0 implies vector_space_singleton_independent(m, v)
+} by {
+    if v != V.0 {
+        forall(r: F) {
+            if m.smul(r, v) = V.0 {
+                vector_space_smul_eq_zero(m, r, v)
+                r = F.0 or v = V.0
+                r = F.0
+            }
+        }
+        vector_space_singleton_independent(m, v) = forall(r: F) {
+            m.smul(r, v) = V.0 implies r = F.0
+        }
+        vector_space_singleton_independent(m, v)
+    }
+}
+
+/// A linearly independent singleton {v} has v nonzero.
+theorem vector_space_ne_zero_of_singleton_independent[F: Field, V: AddCommGroup](
+    m: Module[F, V], v: V
+) {
+    vector_space_singleton_independent(m, v) implies v != V.0
+} by {
+    if vector_space_singleton_independent(m, v) {
+        if v = V.0 {
+            m.smul(F.1, v) = m.smul(F.1, V.0)
+            module_smul_zero_right(m, F.1)
+            m.smul(F.1, V.0) = V.0
+            m.smul(F.1, v) = V.0
+            vector_space_singleton_independent(m, v) = forall(r: F) {
+                m.smul(r, v) = V.0 implies r = F.0
+            }
+            F.1 = F.0
+            F.zero_and_one_are_distinct
+            F.0 != F.1
+            false
+        }
+        v != V.0
+    }
+}
+
+/// A singleton {v} is linearly independent iff v is nonzero.
+theorem vector_space_singleton_independent_iff_ne_zero[F: Field, V: AddCommGroup](
+    m: Module[F, V], v: V
+) {
+    vector_space_singleton_independent(m, v) iff v != V.0
+} by {
+    if v != V.0 {
+        vector_space_singleton_independent_of_ne_zero(m, v)
+        vector_space_singleton_independent(m, v)
+    }
+    if vector_space_singleton_independent(m, v) {
+        vector_space_ne_zero_of_singleton_independent(m, v)
+        v != V.0
+    }
+    vector_space_singleton_independent(m, v) iff v != V.0
 }
