@@ -16,7 +16,7 @@ Try to be stylistically consistent with the rest of the codebase.
 
 ## Pull Requests
 
-Try to keep pull requests to below 2000 lines of Acorn code. This isn't a strict rule; pull requests over 2000 lines will be reviewed like any other, but they will require human signoff before merging.
+Try to keep pull requests to below 10000 lines of Acorn code. This isn't a strict rule; pull requests over 10000 lines will be reviewed like any other, but they will require human signoff before merging.
 
 Be sure that `acorn check --strict` works on your pull request.
 
