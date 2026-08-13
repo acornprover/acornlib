@@ -1,5 +1,6 @@
 from nat import Nat, strong_induction, true_below, true_below_apply, lt_and_lte,
-    lte_and_lt, lte_cancel_suc, lt_cancel_suc, lt_suc, lt_not_ref, lte_antisymm, lt_add_left, lt_trans
+    lte_and_lt, lte_cancel_suc, lt_cancel_suc, lt_suc, lt_not_ref, lte_antisymm, lt_add_left, lt_trans,
+    add_suc_left, trichotomy
 from data.fin.fin import Fin, fin_zero, fin_zero_new, fin_zero_value, fin_of_nat_suc,
     fin_of_nat_suc_new_of_lt, fin_last, fin_last_new, fin_last_value, fin_succ, fin_succ_value,
     ext
@@ -16,10 +17,11 @@ from data.fin.fin_sum import fin_sum
 from data.fin.fin_sum_enum import fin_sum_suc_eq_sum_fin_enum_suc
 from algebra.add_comm_monoid import AddCommMonoid
 from algebra.add_semigroup import add_fn
+from algebra.add_group import inverse_inverse
 from comm_ring import CommRing
 from list import List, map, sum, map_singleton, remove_one_cons_eq, remove_one_cons_neq,
     sum_map_of_pointwise, sum_map_remove_one, map_sum_add, unique_implies_tail_unique,
-    remove_one_unique, remove_one_unique_not_contains_self
+    remove_one_unique, remove_one_unique_not_contains_self, remove_one_contains_other
 from algebra.ring.ring import Ring, alternating_sign, alternating_sign_zero,
     alternating_sign_suc, alternating_sign_suc_mul, mul_neg_left, mul_neg_right, mul_neg_one_left,
     mul_neg_one_right
@@ -3031,16 +3033,20 @@ theorem remove_one_comm[T](list: List[T], x: T, y: T) {
     list.remove_one(x).remove_one(y) = list.remove_one(y).remove_one(x)
 }
 
-/// TODO(det_general) — row-swap negation (task 2).
+/// Row-swap negation (task 2) — DONE at the determinant-list level.
 ///
-/// The core general-n lemma is the adjacent-swap identity
+/// The general-n adjacent-swap identity is proved as
+/// `determinant_list_swap_first_two_rows`:
 ///
 ///     determinant_list(entry, List.cons(r2, List.cons(r1, rs)), cols) =
 ///         -(determinant_list(entry, List.cons(r1, List.cons(r2, rs)), cols))
 ///
-/// over a CommRing.  All the machinery for it is in place: expand both sides
-/// along their two head rows (determinant_list_cons_rows_term), giving double
-/// sums over ordered pairs (x, y) with x != y:
+/// over a CommRing, with the hypothesis `cols.is_unique`: the double sums range
+/// over the ordered pairs (x, y) with x != y, and the reindexing (x, y) -> (y, x)
+/// is a bijection on that pair set only when columns are unique — with duplicates
+/// the two double sums are not even indexed by the same pair set.  The proof expands both sides along their two head rows
+/// (`determinant_list_two_rows`), giving double sums over ordered pairs
+/// (x, y) with x != y:
 ///
 ///     LHS = sum_{x in cols} sum_{y in cols.remove_one(x)}
 ///             entry(r2,x)*alt(idx_cols(x))*entry(r1,y)*alt(idx_{rem x}(y)) * D(x,y)
@@ -3048,23 +3054,33 @@ theorem remove_one_comm[T](list: List[T], x: T, y: T) {
 ///             entry(r1,x)*alt(idx_cols(x))*entry(r2,y)*alt(idx_{rem x}(y)) * D(x,y)
 ///
 /// where D(x,y) = determinant_list(entry, rs, cols.remove_one(x).remove_one(y)).
-/// Reindexing the RHS by (x,y) -> (y,x) and pairing terms (the two index sets are
-/// the same ordered pairs), each pair cancels:
+/// The machinery, in order:
+///   * `sum_double_remove_flip` reindexes a double sum by (x, y) -> (y, x) over
+///     a unique list (the ordered pairs of distinct elements);
+///   * `det_swap_sign_pair` proves the sign bracket antisymmetry
+///     alt(a)*alt(b') = -(alt(b)*alt(a')) with a = idx_cols(x), b = idx_cols(y),
+///     b' = idx_{rem x}(y), a' = idx_{rem y}(x), by case-splitting on
+///     a < b (trichotomy) and using list_index_or_zero_remove_before/after,
+///     alternating_sign_suc and mul_neg_left (no alternating_sign_add needed);
+///   * `swap_term_pair_neg` pairs the summands: T(r2, r1)(x, y) = -T(r1, r2)(y, x),
+///     using det_swap_sign_pair, remove_one_comm (D(x,y) = D(y,x)) and CommRing
+///     commutation of the entries;
+///   * `sum_map_neg` pulls a negation out of a mapped sum.
 ///
-///     LHS(x,y) + RHS(y,x) = [entry(r2,x)*entry(r1,y)] *
-///         [alt(a)*alt(b') + alt(b)*alt(a')] * D(x,y)
+/// TODO(det_general): The matrix theorem `matrix_det_suc_swap_first_two_rows`
+/// (matrix_det_suc of matrix_swap_rows(0, 1) negates) needs the head structure of
+/// fin_enum_suc(n) = map(n.suc.range, fin_of_nat_suc(n)): with enum = cons(0,
+/// cons(1, rs)), the theorem applies with entry_S = the swapped matrix's entries,
+/// and det(entry_S, [1, 0, rs], cols) = det(entry_A, [0, 1, rs], cols) by
+/// comparing the two-row expansions pointwise via matrix_entry_swap_rows.  The
+/// missing piece is peeling `cons` heads off map(range, fin_of_nat_suc) (range is
+/// built by appending, so one needs range cons-structure lemmas).
 ///
-/// with a = idx_cols(x), b = idx_cols(y), b' = idx_{rem x}(y), a' = idx_{rem y}(x).
-/// The sign bracket vanishes by alternating_sign_suc_comm (b' = b - 1 when a < b
-/// and a' = a, and symmetrically), the entries commute (CommRing), and the two D
-/// factors agree by remove_one_comm.  The only missing piece is formalizing the
-/// reindexing of the double sum (a bijection on the ordered-pair index set); the
-/// current prover search cannot close such forall/renaming goals directly.
-///
-/// Once the adjacent swap is proved, general row swaps follow from an odd number
-/// of adjacent swaps, and the matrix theorem matrix_det_suc_swap_rows is obtained
-/// by expressing matrix_swap_rows entries as a row-list permutation of the
-/// enumeration and using determinant_list invariance under permuting the rows.
+/// TODO(det_general): Adjacent swaps deeper in the row list follow from this
+/// theorem by peeling the rows before the pair: after k head-row expansions the
+/// residual determinant is det(entry, cons(r_{k+1}, cons(r_k, rs')), cols') with
+/// cols' the column list minus the first k columns, and the same proof applies
+/// with (cols, rs) := (cols', rs').
 
 /// TODO(det_general) — multiplicativity det(AB) = det(A)*det(B) (task 3).
 ///
@@ -3095,3 +3111,812 @@ theorem remove_one_comm[T](list: List[T], x: T, y: T) {
 /// inverse adj(A)/det(A).  This depends on the full determinant theory above
 /// (transpose, row-swap, multiplicativity) and on the Laplace-expansion-equals-
 /// determinant lemma, so it is naturally last.
+
+/// Products of alternating signs add their indices.
+theorem alternating_sign_add[R: Ring](m: Nat, n: Nat) {
+    alternating_sign[R](m) * alternating_sign[R](n) = alternating_sign[R](m + n)
+} by {
+    define p(k: Nat) -> Bool {
+        alternating_sign[R](k) * alternating_sign[R](n) = alternating_sign[R](k + n)
+    }
+    alternating_sign_zero[R]
+    alternating_sign[R](Nat.0) = R.1
+    R.1 * alternating_sign[R](n) = alternating_sign[R](n)
+    alternating_sign[R](Nat.0 + n) = alternating_sign[R](n)
+    p(Nat.0)
+    forall(k: Nat) {
+        if p(k) {
+            alternating_sign_suc[R](k)
+            alternating_sign[R](k.suc) = -alternating_sign[R](k)
+            alternating_sign[R](k.suc) * alternating_sign[R](n) = (-alternating_sign[R](k)) * alternating_sign[R](n)
+            mul_neg_left[R](alternating_sign[R](k), alternating_sign[R](n))
+            (-alternating_sign[R](k)) * alternating_sign[R](n) = -(alternating_sign[R](k) * alternating_sign[R](n))
+            alternating_sign[R](k) * alternating_sign[R](n) = alternating_sign[R](k + n)
+            -(alternating_sign[R](k) * alternating_sign[R](n)) = -(alternating_sign[R](k + n))
+            add_suc_left(k, n)
+            k.suc + n = (k + n).suc
+            alternating_sign_suc[R](k + n)
+            alternating_sign[R]((k + n).suc) = -alternating_sign[R](k + n)
+            alternating_sign[R](k.suc + n) = -alternating_sign[R](k + n)
+            alternating_sign[R](k.suc) * alternating_sign[R](n) = alternating_sign[R](k.suc + n)
+            p(k.suc)
+        }
+    }
+    p(Nat.0) and forall(k: Nat) { p(k) implies p(k.suc) }
+    Nat.induction(p)
+    p(m)
+    alternating_sign[R](m) * alternating_sign[R](n) = alternating_sign[R](m + n)
+}
+
+/// Swapping the roles of the two indices in a double sum over pairs of distinct
+/// elements of a unique list.
+theorem sum_double_remove_flip[T, R: Ring](cols: List[T], f: T -> T -> R) {
+    cols.is_unique implies
+    (sum[R](map[T, R](cols, function(x: T) {
+        sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(x, y) }))
+    })) = sum[R](map[T, R](cols, function(x: T) {
+        sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(y, x) }))
+    })))
+} by {
+    define p(l: List[T]) -> Bool {
+        l.is_unique implies
+        (sum[R](map[T, R](l, function(x: T) {
+            sum[R](map[T, R](l.remove_one(x), function(y: T) { f(x, y) }))
+        })) = sum[R](map[T, R](l, function(x: T) {
+            sum[R](map[T, R](l.remove_one(x), function(y: T) { f(y, x) }))
+        })))
+    }
+    map[T, R](List.nil[T], function(x: T) {
+        sum[R](map[T, R](List.nil[T].remove_one(x), function(y: T) { f(x, y) }))
+    }) = List.nil[R]
+    map[T, R](List.nil[T], function(x: T) {
+        sum[R](map[T, R](List.nil[T].remove_one(x), function(y: T) { f(y, x) }))
+    }) = List.nil[R]
+    sum[R](List.nil[R]) = R.0
+    p(List.nil[T])
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            p(tail) = (tail.is_unique implies (sum[R](map[T, R](tail, function(x: T) {
+                sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+            })) = sum[R](map[T, R](tail, function(x: T) {
+                sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+            }))))
+            if List.cons(head, tail).is_unique {
+                unique_cons_not_contains_head[T](head, tail)
+                not tail.contains(head)
+                unique_implies_tail_unique[T](head, tail)
+                List.cons(head, tail).is_unique implies tail.is_unique
+                tail.is_unique
+                // LHS: peel x = head
+                sum_map_remove_one[T, R](List.cons(head, tail), head, function(x: T) {
+                    sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                })
+                List.cons(head, tail).contains(head)
+                sum[R](map[T, R](List.cons(head, tail).remove_one(head), function(y: T) { f(head, y) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                    })) = sum[R](map[T, R](List.cons(head, tail), function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                    }))
+                remove_one_cons_eq(head, tail)
+                List.cons(head, tail).remove_one(head) = tail
+                sum[R](map[T, R](tail, function(y: T) { f(head, y) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                    })) = sum[R](map[T, R](List.cons(head, tail), function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                    }))
+                // for x in tail: remove_one(x) of cons(head, tail) = cons(head, tail.remove_one(x)), and peel y = head
+                forall(x: T) {
+                    if tail.contains(x) {
+                        if x = head {
+                            tail.contains(x) = tail.contains(head)
+                            not tail.contains(head)
+                            tail.contains(head) = false
+                            tail.contains(x) = false
+                            false
+                        }
+                        x != head
+                        remove_one_cons_neq[T](head, tail, x)
+                        List.cons(head, tail).remove_one(x) = List.cons(head, tail.remove_one(x))
+                        sum_map_remove_one[T, R](List.cons(head, tail.remove_one(x)), head, function(y: T) { f(x, y) })
+                        List.cons(head, tail.remove_one(x)).contains(head)
+                        f(x, head) + sum[R](map[T, R](List.cons(head, tail.remove_one(x)).remove_one(head), function(y: T) { f(x, y) })) =
+                            sum[R](map[T, R](List.cons(head, tail.remove_one(x)), function(y: T) { f(x, y) }))
+                        remove_one_cons_eq(head, tail.remove_one(x))
+                        List.cons(head, tail.remove_one(x)).remove_one(head) = tail.remove_one(x)
+                        f(x, head) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) })) =
+                            sum[R](map[T, R](List.cons(head, tail.remove_one(x)), function(y: T) { f(x, y) }))
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) })) =
+                            f(x, head) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                    }
+                }
+                sum_map_of_pointwise[T, R](tail, function(x: T) {
+                    sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                }, function(x: T) {
+                    f(x, head) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                })
+                sum[R](map[T, R](tail, function(x: T) {
+                    sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                })) = sum[R](map[T, R](tail, function(x: T) {
+                    f(x, head) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                }))
+                sum_map_add_fn[T, R](tail, function(x: T) { f(x, head) }, function(x: T) {
+                    sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                })
+                sum[R](map[T, R](tail, function(x: T) {
+                    f(x, head) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                })) = sum[R](map[T, R](tail, function(x: T) { f(x, head) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                    }))
+                sum[R](map[T, R](tail, function(x: T) {
+                    sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                })) = sum[R](map[T, R](tail, function(x: T) { f(x, head) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                    }))
+                // LHS assembled
+                sum[R](map[T, R](tail, function(y: T) { f(head, y) })) +
+                    sum[R](map[T, R](tail, function(x: T) { f(x, head) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                    })) = sum[R](map[T, R](List.cons(head, tail), function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(x, y) }))
+                    }))
+                // RHS: peel x = head
+                sum_map_remove_one[T, R](List.cons(head, tail), head, function(x: T) {
+                    sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                })
+                List.cons(head, tail).contains(head)
+                sum[R](map[T, R](List.cons(head, tail).remove_one(head), function(y: T) { f(y, head) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                    })) = sum[R](map[T, R](List.cons(head, tail), function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                    }))
+                remove_one_cons_eq(head, tail)
+                List.cons(head, tail).remove_one(head) = tail
+                sum[R](map[T, R](tail, function(y: T) { f(y, head) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                    })) = sum[R](map[T, R](List.cons(head, tail), function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                    }))
+                // for x in tail: peel y = head on the RHS side
+                forall(x: T) {
+                    if tail.contains(x) {
+                        if x = head {
+                            tail.contains(x) = tail.contains(head)
+                            not tail.contains(head)
+                            tail.contains(head) = false
+                            tail.contains(x) = false
+                            false
+                        }
+                        x != head
+                        remove_one_cons_neq[T](head, tail, x)
+                        List.cons(head, tail).remove_one(x) = List.cons(head, tail.remove_one(x))
+                        sum_map_remove_one[T, R](List.cons(head, tail.remove_one(x)), head, function(y: T) { f(y, x) })
+                        List.cons(head, tail.remove_one(x)).contains(head)
+                        f(head, x) + sum[R](map[T, R](List.cons(head, tail.remove_one(x)).remove_one(head), function(y: T) { f(y, x) })) =
+                            sum[R](map[T, R](List.cons(head, tail.remove_one(x)), function(y: T) { f(y, x) }))
+                        remove_one_cons_eq(head, tail.remove_one(x))
+                        List.cons(head, tail.remove_one(x)).remove_one(head) = tail.remove_one(x)
+                        f(head, x) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) })) =
+                            sum[R](map[T, R](List.cons(head, tail.remove_one(x)), function(y: T) { f(y, x) }))
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) })) =
+                            f(head, x) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                    }
+                }
+                sum_map_of_pointwise[T, R](tail, function(x: T) {
+                    sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                }, function(x: T) {
+                    f(head, x) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                })
+                sum[R](map[T, R](tail, function(x: T) {
+                    sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                })) = sum[R](map[T, R](tail, function(x: T) {
+                    f(head, x) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                }))
+                sum_map_add_fn[T, R](tail, function(x: T) { f(head, x) }, function(x: T) {
+                    sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                })
+                sum[R](map[T, R](tail, function(x: T) {
+                    f(head, x) + sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                })) = sum[R](map[T, R](tail, function(x: T) { f(head, x) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                    }))
+                sum[R](map[T, R](tail, function(x: T) {
+                    sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                })) = sum[R](map[T, R](tail, function(x: T) { f(head, x) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                    }))
+                // RHS assembled
+                sum[R](map[T, R](tail, function(y: T) { f(y, head) })) +
+                    sum[R](map[T, R](tail, function(x: T) { f(head, x) })) +
+                    sum[R](map[T, R](tail, function(x: T) {
+                        sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                    })) = sum[R](map[T, R](List.cons(head, tail), function(x: T) {
+                        sum[R](map[T, R](List.cons(head, tail).remove_one(x), function(y: T) { f(y, x) }))
+                    }))
+                // renames and IH
+                sum[R](map[T, R](tail, function(y: T) { f(head, y) })) =
+                    sum[R](map[T, R](tail, function(x: T) { f(head, x) }))
+                sum[R](map[T, R](tail, function(x: T) { f(x, head) })) =
+                    sum[R](map[T, R](tail, function(y: T) { f(y, head) }))
+                p(tail)
+                tail.is_unique
+                sum[R](map[T, R](tail, function(x: T) {
+                    sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(x, y) }))
+                })) = sum[R](map[T, R](tail, function(x: T) {
+                    sum[R](map[T, R](tail.remove_one(x), function(y: T) { f(y, x) }))
+                }))
+                p(List.cons(head, tail))
+            }
+        }
+    }
+    p(List.nil[T]) and forall(head: T, tail: List[T]) { p(tail) implies p(List.cons(head, tail)) }
+    List.induction(p)
+    forall(l: List[T]) { p(l) }
+    p(cols)
+    p(cols) = (cols.is_unique implies (sum[R](map[T, R](cols, function(x: T) {
+        sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(x, y) }))
+    })) = sum[R](map[T, R](cols, function(x: T) {
+        sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(y, x) }))
+    }))))
+    if cols.is_unique {
+        sum[R](map[T, R](cols, function(x: T) {
+            sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(x, y) }))
+        })) = sum[R](map[T, R](cols, function(x: T) {
+            sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(y, x) }))
+        }))
+    }
+}
+
+/// A mapped sum of negations is the negation of the mapped sum.
+theorem sum_map_neg[T, R: Ring](items: List[T], f: T -> R) {
+    sum[R](map[T, R](items, function(x: T) { -(f(x)) })) = -(sum[R](map[T, R](items, f)))
+} by {
+    sum_map_scalar_mul[T, R](items, -R.1, f)
+    (-R.1) * sum[R](map[T, R](items, f)) = sum[R](map[T, R](items, function(x: T) { (-R.1) * f(x) }))
+    mul_neg_one_left[R](sum[R](map[T, R](items, f)))
+    (-R.1) * sum[R](map[T, R](items, f)) = -(sum[R](map[T, R](items, f)))
+    forall(x: T) {
+        if items.contains(x) {
+            mul_neg_one_left[R](f(x))
+            (-R.1) * f(x) = -(f(x))
+            -(f(x)) = (-R.1) * f(x)
+        }
+    }
+    sum_map_of_pointwise[T, R](items, function(x: T) { (-R.1) * f(x) }, function(x: T) { -(f(x)) })
+    sum[R](map[T, R](items, function(x: T) { (-R.1) * f(x) })) = sum[R](map[T, R](items, function(x: T) { -(f(x)) }))
+    (-R.1) * sum[R](map[T, R](items, f)) = sum[R](map[T, R](items, function(x: T) { -(f(x)) }))
+    -(sum[R](map[T, R](items, f))) = sum[R](map[T, R](items, function(x: T) { -(f(x)) }))
+    sum[R](map[T, R](items, function(x: T) { -(f(x)) })) = -(sum[R](map[T, R](items, f)))
+}
+
+/// The signs of the two summands paired by a row swap are negatives of each
+/// other: for distinct columns x, y of a unique column list,
+/// alt(idx(x)) * alt(idx_{rem x}(y)) = -(alt(idx(y)) * alt(idx_{rem y}(x))).
+theorem det_swap_sign_pair[R: Ring, I](cols: List[I], x: I, y: I) {
+    cols.is_unique and cols.contains(x) and cols.contains(y) and x != y implies
+    alternating_sign[R](list_index_or_zero[I](cols, x)) *
+        alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+    -(alternating_sign[R](list_index_or_zero[I](cols, y)) *
+        alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))
+} by {
+    if cols.is_unique and cols.contains(x) and cols.contains(y) and x != y {
+        trichotomy(list_index_or_zero[I](cols, x), list_index_or_zero[I](cols, y))
+        // case 1: idx(x) < idx(y): removing x shifts y down, removing y leaves x fixed
+        if list_index_or_zero[I](cols, x) < list_index_or_zero[I](cols, y) {
+            list_index_or_zero_remove_before[I](cols, x, y)
+            list_index_or_zero[I](cols.remove_one(x), y).suc = list_index_or_zero[I](cols, y)
+            list_index_or_zero_remove_after[I](cols, y, x)
+            list_index_or_zero[I](cols.remove_one(y), x) = list_index_or_zero[I](cols, x)
+            // LHS sign = alt(a) * alt(b') = alt(b') * alt(a)
+            alternating_sign_mul_comm[R](list_index_or_zero[I](cols, x), list_index_or_zero[I](cols.remove_one(x), y))
+            alternating_sign[R](list_index_or_zero[I](cols, x)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) * alternating_sign[R](list_index_or_zero[I](cols, x))
+            // RHS sign = alt(b) * alt(a) = alt(b'.suc) * alt(a) = (-alt(b')) * alt(a) = -(alt(b') * alt(a))
+            alternating_sign_suc[R](list_index_or_zero[I](cols.remove_one(x), y))
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y).suc) = -alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y))
+            alternating_sign[R](list_index_or_zero[I](cols, y)) = -alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y))
+            alternating_sign[R](list_index_or_zero[I](cols, y)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) =
+                (-alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y))) * alternating_sign[R](list_index_or_zero[I](cols, x))
+            mul_neg_left[R](alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)), alternating_sign[R](list_index_or_zero[I](cols, x)))
+            (-alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y))) * alternating_sign[R](list_index_or_zero[I](cols, x)) =
+                -(alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) * alternating_sign[R](list_index_or_zero[I](cols, x)))
+            alternating_sign[R](list_index_or_zero[I](cols, y)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) =
+                -(alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) * alternating_sign[R](list_index_or_zero[I](cols, x)))
+            // -(RHS sign) = -(alt(b') * alt(a)) = alt(b') * alt(a) [inverse_inverse]
+            inverse_inverse[R](alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) * alternating_sign[R](list_index_or_zero[I](cols, x)))
+            -(-(alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) * alternating_sign[R](list_index_or_zero[I](cols, x)))) =
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) * alternating_sign[R](list_index_or_zero[I](cols, x))
+            -(alternating_sign[R](list_index_or_zero[I](cols, y)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) =
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) * alternating_sign[R](list_index_or_zero[I](cols, x))
+            alternating_sign[R](list_index_or_zero[I](cols, x)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+                -(alternating_sign[R](list_index_or_zero[I](cols, y)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))
+        }
+        // case 2: idx(y) < idx(x): removing y shifts x down, removing x leaves y fixed
+        if list_index_or_zero[I](cols, y) < list_index_or_zero[I](cols, x) {
+            list_index_or_zero_remove_before[I](cols, y, x)
+            list_index_or_zero[I](cols.remove_one(y), x).suc = list_index_or_zero[I](cols, x)
+            list_index_or_zero_remove_after[I](cols, x, y)
+            list_index_or_zero[I](cols.remove_one(x), y) = list_index_or_zero[I](cols, y)
+            // RHS sign = alt(b) * alt(a') = alt(a') * alt(b)
+            alternating_sign_mul_comm[R](list_index_or_zero[I](cols, y), list_index_or_zero[I](cols.remove_one(y), x))
+            alternating_sign[R](list_index_or_zero[I](cols, y)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) =
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) * alternating_sign[R](list_index_or_zero[I](cols, y))
+            // LHS sign = alt(a) * alt(b) = alt(a'.suc) * alt(b) = (-alt(a')) * alt(b) = -(alt(a') * alt(b))
+            alternating_sign_suc[R](list_index_or_zero[I](cols.remove_one(y), x))
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x).suc) = -alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))
+            alternating_sign[R](list_index_or_zero[I](cols, x)) = -alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))
+            alternating_sign[R](list_index_or_zero[I](cols, x)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+                (-alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) * alternating_sign[R](list_index_or_zero[I](cols, y))
+            mul_neg_left[R](alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)), alternating_sign[R](list_index_or_zero[I](cols, y)))
+            (-alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) * alternating_sign[R](list_index_or_zero[I](cols, y)) =
+                -(alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) * alternating_sign[R](list_index_or_zero[I](cols, y)))
+            alternating_sign[R](list_index_or_zero[I](cols, x)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+                -(alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) * alternating_sign[R](list_index_or_zero[I](cols, y)))
+            // -(RHS sign) = -(alt(b) * alt(a')) = -(alt(a') * alt(b)) = LHS sign
+            -(alternating_sign[R](list_index_or_zero[I](cols, y)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) =
+                -(alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) * alternating_sign[R](list_index_or_zero[I](cols, y)))
+            alternating_sign[R](list_index_or_zero[I](cols, x)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+                -(alternating_sign[R](list_index_or_zero[I](cols, y)) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))
+        }
+        // case 3: idx(x) = idx(y) contradicts injectivity on a unique list
+        if list_index_or_zero[I](cols, x) = list_index_or_zero[I](cols, y) {
+            list_index_or_zero_injective_unique[I](cols, x, y)
+            x = y
+            x != y
+            false
+        }
+        alternating_sign[R](list_index_or_zero[I](cols, x)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+        -(alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))
+    }
+}
+
+/// One summand of the two-row determinant expansion: the product of the two
+/// head-row entries with their column signs and the remaining determinant.
+define det_two_row_term[R: Ring, I](entry: (I, I) -> R, r1: I, r2: I, rs: List[I], cols: List[I], x: I, y: I) -> R {
+    entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+        entry(r2, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+        determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))
+}
+
+/// The determinant of a matrix with two head rows expands as a double sum over
+/// pairs of distinct columns.
+theorem determinant_list_two_rows[R: Ring, I](entry: (I, I) -> R, r1: I, r2: I, rs: List[I], cols: List[I]) {
+    determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols) =
+        sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+            }))
+        }))
+} by {
+    determinant_list_cons_rows_term[R, I](entry, r1, List.cons(r2, rs), cols)
+    determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols) =
+        sum[R](map[I, R](cols, det_row_sum_term[R, I](entry, r1, List.cons(r2, rs), cols)))
+    forall(x: I) {
+        if cols.contains(x) {
+            det_row_sum_term[R, I](entry, r1, List.cons(r2, rs), cols, x) =
+                entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                    determinant_list[R, I](entry, List.cons(r2, rs), cols.remove_one(x))
+            determinant_list_cons_rows_term[R, I](entry, r2, rs, cols.remove_one(x))
+            determinant_list[R, I](entry, List.cons(r2, rs), cols.remove_one(x)) =
+                sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x))))
+            det_row_sum_term[R, I](entry, r1, List.cons(r2, rs), cols, x) =
+                entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                    sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x))))
+        }
+    }
+    sum_map_of_pointwise[I, R](cols, det_row_sum_term[R, I](entry, r1, List.cons(r2, rs), cols),
+        function(x: I) {
+            entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x))))
+        })
+    sum[R](map[I, R](cols, det_row_sum_term[R, I](entry, r1, List.cons(r2, rs), cols))) =
+        sum[R](map[I, R](cols, function(x: I) {
+            entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x))))
+        }))
+    determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols) =
+        sum[R](map[I, R](cols, function(x: I) {
+            entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x))))
+        }))
+    forall(x: I) {
+        if cols.contains(x) {
+            sum_map_scalar_mul[I, R](cols.remove_one(x),
+                entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)),
+                det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x)))
+            (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x)))) =
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                        det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+                }))
+            entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x)))) =
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                        det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+                }))
+        }
+    }
+    sum_map_of_pointwise[I, R](cols, function(x: I) {
+        entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+            sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x))))
+    }, function(x: I) {
+        sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+            (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+        }))
+    })
+    sum[R](map[I, R](cols, function(x: I) {
+        entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+            sum[R](map[I, R](cols.remove_one(x), det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x))))
+    })) = sum[R](map[I, R](cols, function(x: I) {
+        sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+            (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+        }))
+    }))
+    determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols) =
+        sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                    det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+            }))
+        }))
+    forall(x: I) {
+        if cols.contains(x) {
+            forall(y: I) {
+                if cols.remove_one(x).contains(y) {
+                    det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y) =
+                        entry(r2, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+                            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))
+                    (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                        det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y) =
+                        (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                            (entry(r2, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+                                determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)))
+                    (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                        (entry(r2, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+                            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))) =
+                        entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                            entry(r2, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+                            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))
+                    det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y) =
+                        entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                            entry(r2, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+                            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))
+                    (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                        det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y) =
+                        det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+                }
+            }
+            sum_map_of_pointwise[I, R](cols.remove_one(x), function(y: I) {
+                (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                    det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+            }, function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+            })
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                    det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+            })) = sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+            }))
+        }
+    }
+    sum_map_of_pointwise[I, R](cols, function(x: I) {
+        sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+            (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+        }))
+    }, function(x: I) {
+        sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+            det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+        }))
+    })
+    sum[R](map[I, R](cols, function(x: I) {
+        sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+            (entry(r1, x) * alternating_sign[R](list_index_or_zero[I](cols, x))) *
+                det_row_sum_term[R, I](entry, r2, rs, cols.remove_one(x), y)
+        }))
+    })) = sum[R](map[I, R](cols, function(x: I) {
+        sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+            det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+        }))
+    }))
+    determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols) =
+        sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+            }))
+        }))
+}
+
+/// The two-row summands paired by a row swap are negatives of each other:
+/// T(r2, r1)(x, y) = -T(r1, r2)(y, x) for distinct columns x, y.
+theorem swap_term_pair_neg[R: CommRing, I](entry: (I, I) -> R, r1: I, r2: I, rs: List[I], cols: List[I], x: I, y: I) {
+    cols.is_unique and cols.contains(x) and cols.remove_one(x).contains(y) implies
+    det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y) =
+        -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+} by {
+    if cols.is_unique and cols.contains(x) and cols.remove_one(x).contains(y) {
+        // x != y from uniqueness of cols
+        if y = x {
+            cols.remove_one(x).contains(y) = cols.remove_one(x).contains(x)
+            remove_one_unique_not_contains_self[I](cols, x)
+            not cols.remove_one(x).contains(x)
+            cols.remove_one(x).contains(x) = false
+            cols.remove_one(x).contains(y) = false
+            false
+        }
+        x != y
+        // y occurs in cols
+        remove_one_contains_other[I](cols, x, y)
+        cols.contains(y) = cols.remove_one(x).contains(y)
+        cols.contains(y)
+        // sign pairing
+        det_swap_sign_pair[R, I](cols, x, y)
+        alternating_sign[R](list_index_or_zero[I](cols, x)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+            -(alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))
+        // remaining determinant symmetric
+        remove_one_comm[I](cols, x, y)
+        cols.remove_one(x).remove_one(y) = cols.remove_one(y).remove_one(x)
+        determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)) =
+            determinant_list[R, I](entry, rs, cols.remove_one(y).remove_one(x))
+        // unfold the two terms
+        det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y) =
+            entry(r2, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                entry(r1, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+                determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))
+        det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x) =
+            entry(r1, y) * alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                entry(r2, x) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) *
+                determinant_list[R, I](entry, rs, cols.remove_one(y).remove_one(x))
+        // combine: gather the signs, pull out the minus, commute the entries
+        entry(r2, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+            entry(r1, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)) =
+            entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, x)) *
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y))) *
+                entry(r1, y) * determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))
+        entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, x)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y))) *
+            entry(r1, y) * determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)) =
+            entry(r2, x) * (-(alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))) *
+                entry(r1, y) * determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))
+        // pull the minus out of the product chain one factor at a time
+        mul_neg_right[R](entry(r2, x), alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))
+        entry(r2, x) * (-(alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))) =
+            -(entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))))
+        mul_neg_left[R](entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))), entry(r1, y))
+        (-(entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))))) * entry(r1, y) =
+            -(entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) * entry(r1, y))
+        mul_neg_left[R](entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) * entry(r1, y),
+            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)))
+        (-(entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) * entry(r1, y))) *
+            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)) =
+            -(entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) * entry(r1, y) *
+                determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)))
+        entry(r2, x) * (-(alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))) *
+            entry(r1, y) * determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)) =
+            -(entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) *
+                entry(r1, y) * determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)))
+        -(entry(r2, x) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) *
+            entry(r1, y) * determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))) =
+            -(entry(r1, y) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) *
+                entry(r2, x) * determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)))
+        -(entry(r1, y) * (alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x))) *
+            entry(r2, x) * determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))) =
+            -(entry(r1, y) * alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                entry(r2, x) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) *
+                determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)))
+        -(entry(r1, y) * alternating_sign[R](list_index_or_zero[I](cols, y)) *
+            entry(r2, x) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) *
+            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y))) =
+            -(entry(r1, y) * alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                entry(r2, x) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) *
+                determinant_list[R, I](entry, rs, cols.remove_one(y).remove_one(x)))
+        entry(r2, x) * alternating_sign[R](list_index_or_zero[I](cols, x)) *
+            entry(r1, y) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) *
+            determinant_list[R, I](entry, rs, cols.remove_one(x).remove_one(y)) =
+            -(entry(r1, y) * alternating_sign[R](list_index_or_zero[I](cols, y)) *
+                entry(r2, x) * alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)) *
+                determinant_list[R, I](entry, rs, cols.remove_one(y).remove_one(x)))
+        det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y) =
+            -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+    }
+}
+
+/// Swapping the first two rows negates the determinant.
+theorem determinant_list_swap_first_two_rows[R: CommRing, I](entry: (I, I) -> R, r1: I, r2: I, rs: List[I], cols: List[I]) {
+    cols.is_unique implies
+    determinant_list[R, I](entry, List.cons(r2, List.cons(r1, rs)), cols) =
+        -(determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols))
+} by {
+    if cols.is_unique {
+        // LHS expansion along the two head rows
+        determinant_list_two_rows[R, I](entry, r2, r1, rs, cols)
+        determinant_list[R, I](entry, List.cons(r2, List.cons(r1, rs)), cols) =
+            sum[R](map[I, R](cols, function(x: I) {
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y)
+                }))
+            }))
+        // RHS expansion along the two head rows
+        determinant_list_two_rows[R, I](entry, r1, r2, rs, cols)
+        determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols) =
+            sum[R](map[I, R](cols, function(x: I) {
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+                }))
+            }))
+        // pair the LHS summand at (x, y) with the RHS summand at (y, x)
+        forall(x: I) {
+            if cols.contains(x) {
+                forall(y: I) {
+                    if cols.remove_one(x).contains(y) {
+                        swap_term_pair_neg[R, I](entry, r1, r2, rs, cols, x, y)
+                        det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y) =
+                            -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+                    }
+                }
+                sum_map_of_pointwise[I, R](cols.remove_one(x),
+                    function(y: I) { det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y) },
+                    function(y: I) { -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)) })
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y)
+                })) = sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+                }))
+            }
+        }
+        sum_map_of_pointwise[I, R](cols,
+            function(x: I) {
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y)
+                }))
+            },
+            function(x: I) {
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+                }))
+            })
+        sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y)
+            }))
+        })) = sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+            }))
+        }))
+        determinant_list[R, I](entry, List.cons(r2, List.cons(r1, rs)), cols) =
+            sum[R](map[I, R](cols, function(x: I) {
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+                }))
+            }))
+        // pull the negation out of the inner sums
+        forall(x: I) {
+            if cols.contains(x) {
+                sum_map_neg[I, R](cols.remove_one(x),
+                    function(y: I) { det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x) })
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+                })) = -(sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+                })))
+            }
+        }
+        sum_map_of_pointwise[I, R](cols,
+            function(x: I) {
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+                }))
+            },
+            function(x: I) {
+                -(sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+                })))
+            })
+        sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+            }))
+        })) = sum[R](map[I, R](cols, function(x: I) {
+            -(sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+            })))
+        }))
+        determinant_list[R, I](entry, List.cons(r2, List.cons(r1, rs)), cols) =
+            sum[R](map[I, R](cols, function(x: I) {
+                -(sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+                })))
+            }))
+        // pull the negation out of the outer sum
+        sum_map_neg[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+            }))
+        })
+        sum[R](map[I, R](cols, function(x: I) {
+            -(sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+            })))
+        })) = -(sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+            }))
+        })))
+        determinant_list[R, I](entry, List.cons(r2, List.cons(r1, rs)), cols) =
+            -(sum[R](map[I, R](cols, function(x: I) {
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+                }))
+            })))
+        // reindex the double sum: (x, y) -> (y, x)
+        sum_double_remove_flip[I, R](cols, function(x: I, y: I) {
+            det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+        })
+        sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+            }))
+        })) = sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+            }))
+        }))
+        sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x)
+            }))
+        })) = sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+            }))
+        }))
+        determinant_list[R, I](entry, List.cons(r2, List.cons(r1, rs)), cols) =
+            -(sum[R](map[I, R](cols, function(x: I) {
+                sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                    det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+                }))
+            })))
+        // the inner double sum is the RHS determinant
+        -(sum[R](map[I, R](cols, function(x: I) {
+            sum[R](map[I, R](cols.remove_one(x), function(y: I) {
+                det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
+            }))
+        }))) = -(determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols))
+        determinant_list[R, I](entry, List.cons(r2, List.cons(r1, rs)), cols) =
+            -(determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols))
+    }
+}
