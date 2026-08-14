@@ -26,20 +26,24 @@
 ///
 /// The `quaternion_unit_distance` predicate is the unit-distance graph of
 /// the four-dimensional integer lattice inside the quaternions.
-from real import Real
-from nat import Nat
+from real import Real, from_nat_real_pos_of_ne_zero
+from nat import Nat, from_nat, from_nat_one, from_nat_zero
 from pair import Pair, pair_new_first, pair_new_second, pair_ext
 from finite_set import FiniteSet, fs_image, finite_set_image_contains_eq, finite_set_ext_contains,
     finite_set_image_cardinality_is_of_injective
 from data.basic.functions import is_injective_fn
 from data.finite.finite_set_card import fs_card, fs_card_eq_of_cardinality_is, fs_card_cardinality_is
-from data.finite.finite_set_filter import finite_set_filter, finite_set_filter_contains_eq
+from data.finite.finite_set_filter import finite_set_filter, finite_set_filter_contains_eq,
+    finite_set_filter_subset
 from data.finite.finite_set_product import finite_set_product, finite_set_product_contains_eq,
     finite_set_product_contains_pair
-from complex.complex import Complex, distrib, abs_squared_conj, conj_conj, re_mul, im_mul,
-    mul_comm, mul_assoc, mul_from_real, real_add_lifts
-from algebra.add_group import inverse_inverse, inverse_add
+from data.finite.finite_set_card_compare import fs_card_mono
+from data.finite.finite_set_product_card import fs_card_product
+from complex.complex import Complex, distrib, abs_squared_conj, abs_squared_neg, conj_conj,
+    re_mul, im_mul, mul_comm, mul_assoc, mul_from_real, real_add_lifts, add_comm
+from algebra.add_group import inverse_inverse, inverse_add, left_cancel, inverse_left
 from algebra.ring.ring import mul_neg_left, mul_neg_right
+from order import lt_not_ref, lte_trans_eq
 from comm_ring import CommRing
 from number_theory.four_squares_identity import norm2, qmul_z, qmul_w, norm2_mul, conj_neg2,
     conj_mul2, swap_pair, absorb_pair
@@ -1105,4 +1109,360 @@ theorem nu_empty {
     nu(FiniteSet.empty[Quat]) = Nat.0.div(Nat.2)
     Nat.0.div(Nat.2) = Nat.0
     nu(FiniteSet.empty[Quat]) = Nat.0
+}
+
+// ============================================================================
+// Vector addition and the counting structure of nu
+// ============================================================================
+//
+// The counting mechanism of the 2026 disproof turns many unit-norm vectors
+// into many unit distances: if every point of a window has all of its
+// translates by a set `u` of unit vectors inside the point set, then the
+// set carries `|u|` unit distances per window point.  For that one needs
+// vector addition on quaternions (`quat_add`) and the fact that a unit
+// translate keeps the squared distance equal to the norm of the vector
+// (`quat_dist_sq_add_right`).  The section then records the structural
+// facts of the count `nu`: unit distance is symmetric
+// (`quat_unit_dist_comm`), no point is at unit distance from itself, so the
+// ordered unit pairs come in swapped pairs (`oup_swap_member`,
+// `oup_no_self_member`), and the ordered unit pairs are a subset of all
+// ordered pairs (`oup_card_at_most_sq`).
+
+/// The sum of two quaternions (vector addition in R⁴).
+define quat_add(x: Quat, y: Quat) -> Quat {
+    Quat.new(x.first + y.first, x.second + y.second)
+}
+
+/// Adding the same quaternion to both sides cancels on the left.
+theorem quat_add_left_cancel(a: Quat, w: Quat, v: Quat) {
+    quat_add(a, w) = quat_add(a, v) implies w = v
+} by {
+    if quat_add(a, w) = quat_add(a, v) {
+        quat_add(a, w) = Quat.new(a.first + w.first, a.second + w.second)
+        quat_add(a, v) = Quat.new(a.first + v.first, a.second + v.second)
+        Quat.new(a.first + w.first, a.second + w.second) =
+            Quat.new(a.first + v.first, a.second + v.second)
+        pair_new_first(a.first + w.first, a.second + w.second)
+        Quat.new(a.first + w.first, a.second + w.second).first = a.first + w.first
+        pair_new_first(a.first + v.first, a.second + v.second)
+        Quat.new(a.first + v.first, a.second + v.second).first = a.first + v.first
+        a.first + w.first = a.first + v.first
+        left_cancel(a.first, w.first, v.first)
+        w.first = v.first
+        pair_new_second(a.first + w.first, a.second + w.second)
+        Quat.new(a.first + w.first, a.second + w.second).second = a.second + w.second
+        pair_new_second(a.first + v.first, a.second + v.second)
+        Quat.new(a.first + v.first, a.second + v.second).second = a.second + v.second
+        Quat.new(a.first + w.first, a.second + w.second) =
+            Quat.new(a.first + v.first, a.second + v.second)
+        a.second + w.second = a.second + v.second
+        left_cancel(a.second, w.second, v.second)
+        w.second = v.second
+        Quat.new(w.first, w.second) = w
+        Quat.new(v.first, v.second) = v
+        w = v
+    }
+}
+
+/// The negative of a quaternion.
+define quat_neg(x: Quat) -> Quat {
+    Quat.new(-x.first, -x.second)
+}
+
+/// Subtracting a sum from its first summand leaves the negative of the
+/// second: x - (x + y) = -y.
+theorem complex_sub_add_right(x: Complex, y: Complex) {
+    x - (x + y) = -y
+} by {
+    x - (x + y) = x + -(x + y)
+    inverse_add(x, y)
+    -(x + y) = -y + -x
+    x + -(x + y) = x + (-y + -x)
+    add_comm(-y, -x)
+    -y + -x = -x + -y
+    x + (-y + -x) = x + (-x + -y)
+    add_comm(x, -x)
+    x + -x = -x + x
+    inverse_left(x)
+    -x + x = Complex.0
+    x + -x = Complex.0
+    x + (-x + -y) = (x + -x) + -y
+    (x + -x) + -y = Complex.0 + -y
+    Complex.0 + -y = -y
+    x - (x + y) = -y
+}
+
+/// Subtracting a sum from its first summand leaves the negative of the
+/// second: a - (a + w) = -w.
+theorem quat_sub_add_right(a: Quat, w: Quat) {
+    quat_sub(a, quat_add(a, w)) = quat_neg(w)
+} by {
+    quat_sub(a, quat_add(a, w)) =
+        Quat.new(a.first - quat_add(a, w).first, a.second - quat_add(a, w).second)
+    quat_add(a, w) = Quat.new(a.first + w.first, a.second + w.second)
+    quat_add(a, w).first = a.first + w.first
+    quat_add(a, w).second = a.second + w.second
+    quat_sub(a, quat_add(a, w)) =
+        Quat.new(a.first - (a.first + w.first), a.second - (a.second + w.second))
+    a.first - (a.first + w.first) = -w.first
+    a.second - (a.second + w.second) = -w.second
+    Quat.new(a.first - (a.first + w.first), a.second - (a.second + w.second)) =
+        Quat.new(-w.first, -w.second)
+    quat_neg(w) = Quat.new(-w.first, -w.second)
+    quat_sub(a, quat_add(a, w)) = quat_neg(w)
+}
+
+/// The norm of a quaternion is unchanged by negation.
+theorem quat_norm_neg(x: Quat) {
+    quat_norm(quat_neg(x)) = quat_norm(x)
+} by {
+    quat_norm(quat_neg(x)) = norm2(quat_neg(x).first, quat_neg(x).second)
+    quat_neg(x) = Quat.new(-x.first, -x.second)
+    quat_neg(x).first = -x.first
+    quat_neg(x).second = -x.second
+    quat_norm(quat_neg(x)) = norm2(-x.first, -x.second)
+    norm2(-x.first, -x.second) = (-x.first).abs_squared + (-x.second).abs_squared
+    abs_squared_neg(x.first)
+    (-x.first).abs_squared = x.first.abs_squared
+    abs_squared_neg(x.second)
+    (-x.second).abs_squared = x.second.abs_squared
+    (-x.first).abs_squared + (-x.second).abs_squared =
+        x.first.abs_squared + x.second.abs_squared
+    quat_norm(x) = norm2(x.first, x.second)
+    norm2(x.first, x.second) = x.first.abs_squared + x.second.abs_squared
+    quat_norm(quat_neg(x)) = quat_norm(x)
+}
+
+/// Subtracting the added element recovers the first summand:
+/// (x + y) - y = x.
+theorem complex_add_sub_cancel(x: Complex, y: Complex) {
+    (x + y) - y = x
+} by {
+    (x + y) - y = (x + y) + -y
+    add_comm(y, -y)
+    y + -y = -y + y
+    inverse_left(y)
+    -y + y = Complex.0
+    y + -y = Complex.0
+    (x + y) + -y = x + (y + -y)
+    x + (y + -y) = x + Complex.0
+    x + Complex.0 = x
+    (x + y) - y = x
+}
+
+/// Subtracting the first summand of a sum recovers the second: (a + w) - a = w.
+theorem quat_sub_add_left(a: Quat, w: Quat) {
+    quat_sub(quat_add(a, w), a) = w
+} by {
+    quat_sub(quat_add(a, w), a) =
+        Quat.new(quat_add(a, w).first - a.first, quat_add(a, w).second - a.second)
+    quat_add(a, w) = Quat.new(a.first + w.first, a.second + w.second)
+    quat_add(a, w).first = a.first + w.first
+    quat_add(a, w).second = a.second + w.second
+    quat_sub(quat_add(a, w), a) =
+        Quat.new((a.first + w.first) - a.first, (a.second + w.second) - a.second)
+    add_comm(w.first, a.first)
+    w.first + a.first = a.first + w.first
+    complex_add_sub_cancel(w.first, a.first)
+    (w.first + a.first) - a.first = w.first
+    (a.first + w.first) - a.first = w.first
+    add_comm(w.second, a.second)
+    w.second + a.second = a.second + w.second
+    complex_add_sub_cancel(w.second, a.second)
+    (w.second + a.second) - a.second = w.second
+    (a.second + w.second) - a.second = w.second
+    Quat.new((a.first + w.first) - a.first, (a.second + w.second) - a.second) =
+        Quat.new(w.first, w.second)
+    Quat.new(w.first, w.second) = w
+    quat_sub(quat_add(a, w), a) = w
+}
+
+/// The squared distance from a point to its translate by w is the norm of w.
+theorem quat_dist_sq_add_right(a: Quat, w: Quat) {
+    quat_dist_sq(a, quat_add(a, w)) = quat_norm(w)
+} by {
+    quat_dist_sq(a, quat_add(a, w)) = quat_norm(quat_sub(a, quat_add(a, w)))
+    quat_sub_add_right(a, w)
+    quat_sub(a, quat_add(a, w)) = quat_neg(w)
+    quat_dist_sq(a, quat_add(a, w)) = quat_norm(quat_neg(w))
+    quat_norm_neg(w)
+    quat_norm(quat_neg(w)) = quat_norm(w)
+    quat_dist_sq(a, quat_add(a, w)) = quat_norm(w)
+}
+
+/// Zero is not one in the reals.
+theorem real_zero_ne_one {
+    Real.0 != Real.1
+} by {
+    if Real.0 = Real.1 {
+        from_nat_real_pos_of_ne_zero(Nat.1)
+        Nat.1 != Nat.0
+        from_nat[Real](Nat.1) > Real.0
+        from_nat_one[Real]
+        from_nat[Real](Nat.1) = Real.1
+        Real.1 > Real.0
+        Real.0 > Real.0
+        lt_not_ref(Real.0)
+        false
+    }
+    Real.0 != Real.1
+}
+
+/// A quaternion is at squared distance zero from itself.
+theorem quat_dist_sq_self(x: Quat) {
+    quat_dist_sq(x, x) = Real.0
+} by {
+    quat_dist_sq(x, x) = quat_norm(quat_sub(x, x))
+    quat_sub(x, x) = Quat.new(x.first - x.first, x.second - x.second)
+    quat_sub(x, x).first = x.first - x.first
+    quat_sub(x, x).second = x.second - x.second
+    quat_norm(quat_sub(x, x)) = norm2(quat_sub(x, x).first, quat_sub(x, x).second)
+    x.first - x.first = x.first + -(x.first)
+    add_comm(x.first, -(x.first))
+    x.first + -(x.first) = -(x.first) + x.first
+    inverse_left(x.first)
+    -(x.first) + x.first = Complex.0
+    x.first - x.first = Complex.0
+    x.second - x.second = x.second + -(x.second)
+    add_comm(x.second, -(x.second))
+    x.second + -(x.second) = -(x.second) + x.second
+    inverse_left(x.second)
+    -(x.second) + x.second = Complex.0
+    x.second - x.second = Complex.0
+    quat_sub(x, x) = Quat.new(Complex.0, Complex.0)
+    quat_norm(quat_sub(x, x)) = norm2(Complex.0, Complex.0)
+    norm2(Complex.0, Complex.0) = Complex.0.abs_squared + Complex.0.abs_squared
+    Complex.0.abs_squared = Real.0
+    Complex.0.abs_squared = Real.0
+    norm2(Complex.0, Complex.0) = Real.0 + Real.0
+    Real.0 + Real.0 = Real.0
+    quat_dist_sq(x, x) = Real.0
+}
+
+/// Negating a difference of complex numbers swaps its arguments.
+theorem complex_neg_sub(a: Complex, b: Complex) {
+    b - a = -(a - b)
+} by {
+    b - a = b + -(a)
+    a - b = a + -(b)
+    inverse_add(a, -(b))
+    -(a + -(b)) = -(-(b)) + -(a)
+    inverse_inverse(b)
+    -(-(b)) = b
+    -(a + -(b)) = b + -(a)
+    -(a - b) = b + -(a)
+    b - a = -(a - b)
+}
+
+/// The squared distance of two quaternions is symmetric.
+theorem quat_dist_sq_comm(x: Quat, y: Quat) {
+    quat_dist_sq(x, y) = quat_dist_sq(y, x)
+} by {
+    quat_dist_sq(x, y) = norm2(x.first - y.first, x.second - y.second)
+    quat_dist_sq(y, x) = norm2(y.first - x.first, y.second - x.second)
+    norm2(x.first - y.first, x.second - y.second) =
+        (x.first - y.first).abs_squared + (x.second - y.second).abs_squared
+    norm2(y.first - x.first, y.second - x.second) =
+        (y.first - x.first).abs_squared + (y.second - x.second).abs_squared
+    complex_neg_sub(x.first, y.first)
+    y.first - x.first = -(x.first - y.first)
+    abs_squared_neg(x.first - y.first)
+    (-(x.first - y.first)).abs_squared = (x.first - y.first).abs_squared
+    (y.first - x.first).abs_squared = (x.first - y.first).abs_squared
+    complex_neg_sub(x.second, y.second)
+    y.second - x.second = -(x.second - y.second)
+    abs_squared_neg(x.second - y.second)
+    (-(x.second - y.second)).abs_squared = (x.second - y.second).abs_squared
+    (y.second - x.second).abs_squared = (x.second - y.second).abs_squared
+    (x.first - y.first).abs_squared + (x.second - y.second).abs_squared =
+        (y.first - x.first).abs_squared + (y.second - x.second).abs_squared
+    quat_dist_sq(x, y) = quat_dist_sq(y, x)
+}
+
+/// Unit distance is symmetric: (x, y) is a unit pair exactly when (y, x) is.
+theorem quat_unit_dist_comm(x: Quat, y: Quat) {
+    quaternion_unit_distance(x, y) = quaternion_unit_distance(y, x)
+} by {
+    quaternion_unit_distance(x, y) = (quat_dist_sq(x, y) = Real.1)
+    quaternion_unit_distance(y, x) = (quat_dist_sq(y, x) = Real.1)
+    quat_dist_sq_comm(x, y)
+    quat_dist_sq(x, y) = quat_dist_sq(y, x)
+    quaternion_unit_distance(x, y) = quaternion_unit_distance(y, x)
+}
+
+/// Swapping the two points of a member of the ordered unit pairs keeps it a
+/// member: the ordered unit pairs are closed under reversal.
+theorem oup_swap_member(s: FiniteSet[Quat], x: Quat, y: Quat) {
+    ordered_unit_pairs(s).contains(Pair.new(x, y)) =
+        ordered_unit_pairs(s).contains(Pair.new(y, x))
+} by {
+    finite_set_filter_contains_eq(finite_set_product(s, s), ordered_unit_pair, Pair.new(x, y))
+    finite_set_filter(finite_set_product(s, s), ordered_unit_pair).contains(Pair.new(x, y)) =
+        (finite_set_product(s, s).contains(Pair.new(x, y)) and ordered_unit_pair(Pair.new(x, y)))
+    ordered_unit_pairs(s) = finite_set_filter(finite_set_product(s, s), ordered_unit_pair)
+    finite_set_filter_contains_eq(finite_set_product(s, s), ordered_unit_pair, Pair.new(y, x))
+    finite_set_filter(finite_set_product(s, s), ordered_unit_pair).contains(Pair.new(y, x)) =
+        (finite_set_product(s, s).contains(Pair.new(y, x)) and ordered_unit_pair(Pair.new(y, x)))
+    finite_set_product_contains_eq(s, s, Pair.new(x, y))
+    finite_set_product(s, s).contains(Pair.new(x, y)) =
+        (s.contains(x) and s.contains(y))
+    finite_set_product_contains_eq(s, s, Pair.new(y, x))
+    finite_set_product(s, s).contains(Pair.new(y, x)) =
+        (s.contains(y) and s.contains(x))
+    ordered_unit_pair(Pair.new(x, y)) = quaternion_unit_distance(x, y)
+    ordered_unit_pair(Pair.new(y, x)) = quaternion_unit_distance(y, x)
+    quat_unit_dist_comm(x, y)
+    quaternion_unit_distance(x, y) = quaternion_unit_distance(y, x)
+    ordered_unit_pair(Pair.new(x, y)) = ordered_unit_pair(Pair.new(y, x))
+    (s.contains(x) and s.contains(y)) = (s.contains(y) and s.contains(x))
+    (finite_set_product(s, s).contains(Pair.new(x, y)) and ordered_unit_pair(Pair.new(x, y))) =
+        (finite_set_product(s, s).contains(Pair.new(y, x)) and ordered_unit_pair(Pair.new(y, x)))
+    ordered_unit_pairs(s).contains(Pair.new(x, y)) =
+        ordered_unit_pairs(s).contains(Pair.new(y, x))
+}
+
+/// No point is at unit distance from itself, so no diagonal pair is a member
+/// of the ordered unit pairs.
+theorem oup_no_self_member(s: FiniteSet[Quat], x: Quat) {
+    not ordered_unit_pairs(s).contains(Pair.new(x, x))
+} by {
+    if ordered_unit_pairs(s).contains(Pair.new(x, x)) {
+        finite_set_filter_contains_eq(finite_set_product(s, s), ordered_unit_pair, Pair.new(x, x))
+        finite_set_filter(finite_set_product(s, s), ordered_unit_pair).contains(Pair.new(x, x)) =
+            (finite_set_product(s, s).contains(Pair.new(x, x)) and ordered_unit_pair(Pair.new(x, x)))
+        ordered_unit_pairs(s) = finite_set_filter(finite_set_product(s, s), ordered_unit_pair)
+        ordered_unit_pairs(s).contains(Pair.new(x, x)) =
+            finite_set_filter(finite_set_product(s, s), ordered_unit_pair).contains(Pair.new(x, x))
+        finite_set_filter(finite_set_product(s, s), ordered_unit_pair).contains(Pair.new(x, x))
+        ordered_unit_pair(Pair.new(x, x))
+        ordered_unit_pair(Pair.new(x, x)) = quaternion_unit_distance(x, x)
+        quaternion_unit_distance(x, x)
+        quaternion_unit_distance(x, x) = (quat_dist_sq(x, x) = Real.1)
+        quat_dist_sq(x, x) = Real.1
+        quat_dist_sq_self(x)
+        quat_dist_sq(x, x) = Real.0
+        Real.0 = Real.1
+        real_zero_ne_one
+        Real.0 != Real.1
+        false
+    }
+    not ordered_unit_pairs(s).contains(Pair.new(x, x))
+}
+
+/// The ordered unit pairs of a finite set are a subset of all ordered pairs,
+/// so their count is at most the square of the set's cardinality.
+theorem oup_card_at_most_sq(s: FiniteSet[Quat]) {
+    fs_card(ordered_unit_pairs(s)) <= fs_card(s) * fs_card(s)
+} by {
+    ordered_unit_pairs(s) = finite_set_filter(finite_set_product(s, s), ordered_unit_pair)
+    finite_set_filter_subset(finite_set_product(s, s), ordered_unit_pair)
+    finite_set_filter(finite_set_product(s, s), ordered_unit_pair).subset_eq(finite_set_product(s, s))
+    ordered_unit_pairs(s).subset_eq(finite_set_product(s, s))
+    fs_card_mono(ordered_unit_pairs(s), finite_set_product(s, s))
+    fs_card(ordered_unit_pairs(s)) <= fs_card(finite_set_product(s, s))
+    fs_card_product(s, s)
+    fs_card(finite_set_product(s, s)) = fs_card(s) * fs_card(s)
+    lte_trans_eq(fs_card(ordered_unit_pairs(s)), fs_card(finite_set_product(s, s)),
+        fs_card(s) * fs_card(s))
+    fs_card(ordered_unit_pairs(s)) <= fs_card(s) * fs_card(s)
 }
