@@ -1,5 +1,5 @@
 from real.real_field import Real
-from real.real_series import seq_lte, partial_seq_lte
+from real.real_series import seq_lte, partial_seq_lte, tail, partial_tail
 from real.supremum import is_set_infimum, is_set_supremum, is_nonempty, is_set_upper_bound, is_set_lower_bound, has_upper_bound, function_image, function_image_contains, negate_set, negate_set_contains, completeness, set_supremum_le_upper_bound, set_member_le_supremum, set_supremum_is_upper_bound, set_upper_bound_contains_le
 from data.basic.set import Set, maps_into_set_image
 from data.basic.functions import function_extensionality
@@ -7,8 +7,13 @@ from algebra.semigroup import mul_fn
 from algebra.add_ordered_group import add_le_add, add_le_add_right
 from ordered_field import mul_le_mul_of_nonneg_right
 from list import partial, partial_pointwise_eq, partial_scalar_mul
-from nat import Nat, only_zero_lte_zero, lt_imp_lte_suc
-from order import lte_antisymm, lte_trans
+from nat import Nat, only_zero_lte_zero, lt_imp_lte_suc, lte_add_right,
+    lte_add_left, lt_add_left, lte_imp_not_lt, not_lt_zero,
+    add_imp_sub_left, add_sub, sub_self, lt_or_lte, lt_not_symm, lt_and_lte, lte_and_lt,
+    lte_cancel_suc, lt_suc, sub_lt, alt_induction
+from real.real_base import add_comm, add_assoc, add_zero_right, add_zero_left,
+    add_neg_eq_zero, sub_cancels
+from order import lte_antisymm, lte_trans, lt_of_lte_of_ne, not_lte_imp_gt, lt_imp_lte
 
 numerals Real
 numerals Nat
@@ -1683,7 +1688,7 @@ theorem comparison(f: Real -> Real, g: Real -> Real, a: Real, b: Real, lb_f: Rea
 // }
 
 // ---------------------------------------------------------------------------
-// Stretch results (stated but not yet proved)
+// Concatenation of partitions and additivity of the integral
 // ---------------------------------------------------------------------------
 
 // Every function integrable on [a, b] is bounded on [a, b].
@@ -1695,13 +1700,806 @@ theorem comparison(f: Real -> Real, g: Real -> Real, a: Real, b: Real, lb_f: Rea
 //     is_integrable(f, a, b) implies is_bounded_on(f, a, b)
 // }
 
-// Additivity of the integral over adjacent intervals:
-// integral(f, a, c) = integral(f, a, b) + integral(f, b, c) for a <= b <= c.
-// This needs the machinery of common refinements of partitions to compare
-// Darboux sums across different partitions, which is left as future work.
-//
-// theorem integral_additivity(f: Real -> Real, a: Real, b: Real, c: Real) {
-//     a <= b and b <= c and is_integrable(f, a, c)
-//     implies
-//     integral(f, a, c) = integral(f, a, b) + integral(f, b, c)
-// }
+// ---------------------------------------------------------------------------
+// Natural number arithmetic for concatenating partitions
+// ---------------------------------------------------------------------------
+
+/// Adding a common amount to both sides of a natural inequality can be
+/// cancelled.
+theorem nat_lte_cancel_add_right(x: Nat, y: Nat, b: Nat) {
+    x + b <= y + b implies x <= y
+} by {
+    define p(k: Nat) -> Bool {
+        x + k <= y + k implies x <= y
+    }
+    x + Nat.0 = x
+    y + Nat.0 = y
+    if x + Nat.0 <= y + Nat.0 {
+        x <= y
+    }
+    p(Nat.0) = (x + Nat.0 <= y + Nat.0 implies x <= y)
+    p(Nat.0)
+    forall(k: Nat) {
+        if p(k) {
+            if x + k.suc <= y + k.suc {
+                lte_cancel_suc(x + k, y + k)
+                x + k <= y + k
+                x <= y
+            }
+            p(k.suc) = (x + k.suc <= y + k.suc implies x <= y)
+            p(k.suc)
+        }
+    }
+    forall(k: Nat) { p(k) implies p(k.suc) }
+    alt_induction(p)
+    p(Nat.0) and forall(k: Nat) { p(k) implies p(k.suc) } implies forall(k: Nat) { p(k) }
+    p(Nat.0) and forall(k: Nat) { p(k) implies p(k.suc) }
+    forall(k: Nat) { p(k) }
+    p(b)
+}
+
+/// A bound on a sum gives a bound on the subtraction: a <= b + c implies
+/// a - b <= c.
+theorem nat_sub_lte(a: Nat, b: Nat, c: Nat) {
+    a <= b + c implies a - b <= c
+} by {
+    if a <= b + c {
+        if b <= a {
+            add_sub(a, b)
+            a - b + b = a
+            a - b + b <= b + c
+            nat_lte_cancel_add_right(a - b, c, b)
+            a - b <= c
+        } else {
+            not b <= a
+            not_lte_imp_gt[Nat](b, a)
+            a < b
+            sub_lt(a, b)
+            a - b = Nat.0
+            only_zero_lte_zero(c)
+            Nat.0 <= c
+            a - b <= c
+        }
+    }
+}
+
+/// Subtraction is monotone: a <= b implies a - k <= b - k.
+theorem nat_sub_le_sub(a: Nat, b: Nat, k: Nat) {
+    a <= b implies a - k <= b - k
+} by {
+    if a <= b {
+        if k <= a {
+            add_sub(a, k)
+            a - k + k = a
+            lte_trans[Nat](k, a, b)
+            k <= b
+            add_sub(b, k)
+            b - k + k = b
+            a - k + k <= b - k + k
+            nat_lte_cancel_add_right(a - k, b - k, k)
+            a - k <= b - k
+        } else {
+            not k <= a
+            not_lte_imp_gt[Nat](k, a)
+            a < k
+            sub_lt(a, k)
+            a - k = Nat.0
+            only_zero_lte_zero(b - k)
+            Nat.0 <= b - k
+            a - k <= b - k
+        }
+    }
+}
+
+/// The successor distributes over subtraction when the subtracted amount does
+/// not exceed the base: b <= a implies (a + 1) - b = (a - b) + 1.
+theorem nat_suc_sub(a: Nat, b: Nat) {
+    b <= a implies (a + 1) - b = (a - b) + 1
+} by {
+    if b <= a {
+        add_sub(a, b)
+        a - b + b = a
+        (a - b) + 1 + b = a + 1
+        add_imp_sub_left((a - b) + 1, b, a + 1)
+        (a + 1) - b = (a - b) + 1
+    }
+}
+
+/// Ring helper: (a + b) - b = a.
+theorem ring_add_sub_cancel(a: Real, b: Real) {
+    (a + b) - b = a
+} by {
+    sub_cancels(a, b)
+    a + b - b = a
+    (a + b) - b = a
+}
+
+/// Ring helper: (a - b) + b = a.
+theorem ring_sub_add_cancel(a: Real, b: Real) {
+    (a - b) + b = a
+} by {
+    add_comm(a - b, b)
+    (a - b) + b = b + (a - b)
+    a - b = a + -b
+    b + (a - b) = b + (a + -b)
+    add_comm(a, -b)
+    a + -b = -b + a
+    b + (a + -b) = b + (-b + a)
+    add_assoc(b, -b, a)
+    (b + -b) + a = b + (-b + a)
+    add_neg_eq_zero(b)
+    b + -b = Real.0
+    (b + -b) + a = Real.0 + a
+    add_zero_left(a)
+    Real.0 + a = a
+    b + (a - b) = a
+    (a - b) + b = a
+}
+
+// The additivity identity integral(f, a, c) = integral(f, a, b) +
+// integral(f, b, c) for a <= b <= c is proved here directly from the Darboux
+// definition, without common refinements: concatenating a partition of [a, b]
+// with a partition of [b, c] gives a partition of [a, c] whose lower (upper)
+// Darboux sum is the sum of the two.  Hence every sum of a lower sum on [a, b]
+// and a lower sum on [b, c] is a lower sum on [a, c] (and dually for upper
+// sums), which squeezes the suprema and infima together.
+
+/// The concatenation of a partition p1 of [a, b] of length n1 with a partition
+/// p2 of [b, c]: the first n1 + 1 points come from p1 and the rest from p2.
+define concat_partition(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, i: Nat) -> Real {
+    if i <= n1 {
+        p1(i)
+    } else {
+        p2(i - n1)
+    }
+}
+
+/// The concatenated partition starts at the start of p1.
+theorem concat_partition_start(p1: Nat -> Real, n1: Nat, p2: Nat -> Real) {
+    concat_partition(p1, n1, p2, Nat.0) = p1(Nat.0)
+} by {
+    concat_partition(p1, n1, p2, Nat.0) = (if Nat.0 <= n1 { p1(Nat.0) } else { p2(Nat.0 - n1) })
+    only_zero_lte_zero(n1)
+    Nat.0 <= n1
+    (if Nat.0 <= n1 { p1(Nat.0) } else { p2(Nat.0 - n1) }) = p1(Nat.0)
+    concat_partition(p1, n1, p2, Nat.0) = p1(Nat.0)
+}
+
+/// At index n1 + i the concatenated partition agrees with p2 at i.
+theorem concat_partition_tail_point(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies concat_partition(p1, n1, p2, n1 + i) = p2(i)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) {
+        if i = Nat.0 {
+            n1 + Nat.0 = n1
+            concat_partition(p1, n1, p2, n1 + Nat.0) = concat_partition(p1, n1, p2, n1)
+            concat_partition(p1, n1, p2, n1) = p1(n1)
+            partition_end(p1, a, b, n1)
+            p1(n1) = b
+            partition_start(p2, b, c, n2)
+            p2(Nat.0) = b
+            p2(i) = p2(Nat.0)
+            concat_partition(p1, n1, p2, n1 + i) = p2(i)
+        } else {
+            i != Nat.0
+            only_zero_lte_zero(i)
+            Nat.0 <= i
+            lt_of_lte_of_ne[Nat](Nat.0, i)
+            Nat.0 < i
+            lt_add_left(n1, Nat.0, i)
+            n1 + Nat.0 < n1 + i
+            n1 < n1 + i
+            lte_imp_not_lt(n1 + i, n1)
+            not (n1 + i <= n1)
+            concat_partition(p1, n1, p2, n1 + i) = p2((n1 + i) - n1)
+            add_imp_sub_left(n1, i, n1 + i)
+            (n1 + i) - n1 = i
+            p2((n1 + i) - n1) = p2(i)
+            concat_partition(p1, n1, p2, n1 + i) = p2(i)
+        }
+    }
+}
+
+/// The concatenated partition ends at the end of p2, which is c.
+theorem concat_partition_end(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies concat_partition(p1, n1, p2, n1 + n2) = c
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) {
+        concat_partition_tail_point(p1, n1, p2, a, b, c, n2, n2)
+        concat_partition(p1, n1, p2, n1 + n2) = p2(n2)
+        partition_end(p2, b, c, n2)
+        p2(n2) = c
+        concat_partition(p1, n1, p2, n1 + n2) = c
+    }
+}
+
+/// A point of the concatenated partition below n1 comes from p1.
+theorem concat_partition_prefix_point(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, i: Nat) {
+    i <= n1 implies concat_partition(p1, n1, p2, i) = p1(i)
+} by {
+    if i <= n1 {
+        concat_partition(p1, n1, p2, i) = p1(i)
+    }
+}
+
+/// A point of the concatenated partition above n1 comes from p2.
+theorem concat_partition_suffix_point(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2
+    implies concat_partition(p1, n1, p2, i) = p2(i - n1)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2 {
+        if i = n1 {
+            concat_partition(p1, n1, p2, i) = p1(n1)
+            partition_end(p1, a, b, n1)
+            p1(n1) = b
+            partition_start(p2, b, c, n2)
+            p2(Nat.0) = b
+            sub_self(n1)
+            i - n1 = n1 - n1
+            sub_self(n1)
+            n1 - n1 = Nat.0
+            i - n1 = Nat.0
+            p2(i - n1) = p2(Nat.0)
+            concat_partition(p1, n1, p2, i) = p2(i - n1)
+        } else {
+            i != n1
+            lt_of_lte_of_ne[Nat](n1, i)
+            n1 < i
+            concat_partition(p1, n1, p2, i) = p2(i - n1)
+        }
+    }
+}
+
+/// The successor index of a suffix point of the concatenated partition also
+/// agrees with p2 (including the final index n1 + n2).
+theorem concat_partition_suffix_suc_point(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2
+    implies concat_partition(p1, n1, p2, i + 1) = p2((i + 1) - n1)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2 {
+        if i + 1 = n1 + n2 {
+            concat_partition_tail_point(p1, n1, p2, a, b, c, n2, n2)
+            concat_partition(p1, n1, p2, n1 + n2) = p2(n2)
+            add_imp_sub_left(n1, n2, n1 + n2)
+            (n1 + n2) - n1 = n2
+            concat_partition(p1, n1, p2, i + 1) = p2((i + 1) - n1)
+        } else {
+            i + 1 != n1 + n2
+            lt_imp_lte_suc(i, n1 + n2)
+            i + 1 <= n1 + n2
+            lt_of_lte_of_ne[Nat](i + 1, n1 + n2)
+            i + 1 < n1 + n2
+            lt_suc(i)
+            i < i + 1
+            lt_imp_lte(i, i + 1)
+            i <= i + 1
+            lte_trans[Nat](n1, i, i + 1)
+            n1 <= i + 1
+            concat_partition_suffix_point(p1, n1, p2, a, b, c, n2, i + 1)
+            concat_partition(p1, n1, p2, i + 1) = p2((i + 1) - n1)
+        }
+    }
+}
+
+/// The concatenation of two partitions is nondecreasing.
+theorem concat_partition_mono(p1: Nat -> Real, p2: Nat -> Real, a: Real, b: Real, c: Real, n1: Nat, n2: Nat, i: Nat, j: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and i <= j and j <= n1 + n2
+    implies concat_partition(p1, n1, p2, i) <= concat_partition(p1, n1, p2, j)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and i <= j and j <= n1 + n2 {
+        if j <= n1 {
+            lte_trans[Nat](i, j, n1)
+            i <= n1
+            concat_partition_prefix_point(p1, n1, p2, i)
+            concat_partition(p1, n1, p2, i) = p1(i)
+            concat_partition_prefix_point(p1, n1, p2, j)
+            concat_partition(p1, n1, p2, j) = p1(j)
+            partition_mono(p1, a, b, n1, i, j)
+            p1(i) <= p1(j)
+            concat_partition(p1, n1, p2, i) <= concat_partition(p1, n1, p2, j)
+        } else {
+            not j <= n1
+            not_lte_imp_gt[Nat](j, n1)
+            n1 < j
+            if i <= n1 {
+                concat_partition_prefix_point(p1, n1, p2, i)
+                concat_partition(p1, n1, p2, i) = p1(i)
+                concat_partition_suffix_point(p1, n1, p2, a, b, c, n2, j)
+                concat_partition(p1, n1, p2, j) = p2(j - n1)
+                partition_mono(p1, a, b, n1, i, n1)
+                p1(i) <= p1(n1)
+                partition_end(p1, a, b, n1)
+                p1(n1) = b
+                p1(i) <= b
+                only_zero_lte_zero(j - n1)
+                Nat.0 <= j - n1
+                nat_sub_lte(j, n1, n2)
+                j - n1 <= n2
+                partition_mono(p2, b, c, n2, Nat.0, j - n1)
+                p2(Nat.0) <= p2(j - n1)
+                partition_start(p2, b, c, n2)
+                p2(Nat.0) = b
+                b <= p2(j - n1)
+                lte_trans[Real](p1(i), b, p2(j - n1))
+                p1(i) <= p2(j - n1)
+                concat_partition(p1, n1, p2, i) <= concat_partition(p1, n1, p2, j)
+            } else {
+                not i <= n1
+                not_lte_imp_gt[Nat](i, n1)
+                n1 < i
+                concat_partition_suffix_point(p1, n1, p2, a, b, c, n2, i)
+                concat_partition(p1, n1, p2, i) = p2(i - n1)
+                concat_partition_suffix_point(p1, n1, p2, a, b, c, n2, j)
+                concat_partition(p1, n1, p2, j) = p2(j - n1)
+                nat_sub_le_sub(i, j, n1)
+                i - n1 <= j - n1
+                nat_sub_lte(j, n1, n2)
+                j - n1 <= n2
+                partition_mono(p2, b, c, n2, i - n1, j - n1)
+                p2(i - n1) <= p2(j - n1)
+                concat_partition(p1, n1, p2, i) <= concat_partition(p1, n1, p2, j)
+            }
+        }
+    }
+}
+
+/// The concatenation of a partition of [a, b] and a partition of [b, c] is a
+/// partition of [a, c].
+theorem concat_partition_is_partition(p1: Nat -> Real, p2: Nat -> Real, a: Real, b: Real, c: Real, n1: Nat, n2: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies is_partition(concat_partition(p1, n1, p2), a, c, n1 + n2)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) {
+        concat_partition_start(p1, n1, p2)
+        concat_partition(p1, n1, p2, Nat.0) = p1(Nat.0)
+        partition_start(p1, a, b, n1)
+        p1(Nat.0) = a
+        concat_partition(p1, n1, p2, Nat.0) = a
+        concat_partition_end(p1, n1, p2, a, b, c, n2)
+        concat_partition(p1, n1, p2, n1 + n2) = c
+        forall(i: Nat, j: Nat) {
+            if i <= j and j <= n1 + n2 {
+                concat_partition_mono(p1, p2, a, b, c, n1, n2, i, j)
+                concat_partition(p1, n1, p2, i) <= concat_partition(p1, n1, p2, j)
+            }
+        }
+        partition_monotone(concat_partition(p1, n1, p2), n1 + n2)
+        is_partition(concat_partition(p1, n1, p2), a, c, n1 + n2)
+    }
+}
+
+/// The lower Darboux step of the concatenated partition agrees with p1 on the
+/// prefix indices.
+theorem concat_partition_step_lower_prefix(f: Real -> Real, p1: Nat -> Real, n1: Nat, p2: Nat -> Real, i: Nat) {
+    i < n1 implies partition_step_lower(f, concat_partition(p1, n1, p2), i) = partition_step_lower(f, p1, i)
+} by {
+    if i < n1 {
+        lt_imp_lte_suc(i, n1)
+        i + 1 <= n1
+        i <= i + 1
+        lte_trans[Nat](i, i + 1, n1)
+        i <= n1
+        concat_partition_prefix_point(p1, n1, p2, i)
+        concat_partition(p1, n1, p2, i) = p1(i)
+        concat_partition_prefix_point(p1, n1, p2, i + 1)
+        concat_partition(p1, n1, p2, i + 1) = p1(i + 1)
+        partition_step_lower(f, concat_partition(p1, n1, p2), i) =
+            interval_inf(f, concat_partition(p1, n1, p2, i), concat_partition(p1, n1, p2, i + 1)) * diff_step(concat_partition(p1, n1, p2), i)
+        interval_inf(f, concat_partition(p1, n1, p2, i), concat_partition(p1, n1, p2, i + 1)) * diff_step(concat_partition(p1, n1, p2), i) =
+            interval_inf(f, p1(i), p1(i + 1)) * diff_step(p1, i)
+        partition_step_lower(f, concat_partition(p1, n1, p2), i) = partition_step_lower(f, p1, i)
+    }
+}
+
+/// The lower Darboux step of the concatenated partition agrees with p2 on the
+/// suffix indices.
+theorem concat_partition_step_lower_suffix(f: Real -> Real, p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2
+    implies partition_step_lower(f, concat_partition(p1, n1, p2), i) = partition_step_lower(f, p2, i - n1)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2 {
+        concat_partition_suffix_point(p1, n1, p2, a, b, c, n2, i)
+        concat_partition(p1, n1, p2, i) = p2(i - n1)
+        concat_partition_suffix_suc_point(p1, n1, p2, a, b, c, n2, i)
+        concat_partition(p1, n1, p2, i + 1) = p2((i + 1) - n1)
+        nat_suc_sub(i, n1)
+        (i + 1) - n1 = (i - n1) + 1
+        p2((i + 1) - n1) = p2((i - n1) + 1)
+        partition_step_lower(f, concat_partition(p1, n1, p2), i) =
+            interval_inf(f, concat_partition(p1, n1, p2, i), concat_partition(p1, n1, p2, i + 1)) * diff_step(concat_partition(p1, n1, p2), i)
+        interval_inf(f, concat_partition(p1, n1, p2, i), concat_partition(p1, n1, p2, i + 1)) * diff_step(concat_partition(p1, n1, p2), i) =
+            interval_inf(f, p2(i - n1), p2((i - n1) + 1)) * diff_step(p2, i - n1)
+        partition_step_lower(f, concat_partition(p1, n1, p2), i) = partition_step_lower(f, p2, i - n1)
+    }
+}
+
+/// The lower Darboux sum of the concatenated partition is the sum of the two
+/// lower Darboux sums.
+theorem concat_partition_lower_sum(f: Real -> Real, p1: Nat -> Real, p2: Nat -> Real, a: Real, b: Real, c: Real, n1: Nat, n2: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies lower_sum(f, concat_partition(p1, n1, p2), n1 + n2) = lower_sum(f, p1, n1) + lower_sum(f, p2, n2)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) {
+        partial_tail(partition_step_lower(f, concat_partition(p1, n1, p2)), n1, n2)
+        partial(partition_step_lower(f, concat_partition(p1, n1, p2)), n1 + n2) =
+            partial(partition_step_lower(f, concat_partition(p1, n1, p2)), n1) +
+            partial(tail(partition_step_lower(f, concat_partition(p1, n1, p2)), n1), n2)
+        forall(k: Nat) {
+            if k < n1 {
+                concat_partition_step_lower_prefix(f, p1, n1, p2, k)
+                partition_step_lower(f, concat_partition(p1, n1, p2), k) = partition_step_lower(f, p1, k)
+            }
+        }
+        partial_pointwise_eq(partition_step_lower(f, concat_partition(p1, n1, p2)), partition_step_lower(f, p1), n1)
+        partial(partition_step_lower(f, concat_partition(p1, n1, p2)), n1) = partial(partition_step_lower(f, p1), n1)
+        forall(k: Nat) {
+            if k < n2 {
+                n1 <= n1 + k
+                lt_add_left(n1, k, n2)
+                n1 + k < n1 + n2
+                concat_partition_step_lower_suffix(f, p1, n1, p2, a, b, c, n2, n1 + k)
+                partition_step_lower(f, concat_partition(p1, n1, p2), n1 + k) = partition_step_lower(f, p2, (n1 + k) - n1)
+                add_imp_sub_left(n1, k, n1 + k)
+                (n1 + k) - n1 = k
+                partition_step_lower(f, concat_partition(p1, n1, p2), n1 + k) = partition_step_lower(f, p2, k)
+                tail(partition_step_lower(f, concat_partition(p1, n1, p2)), n1, k) =
+                    partition_step_lower(f, concat_partition(p1, n1, p2), n1 + k)
+                tail(partition_step_lower(f, concat_partition(p1, n1, p2)), n1, k) = partition_step_lower(f, p2, k)
+            }
+        }
+        partial_pointwise_eq(tail(partition_step_lower(f, concat_partition(p1, n1, p2)), n1), partition_step_lower(f, p2), n2)
+        partial(tail(partition_step_lower(f, concat_partition(p1, n1, p2)), n1), n2) = partial(partition_step_lower(f, p2), n2)
+        partial(partition_step_lower(f, concat_partition(p1, n1, p2)), n1 + n2) =
+            partial(partition_step_lower(f, p1), n1) + partial(partition_step_lower(f, p2), n2)
+        lower_sum(f, concat_partition(p1, n1, p2), n1 + n2) = lower_sum(f, p1, n1) + lower_sum(f, p2, n2)
+    }
+}
+
+/// The upper Darboux step of the concatenated partition agrees with p1 on the
+/// prefix indices.
+theorem concat_partition_step_upper_prefix(f: Real -> Real, p1: Nat -> Real, n1: Nat, p2: Nat -> Real, i: Nat) {
+    i < n1 implies partition_step_upper(f, concat_partition(p1, n1, p2), i) = partition_step_upper(f, p1, i)
+} by {
+    if i < n1 {
+        lt_imp_lte_suc(i, n1)
+        i + 1 <= n1
+        i <= i + 1
+        lte_trans[Nat](i, i + 1, n1)
+        i <= n1
+        concat_partition_prefix_point(p1, n1, p2, i)
+        concat_partition(p1, n1, p2, i) = p1(i)
+        concat_partition_prefix_point(p1, n1, p2, i + 1)
+        concat_partition(p1, n1, p2, i + 1) = p1(i + 1)
+        partition_step_upper(f, concat_partition(p1, n1, p2), i) =
+            interval_sup(f, concat_partition(p1, n1, p2, i), concat_partition(p1, n1, p2, i + 1)) * diff_step(concat_partition(p1, n1, p2), i)
+        interval_sup(f, concat_partition(p1, n1, p2, i), concat_partition(p1, n1, p2, i + 1)) * diff_step(concat_partition(p1, n1, p2), i) =
+            interval_sup(f, p1(i), p1(i + 1)) * diff_step(p1, i)
+        partition_step_upper(f, concat_partition(p1, n1, p2), i) = partition_step_upper(f, p1, i)
+    }
+}
+
+/// The upper Darboux step of the concatenated partition agrees with p2 on the
+/// suffix indices.
+theorem concat_partition_step_upper_suffix(f: Real -> Real, p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2
+    implies partition_step_upper(f, concat_partition(p1, n1, p2), i) = partition_step_upper(f, p2, i - n1)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2 {
+        concat_partition_suffix_point(p1, n1, p2, a, b, c, n2, i)
+        concat_partition(p1, n1, p2, i) = p2(i - n1)
+        concat_partition_suffix_suc_point(p1, n1, p2, a, b, c, n2, i)
+        concat_partition(p1, n1, p2, i + 1) = p2((i + 1) - n1)
+        nat_suc_sub(i, n1)
+        (i + 1) - n1 = (i - n1) + 1
+        p2((i + 1) - n1) = p2((i - n1) + 1)
+        partition_step_upper(f, concat_partition(p1, n1, p2), i) =
+            interval_sup(f, concat_partition(p1, n1, p2, i), concat_partition(p1, n1, p2, i + 1)) * diff_step(concat_partition(p1, n1, p2), i)
+        interval_sup(f, concat_partition(p1, n1, p2, i), concat_partition(p1, n1, p2, i + 1)) * diff_step(concat_partition(p1, n1, p2), i) =
+            interval_sup(f, p2(i - n1), p2((i - n1) + 1)) * diff_step(p2, i - n1)
+        partition_step_upper(f, concat_partition(p1, n1, p2), i) = partition_step_upper(f, p2, i - n1)
+    }
+}
+
+/// The upper Darboux sum of the concatenated partition is the sum of the two
+/// upper Darboux sums.
+theorem concat_partition_upper_sum(f: Real -> Real, p1: Nat -> Real, p2: Nat -> Real, a: Real, b: Real, c: Real, n1: Nat, n2: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies upper_sum(f, concat_partition(p1, n1, p2), n1 + n2) = upper_sum(f, p1, n1) + upper_sum(f, p2, n2)
+} by {
+    if is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) {
+        partial_tail(partition_step_upper(f, concat_partition(p1, n1, p2)), n1, n2)
+        partial(partition_step_upper(f, concat_partition(p1, n1, p2)), n1 + n2) =
+            partial(partition_step_upper(f, concat_partition(p1, n1, p2)), n1) +
+            partial(tail(partition_step_upper(f, concat_partition(p1, n1, p2)), n1), n2)
+        forall(k: Nat) {
+            if k < n1 {
+                concat_partition_step_upper_prefix(f, p1, n1, p2, k)
+                partition_step_upper(f, concat_partition(p1, n1, p2), k) = partition_step_upper(f, p1, k)
+            }
+        }
+        partial_pointwise_eq(partition_step_upper(f, concat_partition(p1, n1, p2)), partition_step_upper(f, p1), n1)
+        partial(partition_step_upper(f, concat_partition(p1, n1, p2)), n1) = partial(partition_step_upper(f, p1), n1)
+        forall(k: Nat) {
+            if k < n2 {
+                n1 <= n1 + k
+                lt_add_left(n1, k, n2)
+                n1 + k < n1 + n2
+                concat_partition_step_upper_suffix(f, p1, n1, p2, a, b, c, n2, n1 + k)
+                partition_step_upper(f, concat_partition(p1, n1, p2), n1 + k) = partition_step_upper(f, p2, (n1 + k) - n1)
+                add_imp_sub_left(n1, k, n1 + k)
+                (n1 + k) - n1 = k
+                partition_step_upper(f, concat_partition(p1, n1, p2), n1 + k) = partition_step_upper(f, p2, k)
+                tail(partition_step_upper(f, concat_partition(p1, n1, p2)), n1, k) =
+                    partition_step_upper(f, concat_partition(p1, n1, p2), n1 + k)
+                tail(partition_step_upper(f, concat_partition(p1, n1, p2)), n1, k) = partition_step_upper(f, p2, k)
+            }
+        }
+        partial_pointwise_eq(tail(partition_step_upper(f, concat_partition(p1, n1, p2)), n1), partition_step_upper(f, p2), n2)
+        partial(tail(partition_step_upper(f, concat_partition(p1, n1, p2)), n1), n2) = partial(partition_step_upper(f, p2), n2)
+        partial(partition_step_upper(f, concat_partition(p1, n1, p2)), n1 + n2) =
+            partial(partition_step_upper(f, p1), n1) + partial(partition_step_upper(f, p2), n2)
+        upper_sum(f, concat_partition(p1, n1, p2), n1 + n2) = upper_sum(f, p1, n1) + upper_sum(f, p2, n2)
+    }
+}
+
+/// Every lower Darboux sum of [a, b] plus every lower Darboux sum of [b, c]
+/// is a lower Darboux sum of [a, c], hence at most the supremum of the lower
+/// sums on [a, c].
+theorem additivity_concat_lower(f: Real -> Real, a: Real, b: Real, c: Real, m_ac: Real) {
+    a <= b and b <= c and is_set_supremum(lower_sum_set(f, a, c), m_ac)
+    implies forall(x1: Real, x2: Real) {
+        lower_sum_set(f, a, b).contains(x1) and lower_sum_set(f, b, c).contains(x2)
+        implies x1 + x2 <= m_ac
+    }
+} by {
+    if a <= b and b <= c and is_set_supremum(lower_sum_set(f, a, c), m_ac) {
+        forall(x1: Real, x2: Real) {
+            if lower_sum_set(f, a, b).contains(x1) and lower_sum_set(f, b, c).contains(x2) {
+                lower_sum_set(f, a, b).contains(x1) = lower_sum_contains(f, a, b, x1)
+                lower_sum_contains(f, a, b, x1)
+                let (p1: Nat -> Real, n1: Nat) satisfy {
+                    is_partition(p1, a, b, n1) and x1 = lower_sum(f, p1, n1)
+                }
+                lower_sum_set(f, b, c).contains(x2) = lower_sum_contains(f, b, c, x2)
+                lower_sum_contains(f, b, c, x2)
+                let (p2: Nat -> Real, n2: Nat) satisfy {
+                    is_partition(p2, b, c, n2) and x2 = lower_sum(f, p2, n2)
+                }
+                concat_partition_is_partition(p1, p2, a, b, c, n1, n2)
+                is_partition(concat_partition(p1, n1, p2), a, c, n1 + n2)
+                concat_partition_lower_sum(f, p1, p2, a, b, c, n1, n2)
+                lower_sum(f, concat_partition(p1, n1, p2), n1 + n2) = lower_sum(f, p1, n1) + lower_sum(f, p2, n2)
+                lower_sum(f, p1, n1) + lower_sum(f, p2, n2) = x1 + x2
+                lower_sum(f, concat_partition(p1, n1, p2), n1 + n2) = x1 + x2
+                is_partition(concat_partition(p1, n1, p2), a, c, n1 + n2) and
+                    x1 + x2 = lower_sum(f, concat_partition(p1, n1, p2), n1 + n2)
+                exists(p: Nat -> Real, n: Nat) {
+                    is_partition(p, a, c, n) and x1 + x2 = lower_sum(f, p, n)
+                }
+                lower_sum_contains(f, a, c, x1 + x2)
+                lower_sum_set(f, a, c).contains(x1 + x2) = lower_sum_contains(f, a, c, x1 + x2)
+                lower_sum_set(f, a, c).contains(x1 + x2)
+                set_member_le_supremum(lower_sum_set(f, a, c), m_ac, x1 + x2)
+                x1 + x2 <= m_ac
+            }
+        }
+    }
+}
+
+/// The supremum of the lower sums on [a, b] plus that on [b, c] is at most the
+/// supremum of the lower sums on [a, c].
+theorem sup_lower_add_le(f: Real -> Real, a: Real, b: Real, c: Real, m_ab: Real, m_bc: Real, m_ac: Real) {
+    a <= b and b <= c and
+    is_set_supremum(lower_sum_set(f, a, b), m_ab) and
+    is_set_supremum(lower_sum_set(f, b, c), m_bc) and
+    is_set_supremum(lower_sum_set(f, a, c), m_ac)
+    implies m_ab + m_bc <= m_ac
+} by {
+    if a <= b and b <= c and
+       is_set_supremum(lower_sum_set(f, a, b), m_ab) and
+       is_set_supremum(lower_sum_set(f, b, c), m_bc) and
+       is_set_supremum(lower_sum_set(f, a, c), m_ac) {
+        additivity_concat_lower(f, a, b, c, m_ac)
+        forall(x2: Real) {
+            if lower_sum_set(f, b, c).contains(x2) {
+                forall(x1: Real) {
+                    if lower_sum_set(f, a, b).contains(x1) {
+                        lower_sum_set(f, a, b).contains(x1) and lower_sum_set(f, b, c).contains(x2)
+                        x1 + x2 <= m_ac
+                        add_le_add_right[Real](x1 + x2, m_ac, -x2)
+                        (x1 + x2) + -x2 <= m_ac + -x2
+                        sub_cancels(x1, x2)
+                        (x1 + x2) + -x2 = x1
+                        x1 <= m_ac + -x2
+                        m_ac + -x2 = m_ac - x2
+                        x1 <= m_ac - x2
+                    }
+                }
+                is_set_upper_bound(lower_sum_set(f, a, b), m_ac - x2)
+                sup_le_of_upper_bound(lower_sum_set(f, a, b), m_ab, m_ac - x2)
+                m_ab <= m_ac - x2
+                add_le_add_right[Real](m_ab, m_ac - x2, x2)
+                m_ab + x2 <= (m_ac - x2) + x2
+                ring_sub_add_cancel(m_ac, x2)
+                (m_ac - x2) + x2 = m_ac
+                m_ab + x2 <= m_ac
+                x2 + m_ab = m_ab + x2
+                x2 + m_ab <= m_ac
+                add_le_add_right[Real](x2 + m_ab, m_ac, -m_ab)
+                (x2 + m_ab) + -m_ab <= m_ac + -m_ab
+                sub_cancels(x2, m_ab)
+                (x2 + m_ab) + -m_ab = x2
+                x2 <= m_ac + -m_ab
+                m_ac + -m_ab = m_ac - m_ab
+                x2 <= m_ac - m_ab
+            }
+        }
+        forall(x2: Real) {
+            if lower_sum_set(f, b, c).contains(x2) {
+                x2 <= m_ac - m_ab
+            }
+        }
+        is_set_upper_bound(lower_sum_set(f, b, c), m_ac - m_ab)
+        sup_le_of_upper_bound(lower_sum_set(f, b, c), m_bc, m_ac - m_ab)
+        m_bc <= m_ac - m_ab
+        add_le_add_right[Real](m_bc, m_ac - m_ab, m_ab)
+        m_bc + m_ab <= (m_ac - m_ab) + m_ab
+        (m_ac - m_ab) + m_ab = m_ac
+        m_bc + m_ab <= m_ac
+        m_ab + m_bc = m_bc + m_ab
+        m_ab + m_bc <= m_ac
+    }
+}
+
+/// Every upper Darboux sum of [a, b] plus every upper Darboux sum of [b, c]
+/// is an upper Darboux sum of [a, c], hence at least the infimum of the upper
+/// sums on [a, c].
+theorem additivity_concat_upper(f: Real -> Real, a: Real, b: Real, c: Real, m_ac: Real) {
+    a <= b and b <= c and is_set_infimum(upper_sum_set(f, a, c), m_ac)
+    implies forall(x1: Real, x2: Real) {
+        upper_sum_set(f, a, b).contains(x1) and upper_sum_set(f, b, c).contains(x2)
+        implies m_ac <= x1 + x2
+    }
+} by {
+    if a <= b and b <= c and is_set_infimum(upper_sum_set(f, a, c), m_ac) {
+        forall(x1: Real, x2: Real) {
+            if upper_sum_set(f, a, b).contains(x1) and upper_sum_set(f, b, c).contains(x2) {
+                upper_sum_set(f, a, b).contains(x1) = upper_sum_contains(f, a, b, x1)
+                upper_sum_contains(f, a, b, x1)
+                let (p1: Nat -> Real, n1: Nat) satisfy {
+                    is_partition(p1, a, b, n1) and x1 = upper_sum(f, p1, n1)
+                }
+                upper_sum_set(f, b, c).contains(x2) = upper_sum_contains(f, b, c, x2)
+                upper_sum_contains(f, b, c, x2)
+                let (p2: Nat -> Real, n2: Nat) satisfy {
+                    is_partition(p2, b, c, n2) and x2 = upper_sum(f, p2, n2)
+                }
+                concat_partition_is_partition(p1, p2, a, b, c, n1, n2)
+                is_partition(concat_partition(p1, n1, p2), a, c, n1 + n2)
+                concat_partition_upper_sum(f, p1, p2, a, b, c, n1, n2)
+                upper_sum(f, concat_partition(p1, n1, p2), n1 + n2) = upper_sum(f, p1, n1) + upper_sum(f, p2, n2)
+                upper_sum(f, p1, n1) + upper_sum(f, p2, n2) = x1 + x2
+                upper_sum(f, concat_partition(p1, n1, p2), n1 + n2) = x1 + x2
+                is_partition(concat_partition(p1, n1, p2), a, c, n1 + n2) and
+                    x1 + x2 = upper_sum(f, concat_partition(p1, n1, p2), n1 + n2)
+                exists(p: Nat -> Real, n: Nat) {
+                    is_partition(p, a, c, n) and x1 + x2 = upper_sum(f, p, n)
+                }
+                upper_sum_contains(f, a, c, x1 + x2)
+                upper_sum_set(f, a, c).contains(x1 + x2) = upper_sum_contains(f, a, c, x1 + x2)
+                upper_sum_set(f, a, c).contains(x1 + x2)
+                set_infimum_is_lower_bound(upper_sum_set(f, a, c), m_ac)
+                is_set_lower_bound(upper_sum_set(f, a, c), m_ac)
+                set_lower_bound_contains_le(upper_sum_set(f, a, c), m_ac, x1 + x2)
+                m_ac <= x1 + x2
+            }
+        }
+    }
+}
+
+/// The infimum of the upper sums on [a, c] is at most the sum of the infima
+/// of the upper sums on [a, b] and [b, c].
+theorem inf_upper_add_ge(f: Real -> Real, a: Real, b: Real, c: Real, m_ab: Real, m_bc: Real, m_ac: Real) {
+    a <= b and b <= c and
+    is_set_infimum(upper_sum_set(f, a, b), m_ab) and
+    is_set_infimum(upper_sum_set(f, b, c), m_bc) and
+    is_set_infimum(upper_sum_set(f, a, c), m_ac)
+    implies m_ac <= m_ab + m_bc
+} by {
+    if a <= b and b <= c and
+       is_set_infimum(upper_sum_set(f, a, b), m_ab) and
+       is_set_infimum(upper_sum_set(f, b, c), m_bc) and
+       is_set_infimum(upper_sum_set(f, a, c), m_ac) {
+        additivity_concat_upper(f, a, b, c, m_ac)
+        forall(x2: Real) {
+            if upper_sum_set(f, b, c).contains(x2) {
+                forall(x1: Real) {
+                    if upper_sum_set(f, a, b).contains(x1) {
+                        upper_sum_set(f, a, b).contains(x1) and upper_sum_set(f, b, c).contains(x2)
+                        m_ac <= x1 + x2
+                        add_le_add_right[Real](m_ac, x1 + x2, -x2)
+                        m_ac + -x2 <= (x1 + x2) + -x2
+                        sub_cancels(x1, x2)
+                        (x1 + x2) + -x2 = x1
+                        m_ac + -x2 <= x1
+                        m_ac + -x2 = m_ac - x2
+                        m_ac - x2 <= x1
+                    }
+                }
+                is_set_lower_bound(upper_sum_set(f, a, b), m_ac - x2)
+                set_lower_bound_le_infimum(upper_sum_set(f, a, b), m_ab, m_ac - x2)
+                m_ac - x2 <= m_ab
+                add_le_add_right[Real](m_ac - x2, m_ab, x2)
+                (m_ac - x2) + x2 <= m_ab + x2
+                ring_sub_add_cancel(m_ac, x2)
+                (m_ac - x2) + x2 = m_ac
+                m_ac <= m_ab + x2
+                m_ab + x2 = x2 + m_ab
+                m_ac <= x2 + m_ab
+                add_le_add_right[Real](m_ac, x2 + m_ab, -m_ab)
+                m_ac + -m_ab <= (x2 + m_ab) + -m_ab
+                sub_cancels(x2, m_ab)
+                (x2 + m_ab) + -m_ab = x2
+                m_ac + -m_ab <= x2
+                m_ac + -m_ab = m_ac - m_ab
+                m_ac - m_ab <= x2
+            }
+        }
+        forall(x2: Real) {
+            if upper_sum_set(f, b, c).contains(x2) {
+                m_ac - m_ab <= x2
+            }
+        }
+        is_set_lower_bound(upper_sum_set(f, b, c), m_ac - m_ab)
+        set_lower_bound_le_infimum(upper_sum_set(f, b, c), m_bc, m_ac - m_ab)
+        m_ac - m_ab <= m_bc
+        add_le_add_right[Real](m_ac - m_ab, m_bc, m_ab)
+        (m_ac - m_ab) + m_ab <= m_bc + m_ab
+        ring_sub_add_cancel(m_ac, m_ab)
+        (m_ac - m_ab) + m_ab = m_ac
+        m_ac <= m_bc + m_ab
+        m_bc + m_ab = m_ab + m_bc
+        m_ac <= m_ab + m_bc
+    }
+}
+
+/// Additivity of the integral over adjacent intervals: if f is integrable on
+/// [a, b], [b, c], and [a, c] with a <= b <= c, then the integral over [a, c]
+/// is the sum of the integrals over [a, b] and [b, c].
+theorem integral_additivity(f: Real -> Real, a: Real, b: Real, c: Real) {
+    a <= b and b <= c and is_integrable(f, a, b) and is_integrable(f, b, c) and is_integrable(f, a, c)
+    implies integral(f, a, c) = integral(f, a, b) + integral(f, b, c)
+} by {
+    if a <= b and b <= c and is_integrable(f, a, b) and is_integrable(f, b, c) and is_integrable(f, a, c) {
+        integral_spec(f, a, b)
+        is_set_supremum(lower_sum_set(f, a, b), integral(f, a, b)) and
+            is_set_infimum(upper_sum_set(f, a, b), integral(f, a, b))
+        integral_spec(f, b, c)
+        is_set_supremum(lower_sum_set(f, b, c), integral(f, b, c)) and
+            is_set_infimum(upper_sum_set(f, b, c), integral(f, b, c))
+        integral_spec(f, a, c)
+        is_set_supremum(lower_sum_set(f, a, c), integral(f, a, c)) and
+            is_set_infimum(upper_sum_set(f, a, c), integral(f, a, c))
+        sup_lower_add_le(f, a, b, c, integral(f, a, b), integral(f, b, c), integral(f, a, c))
+        integral(f, a, b) + integral(f, b, c) <= integral(f, a, c)
+        inf_upper_add_ge(f, a, b, c, integral(f, a, b), integral(f, b, c), integral(f, a, c))
+        integral(f, a, c) <= integral(f, a, b) + integral(f, b, c)
+        lte_antisymm[Real](integral(f, a, c), integral(f, a, b) + integral(f, b, c))
+        integral(f, a, c) = integral(f, a, b) + integral(f, b, c)
+    }
+}
+
+/// Additivity of the integral over adjacent intervals, with the sum on the
+/// left-hand side.
+theorem integral_additivity_symm(f: Real -> Real, a: Real, b: Real, c: Real) {
+    a <= b and b <= c and is_integrable(f, a, b) and is_integrable(f, b, c) and is_integrable(f, a, c)
+    implies integral(f, a, b) + integral(f, b, c) = integral(f, a, c)
+} by {
+    if a <= b and b <= c and is_integrable(f, a, b) and is_integrable(f, b, c) and is_integrable(f, a, c) {
+        integral_additivity(f, a, b, c)
+        integral(f, a, c) = integral(f, a, b) + integral(f, b, c)
+        integral(f, a, b) + integral(f, b, c) = integral(f, a, c)
+    }
+}
