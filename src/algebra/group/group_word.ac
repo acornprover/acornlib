@@ -1,0 +1,331 @@
+/// Words in a set of generators, and their values in a group.
+///
+/// A word is a finite sequence of generators, each carrying an exponent of plus
+/// or minus one.  A word is syntax: nothing here builds a free group or a
+/// quotient.  Its value is taken in an arbitrary target group, once every
+/// generator has been assigned an element of that group.  Concatenation of words
+/// corresponds to multiplication of their values, and the formal inverse of a
+/// word to the inverse of its value.
+///
+/// This is the vocabulary a finite group presentation needs: the relators of a
+/// presentation are words, and an equation between words holds in a presented
+/// group exactly when every assignment killing the relators gives the two words
+/// the same value.
+
+from algebra.group import Group, inverse_inverse, inverse_mul
+from algebra.group.group_commutator import commutator_element, commutator_element_def
+from list import List
+
+/// A generator together with an exponent of plus or minus one.
+inductive SignedGenerator[T] {
+    /// The generator itself.
+    positive(T)
+    /// The inverse of the generator.
+    negative(T)
+}
+
+/// The same generator with the opposite exponent.
+define signed_flip[T](x: SignedGenerator[T]) -> SignedGenerator[T] {
+    match x {
+        SignedGenerator.positive(g) {
+            SignedGenerator.negative(g)
+        }
+        SignedGenerator.negative(g) {
+            SignedGenerator.positive(g)
+        }
+    }
+}
+
+/// The value of a signed generator when each generator is assigned an element of a group.
+define signed_eval[T, G: Group](x: SignedGenerator[T], assign: T -> G) -> G {
+    match x {
+        SignedGenerator.positive(g) {
+            assign(g)
+        }
+        SignedGenerator.negative(g) {
+            assign(g).inverse
+        }
+    }
+}
+
+/// The value of a generator with exponent plus one.
+theorem signed_eval_positive[T, G: Group](g: T, assign: T -> G) {
+    signed_eval(SignedGenerator.positive(g), assign) = assign(g)
+}
+
+/// The value of a generator with exponent minus one.
+theorem signed_eval_negative[T, G: Group](g: T, assign: T -> G) {
+    signed_eval(SignedGenerator.negative(g), assign) = assign(g).inverse
+}
+
+/// Flipping the exponent of a generator inverts its value.
+theorem signed_eval_flip[T, G: Group](x: SignedGenerator[T], assign: T -> G) {
+    signed_eval(signed_flip(x), assign) = signed_eval(x, assign).inverse
+} by {
+    match x {
+        SignedGenerator.positive(g) {
+            signed_eval(signed_flip(x), assign) = assign(g).inverse
+            signed_eval(signed_flip(x), assign) = signed_eval(x, assign).inverse
+        }
+        SignedGenerator.negative(g) {
+            signed_eval(signed_flip(x), assign) = assign(g)
+            inverse_inverse(assign(g))
+            signed_eval(signed_flip(x), assign) = signed_eval(x, assign).inverse
+        }
+    }
+}
+
+/// Flipping the exponent of a generator twice returns the original generator.
+theorem signed_flip_flip[T](x: SignedGenerator[T]) {
+    signed_flip(signed_flip(x)) = x
+} by {
+    match x {
+        SignedGenerator.positive(g) {
+            signed_flip(signed_flip(x)) = SignedGenerator.positive(g)
+            signed_flip(signed_flip(x)) = x
+        }
+        SignedGenerator.negative(g) {
+            signed_flip(signed_flip(x)) = SignedGenerator.negative(g)
+            signed_flip(signed_flip(x)) = x
+        }
+    }
+}
+
+/// The value of a word when each generator is assigned an element of a group,
+/// multiplying the letters from left to right.
+define word_eval[T, G: Group](w: List[SignedGenerator[T]], assign: T -> G) -> G {
+    match w {
+        List.nil {
+            G.1
+        }
+        List.cons(head, tail) {
+            signed_eval(head, assign) * word_eval(tail, assign)
+        }
+    }
+}
+
+/// The empty word has the identity as its value.
+theorem word_eval_nil[T, G: Group](assign: T -> G) {
+    word_eval(List.nil[SignedGenerator[T]], assign) = G.1
+}
+
+/// Prepending a letter multiplies its value on the left.
+theorem word_eval_cons[T, G: Group](head: SignedGenerator[T],
+    tail: List[SignedGenerator[T]], assign: T -> G) {
+    word_eval(List.cons(head, tail), assign) =
+        signed_eval(head, assign) * word_eval(tail, assign)
+}
+
+/// A one-letter word has the value of its letter.
+theorem word_eval_singleton[T, G: Group](x: SignedGenerator[T], assign: T -> G) {
+    word_eval(List.singleton(x), assign) = signed_eval(x, assign)
+} by {
+    word_eval(List.nil[SignedGenerator[T]], assign) = G.1
+}
+
+/// Concatenation of words corresponds to multiplication of their values.
+theorem word_eval_add[T, G: Group](left: List[SignedGenerator[T]],
+    right: List[SignedGenerator[T]], assign: T -> G) {
+    word_eval(left + right, assign) = word_eval(left, assign) * word_eval(right, assign)
+} by {
+    define p(l: List[SignedGenerator[T]]) -> Bool {
+        word_eval(l + right, assign) = word_eval(l, assign) * word_eval(right, assign)
+    }
+    List.nil[SignedGenerator[T]] + right = right
+    word_eval(List.nil[SignedGenerator[T]], assign) = G.1
+    G.1 * word_eval(right, assign) = word_eval(right, assign)
+    p(List.nil[SignedGenerator[T]])
+    forall(head: SignedGenerator[T], tail: List[SignedGenerator[T]]) {
+        if p(tail) {
+            word_eval(tail + right, assign) =
+                word_eval(tail, assign) * word_eval(right, assign)
+            word_eval(List.cons(head, tail + right), assign) =
+                signed_eval(head, assign) * word_eval(tail + right, assign)
+            signed_eval(head, assign) *
+                (word_eval(tail, assign) * word_eval(right, assign)) =
+                (signed_eval(head, assign) * word_eval(tail, assign)) *
+                    word_eval(right, assign)
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(p)
+    forall(l: List[SignedGenerator[T]]) { p(l) }
+}
+
+/// The formal inverse of a word: its letters in the opposite order, each with the
+/// opposite exponent.
+define word_inverse[T](w: List[SignedGenerator[T]]) -> List[SignedGenerator[T]] {
+    match w {
+        List.nil {
+            List.nil[SignedGenerator[T]]
+        }
+        List.cons(head, tail) {
+            word_inverse(tail) + List.singleton(signed_flip(head))
+        }
+    }
+}
+
+/// The empty word is its own formal inverse.
+theorem word_inverse_nil[T] {
+    word_inverse(List.nil[SignedGenerator[T]]) = List.nil[SignedGenerator[T]]
+}
+
+/// The formal inverse of a nonempty word ends with the flipped first letter.
+theorem word_inverse_cons[T](head: SignedGenerator[T], tail: List[SignedGenerator[T]]) {
+    word_inverse(List.cons(head, tail)) =
+        word_inverse(tail) + List.singleton(signed_flip(head))
+}
+
+/// The formal inverse of a one-letter word is the flipped letter.
+theorem word_inverse_singleton[T](x: SignedGenerator[T]) {
+    word_inverse(List.singleton(x)) = List.singleton(signed_flip(x))
+} by {
+    List.nil[SignedGenerator[T]] + List.singleton(signed_flip(x)) =
+        List.singleton(signed_flip(x))
+}
+
+/// The formal inverse of a concatenation reverses the order of the factors.
+theorem word_inverse_add[T](left: List[SignedGenerator[T]],
+    right: List[SignedGenerator[T]]) {
+    word_inverse(left + right) = word_inverse(right) + word_inverse(left)
+} by {
+    define p(l: List[SignedGenerator[T]]) -> Bool {
+        word_inverse(l + right) = word_inverse(right) + word_inverse(l)
+    }
+    List.nil[SignedGenerator[T]] + right = right
+    word_inverse(List.nil[SignedGenerator[T]]) = List.nil[SignedGenerator[T]]
+    word_inverse(right) + List.nil[SignedGenerator[T]] = word_inverse(right)
+    p(List.nil[SignedGenerator[T]])
+    forall(head: SignedGenerator[T], tail: List[SignedGenerator[T]]) {
+        if p(tail) {
+            word_inverse(tail + right) = word_inverse(right) + word_inverse(tail)
+            word_inverse(List.cons(head, tail + right)) =
+                word_inverse(tail + right) + List.singleton(signed_flip(head))
+            word_inverse(List.cons(head, tail)) =
+                word_inverse(tail) + List.singleton(signed_flip(head))
+            (word_inverse(right) + word_inverse(tail)) + List.singleton(signed_flip(head)) =
+                word_inverse(right) + (word_inverse(tail) + List.singleton(signed_flip(head)))
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(p)
+    forall(l: List[SignedGenerator[T]]) { p(l) }
+}
+
+/// The formal inverse is an involution on words.
+theorem word_inverse_inverse[T](w: List[SignedGenerator[T]]) {
+    word_inverse(word_inverse(w)) = w
+} by {
+    define p(l: List[SignedGenerator[T]]) -> Bool {
+        word_inverse(word_inverse(l)) = l
+    }
+    word_inverse(List.nil[SignedGenerator[T]]) = List.nil[SignedGenerator[T]]
+    p(List.nil[SignedGenerator[T]])
+    forall(head: SignedGenerator[T], tail: List[SignedGenerator[T]]) {
+        if p(tail) {
+            word_inverse(List.cons(head, tail)) =
+                word_inverse(tail) + List.singleton(signed_flip(head))
+            word_inverse_add(word_inverse(tail), List.singleton(signed_flip(head)))
+            word_inverse_singleton(signed_flip(head))
+            signed_flip_flip(head)
+            word_inverse(word_inverse(tail)) = tail
+            List.singleton(head) + tail = List.cons(head, tail)
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(p)
+    forall(l: List[SignedGenerator[T]]) { p(l) }
+}
+
+/// The formal inverse of a word evaluates to the inverse of its value.
+theorem word_eval_inverse[T, G: Group](w: List[SignedGenerator[T]], assign: T -> G) {
+    word_eval(word_inverse(w), assign) = word_eval(w, assign).inverse
+} by {
+    define p(l: List[SignedGenerator[T]]) -> Bool {
+        word_eval(word_inverse(l), assign) = word_eval(l, assign).inverse
+    }
+    word_eval_nil(assign)
+    word_eval(List.nil[SignedGenerator[T]], assign) = G.1
+    G.1.inverse * G.1 = G.1
+    G.1.inverse * G.1 = G.1.inverse
+    G.1.inverse = G.1
+    p(List.nil[SignedGenerator[T]])
+    forall(head: SignedGenerator[T], tail: List[SignedGenerator[T]]) {
+        if p(tail) {
+            word_eval(word_inverse(tail), assign) = word_eval(tail, assign).inverse
+            word_eval_add(word_inverse(tail), List.singleton(signed_flip(head)), assign)
+            word_eval_singleton(signed_flip(head), assign)
+            signed_eval_flip(head, assign)
+            word_eval(word_inverse(List.cons(head, tail)), assign) =
+                word_eval(tail, assign).inverse * signed_eval(head, assign).inverse
+            word_eval_cons(head, tail, assign)
+            inverse_mul(signed_eval(head, assign), word_eval(tail, assign))
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(p)
+    forall(l: List[SignedGenerator[T]]) { p(l) }
+}
+
+/// A word times its formal inverse evaluates to the identity.
+theorem word_eval_add_inverse[T, G: Group](w: List[SignedGenerator[T]], assign: T -> G) {
+    word_eval(w + word_inverse(w), assign) = G.1
+} by {
+    word_eval_add(w, word_inverse(w), assign)
+    word_eval_inverse(w, assign)
+}
+
+/// Deleting an adjacent generator and inverse pair does not change the value of a word.
+theorem word_eval_cancel[T, G: Group](left: List[SignedGenerator[T]],
+    x: SignedGenerator[T], right: List[SignedGenerator[T]], assign: T -> G) {
+    word_eval(left + List.cons(x, List.cons(signed_flip(x), right)), assign) =
+        word_eval(left + right, assign)
+} by {
+    word_eval_cons(signed_flip(x), right, assign)
+    signed_eval_flip(x, assign)
+    word_eval_cons(x, List.cons(signed_flip(x), right), assign)
+    signed_eval(x, assign) *
+        (signed_eval(x, assign).inverse * word_eval(right, assign)) =
+        (signed_eval(x, assign) * signed_eval(x, assign).inverse) * word_eval(right, assign)
+    signed_eval(x, assign) * signed_eval(x, assign).inverse = G.1
+    word_eval_add(left, List.cons(x, List.cons(signed_flip(x), right)), assign)
+    word_eval_add(left, right, assign)
+}
+
+/// The word `g h g^-1 h^-1` in two generators, in that order.
+define commutator_word[T](g: T, h: T) -> List[SignedGenerator[T]] {
+    List.cons(SignedGenerator.positive(g),
+        List.cons(SignedGenerator.positive(h),
+            List.cons(SignedGenerator.negative(g),
+                List.singleton(SignedGenerator.negative(h)))))
+}
+
+/// The commutator word evaluates to the commutator of the values of its two generators.
+theorem commutator_word_eval[T, G: Group](g: T, h: T, assign: T -> G) {
+    word_eval(commutator_word(g, h), assign) =
+        commutator_element(assign(g), assign(h))
+} by {
+    word_eval_singleton(SignedGenerator.negative(h), assign)
+    word_eval(List.singleton(SignedGenerator.negative(h)), assign) = assign(h).inverse
+    word_eval_cons(SignedGenerator.negative(g),
+        List.singleton(SignedGenerator.negative(h)), assign)
+    word_eval(List.cons(SignedGenerator.negative(g),
+        List.singleton(SignedGenerator.negative(h))), assign) =
+        assign(g).inverse * assign(h).inverse
+    word_eval_cons(SignedGenerator.positive(h),
+        List.cons(SignedGenerator.negative(g),
+            List.singleton(SignedGenerator.negative(h))), assign)
+    word_eval(List.cons(SignedGenerator.positive(h),
+        List.cons(SignedGenerator.negative(g),
+            List.singleton(SignedGenerator.negative(h)))), assign) =
+        assign(h) * (assign(g).inverse * assign(h).inverse)
+    word_eval_cons(SignedGenerator.positive(g),
+        List.cons(SignedGenerator.positive(h),
+            List.cons(SignedGenerator.negative(g),
+                List.singleton(SignedGenerator.negative(h)))), assign)
+    word_eval(commutator_word(g, h), assign) =
+        assign(g) * (assign(h) * (assign(g).inverse * assign(h).inverse))
+    commutator_element_def(assign(g), assign(h))
+    assign(g) * (assign(h) * (assign(g).inverse * assign(h).inverse)) =
+        assign(g) * assign(h) * assign(g).inverse * assign(h).inverse
+}
